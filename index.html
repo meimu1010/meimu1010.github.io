@@ -33,28 +33,30 @@
     </video>
 
     <!-- 音声付きMP3 -->
-    <audio id="audio" autoplay loop>
+    <audio id="audio" loop>
         <source src="miku.mp3" type="audio/mp3">
         お使いのブラウザは音声タグに対応していません。
     </audio>
 
     <script>
         window.onload = function() {
-            // 自動再生の設定
             var video = document.getElementById('video');
             var audio = document.getElementById('audio');
-
-            // ページ読み込み時に動画と音声が自動再生される
+            
+            // ページがロードされると動画は自動再生
             video.play().then(function() {
                 console.log("動画が自動再生されました");
             }).catch(function(error) {
                 console.error("動画自動再生に失敗しました: ", error);
             });
 
-            audio.play().then(function() {
-                console.log("音声が自動再生されました");
-            }).catch(function(error) {
-                console.error("音声自動再生に失敗しました: ", error);
+            // ユーザーのクリックまたはタッチで音声の再生を開始
+            document.body.addEventListener('click', function() {
+                audio.play().then(function() {
+                    console.log("音声が再生されました");
+                }).catch(function(error) {
+                    console.error("音声再生に失敗しました: ", error);
+                });
             });
 
             // マウスカーソル非表示
