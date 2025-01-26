@@ -77,15 +77,12 @@
             // 全画面表示の変化を監視し、カーソルを非表示にする
             document.addEventListener('fullscreenchange', function() {
                 if (document.fullscreenElement) {
-                    document.body.style.cursor = 'none'; // 全画面表示中はカーソルを非表示
+                    // 全画面モードに入ったらカーソルを非表示
+                    document.body.style.cursor = 'none';
                 } else {
-                    document.body.style.cursor = ''; // 通常状態に戻す
+                    // 全画面モードを終了したらカーソルを表示
+                    document.body.style.cursor = '';
                 }
-            });
-
-            // これにより全画面表示でない場合もカーソルを非表示にする
-            document.addEventListener('mousemove', function() {
-                document.body.style.cursor = 'none'; // マウスが動いた時にも非表示
             });
         };
     </script>
