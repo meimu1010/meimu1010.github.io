@@ -20,8 +20,8 @@
 </head>
 <body>
     <script>
-        // ページロード後に全画面表示を行う
-        window.onload = function() {
+        // ユーザーがクリックしたときに全画面表示に切り替える
+        document.body.addEventListener('click', function() {
             // 全画面モードにする関数
             function goFullScreen() {
                 if (document.documentElement.requestFullscreen) {
@@ -37,7 +37,8 @@
 
             // 全画面モードに移行
             goFullScreen();
-        };
+        });
     </script>
+    <p>クリックして全画面表示に切り替えます</p>
 </body>
 </html>
