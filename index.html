@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全画面無限ループMP4</title>
+    <title>MP4ループとMP3音声</title>
     <style>
         body {
             margin: 0;
@@ -19,39 +19,42 @@
             object-fit: cover; /* 動画が画面いっぱいに表示されるようにする */
             pointer-events: none; /* 動画上のクリックやインタラクションを無効化 */
         }
+
+        audio {
+            display: none; /* MP3音声は非表示にする */
+        }
     </style>
 </head>
 <body>
-    <video id="video" autoplay loop playsinline>
-        <source src="your-video.mp4" type="video/mp4">
+    <!-- 音なしでループするMP4動画 -->
+    <video id="video" autoplay loop muted playsinline>
+        <source src="miku.mp4" type="video/mp4">
         お使いのブラウザは動画タグに対応していません。
     </video>
 
+    <!-- 音声付きMP3 -->
+    <audio id="audio" autoplay loop>
+        <source src="miku.mp3" type="audio/mp3">
+        お使いのブラウザは音声タグに対応していません。
+    </audio>
+
     <script>
         window.onload = function() {
+            // 自動再生の設定
             var video = document.getElementById('video');
-            
-            // ユーザーのクリックで全画面表示を切り替え
-            document.body.addEventListener('click', function() {
-                // 全画面モードに切り替える
-                if (video.requestFullscreen) {
-                    video.requestFullscreen();
-                } else if (video.mozRequestFullScreen) { // Firefox
-                    video.mozRequestFullScreen();
-                } else if (video.webkitRequestFullscreen) { // Chrome, Safari
-                    video.webkitRequestFullscreen();
-                } else if (video.msRequestFullscreen) { // IE
-                    video.msRequestFullscreen();
-                }
+            var audio = document.getElementById('audio');
+
+            // ページ読み込み時に動画と音声が自動再生される
+            video.play().then(function() {
+                console.log("動画が自動再生されました");
+            }).catch(function(error) {
+                console.error("動画自動再生に失敗しました: ", error);
             });
 
-            // 自動再生を有効にして、音声を無効にしない
-            video.play().then(function() {
-                // 再生が開始されたときに処理を行う（問題がない場合のみ実行）
-                console.log("自動再生が開始されました");
+            audio.play().then(function() {
+                console.log("音声が自動再生されました");
             }).catch(function(error) {
-                // 自動再生ができなかった場合のエラーハンドリング
-                console.error("自動再生に失敗しました: ", error);
+                console.error("音声自動再生に失敗しました: ", error);
             });
 
             // マウスカーソル非表示
