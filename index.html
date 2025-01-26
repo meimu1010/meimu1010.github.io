@@ -3,37 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GIF全画面表示</title>
+    <title>全画面無限ループMP4</title>
     <style>
         body {
             margin: 0;
             height: 100vh;
             overflow: hidden;
-            background-color: #333;
+            background-color: black;
+            cursor: none; /* マウスカーソル非表示 */
         }
 
-        #gif {
+        video {
             width: 100%;
-            height: auto;
-            cursor: pointer;
-        }
-
-        /* 全画面時のスタイル */
-        body.fullscreen #gif {
-            width: 100vw;
-            height: 100vh;
-            object-fit: contain; /* 画像の比率を保ちつつ全画面表示 */
+            height: 100%;
+            object-fit: cover; /* 動画が画面いっぱいに表示されるようにする */
         }
     </style>
 </head>
 <body>
-    <img id="gif" src="miku.gif" alt="GIF">
+    <video id="video" autoplay loop muted>
+        <source src="miku.mp4" type="video/mp4">
+        お使いのブラウザは動画タグに対応していません。
+    </video>
 
     <script>
-        // クリックで全画面表示を切り替え
-        document.getElementById('gif').addEventListener('click', function() {
-            document.body.classList.toggle('fullscreen');
-        });
+        // ページ読み込み時に全画面に切り替える
+        window.onload = function() {
+            var video = document.getElementById('video');
+
+            // ユーザーのクリックまたはタップで全画面にする
+            document.body.addEventListener('click', function() {
+                // 全画面に切り替える関数
+                if (video.requestFullscreen) {
+                    video.requestFullscreen();
+                } else if (video.mozRequestFullScreen) { // Firefox
+                    video.mozRequestFullScreen();
+                } else if (video.webkitRequestFullscreen) { // Chrome, Safari
+                    video.webkitRequestFullscreen();
+                } else if (video.msRequestFullscreen) { // IE
+                    video.msRequestFullscreen();
+                }
+            });
+        };
     </script>
 </body>
 </html>
