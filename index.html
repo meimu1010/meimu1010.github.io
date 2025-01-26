@@ -3,33 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple HTML Page</title>
+    <title>Simple HTML UI</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f9f9f9;
-        }
-        h1 {
+            background-color: #f4f4f9;
             color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
-        p {
-            font-size: 1rem;
-            line-height: 1.6;
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
         }
-        a {
-            color: #007BFF;
-            text-decoration: none;
+        input[type="text"], button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
-        a:hover {
-            text-decoration: underline;
+        button {
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <h1>Welcome to My Simple Page</h1>
-    <p>This is a simple HTML page created as an example. You can use this as a starting point for your web projects.</p>
-    <p>Visit <a href="https://www.example.com" target="_blank">Example.com</a> for more information.</p>
-    <img src="https://via.placeholder.com/400x200" alt="Placeholder Image" width="400" height="200">
+    <div class="container">
+        <h1>Simple Form</h1>
+        <form>
+            <input type="text" id="inputField" placeholder="Enter some text" required>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
 </body>
 </html>
