@@ -10,7 +10,7 @@
             height: 100vh;
             overflow: hidden;
             background-color: black;
-            cursor: none; /* マウスカーソル非表示 */
+            cursor: none; /* 初期状態でカーソルを非表示 */
         }
 
         video {
@@ -42,7 +42,7 @@
         window.onload = function() {
             var video = document.getElementById('video');
             var audio = document.getElementById('audio');
-            
+
             // タッチまたはクリックで動画の再生と音声再生を開始
             document.body.addEventListener('click', function() {
                 // 動画を再生
@@ -73,6 +73,20 @@
 
             // マウスカーソル非表示
             document.body.style.cursor = 'none';
+
+            // 全画面表示の変化を監視し、カーソルを非表示にする
+            document.addEventListener('fullscreenchange', function() {
+                if (document.fullscreenElement) {
+                    document.body.style.cursor = 'none'; // 全画面表示中はカーソルを非表示
+                } else {
+                    document.body.style.cursor = ''; // 通常状態に戻す
+                }
+            });
+
+            // これにより全画面表示でない場合もカーソルを非表示にする
+            document.addEventListener('mousemove', function() {
+                document.body.style.cursor = 'none'; // マウスが動いた時にも非表示
+            });
         };
     </script>
 </body>
