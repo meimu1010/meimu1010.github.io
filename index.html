@@ -22,7 +22,7 @@
     </style>
 </head>
 <body>
-    <video id="video" autoplay loop playsinline muted>
+    <video id="video" autoplay loop playsinline>
         <source src="miku.mp4" type="video/mp4">
         お使いのブラウザは動画タグに対応していません。
     </video>
@@ -45,8 +45,14 @@
                 }
             });
 
-            // ページ読み込み時に動画の自動再生が行われるように設定
-            video.play();
+            // 自動再生を有効にして、音声を無効にしない
+            video.play().then(function() {
+                // 再生が開始されたときに処理を行う（問題がない場合のみ実行）
+                console.log("自動再生が開始されました");
+            }).catch(function(error) {
+                // 自動再生ができなかった場合のエラーハンドリング
+                console.error("自動再生に失敗しました: ", error);
+            });
 
             // マウスカーソル非表示
             document.body.style.cursor = 'none';
