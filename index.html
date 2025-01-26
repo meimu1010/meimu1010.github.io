@@ -3,42 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全画面表示とマウスカーソル非表示</title>
+    <title>GIF全画面表示</title>
     <style>
         body {
             margin: 0;
             height: 100vh;
             overflow: hidden;
-            background-color: #333; /* 背景色 */
+            background-color: #333;
         }
 
-        /* マウスカーソルを非表示にする */
-        body {
-            cursor: none;
+        #gif {
+            width: 100%;
+            height: auto;
+            cursor: pointer;
+        }
+
+        /* 全画面時のスタイル */
+        body.fullscreen #gif {
+            width: 100vw;
+            height: 100vh;
+            object-fit: contain; /* 画像の比率を保ちつつ全画面表示 */
         }
     </style>
 </head>
 <body>
-    <script>
-        // ユーザーがクリックしたときに全画面表示に切り替える
-        document.body.addEventListener('click', function() {
-            // 全画面モードにする関数
-            function goFullScreen() {
-                if (document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen();
-                } else if (document.documentElement.mozRequestFullScreen) { // Firefox
-                    document.documentElement.mozRequestFullScreen();
-                } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari
-                    document.documentElement.webkitRequestFullscreen();
-                } else if (document.documentElement.msRequestFullscreen) { // IE
-                    document.documentElement.msRequestFullscreen();
-                }
-            }
+    <img id="gif" src="miku.gif" alt="GIF">
 
-            // 全画面モードに移行
-            goFullScreen();
+    <script>
+        // クリックで全画面表示を切り替え
+        document.getElementById('gif').addEventListener('click', function() {
+            document.body.classList.toggle('fullscreen');
         });
     </script>
-    <p>クリックして全画面表示に切り替えます</p>
 </body>
 </html>
