@@ -17,11 +17,12 @@
             width: 100%;
             height: 100%;
             object-fit: cover; /* 動画が画面いっぱいに表示されるようにする */
+            pointer-events: none; /* 動画上のクリックやインタラクションを無効化 */
         }
     </style>
 </head>
 <body>
-    <video id="video" autoplay loop playsinline>
+    <video id="video" autoplay loop playsinline muted>
         <source src="miku.mp4" type="video/mp4">
         お使いのブラウザは動画タグに対応していません。
     </video>
@@ -30,9 +31,9 @@
         window.onload = function() {
             var video = document.getElementById('video');
             
-            // ページが読み込まれたら、全画面表示を試みる
+            // ユーザーのクリックで全画面表示を切り替え
             document.body.addEventListener('click', function() {
-                // 全画面モードに切り替え
+                // 全画面モードに切り替える
                 if (video.requestFullscreen) {
                     video.requestFullscreen();
                 } else if (video.mozRequestFullScreen) { // Firefox
@@ -43,6 +44,9 @@
                     video.msRequestFullscreen();
                 }
             });
+
+            // ページ読み込み時に動画の自動再生が行われるように設定
+            video.play();
 
             // マウスカーソル非表示
             document.body.style.cursor = 'none';
