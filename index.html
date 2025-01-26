@@ -84,6 +84,13 @@
                     document.body.style.cursor = '';
                 }
             });
+
+            // 全画面モード中にカーソルが再表示されるのを防ぐ
+            document.addEventListener('mousemove', function() {
+                if (document.fullscreenElement) {
+                    document.body.style.cursor = 'none'; // 全画面時にはカーソルを非表示にする
+                }
+            });
         };
     </script>
 </body>
