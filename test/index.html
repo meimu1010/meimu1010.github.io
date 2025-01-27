@@ -101,6 +101,16 @@
       }
     }
 
+    // Function to generate a random 4-letter string
+    function generateRandomString() {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+      let randomString = '';
+      for (let i = 0; i < 4; i++) {
+        randomString += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      return randomString;
+    }
+
     startBtn.addEventListener('click', () => {
       const name = nameInput.value.trim();
       const password = passwordInput.value.trim();
@@ -125,7 +135,8 @@
       setTimeout(() => {
         loopInterval = setInterval(() => {
           count++;
-          const logMessage = `${name} 通報を実行しました。(${count} 回目)`;
+          const randomString = generateRandomString(); // Generate random string
+          const logMessage = `NTRXOX ${randomString} ${name} 通報を実行しました。(${count} 回目)`;
           const logEntry = document.createElement('p');
           logEntry.textContent = logMessage;
           logBox.appendChild(logEntry);
