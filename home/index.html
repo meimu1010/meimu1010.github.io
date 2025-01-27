@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MP4ループとMP3音声</title>
+    <title>動画と音声の同期</title>
     <style>
         body {
             margin: 0;
@@ -43,7 +43,7 @@
             var video = document.getElementById('video');
             var audio = document.getElementById('audio');
 
-            // タッチまたはクリックで動画の再生と音声再生を開始
+            // タッチまたはクリックで動画と音声の再生を開始
             document.body.addEventListener('click', function() {
                 // 動画を再生
                 video.play().then(function() {
@@ -71,19 +71,30 @@
                 });
             });
 
-            // 全画面表示の変化を監視し、カーソルを非表示または表示
+            // 動画と音声の同期を1秒ごとに確認
+            setInterval(() => {
+                const diff = Math.abs(video.currentTime - audio.currentTime);
+
+                // 0.5秒以上ズレていたら音声を動画に同期
+                if (diff > 0.5) {
+                    console.log(`同期修正: 動画=${video.currentTime}, 音声=${audio.currentTime}`);
+                    audio.currentTime = video.currentTime;
+                }
+            }, 1000); // 1秒ごとに同期確認
+
+            // マウスカーソル非表示設定
             document.addEventListener('fullscreenchange', function() {
                 if (document.fullscreenElement) {
-                    document.body.style.cursor = 'none'; // 全画面モード時にカーソルを非表示
+                    document.body.style.cursor = 'none'; // 全画面モードでカーソル非表示
                 } else {
-                    document.body.style.cursor = ''; // 全画面モードを終了したらカーソルを表示
+                    document.body.style.cursor = ''; // 通常モードでカーソルを表示
                 }
             });
 
             // 全画面モード中にカーソルを再表示させない
             document.addEventListener('mousemove', function() {
                 if (document.fullscreenElement) {
-                    document.body.style.cursor = 'none'; // カーソルを再度非表示にする
+                    document.body.style.cursor = 'none'; // 全画面中は常に非表示
                 }
             });
         };
