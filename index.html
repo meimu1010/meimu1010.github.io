@@ -3,35 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>シンプルなホームページ</title>
+    <title>プロフェッショナルなホームページ</title>
     <style>
         body {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: #121212;
-            color: #fff;
+            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
+            background-color: #121212;
+            color: #fff;
         }
 
         header {
-            background-color: #222;
-            color: #ff3333;
-            padding: 20px;
+            background-color: #333;
+            padding: 20px 0;
             text-align: center;
-            font-size: 24px;
+            color: #f0f0f0;
+        }
+
+        header h1 {
+            font-size: 36px;
+            margin: 0;
+            font-weight: 600;
         }
 
         nav {
-            background-color: #333;
-            padding: 10px;
+            background-color: #444;
+            padding: 15px 0;
             text-align: center;
         }
 
         nav a {
-            color: #ff3333;
+            color: #f0f0f0;
             text-decoration: none;
-            margin: 0 15px;
-            font-weight: bold;
+            margin: 0 20px;
+            font-size: 18px;
+            font-weight: 500;
         }
 
         nav a:hover {
@@ -39,74 +45,71 @@
         }
 
         .content {
-            padding: 20px;
+            padding: 40px 20px;
             background-color: #1e1e1e;
-            margin: 20px;
+            margin: 20px auto;
+            width: 90%;
+            max-width: 1100px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        }
+
+        .content h2 {
+            font-size: 28px;
+            color: #ff9900;
+        }
+
+        .content p {
+            font-size: 16px;
+            line-height: 1.8;
         }
 
         footer {
-            background-color: #222;
+            background-color: #333;
             color: #bbb;
-            padding: 10px;
             text-align: center;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            font-size: 12px;
-        }
-
-        .glitch {
-            font-size: 32px;
-            color: #ff3333;
+            padding: 20px;
             position: relative;
-            animation: glitch-animation 1s infinite;
         }
 
-        @keyframes glitch-animation {
-            0% {
-                text-shadow: -2px -2px 0 rgba(255, 0, 0, 0.7), 2px 2px 0 rgba(255, 0, 0, 0.7);
-            }
-            20% {
-                text-shadow: -4px -4px 0 rgba(255, 0, 0, 0.7), 4px 4px 0 rgba(255, 0, 0, 0.7);
-            }
-            40% {
-                text-shadow: 4px -4px 0 rgba(255, 0, 0, 0.7), -4px 4px 0 rgba(255, 0, 0, 0.7);
-            }
-            60% {
-                text-shadow: -6px -6px 0 rgba(255, 0, 0, 0.7), 6px 6px 0 rgba(255, 0, 0, 0.7);
-            }
-            80% {
-                text-shadow: 2px 2px 0 rgba(255, 0, 0, 0.7), -2px -2px 0 rgba(255, 0, 0, 0.7);
-            }
-            100% {
-                text-shadow: -2px -2px 0 rgba(255, 0, 0, 0.7), 2px 2px 0 rgba(255, 0, 0, 0.7);
-            }
+        footer p {
+            margin: 0;
+            font-size: 14px;
         }
+
+        footer a {
+            color: #ff9900;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
     </style>
 </head>
 <body>
 
     <header>
-        <div class="glitch">シンプルなホームページ</div>
+        <h1>ようこそ！プロフェッショナルなサイトへ</h1>
     </header>
 
     <nav>
         <a href="#">ホーム</a>
-        <a href="#">アクセス</a>
         <a href="#">サービス</a>
-        <a href="#">連絡先</a>
+        <a href="#">ポートフォリオ</a>
+        <a href="#">お問い合わせ</a>
     </nav>
 
     <div class="content">
-        <h2>ようこそ</h2>
-        <p>このページは、シンプルで洗練された暗いテーマのデザインです。</p>
-        <p>シンプルでありながら印象的なビジュアルをお楽しみください。</p>
+        <h2>私たちの使命</h2>
+        <p>私たちは、クライアントに最高のサービスを提供することに誇りを持っています。私たちのチームは、革新と品質を重視し、常に最適な解決策を提供します。</p>
+        <p>サイトを通じて、私たちのサービスや実績について知ることができます。私たちはお客様と共に成長し、成功を目指しています。</p>
     </div>
 
     <footer>
-        <p>&copy; 2025 シンプルなホームページ - 全著作権所有</p>
+        <p>&copy; 2025 プロフェッショナルなホームページ | <a href="#">プライバシーポリシー</a></p>
     </footer>
 
 </body>
