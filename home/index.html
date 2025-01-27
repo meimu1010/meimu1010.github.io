@@ -71,24 +71,19 @@
                 });
             });
 
-            // マウスカーソル非表示
-            document.body.style.cursor = 'none';
-
-            // 全画面表示の変化を監視し、カーソルを非表示にする
+            // 全画面表示の変化を監視し、カーソルを非表示または表示
             document.addEventListener('fullscreenchange', function() {
                 if (document.fullscreenElement) {
-                    // 全画面モードに入ったらカーソルを非表示
-                    document.body.style.cursor = 'none';
+                    document.body.style.cursor = 'none'; // 全画面モード時にカーソルを非表示
                 } else {
-                    // 全画面モードを終了したらカーソルを表示
-                    document.body.style.cursor = '';
+                    document.body.style.cursor = ''; // 全画面モードを終了したらカーソルを表示
                 }
             });
 
-            // 全画面モード中にカーソルが再表示されるのを防ぐ
+            // 全画面モード中にカーソルを再表示させない
             document.addEventListener('mousemove', function() {
                 if (document.fullscreenElement) {
-                    document.body.style.cursor = 'none'; // 全画面時にはカーソルを非表示にする
+                    document.body.style.cursor = 'none'; // カーソルを再度非表示にする
                 }
             });
         };
