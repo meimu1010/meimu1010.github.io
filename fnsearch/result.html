@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>検索結果</title>
+</head>
+<body>
+    <h1>検索結果</h1>
+    {% if results %}
+        <ul>
+        {% for result in results %}
+            <li>ユーザー名: {{ result.display_name }}, ID: {{ result.id }}, 連携アカウント: {{ result.auth_info }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>ユーザーが見つかりませんでした。</p>
+    {% endif %}
+    <a href="/">戻る</a>
+</body>
+</html>
