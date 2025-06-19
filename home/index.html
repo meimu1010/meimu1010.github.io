@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>動画と音声の同期</title>
+  <title>動画再生（フルスクリーン・カーソル非表示）</title>
   <style>
     html, body {
       margin: 0;
       height: 100%;
       background: black;
       overflow: hidden;
-      cursor: none;
+      cursor: none; /* 初期状態で非表示 */
     }
 
     video {
@@ -19,29 +19,19 @@
       object-fit: cover;
       pointer-events: none;
     }
-
-    audio {
-      display: none;
-    }
   </style>
 </head>
 <body>
-  <video id="video" muted loop playsinline>
+  <video id="video" autoplay loop playsinline>
     <source src="mikufull.mp4" type="video/mp4" />
     お使いのブラウザは video タグに対応していません。
   </video>
 
-  <audio id="audio" loop>
-    <source src="miku.mp3" type="audio/mp3" />
-    お使いのブラウザは audio タグに対応していません。
-  </audio>
-
   <script>
     window.onload = function () {
       const video = document.getElementById('video');
-      const audio = document.getElementById('audio');
 
-      // フルスクリーン実行
+      // フルスクリーン要求（各ブラウザ対応）
       function requestFullscreen(elem) {
         if (elem.requestFullscreen) {
           elem.requestFullscreen();
@@ -54,7 +44,7 @@
         }
       }
 
-      // 全画面中か判定
+      // フルスクリーン判定
       function isFullscreen() {
         return (
           document.fullscreenElement ||
@@ -64,29 +54,20 @@
         );
       }
 
-      // 常にカーソル非表示（全画面中）
+      // 常にカーソルを非表示にする
       setInterval(() => {
         if (isFullscreen()) {
           document.body.style.cursor = 'none';
         } else {
           document.body.style.cursor = '';
         }
-      }, 100); // 100ミリ秒ごとにチェック＆再設定
+      }, 100);
 
       // クリックで再生＆フルスクリーン
       document.body.addEventListener('click', () => {
         video.play().catch(console.error);
-        audio.play().catch(console.error);
         requestFullscreen(video);
       });
-
-      // 動画と音声の同期処理
-      setInterval(() => {
-        const diff = Math.abs(video.currentTime - audio.currentTime);
-        if (diff > 0.5) {
-          audio.currentTime = video.currentTime;
-        }
-      }, 1000);
     };
   </script>
 </body>
