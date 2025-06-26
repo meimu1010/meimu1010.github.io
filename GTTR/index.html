@@ -1,18 +1,26 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<title>自閉症スペクトラムとは</title>
+  <meta charset="UTF-8" />
+  <title>重複MP3再生サイト</title>
+
+  <!-- Discord用のOGPタグ -->
+  <meta property="og:title" content="自閉症スペクトラム障害とは" />
+  <meta property="og:description" content="社会的なコミュニケーションの困難さや特定のこだわり、感覚過敏などの特性が見られる発達障害" />
 </head>
 <body>
-<script>
-  const audioSrc = 'rick roll.mp3';  // ここにMP3ファイルのパスを入れてください
+  <h1>自閉症スペクトラムとは... あなたのことです</h1>
 
-  // 3回重複して再生
-  for(let i = 0; i < 3; i++) {
-    const audio = new Audio(audioSrc);
-    audio.play();
-  }
-</script>
+  <script>
+    const audioSrc = 'rick roll.mp3'; // 実際のMP3ファイルURLに置き換えてください
+
+    // 3回重複再生
+    for (let i = 0; i < 3; i++) {
+      const audio = new Audio(audioSrc);
+      audio.play().catch(e => {
+        console.log("自動再生ブロックの可能性があります。ユーザー操作後に再生してください。");
+      });
+    }
+  </script>
 </body>
 </html>
