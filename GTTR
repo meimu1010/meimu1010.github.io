@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>重複MP3再生</title>
+</head>
+<body>
+<script>
+  const audioSrc = 'your-audio.mp3';  // ここにMP3ファイルのパスを入れてください
+
+  // 3回重複して再生
+  for(let i = 0; i < 3; i++) {
+    const audio = new Audio(audioSrc);
+    audio.play();
+  }
+</script>
+</body>
+</html>
