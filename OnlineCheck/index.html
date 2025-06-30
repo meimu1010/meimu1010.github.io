@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>Fortnite アカウントチェック</title>
+  <title>IP付きアカウント登録</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -52,18 +52,30 @@
       padding: 15px;
       max-width: 400px;
       display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: background-color 0.5s ease;
+    }
+
+    .account-header {
+      display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
-      transition: background-color 0.5s ease;
     }
-    
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .delete-btn {
       background-color: #dc3545;
       color: white;
       border: none;
-      padding: 10px 15px;
+      padding: 8px 15px;
       border-radius: 8px;
       cursor: pointer;
       transition: background-color 0.2s ease;
@@ -75,7 +87,7 @@
 </head>
 <body>
 
-  <h2>Fortnite アカウント ステータスチェッカー</h2>
+  <h2>Fortnite アカウント登録（IP付き）</h2>
 
   <div class="form">
     <input type="text" id="accountName" placeholder="アカウント名" />
@@ -86,11 +98,21 @@
   <div id="accountList"></div>
 
   <script>
+    async function getIP() {
+      try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        return data.ip;
+      } catch (e) {
+        return "取得失敗";
+      }
+    }
+
     window.onload = () => {
       displayAccounts();
     };
 
-    function addAccount() {
+    async function addAccount() {
       const name = document.getElementById("accountName").value.trim();
       const id = document.getElementById("accountId").value.trim();
       if (!name || !id) {
@@ -98,8 +120,10 @@
         return;
       }
 
+      const ip = await getIP();
+
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      accounts.push({ name, id });
+      accounts.push({ name, id, ip, addedAt: new Date().toISOString() });
       localStorage.setItem("accounts", JSON.stringify(accounts));
 
       document.getElementById("accountName").value = "";
@@ -116,10 +140,17 @@
       accounts.forEach((account, index) => {
         const div = document.createElement("div");
         div.className = "account-box";
+
         div.innerHTML = `
-          <strong>${account.name} (${account.id})</strong>
-          <button onclick="checkStatus('${account.id}', this)">状態確認</button>
-          <button class="delete-btn" onclick="removeAccount(${index})">削除</button>
+          <div class="account-header">
+            <strong>${account.name} (${account.id})</strong>
+            <div class="buttons">
+              <button onclick="checkStatus('${account.id}', this)">状態確認</button>
+              <button class="delete-btn" onclick="removeAccount(${index})">削除</button>
+            </div>
+          </div>
+          <div>IP: ${account.ip}</div>
+          <div>登録日時: ${new Date(account.addedAt).toLocaleString()}</div>
         `;
         container.appendChild(div);
       });
@@ -148,13 +179,13 @@
     function flashBox(box, color) {
       const originalColor = box.style.backgroundColor;
       if(color === "green") {
-        box.style.backgroundColor = "#d4ffd4"; // 薄い緑
+        box.style.backgroundColor = "#d4ffd4";
       } else if(color === "red") {
-        box.style.backgroundColor = "#ffd4d4"; // 薄い赤
+        box.style.backgroundColor = "#ffd4d4";
       }
 
       setTimeout(() => {
-        box.style.backgroundColor = originalColor || "#fff"; // 元の色に戻す
+        box.style.backgroundColor = originalColor || "#fff";
       }, 3000);
     }
 
