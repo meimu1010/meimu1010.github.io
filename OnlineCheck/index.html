@@ -9,7 +9,6 @@
       margin: 0;
       padding: 30px;
       background-color: #f4f4f4;
-      transition: background-color 0.5s ease;
     }
 
     h2 {
@@ -57,9 +56,9 @@
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
+      transition: background-color 0.5s ease;
     }
     
-    /* 削除ボタン赤色 */
     .delete-btn {
       background-color: #dc3545;
       color: white;
@@ -87,8 +86,6 @@
   <div id="accountList"></div>
 
   <script>
-    let flashTimeoutId = null;
-
     window.onload = () => {
       displayAccounts();
     };
@@ -121,21 +118,24 @@
         div.className = "account-box";
         div.innerHTML = `
           <strong>${account.name} (${account.id})</strong>
-          <button onclick="checkStatus('${account.id}')">状態確認</button>
+          <button onclick="checkStatus('${account.id}', this)">状態確認</button>
           <button class="delete-btn" onclick="removeAccount(${index})">削除</button>
         `;
         container.appendChild(div);
       });
     }
 
-    function checkStatus(accid) {
+    function checkStatus(accid, btn) {
       fetch(`https://yls.julesbot.com/api/accounts/${accid}/onlineStatus`)
         .then(response => response.json())
         .then(data => {
+          const box = btn.closest('.account-box');
+          if (!box) return;
+
           if (data.isOnline === true) {
-            flashBody("green");
+            flashBox(box, "green");
           } else if (data.isOnline === false) {
-            flashBody("red");
+            flashBox(box, "red");
           } else {
             alert("状態が取得できませんでした");
           }
@@ -145,23 +145,16 @@
         });
     }
 
-    function flashBody(color) {
-      // 既存のタイマーをクリア
-      if (flashTimeoutId) {
-        clearTimeout(flashTimeoutId);
-        flashTimeoutId = null;
+    function flashBox(box, color) {
+      const originalColor = box.style.backgroundColor;
+      if(color === "green") {
+        box.style.backgroundColor = "#d4ffd4"; // 薄い緑
+      } else if(color === "red") {
+        box.style.backgroundColor = "#ffd4d4"; // 薄い赤
       }
 
-      if (color === "green") {
-        document.body.style.backgroundColor = "#d4ffd4"; // 薄い緑
-      } else if (color === "red") {
-        document.body.style.backgroundColor = "#ffd4d4"; // 薄い赤
-      }
-
-      // 3秒後に元に戻す
-      flashTimeoutId = setTimeout(() => {
-        document.body.style.backgroundColor = "#f4f4f4"; // 元の色
-        flashTimeoutId = null;
+      setTimeout(() => {
+        box.style.backgroundColor = originalColor || "#fff"; // 元の色に戻す
       }, 3000);
     }
 
