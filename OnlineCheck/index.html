@@ -87,7 +87,7 @@
 </head>
 <body>
 
-  <h2>Fortnite アカウント登録（IP付き）</h2>
+  <h2>Fortnite アカウント登録（IP取得は内部保持）</h2>
 
   <div class="form">
     <input type="text" id="accountName" placeholder="アカウント名" />
@@ -149,7 +149,6 @@
               <button class="delete-btn" onclick="removeAccount(${index})">削除</button>
             </div>
           </div>
-          <div>IP: ${account.ip}</div>
           <div>登録日時: ${new Date(account.addedAt).toLocaleString()}</div>
         `;
         container.appendChild(div);
