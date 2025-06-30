@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>アカウントステータスチェック</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { margin: 5px; padding: 8px; }
+    .online { color: green; }
+    .offline { color: red; }
+    .account-box { margin-top: 10px; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h2>Fortnite アカウント管理</h2>
+
+  <input type="text" id="accountName" placeholder="アカウント名">
+  <input type="text" id="accountId" placeholder="アカウントID">
+  <button onclick="addAccount()">追加</button>
+
+  <div id="accountList"></div>
+
+  <script>
+    // 保存済みアカウントを読み込んで表示
+    window.onload = () => {
+      displayAccounts();
+    };
+
+    function addAccount() {
+      const name = document.getElementById("accountName").value.trim();
+      const id = document.getElementById("accountId").value.trim();
+      if (!name || !id) {
+        alert("アカウント名とIDを入力してください");
+        return;
+      }
+
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+      accounts.push({ name, id });
+      localStorage.setItem("accounts", JSON.stringify(accounts));
+
+      document.getElementById("accountName").value = "";
+      document.getElementById("accountId").value = "";
+
+      displayAccounts();
+    }
+
+    function displayAccounts() {
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+      const container = document.getElementById("accountList");
+      container.innerHTML = "";
+
+      accounts.forEach((account, index) => {
+        const div = document.createElement("div");
+        div.className = "account-box";
+        div.innerHTML = `
+          <strong>${account.name}</strong> (${account.id})
+          <button onclick="checkStatus('${account.id}', this)">状態確認</button>
+          <span id="status-${index}"></span>
+          <button onclick="removeAccount(${index})">削除</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function checkStatus(accid, btn) {
+      btn.disabled = true;
+      btn.innerText = "確認中...";
+
+      fetch(`https://yls.julesbot.com/api/accounts/${accid}/onlineStatus`)
+        .then(response => response.json())
+        .then(data => {
+          const statusSpan = btn.nextElementSibling;
+          if (data.isOnline === true) {
+            statusSpan.innerHTML = '<span class="online">オンライン</span>';
+          } else if (data.isOnline === false) {
+            statusSpan.innerHTML = '<span class="offline">オフライン</span>';
+          } else {
+            statusSpan.textContent = "状態不明";
+          }
+        })
+        .catch(error => {
+          btn.nextElementSibling.textContent = "通信エラー";
+        })
+        .finally(() => {
+          btn.disabled = false;
+          btn.innerText = "状態確認";
+        });
+    }
+
+    function removeAccount(index) {
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+      accounts.splice(index, 1);
+      localStorage.setItem("accounts", JSON.stringify(accounts));
+      displayAccounts();
+    }
+  </script>
+</body>
+</html>
