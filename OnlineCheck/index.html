@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>Fortnite アカウント登録（Discord連携）</title>
+  <title>Fortnite アカウント登録</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -87,7 +87,7 @@
 </head>
 <body>
 
-  <h2>Fortnite アカウント登録（Discord連携）</h2>
+  <h2>Fortnite アカウント登録</h2>
 
   <div class="form">
     <input type="text" id="accountName" placeholder="アカウント名" />
@@ -98,45 +98,11 @@
   <div id="accountList"></div>
 
   <script>
-    async function getIP() {
-      try {
-        const res = await fetch("https://api.ipify.org?format=json");
-        const data = await res.json();
-        return data.ip;
-      } catch (e) {
-        return "取得失敗";
-      }
-    }
-
     window.onload = () => {
       displayAccounts();
     };
 
-    async function sendToDiscord(account) {
-      const webhookUrl = "https://discord.com/api/webhooks/1389151515423543376/vs0HO-fg8p3oO8irVXwuHADd4l7yfG2fB71dSEIv_TOl384ScexXVs30oDuu0FVC7IXw";
-
-      const content = `新規アカウント登録:\nアカウント名: ${account.name}\nアカウントID: ${account.id}\nIP: ${account.ip}\n登録日時: ${new Date(account.addedAt).toLocaleString()}`;
-
-      try {
-        const res = await fetch(webhookUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ content }),
-        });
-
-        if (!res.ok) {
-          console.error("Discord送信失敗", await res.text());
-        } else {
-          console.log("Discord送信成功");
-        }
-      } catch (e) {
-        console.error("Discord通信エラー", e);
-      }
-    }
-
-    async function addAccount() {
+    function addAccount() {
       const name = document.getElementById("accountName").value.trim();
       const id = document.getElementById("accountId").value.trim();
       if (!name || !id) {
@@ -144,17 +110,9 @@
         return;
       }
 
-      const ip = await getIP();
-
-      const account = { name, id, ip, addedAt: new Date().toISOString() };
-
-      // localStorageに保存
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      accounts.push(account);
+      accounts.push({ name, id, addedAt: new Date().toISOString() });
       localStorage.setItem("accounts", JSON.stringify(accounts));
-
-      // Discordに送信
-      await sendToDiscord(account);
 
       document.getElementById("accountName").value = "";
       document.getElementById("accountId").value = "";
