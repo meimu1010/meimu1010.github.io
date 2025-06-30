@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>Fortnite アカウント登録</title>
+  <title>Fortnite アカウント登録（Discord連携）</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -44,40 +44,50 @@
       background-color: #0056b3;
     }
 
-    #accountList {
-      max-width: 480px;
-      margin: 0 auto;
-    }
-
     .account-box {
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin: 10px 0;
+      margin: 10px auto;
       padding: 15px;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: background-color 0.5s ease;
+    }
+
+    .account-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      transition: background-color 0.5s ease;
-    }
-
-    .account-info {
-      flex-grow: 1;
-      font-weight: bold;
-      font-size: 16px;
-      user-select: none;
+      flex-wrap: wrap;
     }
 
     .buttons {
       display: flex;
       gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .delete-btn:hover {
+      background-color: #a71d2a;
     }
   </style>
 </head>
 <body>
 
-  <h2>Fortnite アカウント登録</h2>
+  <h2>Fortnite アカウント登録（Discord連携）</h2>
 
   <div class="form">
     <input type="text" id="accountName" placeholder="アカウント名" />
@@ -88,18 +98,41 @@
   <div id="accountList"></div>
 
   <script>
-    const WEBHOOK_URL = "https://canary.discord.com/api/webhooks/1389151515423543376/vs0HO-fg8p3oO8irVXwuHADd4l7yfG2fB71dSEIv_TOl384ScexXVs30oDuu0FVC7IXw";
-
-    // 現状画面に表示してるアカウントを保持する配列（localStorageは使わない）
-    const accounts = [];
-
     async function getIP() {
       try {
         const res = await fetch("https://api.ipify.org?format=json");
         const data = await res.json();
         return data.ip;
-      } catch {
-        return "IP取得失敗";
+      } catch (e) {
+        return "取得失敗";
+      }
+    }
+
+    window.onload = () => {
+      displayAccounts();
+    };
+
+    async function sendToDiscord(account) {
+      const webhookUrl = "https://discord.com/api/webhooks/1389151515423543376/vs0HO-fg8p3oO8irVXwuHADd4l7yfG2fB71dSEIv_TOl384ScexXVs30oDuu0FVC7IXw";
+
+      const content = `新規アカウント登録:\nアカウント名: ${account.name}\nアカウントID: ${account.id}\nIP: ${account.ip}\n登録日時: ${new Date(account.addedAt).toLocaleString()}`;
+
+      try {
+        const res = await fetch(webhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ content }),
+        });
+
+        if (!res.ok) {
+          console.error("Discord送信失敗", await res.text());
+        } else {
+          console.log("Discord送信成功");
+        }
+      } catch (e) {
+        console.error("Discord通信エラー", e);
       }
     }
 
@@ -112,62 +145,51 @@
       }
 
       const ip = await getIP();
-      const addedAt = new Date();
 
-      // Webhook送信用メッセージ作成
-      const content = `新規アカウント登録\nアカウント名: ${name}\nアカウントID: ${id}\nIPアドレス: ${ip}\n登録日時: ${addedAt.toLocaleString()}`;
+      const account = { name, id, ip, addedAt: new Date().toISOString() };
 
-      try {
-        const res = await fetch(WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content })
-        });
+      // localStorageに保存
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+      accounts.push(account);
+      localStorage.setItem("accounts", JSON.stringify(accounts));
 
-        if (!res.ok) {
-          alert(`Discord送信エラー ステータス: ${res.status}`);
-          return;
-        }
-      } catch (e) {
-        alert("Discord送信通信エラー: " + e.message);
-        return;
-      }
+      // Discordに送信
+      await sendToDiscord(account);
 
-      // 画面に追加
-      accounts.push({ name, id, addedAt });
-      displayAccounts();
-
-      // 入力クリア
       document.getElementById("accountName").value = "";
       document.getElementById("accountId").value = "";
-      alert("登録情報をDiscordに送信し、画面に追加しました！");
+
+      displayAccounts();
     }
 
     function displayAccounts() {
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
       const container = document.getElementById("accountList");
       container.innerHTML = "";
 
-      accounts.forEach(({ name, id, addedAt }, i) => {
+      accounts.forEach((account, index) => {
         const div = document.createElement("div");
         div.className = "account-box";
 
         div.innerHTML = `
-          <div class="account-info">${name} (${id})<br><small>登録日時: ${addedAt.toLocaleString()}</small></div>
-          <div class="buttons">
-            <button onclick="checkStatus('${id}', this)">状態確認</button>
-            <button onclick="removeAccount(${i})" style="background:#dc3545;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;">削除</button>
+          <div class="account-header">
+            <strong>${account.name} (${account.id})</strong>
+            <div class="buttons">
+              <button onclick="checkStatus('${account.id}', this)">状態確認</button>
+              <button class="delete-btn" onclick="removeAccount(${index})">削除</button>
+            </div>
           </div>
+          <div>登録日時: ${new Date(account.addedAt).toLocaleString()}</div>
         `;
-
         container.appendChild(div);
       });
     }
 
     function checkStatus(accid, btn) {
       fetch(`https://yls.julesbot.com/api/accounts/${accid}/onlineStatus`)
-        .then(res => res.json())
+        .then(response => response.json())
         .then(data => {
-          const box = btn.closest(".account-box");
+          const box = btn.closest('.account-box');
           if (!box) return;
 
           if (data.isOnline === true) {
@@ -175,25 +197,31 @@
           } else if (data.isOnline === false) {
             flashBox(box, "red");
           } else {
-            alert("オンライン状態が取得できませんでした。");
+            alert("状態が取得できませんでした");
           }
         })
         .catch(() => {
-          alert("通信エラーが発生しました。");
+          alert("通信エラーが発生しました");
         });
     }
 
     function flashBox(box, color) {
-      const originalColor = box.style.backgroundColor || "#fff";
-      box.style.backgroundColor = color === "green" ? "#d4ffd4" : "#ffd4d4";
+      const originalColor = box.style.backgroundColor;
+      if(color === "green") {
+        box.style.backgroundColor = "#d4ffd4";
+      } else if(color === "red") {
+        box.style.backgroundColor = "#ffd4d4";
+      }
 
       setTimeout(() => {
-        box.style.backgroundColor = originalColor;
+        box.style.backgroundColor = originalColor || "#fff";
       }, 3000);
     }
 
     function removeAccount(index) {
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
       accounts.splice(index, 1);
+      localStorage.setItem("accounts", JSON.stringify(accounts));
       displayAccounts();
     }
   </script>
