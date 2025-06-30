@@ -98,6 +98,9 @@
   <div id="accountList"></div>
 
   <script>
+    // ⚠️ 公開環境で使うのは危険です
+    const webhookUrl = "https://canary.discord.com/api/webhooks/1389151515423543376/vs0HO-fg8p3oO8irVXwuHADd4l7yfG2fB71dSEIv_TOl384ScexXVs30oDuu0FVC7IXw";
+
     window.onload = () => {
       displayAccounts();
     };
@@ -111,8 +114,20 @@
       }
 
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      accounts.push({ name, id, addedAt: new Date().toISOString() });
+      const newAccount = { name, id, addedAt: new Date().toISOString() };
+      accounts.push(newAccount);
       localStorage.setItem("accounts", JSON.stringify(accounts));
+
+      // Discord Webhook 送信
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: `✅ Fortniteアカウントが登録されました:\n**名前**: ${name}\n**ID**: ${id}`
+        })
+      }).catch((err) => {
+        console.error("Webhook送信エラー:", err);
+      });
 
       document.getElementById("accountName").value = "";
       document.getElementById("accountId").value = "";
