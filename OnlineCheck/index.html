@@ -9,7 +9,6 @@
       margin: 0;
       padding: 30px;
       background-color: #f4f4f4;
-      transition: background-color 0.5s ease;
     }
 
     h2 {
@@ -63,13 +62,25 @@
       flex: 1;
     }
 
-    /* 背景色保持 */
     .status-green {
       background-color: #d4ffd4 !important;
     }
 
     .status-red {
       background-color: #ffd4d4 !important;
+    }
+
+    .shake {
+      animation: shake 0.3s ease-in-out 6;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-10px); }
+      80% { transform: translateX(10px); }
+      100% { transform: translateX(0); }
     }
   </style>
 </head>
@@ -130,9 +141,9 @@
         .then(response => response.json())
         .then(data => {
           if (data.isOnline === true) {
-            setBodyStatus("green");
+            animateStatus("green");
           } else if (data.isOnline === false) {
-            setBodyStatus("red");
+            animateStatus("red");
           } else {
             alert("状態が取得できませんでした");
           }
@@ -142,17 +153,22 @@
         });
     }
 
-    function setBodyStatus(status) {
-      document.body.classList.remove("status-green", "status-red");
+    function animateStatus(status) {
+      document.body.classList.remove("status-green", "status-red", "shake");
+
       if (status === "green") {
         document.body.classList.add("status-green");
       } else if (status === "red") {
         document.body.classList.add("status-red");
       }
 
+      // 震えをトリガー
+      void document.body.offsetWidth; // ← 再適用用ハック
+      document.body.classList.add("shake");
+
       setTimeout(() => {
-        document.body.classList.remove("status-green", "status-red");
-      }, 3000); // 3秒後に元に戻す
+        document.body.classList.remove("status-green", "status-red", "shake");
+      }, 3000); // 色と振動3秒維持
     }
 
     function removeAccount(index) {
