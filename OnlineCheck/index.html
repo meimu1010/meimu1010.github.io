@@ -63,22 +63,13 @@
       flex: 1;
     }
 
-    .flash-green {
-      animation: flashGreen 1s ease;
+    /* 背景色保持 */
+    .status-green {
+      background-color: #d4ffd4 !important;
     }
 
-    .flash-red {
-      animation: flashRed 1s ease;
-    }
-
-    @keyframes flashGreen {
-      0%   { background-color: #d4ffd4; }
-      100% { background-color: #f4f4f4; }
-    }
-
-    @keyframes flashRed {
-      0%   { background-color: #ffd4d4; }
-      100% { background-color: #f4f4f4; }
+    .status-red {
+      background-color: #ffd4d4 !important;
     }
   </style>
 </head>
@@ -139,9 +130,9 @@
         .then(response => response.json())
         .then(data => {
           if (data.isOnline === true) {
-            flashBody("green");
+            setBodyStatus("green");
           } else if (data.isOnline === false) {
-            flashBody("red");
+            setBodyStatus("red");
           } else {
             alert("状態が取得できませんでした");
           }
@@ -151,14 +142,17 @@
         });
     }
 
-    function flashBody(color) {
-      if (color === "green") {
-        document.body.classList.add("flash-green");
-        setTimeout(() => document.body.classList.remove("flash-green"), 1000);
-      } else if (color === "red") {
-        document.body.classList.add("flash-red");
-        setTimeout(() => document.body.classList.remove("flash-red"), 1000);
+    function setBodyStatus(status) {
+      document.body.classList.remove("status-green", "status-red");
+      if (status === "green") {
+        document.body.classList.add("status-green");
+      } else if (status === "red") {
+        document.body.classList.add("status-red");
       }
+
+      setTimeout(() => {
+        document.body.classList.remove("status-green", "status-red");
+      }, 3000); // 3秒後に元に戻す
     }
 
     function removeAccount(index) {
