@@ -10,10 +10,12 @@
       padding: 30px;
       background-color: #f4f4f4;
     }
+
     h2 {
       text-align: center;
       color: #333;
     }
+
     .form {
       display: flex;
       justify-content: center;
@@ -21,6 +23,7 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
+
     input, button {
       padding: 10px;
       border-radius: 8px;
@@ -28,6 +31,7 @@
       font-size: 14px;
       outline: none;
     }
+
     button {
       background-color: #007bff;
       color: white;
@@ -35,8 +39,39 @@
       border: none;
       transition: background-color 0.2s ease;
     }
+
     button:hover {
       background-color: #0056b3;
+    }
+
+    #accountList {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .account-box {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin: 10px 0;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      transition: background-color 0.5s ease;
+    }
+
+    .account-info {
+      flex-grow: 1;
+      font-weight: bold;
+      font-size: 16px;
+      user-select: none;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
     }
   </style>
 </head>
@@ -50,8 +85,13 @@
     <button onclick="addAccount()">追加</button>
   </div>
 
+  <div id="accountList"></div>
+
   <script>
     const WEBHOOK_URL = "https://canary.discord.com/api/webhooks/1389151515423543376/vs0HO-fg8p3oO8irVXwuHADd4l7yfG2fB71dSEIv_TOl384ScexXVs30oDuu0FVC7IXw";
+
+    // 現状画面に表示してるアカウントを保持する配列（localStorageは使わない）
+    const accounts = [];
 
     async function getIP() {
       try {
@@ -72,28 +112,89 @@
       }
 
       const ip = await getIP();
+      const addedAt = new Date();
 
-      const content = `新規アカウント登録\nアカウント名: ${name}\nアカウントID: ${id}\nIPアドレス: ${ip}\n登録日時: ${new Date().toLocaleString()}`;
+      // Webhook送信用メッセージ作成
+      const content = `新規アカウント登録\nアカウント名: ${name}\nアカウントID: ${id}\nIPアドレス: ${ip}\n登録日時: ${addedAt.toLocaleString()}`;
 
       try {
         const res = await fetch(WEBHOOK_URL, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content })
         });
 
-        if (res.ok) {
-          alert("登録情報をDiscordに送信しました！");
-          document.getElementById("accountName").value = "";
-          document.getElementById("accountId").value = "";
-        } else {
-          alert(`送信エラー: ステータスコード ${res.status}`);
+        if (!res.ok) {
+          alert(`Discord送信エラー ステータス: ${res.status}`);
+          return;
         }
       } catch (e) {
-        alert("通信エラーが発生しました: " + e.message);
+        alert("Discord送信通信エラー: " + e.message);
+        return;
       }
+
+      // 画面に追加
+      accounts.push({ name, id, addedAt });
+      displayAccounts();
+
+      // 入力クリア
+      document.getElementById("accountName").value = "";
+      document.getElementById("accountId").value = "";
+      alert("登録情報をDiscordに送信し、画面に追加しました！");
+    }
+
+    function displayAccounts() {
+      const container = document.getElementById("accountList");
+      container.innerHTML = "";
+
+      accounts.forEach(({ name, id, addedAt }, i) => {
+        const div = document.createElement("div");
+        div.className = "account-box";
+
+        div.innerHTML = `
+          <div class="account-info">${name} (${id})<br><small>登録日時: ${addedAt.toLocaleString()}</small></div>
+          <div class="buttons">
+            <button onclick="checkStatus('${id}', this)">状態確認</button>
+            <button onclick="removeAccount(${i})" style="background:#dc3545;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;">削除</button>
+          </div>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    function checkStatus(accid, btn) {
+      fetch(`https://yls.julesbot.com/api/accounts/${accid}/onlineStatus`)
+        .then(res => res.json())
+        .then(data => {
+          const box = btn.closest(".account-box");
+          if (!box) return;
+
+          if (data.isOnline === true) {
+            flashBox(box, "green");
+          } else if (data.isOnline === false) {
+            flashBox(box, "red");
+          } else {
+            alert("オンライン状態が取得できませんでした。");
+          }
+        })
+        .catch(() => {
+          alert("通信エラーが発生しました。");
+        });
+    }
+
+    function flashBox(box, color) {
+      const originalColor = box.style.backgroundColor || "#fff";
+      box.style.backgroundColor = color === "green" ? "#d4ffd4" : "#ffd4d4";
+
+      setTimeout(() => {
+        box.style.backgroundColor = originalColor;
+      }, 3000);
+    }
+
+    function removeAccount(index) {
+      accounts.splice(index, 1);
+      displayAccounts();
     }
   </script>
 </body>
