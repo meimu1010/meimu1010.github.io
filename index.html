@@ -47,8 +47,8 @@
   <button id="start-btn">ゲームを開始</button>
 
   <div id="jumpscare">
-    <img src="https://i.imgur.com/8p0U7te.jpg" alt="Scary Face">
-    <audio id="scream-sound" src="https://www.myinstants.com/media/sounds/movie_1.mp3"></audio>
+    <img src="https://i.ibb.co/mFZV0s9/scary-face.jpg" alt="Scary Face">
+    <audio id="scream-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c1cfa8fcab.mp3?filename=girl-scream-6052.mp3"></audio>
   </div>
 
   <script>
@@ -59,8 +59,8 @@
     btn.addEventListener("click", () => {
       btn.style.display = "none";
 
-      // 3〜10秒のランダムな遅延
-      const delay = Math.random() * 7000 + 3000;
+      // 3〜7秒のランダムな遅延
+      const delay = Math.random() * 4000 + 3000;
 
       setTimeout(() => {
         jumpscare.style.display = "flex";
