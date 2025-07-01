@@ -1,72 +1,187 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>ジャンプスケア</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>株式会社コスモリンク</title>
   <style>
     body {
       margin: 0;
-      background: black;
-      overflow: hidden;
+      font-family: "Yu Gothic", sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #fdfdfd;
     }
-
-    #start-btn {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 24px;
-      padding: 20px 40px;
-      background: red;
+    header {
+      background-color: #003366;
       color: white;
+      padding: 20px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.8em;
+    }
+    nav {
+      background-color: #005599;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      padding: 10px 0;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .hero {
+      background-image: url('https://picsum.photos/id/1011/1200/500');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      padding: 100px 20px;
+      text-align: center;
+    }
+    .hero h2 {
+      font-size: 2.8em;
+      margin-bottom: 10px;
+    }
+    .section {
+      max-width: 1000px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+    .section h3 {
+      font-size: 1.8em;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 10px;
+      margin-bottom: 30px;
+    }
+    .business-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .business-item {
+      flex: 1 1 30%;
+      background: #f0f0f0;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .info {
+      background-color: #f7f7f7;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    form {
+      background-color: #f2f2f2;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    form label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    form input,
+    form textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    form button {
+      background-color: #003366;
+      color: white;
+      padding: 10px 20px;
       border: none;
+      border-radius: 5px;
       cursor: pointer;
     }
-
-    #jumpscare {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: black;
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
+    form button:hover {
+      background-color: #002244;
     }
-
-    #jumpscare img {
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
+    footer {
+      background-color: #003366;
+      color: white;
+      text-align: center;
+      padding: 20px 0;
+      margin-top: 60px;
+    }
+    @media (max-width: 768px) {
+      .business-list {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
-  <button id="start-btn">ゲームを開始</button>
 
-  <div id="jumpscare">
-    <img src="https://i.ibb.co/mFZV0s9/scary-face.jpg" alt="Scary Face">
-    <audio id="scream-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c1cfa8fcab.mp3?filename=girl-scream-6052.mp3"></audio>
-  </div>
+  <header>
+    <h1>株式会社コスモリンク</h1>
+  </header>
 
-  <script>
-    const btn = document.getElementById("start-btn");
-    const jumpscare = document.getElementById("jumpscare");
-    const sound = document.getElementById("scream-sound");
+  <nav>
+    <a href="#business">事業内容</a>
+    <a href="#company">会社情報</a>
+    <a href="#contact">お問い合わせ</a>
+  </nav>
 
-    btn.addEventListener("click", () => {
-      btn.style.display = "none";
+  <section class="hero">
+    <h2>信頼と技術で未来をつなぐ</h2>
+    <p>お客様に寄り添い、価値あるソリューションを提供します。</p>
+  </section>
 
-      // 3〜7秒のランダムな遅延
-      const delay = Math.random() * 4000 + 3000;
+  <section id="business" class="section">
+    <h3>事業内容</h3>
+    <div class="business-list">
+      <div class="business-item">
+        <h4>システム開発</h4>
+        <p>業務効率化やDX支援に向けたオーダーメイドシステムの設計・開発を行っています。</p>
+      </div>
+      <div class="business-item">
+        <h4>Web制作</h4>
+        <p>コーポレートサイトからECサイトまで、ユーザビリティとデザイン性を両立させたWeb制作を提供。</p>
+      </div>
+      <div class="business-item">
+        <h4>ITコンサルティング</h4>
+        <p>IT戦略の策定から導入支援まで、企業の課題解決に寄り添ったご提案を行います。</p>
+      </div>
+    </div>
+  </section>
 
-      setTimeout(() => {
-        jumpscare.style.display = "flex";
-        sound.play();
-      }, delay);
-    });
-  </script>
+  <section id="company" class="section">
+    <h3>会社情報</h3>
+    <div class="info">
+      <p><strong>会社名：</strong>株式会社コスモリンク</p>
+      <p><strong>所在地：</strong>東京都港区芝公園1-2-3 コスモビル6F</p>
+      <p><strong>設立：</strong>2012年4月</p>
+      <p><strong>代表者：</strong>山田 太郎</p>
+      <p><strong>事業内容：</strong>システム開発、Web制作、ITコンサルティング</p>
+    </div>
+  </section>
+
+  <section id="contact" class="section">
+    <h3>お問い合わせ</h3>
+    <form>
+      <label for="name">お名前</label>
+      <input type="text" id="name" required />
+
+      <label for="email">メールアドレス</label>
+      <input type="email" id="email" required />
+
+      <label for="message">お問い合わせ内容</label>
+      <textarea id="message" rows="5" required></textarea>
+
+      <button type="submit">送信する</button>
+    </form>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 株式会社コスモリンク All Rights Reserved.</p>
+  </footer>
+
 </body>
 </html>
