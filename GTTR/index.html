@@ -4,30 +4,43 @@
   <meta charset="UTF-8" />
   <title>ネットリテラシーとは</title>
 
-  <!-- Discord用のOGPタグ -->
+  <!-- OGPタグ（Discord用） -->
   <meta property="og:title" content="ネットリテラシーとは" />
   <meta property="og:description" content="インターネットを安全に正しく使うための知識や能力" />
   <meta property="og:image" content="https://th.bing.com/th/id/OIP.d76MBMU4Z81EXrAeDtim1QHaFj?w=276&h=180&c=7&r=0&o=7&pid=1.7&rm=3" />
   <meta property="og:url" content="https://example.com/index.html" />
 </head>
-<body style="cursor: pointer; text-align: center; padding-top: 100px;">
-  <h1>404 error</h1>
+<body>
+  <h1>ネットリテラシーとは</h1>
+  <p>自動再生を試みます。ブロックされた場合は画面をクリックしてください。</p>
 
   <script>
-    function playAudio() {
-      const audioSrc = 'rick roll.mp3'; // ← 実際のMP3ファイルのURLに変更してください
+    const audioSrc = 'rick roll.mp3'; // 実際のMP3ファイルのURLに変更してください
+    let audioObjects = [];
+
+    // 音声を3重で再生する関数
+    function playAll() {
+      audioObjects = [];
       for (let i = 0; i < 3; i++) {
         const audio = new Audio(audioSrc);
-        audio.play().catch(e => {
-          console.log("再生失敗:", e);
+        audioObjects.push(audio);
+        audio.play().catch(() => {
+          // 自動再生ブロックされたときの処理はここでは不要
         });
       }
-      // 一度だけ反応させるようにイベント削除
-      document.removeEventListener('click', playAudio);
     }
 
-    // ページ全体をクリックで反応
-    document.addEventListener('click', playAudio);
+    // 自動再生を試みる
+    playAll();
+
+    // 失敗していたら、画面クリックで再試行
+    document.body.addEventListener('click', () => {
+      audioObjects.forEach(audio => {
+        if (audio.paused) {
+          audio.play();
+        }
+      });
+    }, { once: true }); // 最初の1回だけ実行
   </script>
 </body>
 </html>
