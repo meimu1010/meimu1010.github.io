@@ -119,6 +119,11 @@
       font-size: 13px;
       color: #555;
     }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -126,33 +131,85 @@
   <h2>Fortnite アカウント登録</h2>
 
   <div class="form">
-    <input type="text" id="accountName" placeholder="アカウント名" />
-    <input type="text" id="accountId" placeholder="アカウントID" />
-    <button onclick="addAccount()">追加</button>
+    <input type="text" id="accountName" placeholder="Epic / PSN / XBL のユーザー名" />
+    <button id="addBtn" onclick="addAccount()">追加</button>
   </div>
 
   <div id="accountList"></div>
 
   <script>
+    const API_KEY = "c92e7be2-55f0-4006-8c2a-b00578072f41";
+    const BASE_URL = "https://fortnite-api.com/v2/stats/br/v2";
+    const PLATFORMS = [null, "epic", "psn", "xbl"];
+
     window.onload = () => {
       displayAccounts();
     };
 
-    function addAccount() {
-      const name = document.getElementById("accountName").value.trim();
-      const id = document.getElementById("accountId").value.trim();
-      if (!name || !id) {
-        alert("アカウント名とIDを入力してください");
+    async function fetchAccountId(username) {
+      const headers = {
+        "Authorization": API_KEY
+      };
+
+      for (const platform of PLATFORMS) {
+        const params = new URLSearchParams({ name: username });
+        if (platform) {
+          params.append("accountType", platform);
+        }
+
+        try {
+          const response = await fetch(`${BASE_URL}?${params.toString()}`, { headers });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.data && data.data.account && data.data.account.id) {
+              return data.data.account.id;
+            }
+          }
+        } catch (e) {
+          // 通信エラーなどは無視して次へ
+        }
+      }
+
+      return null;
+    }
+
+    async function addAccount() {
+      const input = document.getElementById("accountName");
+      const username = input.value.trim();
+      const addBtn = document.getElementById("addBtn");
+
+      if (!username) {
+        alert("ユーザー名を入力してください");
+        return;
+      }
+
+      addBtn.disabled = true;
+      addBtn.textContent = "取得中…";
+      input.classList.add("loading");
+
+      const accountId = await fetchAccountId(username);
+
+      addBtn.disabled = false;
+      addBtn.textContent = "追加";
+      input.classList.remove("loading");
+
+      if (!accountId) {
+        alert("アカウントIDの取得に失敗しました。ユーザー名を確認してください。");
         return;
       }
 
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      accounts.push({ name, id, addedAt: new Date().toISOString() });
+
+      // 重複登録チェック（IDベース）
+      if (accounts.some(acc => acc.id === accountId)) {
+        alert("このアカウントはすでに登録されています。");
+        return;
+      }
+
+      accounts.push({ name: username, id: accountId, addedAt: new Date().toISOString() });
       localStorage.setItem("accounts", JSON.stringify(accounts));
 
-      document.getElementById("accountName").value = "";
-      document.getElementById("accountId").value = "";
-
+      input.value = "";
       displayAccounts();
     }
 
