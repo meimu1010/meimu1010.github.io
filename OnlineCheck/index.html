@@ -166,6 +166,64 @@
       opacity: 0.6;
       pointer-events: none;
     }
+
+    /* 確認ダイアログ用 */
+    #deleteConfirmDialog {
+      display:none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      padding: 20px 30px;
+      z-index: 1000;
+      width: 300px;
+      text-align: center;
+    }
+
+    #deleteConfirmDialog p {
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    #deleteConfirmDialog button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+      transition: background-color 0.2s ease;
+    }
+
+    #confirmDeleteBtn {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    #confirmDeleteBtn:hover {
+      background-color: #b02a37;
+    }
+
+    #cancelDeleteBtn {
+      background-color: #6c757d;
+      color: white;
+      margin-right: 0;
+    }
+
+    #cancelDeleteBtn:hover {
+      background-color: #5a6268;
+    }
+
+    /* オーバーレイ */
+    #overlay {
+      display:none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 900;
+    }
   </style>
 </head>
 <body>
@@ -186,6 +244,14 @@
   </div>
 
   <div id="accountList"></div>
+
+  <!-- 削除確認ダイアログ -->
+  <div id="deleteConfirmDialog">
+    <p>本当に削除しますか？</p>
+    <button id="confirmDeleteBtn">はい</button>
+    <button id="cancelDeleteBtn">いいえ</button>
+  </div>
+  <div id="overlay"></div>
 
   <script>
     const API_KEY = "c92e7be2-55f0-4006-8c2a-b00578072f41";
@@ -314,7 +380,6 @@
       const account = accounts[index];
 
       const headerDiv = box.querySelector(".account-header");
-      // 名前表示部分をinputに置き換え
       headerDiv.innerHTML = `
         <input type="text" id="editNameInput${index}" value="${escapeHtml(account.name)}" style="font-size:14px; padding:8px; border-radius:6px; border:1px solid #ccc;"/>
         <span>(${account.id})</span>
@@ -373,15 +438,33 @@
       }, 3000);
     }
 
+    // 削除処理（確認ダイアログ付き）
+    let deleteIndex = null;
+
     function removeAccount(index) {
-      if (!confirm("本当に削除しますか？")) {
-        return; // キャンセルなら削除処理しない
-      }
-      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      accounts.splice(index, 1);
-      localStorage.setItem("accounts", JSON.stringify(accounts));
-      displayAccounts();
+      deleteIndex = index;
+      document.getElementById("deleteConfirmDialog").style.display = "block";
+      document.getElementById("overlay").style.display = "block";
     }
+
+    document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
+      if (deleteIndex === null) return;
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+      accounts.splice(deleteIndex, 1);
+      localStorage.setItem("accounts", JSON.stringify(accounts));
+      deleteIndex = null;
+
+      document.getElementById("deleteConfirmDialog").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+
+      displayAccounts();
+    });
+
+    document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
+      deleteIndex = null;
+      document.getElementById("deleteConfirmDialog").style.display = "none";
+      document.getElementById("overlay").style.display = "none";
+    });
 
     // HTMLエスケープ処理（XSS対策）
     function escapeHtml(text) {
