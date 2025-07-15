@@ -374,6 +374,9 @@
     }
 
     function removeAccount(index) {
+      if (!confirm("本当に削除しますか？")) {
+        return; // キャンセルなら削除処理しない
+      }
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
       accounts.splice(index, 1);
       localStorage.setItem("accounts", JSON.stringify(accounts));
