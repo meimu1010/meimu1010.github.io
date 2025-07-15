@@ -66,6 +66,7 @@
       width: 90%;
       max-width: 450px;
       transition: background-color 0.3s ease, transform 0.2s ease;
+      position: relative;
     }
 
     .account-box:hover {
@@ -114,6 +115,20 @@
       background-color: #1e7e34;
     }
 
+    .edit-btn {
+      background-color: #ffc107;
+      color: #222;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .edit-btn:hover {
+      background-color: #e0a800;
+    }
+
     .account-time {
       margin-top: 8px;
       font-size: 13px;
@@ -125,45 +140,64 @@
       pointer-events: none;
     }
 
-    /* 削除確認モーダルのスタイル */
+    /* 編集用入力欄 */
+    .edit-input {
+      padding: 8px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 60%;
+      margin-right: 8px;
+    }
+
+    .edit-save-btn {
+      background-color: #007bff;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .edit-save-btn:hover {
+      background-color: #0056b3;
+    }
+
+    /* モーダル */
     #confirmDeleteModal {
-      display: none;
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: flex;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.4);
+      display: none;
       justify-content: center;
       align-items: center;
-      z-index: 1000;
+      z-index: 9999;
     }
 
-    #confirmDeleteModal > div {
-      background: #fff;
-      padding: 20px 30px;
+    #confirmDeleteModal .modal-content {
+      background: white;
+      padding: 24px 32px;
       border-radius: 12px;
-      width: 300px;
       text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-
-    #confirmDeleteModal p {
-      font-size: 16px;
-      margin-bottom: 20px;
+      max-width: 320px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
     }
 
     #confirmDeleteModal button {
-      padding: 10px 20px;
+      margin: 10px 12px 0 12px;
+      padding: 10px 16px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
-      color: #fff;
-      margin-right: 15px;
       font-weight: bold;
+      font-size: 15px;
+      transition: background-color 0.2s ease;
     }
 
     #confirmDeleteBtn {
       background-color: #dc3545;
+      color: white;
     }
 
     #confirmDeleteBtn:hover {
@@ -172,11 +206,13 @@
 
     #cancelDeleteBtn {
       background-color: #6c757d;
+      color: white;
     }
 
     #cancelDeleteBtn:hover {
       background-color: #5a6268;
     }
+
   </style>
 </head>
 <body>
@@ -200,7 +236,7 @@
 
   <!-- 削除確認モーダル -->
   <div id="confirmDeleteModal">
-    <div>
+    <div class="modal-content">
       <p>本当にこのアカウントを削除しますか？</p>
       <button id="confirmDeleteBtn">はい</button>
       <button id="cancelDeleteBtn">いいえ</button>
@@ -208,6 +244,9 @@
   </div>
 
   <script>
+    let deleteIndex = null;
+    let editIndex = null;
+
     // 既存の手動追加関数
     function addAccountManual() {
       const name = document.getElementById("accountNameManual").value.trim();
@@ -300,60 +339,79 @@
 
       accounts.push({ name: username, id: accountId, addedAt: new Date().toISOString() });
       localStorage.setItem("accounts", JSON.stringify(accounts));
-
       input.value = "";
+
       displayAccounts();
     }
 
-    // アカウント一覧表示（共通関数）
+    // アカウントリスト表示
     function displayAccounts() {
-      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
       const container = document.getElementById("accountList");
       container.innerHTML = "";
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
 
-      accounts.forEach((account, index) => {
-        const div = document.createElement("div");
-        div.className = "account-box";
+      accounts.forEach((acc, i) => {
+        const box = document.createElement("div");
+        box.className = "account-box";
 
-        div.innerHTML = `
-          <div class="account-header">
-            <strong>${account.name} (${account.id})</strong>
-            <div class="buttons">
-              <button class="status-btn" onclick="checkStatus('${account.id}', this)">状態確認</button>
-              <button class="delete-btn" onclick="removeAccount(${index})">削除</button>
+        if (editIndex === i) {
+          // 編集モード
+          box.innerHTML = `
+            <input type="text" id="editNameInput" class="edit-input" value="${acc.name}" />
+            <input type="text" id="editIdInput" class="edit-input" value="${acc.id}" />
+            <button class="edit-save-btn">保存</button>
+          `;
+          const saveBtn = box.querySelector(".edit-save-btn");
+          saveBtn.addEventListener("click", () => {
+            const newName = box.querySelector("#editNameInput").value.trim();
+            const newId = box.querySelector("#editIdInput").value.trim();
+            if (!newName || !newId) {
+              alert("名前とIDを両方入力してください");
+              return;
+            }
+            const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+            accounts[i] = { name: newName, id: newId, addedAt: acc.addedAt };
+            localStorage.setItem("accounts", JSON.stringify(accounts));
+            editIndex = null;
+            displayAccounts();
+          });
+        } else {
+          // 通常表示モード
+          box.innerHTML = `
+            <div class="account-header">
+              <strong>${acc.name}</strong>
+              <div class="buttons">
+                <button class="edit-btn">編集</button>
+                <button class="delete-btn">削除</button>
+              </div>
             </div>
-          </div>
-          <div class="account-time">登録日時: ${new Date(account.addedAt).toLocaleString()}</div>
-        `;
-        container.appendChild(div);
+            <div>ID: ${acc.id}</div>
+            <div class="account-time">登録日時: ${new Date(acc.addedAt).toLocaleString()}</div>
+          `;
+
+          // 編集ボタン
+          box.querySelector(".edit-btn").addEventListener("click", () => {
+            editIndex = i;
+            displayAccounts();
+          });
+
+          // 削除ボタン
+          box.querySelector(".delete-btn").addEventListener("click", () => {
+            removeAccount(i);
+          });
+        }
+
+        container.appendChild(box);
       });
     }
 
-    // 既存の状態確認関数
-    function checkStatus(accid, btn) {
-      fetch(`https://fortnite-api.com/v2/stats/br/v2?accountId=${accid}`, {
-        headers: { Authorization: API_KEY }
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (!data.data) {
-            alert("データが取得できませんでした。");
-            return;
-          }
-          const status = data.data ? "オンライン中" : "オフライン";
-          alert(`${accid} の状態: ${status}`);
-        })
-        .catch(() => alert("通信エラーが発生しました。"));
-    }
-
-    // 削除確認モーダル制御
-    let deleteIndex = null;
-
+    // 削除モーダルを出す関数
     function removeAccount(index) {
       deleteIndex = index;
       document.getElementById('confirmDeleteModal').style.display = 'flex';
     }
 
+    // 削除確定ボタンのイベント
     document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
       if (deleteIndex === null) return;
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
@@ -364,13 +422,17 @@
       displayAccounts();
     });
 
+    // 削除キャンセルボタンのイベント
     document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
       deleteIndex = null;
       document.getElementById('confirmDeleteModal').style.display = 'none';
     });
 
     // ページ読み込み時に表示
-    displayAccounts();
+    window.onload = () => {
+      displayAccounts();
+    };
   </script>
+
 </body>
 </html>
