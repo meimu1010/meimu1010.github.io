@@ -1,150 +1,50 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <title>Fortnite Online Checker</title>
-  <style>
-    body {
-      font-family: 'Helvetica Neue', 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 40px 20px;
-      background: linear-gradient(to right, #f0f4ff, #e2ecff);
-    }
-
-    h2 {
-      text-align: center;
-      color: #222;
-      margin-bottom: 30px;
-      font-size: 28px;
-    }
-
-    .form {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 30px;
-      flex-wrap: wrap;
-    }
-
-    input, button {
-      padding: 12px 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      outline: none;
-      transition: all 0.2s ease;
-    }
-
-    input:focus {
-      border-color: #007bff;
-      box-shadow: 0 0 3px rgba(0,123,255,0.3);
-    }
-
-    button {
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-      border: none;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    #accountList {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .account-box {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 20px;
-      width: 90%;
-      max-width: 450px;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-    }
-
-    .account-box:hover {
-      transform: translateY(-3px);
-    }
-
-    .account-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .buttons {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .delete-btn {
-      background-color: #dc3545;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    .delete-btn:hover {
-      background-color: #b02a37;
-    }
-
-    .status-btn {
-      background-color: #28a745;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    .status-btn:hover {
-      background-color: #1e7e34;
-    }
-
-    .account-time {
-      margin-top: 8px;
-      font-size: 13px;
-      color: #555;
-    }
-
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-  </style>
-</head>
-<body>
-
   <h2>Fortnite アカウント登録</h2>
 
+  <!-- もともとの名前＋ID入力フォーム -->
   <div class="form">
-    <input type="text" id="accountName" placeholder="Epic / PSN / XBL のユーザー名" />
-    <button id="addBtn" onclick="addAccount()">追加</button>
+    <input type="text" id="accountNameManual" placeholder="アカウント名" />
+    <input type="text" id="accountIdManual" placeholder="アカウントID" />
+    <button onclick="addAccountManual()">手動で追加</button>
+  </div>
+
+  <!-- 新規：ユーザー名のみ入力して自動取得 -->
+  <div class="form" style="margin-top: 20px;">
+    <input type="text" id="accountNameAuto" placeholder="Epic / PSN / XBL のユーザー名" />
+    <button id="addBtnAuto" onclick="addAccountAuto()">ユーザー名から自動追加</button>
   </div>
 
   <div id="accountList"></div>
 
   <script>
+    // 既存の手動追加関数
+    function addAccountManual() {
+      const name = document.getElementById("accountNameManual").value.trim();
+      const id = document.getElementById("accountIdManual").value.trim();
+      if (!name || !id) {
+        alert("アカウント名とIDを入力してください");
+        return;
+      }
+
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+      // 重複チェック（IDベース）
+      if (accounts.some(acc => acc.id === id)) {
+        alert("このアカウントはすでに登録されています。");
+        return;
+      }
+
+      accounts.push({ name, id, addedAt: new Date().toISOString() });
+      localStorage.setItem("accounts", JSON.stringify(accounts));
+
+      document.getElementById("accountNameManual").value = "";
+      document.getElementById("accountIdManual").value = "";
+
+      displayAccounts();
+    }
+
+    // 新規追加：ユーザー名だけでID自動取得して追加
     const API_KEY = "c92e7be2-55f0-4006-8c2a-b00578072f41";
     const BASE_URL = "https://fortnite-api.com/v2/stats/br/v2";
     const PLATFORMS = [null, "epic", "psn", "xbl"];
-
-    window.onload = () => {
-      displayAccounts();
-    };
 
     async function fetchAccountId(username) {
       const headers = {
@@ -166,17 +66,17 @@
             }
           }
         } catch (e) {
-          // 通信エラーなどは無視して次へ
+          // エラーは無視して次へ
         }
       }
 
       return null;
     }
 
-    async function addAccount() {
-      const input = document.getElementById("accountName");
+    async function addAccountAuto() {
+      const input = document.getElementById("accountNameAuto");
       const username = input.value.trim();
-      const addBtn = document.getElementById("addBtn");
+      const addBtn = document.getElementById("addBtnAuto");
 
       if (!username) {
         alert("ユーザー名を入力してください");
@@ -190,7 +90,7 @@
       const accountId = await fetchAccountId(username);
 
       addBtn.disabled = false;
-      addBtn.textContent = "追加";
+      addBtn.textContent = "ユーザー名から自動追加";
       input.classList.remove("loading");
 
       if (!accountId) {
@@ -213,6 +113,7 @@
       displayAccounts();
     }
 
+    // アカウント一覧表示（共通関数）
     function displayAccounts() {
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
       const container = document.getElementById("accountList");
@@ -236,6 +137,7 @@
       });
     }
 
+    // 既存の状態確認関数
     function checkStatus(accid, btn) {
       fetch(`https://yls.julesbot.com/api/accounts/${accid}/onlineStatus`)
         .then(response => response.json())
@@ -256,6 +158,7 @@
         });
     }
 
+    // 既存のフラッシュ処理
     function flashBox(box, color) {
       const originalColor = box.style.backgroundColor;
       box.style.backgroundColor = color;
@@ -264,12 +167,15 @@
       }, 3000);
     }
 
+    // 削除処理（共通）
     function removeAccount(index) {
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
       accounts.splice(index, 1);
       localStorage.setItem("accounts", JSON.stringify(accounts));
       displayAccounts();
     }
+
+    window.onload = () => {
+      displayAccounts();
+    };
   </script>
-</body>
-</html>
