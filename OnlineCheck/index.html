@@ -2,89 +2,74 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fortnite アカウント登録</title>
   <style>
-    :root {
-      --primary-color: #007bff;
-      --primary-dark: #0056b3;
-      --danger-color: #dc3545;
-      --danger-dark: #a71d2a;
-      --bg-color: #f0f2f5;
-      --card-bg: #ffffff;
-      --text-color: #333;
-      --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      --radius: 12px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: 'Segoe UI', 'Noto Sans JP', sans-serif;
+      font-family: 'Helvetica Neue', 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 20px;
-      background-color: var(--bg-color);
-      color: var(--text-color);
+      padding: 40px 20px;
+      background: linear-gradient(to right, #f0f4ff, #e2ecff);
     }
 
     h2 {
       text-align: center;
+      color: #222;
       margin-bottom: 30px;
       font-size: 28px;
-      font-weight: 600;
     }
 
     .form {
       display: flex;
       justify-content: center;
-      flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
       margin-bottom: 30px;
+      flex-wrap: wrap;
     }
 
     input, button {
-      padding: 12px 14px;
-      font-size: 16px;
-      border-radius: var(--radius);
+      padding: 12px 16px;
+      border-radius: 8px;
       border: 1px solid #ccc;
+      font-size: 14px;
       outline: none;
+      transition: all 0.2s ease;
     }
 
-    input {
-      flex: 1;
-      min-width: 180px;
-      max-width: 240px;
+    input:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 3px rgba(0,123,255,0.3);
     }
 
     button {
-      background-color: var(--primary-color);
+      background-color: #007bff;
       color: white;
-      border: none;
       cursor: pointer;
-      transition: background-color 0.2s ease, transform 0.1s ease;
+      border: none;
     }
 
     button:hover {
-      background-color: var(--primary-dark);
+      background-color: #0056b3;
     }
 
-    button:active {
-      transform: scale(0.98);
+    #accountList {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
     }
 
     .account-box {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin: 12px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       padding: 20px;
-      max-width: 600px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      transition: background-color 0.5s ease;
+      width: 90%;
+      max-width: 450px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .account-box:hover {
+      transform: translateY(-3px);
     }
 
     .account-header {
@@ -92,6 +77,7 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
+      gap: 10px;
     }
 
     .buttons {
@@ -101,34 +87,37 @@
     }
 
     .delete-btn {
-      background-color: var(--danger-color);
+      background-color: #dc3545;
       color: white;
       border: none;
-      padding: 10px 16px;
-      border-radius: var(--radius);
+      padding: 10px 15px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.2s ease, transform 0.1s ease;
+      transition: background-color 0.2s ease;
     }
 
     .delete-btn:hover {
-      background-color: var(--danger-dark);
+      background-color: #b02a37;
     }
 
-    .delete-btn:active {
-      transform: scale(0.97);
+    .status-btn {
+      background-color: #28a745;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
     }
 
-    @media (max-width: 480px) {
-      h2 {
-        font-size: 22px;
-      }
-      input, button {
-        font-size: 14px;
-        padding: 10px;
-      }
-      .account-box {
-        padding: 15px;
-      }
+    .status-btn:hover {
+      background-color: #1e7e34;
+    }
+
+    .account-time {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #555;
     }
   </style>
 </head>
@@ -180,11 +169,11 @@
           <div class="account-header">
             <strong>${account.name} (${account.id})</strong>
             <div class="buttons">
-              <button onclick="checkStatus('${account.id}', this)">状態確認</button>
+              <button class="status-btn" onclick="checkStatus('${account.id}', this)">状態確認</button>
               <button class="delete-btn" onclick="removeAccount(${index})">削除</button>
             </div>
           </div>
-          <div>登録日時: ${new Date(account.addedAt).toLocaleString()}</div>
+          <div class="account-time">登録日時: ${new Date(account.addedAt).toLocaleString()}</div>
         `;
         container.appendChild(div);
       });
@@ -198,9 +187,9 @@
           if (!box) return;
 
           if (data.isOnline === true) {
-            flashBox(box, "#d1ffe1");
+            flashBox(box, "#d4ffd4");
           } else if (data.isOnline === false) {
-            flashBox(box, "#ffd9d9");
+            flashBox(box, "#ffd4d4");
           } else {
             alert("状態が取得できませんでした");
           }
@@ -211,12 +200,10 @@
     }
 
     function flashBox(box, color) {
-      const original = box.style.backgroundColor || "#ffffff";
+      const originalColor = box.style.backgroundColor;
       box.style.backgroundColor = color;
-      box.style.transition = "background-color 0.5s ease";
-
       setTimeout(() => {
-        box.style.backgroundColor = original;
+        box.style.backgroundColor = originalColor || "#fff";
       }, 3000);
     }
 
