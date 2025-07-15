@@ -114,48 +114,6 @@
       background-color: #1e7e34;
     }
 
-    .edit-btn {
-      background-color: #ffc107;
-      color: black;
-      padding: 10px 15px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    .edit-btn:hover {
-      background-color: #e0a800;
-    }
-
-    .save-btn {
-      background-color: #007bff;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    .save-btn:hover {
-      background-color: #0056b3;
-    }
-
-    .cancel-btn {
-      background-color: #6c757d;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    .cancel-btn:hover {
-      background-color: #5a6268;
-    }
-
     .account-time {
       margin-top: 8px;
       font-size: 13px;
@@ -166,18 +124,79 @@
       opacity: 0.6;
       pointer-events: none;
     }
+
+    /* モーダルのスタイル */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 24px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      max-width: 320px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .modal-buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .modal-buttons button {
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      transition: background-color 0.2s ease;
+    }
+
+    #confirmDeleteBtn {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    #confirmDeleteBtn:hover {
+      background-color: #b02a37;
+    }
+
+    #cancelDeleteBtn {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    #cancelDeleteBtn:hover {
+      background-color: #5a6268;
+    }
   </style>
 </head>
 <body>
 
   <h2>Fortnite アカウント登録</h2>
 
+  <!-- もともとの名前＋ID入力フォーム -->
   <div class="form">
     <input type="text" id="accountNameManual" placeholder="アカウント名" />
     <input type="text" id="accountIdManual" placeholder="アカウントID" />
     <button onclick="addAccountManual()">手動で追加</button>
   </div>
 
+  <!-- 新規：ユーザー名のみ入力して自動取得 -->
   <div class="form" style="margin-top: 20px;">
     <input type="text" id="accountNameAuto" placeholder="Epic / PSN / XBL のユーザー名" />
     <button id="addBtnAuto" onclick="addAccountAuto()">ユーザー名から自動追加</button>
@@ -185,11 +204,19 @@
 
   <div id="accountList"></div>
 
-  <script>
-    const API_KEY = "c92e7be2-55f0-4006-8c2a-b00578072f41";
-    const BASE_URL = "https://fortnite-api.com/v2/stats/br/v2";
-    const PLATFORMS = [null, "epic", "psn", "xbl"];
+  <!-- 削除確認モーダル -->
+  <div id="deleteModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <p>本当にこのアカウントを削除しますか？</p>
+      <div class="modal-buttons">
+        <button id="confirmDeleteBtn">削除する</button>
+        <button id="cancelDeleteBtn">キャンセル</button>
+      </div>
+    </div>
+  </div>
 
+  <script>
+    // 既存の手動追加関数
     function addAccountManual() {
       const name = document.getElementById("accountNameManual").value.trim();
       const id = document.getElementById("accountIdManual").value.trim();
@@ -199,6 +226,7 @@
       }
 
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+      // 重複チェック（IDベース）
       if (accounts.some(acc => acc.id === id)) {
         alert("このアカウントはすでに登録されています。");
         return;
@@ -212,6 +240,11 @@
 
       displayAccounts();
     }
+
+    // 新規追加：ユーザー名だけでID自動取得して追加
+    const API_KEY = "c92e7be2-55f0-4006-8c2a-b00578072f41";
+    const BASE_URL = "https://fortnite-api.com/v2/stats/br/v2";
+    const PLATFORMS = [null, "epic", "psn", "xbl"];
 
     async function fetchAccountId(username) {
       const headers = {
@@ -266,6 +299,8 @@
       }
 
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+
+      // 重複登録チェック（IDベース）
       if (accounts.some(acc => acc.id === accountId)) {
         alert("このアカウントはすでに登録されています。");
         return;
@@ -278,6 +313,7 @@
       displayAccounts();
     }
 
+    // アカウント一覧表示（共通関数）
     function displayAccounts() {
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
       const container = document.getElementById("accountList");
@@ -287,109 +323,58 @@
         const div = document.createElement("div");
         div.className = "account-box";
 
+        const date = new Date(account.addedAt);
+        const formattedDate = date.toLocaleString();
+
         div.innerHTML = `
-          <div class="account-header" data-index="${index}">
-            <strong class="account-name">${escapeHtml(account.name)} (${account.id})</strong>
+          <div class="account-header">
+            <div><strong>${account.name}</strong>（ID: ${account.id}）</div>
             <div class="buttons">
-              <button class="status-btn" onclick="checkStatus('${account.id}', this)">状態確認</button>
-              <button class="edit-btn" onclick="startEdit(${index})">編集</button>
-              <button class="delete-btn" onclick="removeAccount(${index})">削除</button>
+              <button class="status-btn" onclick="alert('ステータス取得などの処理をここに実装')">ステータス確認</button>
+              <button class="delete-btn" onclick="confirmDelete(${index})">削除</button>
             </div>
           </div>
-          <div class="account-time">登録日時: ${new Date(account.addedAt).toLocaleString()}</div>
+          <div class="account-time">追加日時: ${formattedDate}</div>
         `;
+
         container.appendChild(div);
       });
-    }
 
-    function startEdit(index) {
-      const container = document.getElementById("accountList");
-      const accountBoxes = container.getElementsByClassName("account-box");
-      const box = accountBoxes[index];
-      if (!box) return;
-
-      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      const account = accounts[index];
-
-      const headerDiv = box.querySelector(".account-header");
-      headerDiv.innerHTML = `
-        <input type="text" id="editNameInput${index}" value="${escapeHtml(account.name)}" style="font-size:14px; padding:8px; border-radius:6px; border:1px solid #ccc;"/>
-        <span>(${account.id})</span>
-        <div class="buttons">
-          <button class="save-btn" onclick="saveEdit(${index})">保存</button>
-          <button class="cancel-btn" onclick="cancelEdit(${index})">キャンセル</button>
-        </div>
-      `;
-    }
-
-    function saveEdit(index) {
-      const input = document.getElementById(`editNameInput${index}`);
-      if (!input) return;
-
-      const newName = input.value.trim();
-      if (!newName) {
-        alert("ユーザー名は空にできません");
-        return;
+      if (accounts.length === 0) {
+        container.innerHTML = "<p style='text-align:center; color:#555;'>登録されたアカウントはありません。</p>";
       }
+    }
+
+    // 削除用のインデックスを保存
+    let deleteIndex = null;
+
+    // 削除確認モーダルを開く
+    function confirmDelete(index) {
+      deleteIndex = index;
+      document.getElementById("deleteModal").style.display = "flex";
+    }
+
+    // 削除確定ボタンの処理
+    document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
+      if (deleteIndex === null) return;
 
       const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      accounts[index].name = newName;
+      accounts.splice(deleteIndex, 1);
       localStorage.setItem("accounts", JSON.stringify(accounts));
+
+      deleteIndex = null;
+      document.getElementById("deleteModal").style.display = "none";
       displayAccounts();
-    }
+    });
 
-    function cancelEdit(index) {
-      displayAccounts();
-    }
+    // 削除キャンセルボタンの処理
+    document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
+      deleteIndex = null;
+      document.getElementById("deleteModal").style.display = "none";
+    });
 
-    function checkStatus(accid, btn) {
-      fetch(`https://yls.julesbot.com/api/accounts/${accid}/onlineStatus`)
-        .then(response => response.json())
-        .then(data => {
-          const box = btn.closest('.account-box');
-          if (!box) return;
-
-          if (data.isOnline === true) {
-            flashBox(box, "#d4ffd4");
-          } else if (data.isOnline === false) {
-            flashBox(box, "#ffd4d4");
-          } else {
-            alert("状態が取得できませんでした");
-          }
-        })
-        .catch(() => {
-          alert("通信エラーが発生しました");
-        });
-    }
-
-    function flashBox(box, color) {
-      const originalColor = box.style.backgroundColor;
-      box.style.backgroundColor = color;
-      setTimeout(() => {
-        box.style.backgroundColor = originalColor || "#fff";
-      }, 3000);
-    }
-
-    // 削除時に確認ダイアログを表示
-    function removeAccount(index) {
-      if (!confirm("本当にこのアカウントを削除しますか？")) {
-        return; // キャンセル時は何もしない
-      }
-      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
-      accounts.splice(index, 1);
-      localStorage.setItem("accounts", JSON.stringify(accounts));
-      displayAccounts();
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    window.onload = () => {
-      displayAccounts();
-    };
+    // ページロード時にアカウント一覧表示
+    window.onload = displayAccounts;
   </script>
 </body>
 </html>
