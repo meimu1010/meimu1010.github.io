@@ -5,19 +5,17 @@
   <title>Fortnite Online Checker</title>
   <style>
     body {
-      font-family: 'Yu Gothic', 'メイリオ', Meiryo, 'ヒラギノ角ゴ ProN', 'Hiragino Kaku Gothic ProN', sans-serif;
+      font-family: 'Helvetica Neue', 'Segoe UI', sans-serif;
       margin: 0;
       padding: 40px 20px;
       background: linear-gradient(to right, #f0f4ff, #e2ecff);
-      color: #222;
     }
 
     h2 {
       text-align: center;
-      font-weight: 700;
-      font-size: 30px;
+      color: #222;
       margin-bottom: 30px;
-      letter-spacing: 1.1px;
+      font-size: 28px;
     }
 
     .form {
@@ -35,8 +33,6 @@
       font-size: 14px;
       outline: none;
       transition: all 0.2s ease;
-      font-weight: 600;
-      font-family: inherit;
     }
 
     input:focus {
@@ -49,8 +45,6 @@
       color: white;
       cursor: pointer;
       border: none;
-      font-weight: 700;
-      letter-spacing: 0.8px;
     }
 
     button:hover {
@@ -68,12 +62,10 @@
       background: white;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 20px 24px;
+      padding: 20px;
       width: 90%;
-      max-width: 480px;
+      max-width: 450px;
       transition: background-color 0.3s ease, transform 0.2s ease;
-      font-size: 16px;
-      font-weight: 600;
     }
 
     .account-box:hover {
@@ -85,9 +77,7 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 12px;
-      font-weight: 700;
-      font-size: 17px;
+      gap: 10px;
     }
 
     .buttons {
@@ -100,10 +90,9 @@
       background-color: #dc3545;
       color: white;
       border: none;
-      padding: 10px 18px;
+      padding: 10px 15px;
       border-radius: 8px;
       cursor: pointer;
-      font-weight: 700;
       transition: background-color 0.2s ease;
     }
 
@@ -111,29 +100,13 @@
       background-color: #b02a37;
     }
 
-    .edit-btn {
-      background-color: #ffc107;
-      color: #222;
-      padding: 10px 18px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 700;
-      transition: background-color 0.2s ease;
-    }
-
-    .edit-btn:hover {
-      background-color: #e0a800;
-    }
-
     .status-btn {
       background-color: #28a745;
       color: white;
-      padding: 10px 18px;
+      padding: 10px 15px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
-      font-weight: 700;
       transition: background-color 0.2s ease;
     }
 
@@ -143,10 +116,8 @@
 
     .account-time {
       margin-top: 8px;
-      font-size: 14px;
+      font-size: 13px;
       color: #555;
-      font-weight: 500;
-      letter-spacing: 0.5px;
     }
 
     .loading {
@@ -154,52 +125,45 @@
       pointer-events: none;
     }
 
-    /* モーダルのスタイル */
-    .modal {
+    /* 削除確認モーダルのスタイル */
+    #confirmDeleteModal {
+      display: none;
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.4);
+      background: rgba(0,0,0,0.5);
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 9999;
+      z-index: 1000;
     }
 
-    .modal-content {
-      background: white;
-      padding: 28px 32px;
+    #confirmDeleteModal > div {
+      background: #fff;
+      padding: 20px 30px;
       border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-      max-width: 360px;
+      width: 300px;
       text-align: center;
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: 0.7px;
-      color: #222;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .modal-buttons {
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
-      gap: 24px;
+    #confirmDeleteModal p {
+      font-size: 16px;
+      margin-bottom: 20px;
     }
 
-    .modal-buttons button {
-      padding: 12px 28px;
+    #confirmDeleteModal button {
+      padding: 10px 20px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
-      font-weight: 700;
-      font-size: 15px;
-      letter-spacing: 0.7px;
-      transition: background-color 0.2s ease;
+      color: #fff;
+      margin-right: 15px;
+      font-weight: bold;
     }
 
     #confirmDeleteBtn {
       background-color: #dc3545;
-      color: white;
     }
 
     #confirmDeleteBtn:hover {
@@ -208,50 +172,25 @@
 
     #cancelDeleteBtn {
       background-color: #6c757d;
-      color: white;
     }
 
     #cancelDeleteBtn:hover {
       background-color: #5a6268;
     }
-
-    /* 編集用モーダル */
-    #editModal .modal-content {
-      max-width: 400px;
-      font-weight: 500;
-    }
-
-    #editModal input {
-      width: 90%;
-      font-size: 16px;
-      padding: 10px 14px;
-      margin-top: 12px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      outline: none;
-      font-family: inherit;
-      font-weight: 600;
-    }
-
-    #editModal input:focus {
-      border-color: #007bff;
-      box-shadow: 0 0 4px rgba(0,123,255,0.4);
-    }
-
   </style>
 </head>
 <body>
 
   <h2>Fortnite アカウント登録</h2>
 
-  <!-- 手動追加フォーム -->
+  <!-- もともとの名前＋ID入力フォーム -->
   <div class="form">
     <input type="text" id="accountNameManual" placeholder="アカウント名" />
     <input type="text" id="accountIdManual" placeholder="アカウントID" />
     <button onclick="addAccountManual()">手動で追加</button>
   </div>
 
-  <!-- 自動追加フォーム -->
+  <!-- 新規：ユーザー名のみ入力して自動取得 -->
   <div class="form" style="margin-top: 20px;">
     <input type="text" id="accountNameAuto" placeholder="Epic / PSN / XBL のユーザー名" />
     <button id="addBtnAuto" onclick="addAccountAuto()">ユーザー名から自動追加</button>
@@ -260,38 +199,16 @@
   <div id="accountList"></div>
 
   <!-- 削除確認モーダル -->
-  <div id="deleteModal" class="modal" style="display:none;">
-    <div class="modal-content">
+  <div id="confirmDeleteModal">
+    <div>
       <p>本当にこのアカウントを削除しますか？</p>
-      <div class="modal-buttons">
-        <button id="confirmDeleteBtn">削除する</button>
-        <button id="cancelDeleteBtn">キャンセル</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 編集用モーダル -->
-  <div id="editModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <p>アカウントを編集してください</p>
-      <input type="text" id="editAccountName" placeholder="アカウント名" />
-      <input type="text" id="editAccountId" placeholder="アカウントID" />
-      <div class="modal-buttons" style="margin-top: 18px;">
-        <button id="saveEditBtn">保存する</button>
-        <button id="cancelEditBtn">キャンセル</button>
-      </div>
+      <button id="confirmDeleteBtn">はい</button>
+      <button id="cancelDeleteBtn">いいえ</button>
     </div>
   </div>
 
   <script>
-    const API_KEY = "c92e7be2-55f0-4006-8c2a-b00578072f41";
-    const BASE_URL = "https://fortnite-api.com/v2/stats/br/v2";
-    const PLATFORMS = [null, "epic", "psn", "xbl"];
-
-    // ローカルストレージキー
-    const STORAGE_KEY = "accounts";
-
-    // 追加手動
+    // 既存の手動追加関数
     function addAccountManual() {
       const name = document.getElementById("accountNameManual").value.trim();
       const id = document.getElementById("accountIdManual").value.trim();
@@ -300,14 +217,15 @@
         return;
       }
 
-      const accounts = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+      // 重複チェック（IDベース）
       if (accounts.some(acc => acc.id === id)) {
         alert("このアカウントはすでに登録されています。");
         return;
       }
 
       accounts.push({ name, id, addedAt: new Date().toISOString() });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+      localStorage.setItem("accounts", JSON.stringify(accounts));
 
       document.getElementById("accountNameManual").value = "";
       document.getElementById("accountIdManual").value = "";
@@ -315,13 +233,21 @@
       displayAccounts();
     }
 
-    // ユーザー名からID取得API呼び出し
+    // 新規追加：ユーザー名だけでID自動取得して追加
+    const API_KEY = "c92e7be2-55f0-4006-8c2a-b00578072f41";
+    const BASE_URL = "https://fortnite-api.com/v2/stats/br/v2";
+    const PLATFORMS = [null, "epic", "psn", "xbl"];
+
     async function fetchAccountId(username) {
-      const headers = { "Authorization": API_KEY };
+      const headers = {
+        "Authorization": API_KEY
+      };
 
       for (const platform of PLATFORMS) {
         const params = new URLSearchParams({ name: username });
-        if (platform) params.append("accountType", platform);
+        if (platform) {
+          params.append("accountType", platform);
+        }
 
         try {
           const response = await fetch(`${BASE_URL}?${params.toString()}`, { headers });
@@ -332,13 +258,13 @@
             }
           }
         } catch (e) {
-          // ignore errors
+          // エラーは無視して次へ
         }
       }
+
       return null;
     }
 
-    // 自動追加
     async function addAccountAuto() {
       const input = document.getElementById("accountNameAuto");
       const username = input.value.trim();
@@ -364,128 +290,87 @@
         return;
       }
 
-      const accounts = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
+
+      // 重複登録チェック（IDベース）
       if (accounts.some(acc => acc.id === accountId)) {
         alert("このアカウントはすでに登録されています。");
         return;
       }
 
       accounts.push({ name: username, id: accountId, addedAt: new Date().toISOString() });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+      localStorage.setItem("accounts", JSON.stringify(accounts));
 
       input.value = "";
       displayAccounts();
     }
 
-    // アカウント一覧表示
+    // アカウント一覧表示（共通関数）
     function displayAccounts() {
-      const accounts = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
       const container = document.getElementById("accountList");
       container.innerHTML = "";
-
-      if (accounts.length === 0) {
-        container.innerHTML = "<p style='text-align:center; color:#555;'>登録されたアカウントはありません。</p>";
-        return;
-      }
 
       accounts.forEach((account, index) => {
         const div = document.createElement("div");
         div.className = "account-box";
 
-        const date = new Date(account.addedAt);
-        const formattedDate = date.toLocaleString();
-
         div.innerHTML = `
           <div class="account-header">
-            <div><strong>${account.name}</strong>（ID: ${account.id}）</div>
+            <strong>${account.name} (${account.id})</strong>
             <div class="buttons">
-              <button class="status-btn" onclick="alert('ステータス取得などの処理をここに実装')">ステータス確認</button>
-              <button class="edit-btn" onclick="openEditModal(${index})">編集</button>
-              <button class="delete-btn" onclick="confirmDelete(${index})">削除</button>
+              <button class="status-btn" onclick="checkStatus('${account.id}', this)">状態確認</button>
+              <button class="delete-btn" onclick="removeAccount(${index})">削除</button>
             </div>
           </div>
-          <div class="account-time">追加日時: ${formattedDate}</div>
+          <div class="account-time">登録日時: ${new Date(account.addedAt).toLocaleString()}</div>
         `;
-
         container.appendChild(div);
       });
     }
 
-    // 削除関連
+    // 既存の状態確認関数
+    function checkStatus(accid, btn) {
+      fetch(`https://fortnite-api.com/v2/stats/br/v2?accountId=${accid}`, {
+        headers: { Authorization: API_KEY }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (!data.data) {
+            alert("データが取得できませんでした。");
+            return;
+          }
+          const status = data.data ? "オンライン中" : "オフライン";
+          alert(`${accid} の状態: ${status}`);
+        })
+        .catch(() => alert("通信エラーが発生しました。"));
+    }
+
+    // 削除確認モーダル制御
     let deleteIndex = null;
 
-    function confirmDelete(index) {
+    function removeAccount(index) {
       deleteIndex = index;
-      document.getElementById("deleteModal").style.display = "flex";
+      document.getElementById('confirmDeleteModal').style.display = 'flex';
     }
 
-    document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
+    document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
       if (deleteIndex === null) return;
-
-      const accounts = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const accounts = JSON.parse(localStorage.getItem("accounts") || "[]");
       accounts.splice(deleteIndex, 1);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
-
+      localStorage.setItem("accounts", JSON.stringify(accounts));
       deleteIndex = null;
-      document.getElementById("deleteModal").style.display = "none";
+      document.getElementById('confirmDeleteModal').style.display = 'none';
       displayAccounts();
     });
 
-    document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
+    document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
       deleteIndex = null;
-      document.getElementById("deleteModal").style.display = "none";
+      document.getElementById('confirmDeleteModal').style.display = 'none';
     });
 
-    // 編集モーダル関連
-    let editIndex = null;
-
-    function openEditModal(index) {
-      editIndex = index;
-      const accounts = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      const account = accounts[index];
-
-      document.getElementById("editAccountName").value = account.name;
-      document.getElementById("editAccountId").value = account.id;
-
-      document.getElementById("editModal").style.display = "flex";
-    }
-
-    document.getElementById("saveEditBtn").addEventListener("click", () => {
-      if (editIndex === null) return;
-
-      const newName = document.getElementById("editAccountName").value.trim();
-      const newId = document.getElementById("editAccountId").value.trim();
-
-      if (!newName || !newId) {
-        alert("アカウント名とIDを入力してください");
-        return;
-      }
-
-      const accounts = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-
-      // 重複チェック（IDが他のアカウントと被っていないか）
-      if (accounts.some((acc, idx) => acc.id === newId && idx !== editIndex)) {
-        alert("このIDはすでに別のアカウントに使われています。");
-        return;
-      }
-
-      accounts[editIndex].name = newName;
-      accounts[editIndex].id = newId;
-      // 編集日時は追加日時のまま維持（必要あれば追加で編集日時も扱えます）
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
-      editIndex = null;
-      document.getElementById("editModal").style.display = "none";
-      displayAccounts();
-    });
-
-    document.getElementById("cancelEditBtn").addEventListener("click", () => {
-      editIndex = null;
-      document.getElementById("editModal").style.display = "none";
-    });
-
-    window.onload = displayAccounts;
+    // ページ読み込み時に表示
+    displayAccounts();
   </script>
-
 </body>
 </html>
