@@ -1,3 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fortnite Online Checker</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      background: linear-gradient(to right, #f0f4ff, #e2ecff);
+    }
+
+    h2 {
+      text-align: center;
+      color: #222;
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    .form {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    input, button {
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 3px rgba(0,123,255,0.3);
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #accountList {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .account-box {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 90%;
+      max-width: 450px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .account-box:hover {
+      transform: translateY(-3px);
+    }
+
+    .account-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .delete-btn:hover {
+      background-color: #b02a37;
+    }
+
+    .status-btn {
+      background-color: #28a745;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .status-btn:hover {
+      background-color: #1e7e34;
+    }
+
+    .account-time {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
   <h2>Fortnite アカウント登録</h2>
 
   <!-- もともとの名前＋ID入力フォーム -->
@@ -179,3 +309,5 @@
       displayAccounts();
     };
   </script>
+</body>
+</html>
