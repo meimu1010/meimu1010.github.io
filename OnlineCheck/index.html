@@ -293,7 +293,7 @@
         }
 
         try {
-          const response = await fetch(`${BASE_URL}?${params.toString()}`, { headers });
+          const response = await fetch(${BASE_URL}?${params.toString()}, { headers });
           if (response.ok) {
             const data = await response.json();
             if (data.data && data.data.account && data.data.account.id) {
@@ -355,7 +355,7 @@
         const div = document.createElement("div");
         div.className = "account-box";
 
-        div.innerHTML = `
+        div.innerHTML = 
           <div class="account-header" data-index="${index}">
             <strong class="account-name">${escapeHtml(account.name)} (${account.id})</strong>
             <div class="buttons">
@@ -365,7 +365,7 @@
             </div>
           </div>
           <div class="account-time">登録日時: ${new Date(account.addedAt).toLocaleString()}</div>
-        `;
+        ;
         container.appendChild(div);
       });
     }
@@ -380,18 +380,18 @@
       const account = accounts[index];
 
       const headerDiv = box.querySelector(".account-header");
-      headerDiv.innerHTML = `
+      headerDiv.innerHTML = 
         <input type="text" id="editNameInput${index}" value="${escapeHtml(account.name)}" style="font-size:14px; padding:8px; border-radius:6px; border:1px solid #ccc;"/>
         <span>(${account.id})</span>
         <div class="buttons">
           <button class="save-btn" onclick="saveEdit(${index})">保存</button>
           <button class="cancel-btn" onclick="cancelEdit(${index})">キャンセル</button>
         </div>
-      `;
+      ;
     }
 
     function saveEdit(index) {
-      const input = document.getElementById(`editNameInput${index}`);
+      const input = document.getElementById(editNameInput${index});
       if (!input) return;
 
       const newName = input.value.trim();
@@ -411,7 +411,7 @@
     }
 
     function checkStatus(accid, btn) {
-      fetch(`https://yls.julesbot.com/api/accounts/${accid}/onlineStatus`)
+      fetch(https://yls.julesbot.com/api/accounts/${accid}/onlineStatus)
         .then(response => response.json())
         .then(data => {
           const box = btn.closest('.account-box');
@@ -474,19 +474,8 @@
     }
 
     window.onload = () => {
-    // 初回アクセス時はHikakinOfficialを追加
-    const existing = JSON.parse(localStorage.getItem("accounts") || "[]");
-    if (!existing || existing.length === 0) {
-      const defaultAccount = {
-        name: "HikakinOfficial",
-        id: "fb652095d4164f2f93920000ac227482",
-        addedAt: new Date().toISOString()
-      };
-      localStorage.setItem("accounts", JSON.stringify([defaultAccount]));
-    }
-
-    displayAccounts();
-  };
+      displayAccounts();
+    };
   </script>
 </body>
 </html>
