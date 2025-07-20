@@ -474,8 +474,19 @@
     }
 
     window.onload = () => {
-      displayAccounts();
-    };
+    // 初回アクセス時はHikakinOfficialを追加
+    const existing = JSON.parse(localStorage.getItem("accounts") || "[]");
+    if (!existing || existing.length === 0) {
+      const defaultAccount = {
+        name: "HikakinOfficial",
+        id: "fb652095d4164f2f93920000ac227482",
+        addedAt: new Date().toISOString()
+      };
+      localStorage.setItem("accounts", JSON.stringify([defaultAccount]));
+    }
+
+    displayAccounts();
+  };
   </script>
 </body>
 </html>
