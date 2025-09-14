@@ -71,22 +71,32 @@
 
       /* ---- 追加部分 ---- */
 
-      // ESC 無効化
+      // ESC & Ctrl+Shift+I ブロック
       document.addEventListener('keydown', function (e) {
         if (e.key === "Escape") {
           e.preventDefault();
           e.stopPropagation();
+          console.log("ESC キーがブロックされました");
         }
-        // Ctrl+Shift+I 無効化
         if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'i') {
           e.preventDefault();
           e.stopPropagation();
+          console.log("Ctrl+Shift+I がブロックされました");
+        }
+      });
+
+      // フルスクリーン解除を検知して即戻す
+      document.addEventListener("fullscreenchange", () => {
+        if (!isFullscreen()) {
+          console.log("フルスクリーン解除を検知 → 再フルスクリーン");
+          requestFullscreen(video);
         }
       });
 
       // 右クリック無効化
       document.addEventListener('contextmenu', function (e) {
         e.preventDefault();
+        console.log("右クリックがブロックされました");
       });
     };
   </script>
