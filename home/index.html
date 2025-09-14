@@ -31,7 +31,6 @@
     window.onload = function () {
       const video = document.getElementById('video');
 
-      // フルスクリーン要求（各ブラウザ対応）
       function requestFullscreen(elem) {
         if (elem.requestFullscreen) {
           elem.requestFullscreen();
@@ -44,7 +43,6 @@
         }
       }
 
-      // フルスクリーン判定
       function isFullscreen() {
         return (
           document.fullscreenElement ||
@@ -54,30 +52,28 @@
         );
       }
 
-      // 常にカーソルを非表示にする
-      setInterval(() => {
-        if (isFullscreen()) {
-          document.body.style.cursor = 'none';
-        } else {
-          document.body.style.cursor = '';
-        }
-      }, 100);
-
       // クリックで再生＆フルスクリーン
       document.body.addEventListener('click', () => {
         video.play().catch(console.error);
         requestFullscreen(video);
       });
 
-      /* ---- 追加部分 ---- */
+      // ESC 判定用のタイマー
+      let escTimer = null;
 
-      // ESC & Ctrl+Shift+I ブロック
       document.addEventListener('keydown', function (e) {
-        if (e.key === "Escape") {
+        // ESC 短押しブロック
+        if (e.key === "Escape" && !e.repeat) {
           e.preventDefault();
           e.stopPropagation();
-          console.log("ESC キーがブロックされました");
+          console.log("ESC（短押し）がブロックされました");
+          escTimer = setTimeout(() => {
+            // 長押しとみなす → ブラウザに任せる
+            escTimer = null;
+          }, 300); // 0.3秒以内なら短押し扱い
         }
+
+        // Ctrl+Shift+I
         if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'i') {
           e.preventDefault();
           e.stopPropagation();
@@ -85,9 +81,17 @@
         }
       });
 
-      // フルスクリーン解除を検知して即戻す
+      // ESC 長押し時はブロック解除
+      document.addEventListener("keyup", (e) => {
+        if (e.key === "Escape" && escTimer) {
+          clearTimeout(escTimer);
+          escTimer = null;
+        }
+      });
+
+      // フルスクリーン解除監視 → 短押しで解除されたらすぐ戻す
       document.addEventListener("fullscreenchange", () => {
-        if (!isFullscreen()) {
+        if (!isFullscreen() && !escTimer) {
           console.log("フルスクリーン解除を検知 → 再フルスクリーン");
           requestFullscreen(video);
         }
