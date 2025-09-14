@@ -68,9 +68,15 @@
           e.stopPropagation();
           console.log("ESC（短押し）がブロックされました");
           escTimer = setTimeout(() => {
-            // 長押しとみなす → ブラウザに任せる
-            escTimer = null;
-          }, 300); // 0.3秒以内なら短押し扱い
+            escTimer = null; // 長押し判定に移行
+          }, 300); // 0.3秒以内は短押し扱い
+        }
+
+        // F12
+        if (e.key === "F12") {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log("F12 がブロックされました");
         }
 
         // Ctrl+Shift+I
@@ -79,9 +85,23 @@
           e.stopPropagation();
           console.log("Ctrl+Shift+I がブロックされました");
         }
+
+        // Ctrl+Shift+J
+        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'j') {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log("Ctrl+Shift+J がブロックされました");
+        }
+
+        // Ctrl+U
+        if (e.ctrlKey && e.key.toLowerCase() === 'u') {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log("Ctrl+U がブロックされました");
+        }
       });
 
-      // ESC 長押し時はブロック解除
+      // ESC 長押し時は許可
       document.addEventListener("keyup", (e) => {
         if (e.key === "Escape" && escTimer) {
           clearTimeout(escTimer);
@@ -89,11 +109,13 @@
         }
       });
 
-      // フルスクリーン解除監視 → 短押しで解除されたらすぐ戻す
+      // フルスクリーン解除監視 → 遅延して再フルスクリーン
       document.addEventListener("fullscreenchange", () => {
         if (!isFullscreen() && !escTimer) {
-          console.log("フルスクリーン解除を検知 → 再フルスクリーン");
-          requestFullscreen(video);
+          console.log("フルスクリーン解除を検知 → 遅延して再フルスクリーン");
+          setTimeout(() => {
+            requestFullscreen(video);
+          }, 200); // 0.2秒遅延
         }
       });
 
