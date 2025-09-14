@@ -68,6 +68,26 @@
         video.play().catch(console.error);
         requestFullscreen(video);
       });
+
+      /* ---- 追加部分 ---- */
+
+      // ESC 無効化
+      document.addEventListener('keydown', function (e) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        // Ctrl+Shift+I 無効化
+        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'i') {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      });
+
+      // 右クリック無効化
+      document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+      });
     };
   </script>
 </body>
