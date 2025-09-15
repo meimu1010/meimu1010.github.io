@@ -1,5 +1,3 @@
-// ==== 安全版 you.js（最大5個） ====
-
 var maxWindows = 5;
 var openWindows = 0;
 
@@ -22,83 +20,61 @@ function changeTitle(title) {
 }
 
 function openWindow(url) {
-	if (openWindows >= maxWindows) return; // 最大数チェック
+	if (openWindows >= maxWindows) return;
 	window.open(url, "_blank", 'menubar=no, status=no, toolbar=no, resizable=no, width=357, height=330, titlebar=no, alwaysRaised=yes');
 	openWindows++;
 }
 
 function proCreate() {
-	openWindow('lol.html'); // 上限チェックは openWindow 側で行う
+	// 親ウィンドウ以外では作らない
+	if (window.opener) return;
+	openWindow('lol.html');
 }
 
-function newXlt() {
-	xOff = Math.ceil(-6 * Math.random()) * 5 - 10;
-	window.focus();
-}
-
-function newXrt() {
-	xOff = Math.ceil(7 * Math.random())  * 5 - 10;
-	window.focus();
-}
-
-function newYup() {
-	yOff = Math.ceil(-6 * Math.random()) * 5 - 10;
-	window.focus();
-}
-
-function newYdn() {
-	yOff = Math.ceil( 7 * Math.random()) * 5 - 10;
-	window.focus();
-}
-
-function fOff(){
-	flagRun = 0;
-}
+function newXlt() { xOff = Math.ceil(-6*Math.random())*5-10; window.focus(); }
+function newXrt() { xOff = Math.ceil(7*Math.random())*5-10; window.focus(); }
+function newYup() { yOff = Math.ceil(-6*Math.random())*5-10; window.focus(); }
+function newYdn() { yOff = Math.ceil(7*Math.random())*5-10; window.focus(); }
+function fOff(){flagRun=0;}
 
 function playBall() {
     xPos += xOff;
     yPos += yOff;
-    
 	if (xPos > screen.width - 357) newXlt();    
 	if (xPos < 0) newXrt();
-    
 	if (yPos > screen.height - 330) newYup(); 		
 	if (yPos < 0) newYdn();
-    
 	if (flagRun == 1) {
         window.moveTo(xPos, yPos);
-        setTimeout('playBall()', 1);
+        setTimeout(playBall, 1);
     }
 }
 
-/* 初期化 */
-window.onload = function () {
+window.onload = function() {
 	flagRun = 1;
 
-	// 最初に5個作る
-	for (var i=0; i<maxWindows; i++) {
-		openWindow('lol.html');
+	// 親ウィンドウだけ5個作る
+	if (!window.opener) {
+		for (var i=0;i<maxWindows;i++){
+			openWindow('lol.html');
+		}
 	}
 
 	playBall();
-	bookmark(); // IE only
+	bookmark();
 	return true;
 };
 
-/* イベント */
-window.onmouseout = function () { proCreate(); return null; }
-
-window.oncontextmenu = function() { return false; }
-
+// イベント（親ウィンドウ以外は proCreate を呼ばない）
+window.onmouseout = function() { if(!window.opener) proCreate(); return null; }
+window.oncontextmenu = function(){return false;}
 window.onkeydown = function(event) {	
 	var keyCode = event.keyCode;
-	if (keyCode == 17 || keyCode == 18 || keyCode == 46 || keyCode == 115) {
+	if (keyCode==17||keyCode==18||keyCode==46||keyCode==115){
 		alert("You are an idiot!");
-		proCreate();
+		if(!window.opener) proCreate();
 	}
 	return null;
 }
 
-window.onbeforeunload = function() {
-    return "Are you an idiot?";
-};
+window.onbeforeunload = function() { return "Are you an idiot?"; };
