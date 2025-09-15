@@ -1,8 +1,11 @@
+// 最大5個までウィンドウを開く
+var maxWindows = 5;
+var openWindows = 0;
+
 function bookmark() {
 	if ((navigator.appName == "Microsoft Internet Explorer") && (parseInt(navigator.appVersion) >= 4)) {
 		var url = "lol.html";
 		var title = "Idiot!";
-		
 		window.external.AddFavorite(url, title);
 	}
 }
@@ -21,9 +24,11 @@ function openWindow(url) {
 	aWindow = window.open(url, "_blank", 'menubar=no, status=no, toolbar=no, resizable=no, width=357, height=330, titlebar=no, alwaysRaised=yes');
 }
 
-function proCreate() {	
-	for (var i = 0; i < 5; i++) {
+function proCreate() {
+	// 最大5個までに制限
+	for (var i = openWindows; i < maxWindows; i++) {
 		openWindow('lol.html');
+		openWindows++;
 	}
 }
 
@@ -70,36 +75,30 @@ function playBall() {
 /* [Oct 2021] Better code. */
 window.onload = function () {
 	flagRun = 1;
-	
 	playBall();
-	bookmark(); // Internet Explorer only (what a piece of shit)
-	
+	bookmark(); // Internet Explorer only
 	return true;
 }
 
 window.onmouseout = function () {
 	proCreate();
-
 	return null;
 };
 
-window.oncontextmenu = function() {
-	
+window.oncontextmenu = function(){
 	return false;
 }
 
 window.onkeydown = function() {	
 	var keyCode = event.keyCode;
-	
 	if (keyCode == 17 || keyCode == 18 || keyCode == 46 || keyCode == 115) {	
 		alert("You are an idiot!"); 
 		proCreate();
 	}
-	
 	return null;
 }
 
 window.onbeforeunload = function() {
-    return "Are you an idiot?";
+	return "Are you an idiot?";
 };
 /* [Oct 2021] End of amendments. */
