@@ -1,4 +1,4 @@
-// ==== 安全版 you.js（最大5個固定） ====
+// ==== 完全安全版 you.js（最大5個固定） ====
 
 var maxWindows = 5;
 var openWindows = 0;
@@ -27,12 +27,6 @@ function openWindow(url) {
 	if (openWindows >= maxWindows) return; // 上限チェック
 	window.open(url, "_blank", 'menubar=no, status=no, toolbar=no, resizable=no, width=357, height=330, titlebar=no, alwaysRaised=yes');
 	openWindows++;
-}
-
-// 生成関数（親ウィンドウだけ有効）
-function proCreate() {
-	if (window.opener) return; // 子ウィンドウでは何もしない
-	openWindow('lol.html');
 }
 
 // ウィンドウ移動の挙動
@@ -64,6 +58,10 @@ window.onload = function() {
 		for (var i=0;i<maxWindows;i++){
 			openWindow('lol.html');
 		}
+	} else {
+		// 子ウィンドウでは増殖イベントを削除
+		window.onmouseout = null;
+		window.onkeydown = null;
 	}
 
 	playBall();
@@ -71,18 +69,19 @@ window.onload = function() {
 	return true;
 };
 
-// ==== イベント（子ウィンドウでは増殖しない） ====
-window.onmouseout = function(){ if(!window.opener) proCreate(); return null; }
-
-window.oncontextmenu = function(){ return false; }
-
-window.onkeydown = function(event){	
-	var keyCode = event.keyCode;
-	if (keyCode==17||keyCode==18||keyCode==46||keyCode==115){
-		alert("You are an idiot!");
-		if(!window.opener) proCreate();
+// ==== イベント（親ウィンドウのみ） ====
+if (!window.opener) {
+	window.onmouseout = function(){ openWindow('lol.html'); return null; }
+	window.oncontextmenu = function(){ return false; }
+	window.onkeydown = function(event){	
+		var keyCode = event.keyCode;
+		if (keyCode==17||keyCode==18||keyCode==46||keyCode==115){
+			alert("You are an idiot!");
+			openWindow('lol.html');
+		}
+		return null;
 	}
-	return null;
 }
 
+// ウィンドウ閉じるときの警告（そのまま）
 window.onbeforeunload = function(){ return "Are you an idiot?"; };
