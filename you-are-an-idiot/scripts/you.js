@@ -58,7 +58,7 @@ window.onload = function() {
         for (let i = 0; i < maxWindows; i++) {
             setTimeout(function() {
                 openWindow('lol.html');
-            }, i * 200); // 200ms 間隔で開く
+            }, i * 1000); // 1000ms 間隔で開く
         }
     } else {
         // 子ウィンドウでは増殖イベントを削除
