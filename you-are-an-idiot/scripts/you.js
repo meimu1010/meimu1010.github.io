@@ -24,7 +24,7 @@ function changeTitle(title) {
 
 // ウィンドウを開く関数（最大5個まで）
 function openWindow(url) {
-    if (openWindows >= maxWindows) return; // 上限チェック
+    if (openWindows >= maxWindows) return;
 
     var w = window.open(url, "_blank",
         "menubar=no,status=no,toolbar=no,resizable=no" +
@@ -32,9 +32,11 @@ function openWindow(url) {
     );
 
     if (w) {
-        // 強制的にリサイズ＆位置補正（バグ防止）
-        w.resizeTo(357, 330);
-        w.moveTo(100 + openWindows * 50, 100 + openWindows * 50);
+        // 読み込み完了してから確実にリサイズ
+        w.onload = function() {
+            w.resizeTo(357, 330);
+            w.moveTo(100 + openWindows * 50, 100 + openWindows * 50);
+        };
     }
 
     openWindows++;
