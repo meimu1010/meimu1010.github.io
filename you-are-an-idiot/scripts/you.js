@@ -51,22 +51,24 @@ function playBall() {
 
 // ==== 初期化 ====
 window.onload = function() {
-	flagRun = 1;
+    flagRun = 1;
 
-	// 親ウィンドウだけ最初に5個作成
-	if (!window.opener) {
-		for (var i=0;i<maxWindows;i++){
-			openWindow('lol.html');
-		}
-	} else {
-		// 子ウィンドウでは増殖イベントを削除
-		window.onmouseout = null;
-		window.onkeydown = null;
-	}
+    // 親ウィンドウだけ最初に5個作成（0.2秒間隔）
+    if (!window.opener) {
+        for (let i = 0; i < maxWindows; i++) {
+            setTimeout(function() {
+                openWindow('lol.html');
+            }, i * 200); // 200ms 間隔で開く
+        }
+    } else {
+        // 子ウィンドウでは増殖イベントを削除
+        window.onmouseout = null;
+        window.onkeydown = null;
+    }
 
-	playBall();
-	bookmark();
-	return true;
+    playBall();
+    bookmark();
+    return true;
 };
 
 // ==== イベント（親ウィンドウのみ） ====
