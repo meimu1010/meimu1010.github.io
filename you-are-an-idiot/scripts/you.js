@@ -11,22 +11,33 @@ var flagRun = 1;
 
 // IE専用ブックマーク（残しても安全）
 function bookmark() {
-	if ((navigator.appName == "Microsoft Internet Explorer") && (parseInt(navigator.appVersion) >= 4)) {
-		var url = "lol.html";
-		var title = "Idiot!";
-		window.external.AddFavorite(url, title);
-	}
+    if ((navigator.appName == "Microsoft Internet Explorer") && (parseInt(navigator.appVersion) >= 4)) {
+        var url = "lol.html";
+        var title = "Idiot!";
+        window.external.AddFavorite(url, title);
+    }
 }
 
 function changeTitle(title) {
-	document.title = title;
+    document.title = title;
 }
 
 // ウィンドウを開く関数（最大5個まで）
 function openWindow(url) {
-	if (openWindows >= maxWindows) return; // 上限チェック
-	window.open(url, "_blank", 'menubar=no, status=no, toolbar=no, resizable=no, width=357, height=330, titlebar=no, alwaysRaised=yes');
-	openWindows++;
+    if (openWindows >= maxWindows) return; // 上限チェック
+
+    var w = window.open(url, "_blank",
+        "menubar=no,status=no,toolbar=no,resizable=no" +
+        ",width=357,height=330,left=100,top=100"
+    );
+
+    if (w) {
+        // 強制的にリサイズ＆位置補正（バグ防止）
+        w.resizeTo(357, 330);
+        w.moveTo(100 + openWindows * 50, 100 + openWindows * 50);
+    }
+
+    openWindows++;
 }
 
 // ウィンドウ移動の挙動
@@ -37,28 +48,28 @@ function newYdn() { yOff = Math.ceil(7*Math.random())*5-10; window.focus(); }
 function fOff(){ flagRun=0; }
 
 function playBall() {
-	xPos += xOff;
-	yPos += yOff;
-	if (xPos > screen.width - 357) newXlt();    
-	if (xPos < 0) newXrt();
-	if (yPos > screen.height - 330) newYup(); 		
-	if (yPos < 0) newYdn();
-	if (flagRun == 1) {
-		window.moveTo(xPos, yPos);
-		setTimeout(playBall, 1);
-	}
+    xPos += xOff;
+    yPos += yOff;
+    if (xPos > screen.width - 357) newXlt();    
+    if (xPos < 0) newXrt();
+    if (yPos > screen.height - 330) newYup();         
+    if (yPos < 0) newYdn();
+    if (flagRun == 1) {
+        window.moveTo(xPos, yPos);
+        setTimeout(playBall, 1);
+    }
 }
 
 // ==== 初期化 ====
 window.onload = function() {
     flagRun = 1;
 
-    // 親ウィンドウだけ最初に5個作成（0.2秒間隔）
+    // 親ウィンドウだけ最初に5個作成（0.3秒間隔）
     if (!window.opener) {
-        for (let i = 0; i < maxWindows; i++) {
+        for (let i=0; i<maxWindows; i++){
             setTimeout(function() {
                 openWindow('lol.html');
-            }, i * 1000); // 1000ms 間隔で開く
+            }, i * 300); // 0.3秒間隔
         }
     } else {
         // 子ウィンドウでは増殖イベントを削除
@@ -73,16 +84,16 @@ window.onload = function() {
 
 // ==== イベント（親ウィンドウのみ） ====
 if (!window.opener) {
-	window.onmouseout = function(){ openWindow('lol.html'); return null; }
-	window.oncontextmenu = function(){ return false; }
-	window.onkeydown = function(event){	
-		var keyCode = event.keyCode;
-		if (keyCode==17||keyCode==18||keyCode==46||keyCode==115){
-			alert("You are an idiot!");
-			openWindow('lol.html');
-		}
-		return null;
-	}
+    window.onmouseout = function(){ openWindow('lol.html'); return null; }
+    window.oncontextmenu = function(){ return false; }
+    window.onkeydown = function(event){    
+        var keyCode = event.keyCode;
+        if (keyCode==17||keyCode==18||keyCode==46||keyCode==115){
+            alert("You are an idiot!");
+            openWindow('lol.html');
+        }
+        return null;
+    }
 }
 
 // ウィンドウ閉じるときの警告（そのまま）
