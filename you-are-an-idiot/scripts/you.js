@@ -32,11 +32,18 @@ function openWindow(url) {
     );
 
     if (w) {
-        // 読み込み完了してから確実にリサイズ
-        w.onload = function() {
-            w.resizeTo(357, 330);
-            w.moveTo(100 + openWindows * 50, 100 + openWindows * 50);
-        };
+        // 確実に小さいサイズに矯正する（何度も実行）
+        var fixSize = setInterval(function() {
+            try {
+                w.resizeTo(357, 330);
+                w.moveTo(100 + openWindows * 50, 100 + openWindows * 50);
+            } catch (e) {}
+        }, 100);
+
+        // 数秒後に監視終了
+        setTimeout(function() {
+            clearInterval(fixSize);
+        }, 2000);
     }
 
     openWindows++;
@@ -66,13 +73,17 @@ function playBall() {
 window.onload = function() {
     flagRun = 1;
 
-    // 親ウィンドウだけ最初に5個作成（0.3秒間隔）
+    // 親ウィンドウだけ最初に5個作成（0.3秒間隔で順番に）
     if (!window.opener) {
-        for (let i=0; i<maxWindows; i++){
-            setTimeout(function() {
+        let i = 0;
+        let openerInterval = setInterval(function() {
+            if (i < maxWindows) {
                 openWindow('lol.html');
-            }, i * 300); // 0.3秒間隔
-        }
+                i++;
+            } else {
+                clearInterval(openerInterval);
+            }
+        }, 300); // 0.3秒ごとに1つ開く
     } else {
         // 子ウィンドウでは増殖イベントを削除
         window.onmouseout = null;
