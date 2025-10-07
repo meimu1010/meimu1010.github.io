@@ -1,83 +1,113 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<title>You are an idiot! Controller</title>
-<style>
-  body {
-    font-family: sans-serif;
-    text-align: center;
-    margin-top: 50px;
-  }
-  button {
-    font-size: 18px;
-    padding: 10px 20px;
-    margin: 10px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-  }
-  #openBtn { background-color: #4CAF50; color: white; }
-  #closeBtn { background-color: #f44336; color: white; }
-</style>
-</head>
-<body>
-  <h1>You are an idiot! 🎭</h1>
-  <button id="openBtn">＋ ウィンドウを開く</button>
-  <button id="closeBtn">－ ウィンドウを閉じる</button>
-  <p>最大 5 個まで開けます。</p>
+// ==== 完全安全版 you.js（最大5個固定） ====
 
-<script>
 var maxWindows = 5;
-var windowsList = [];
+var openWindows = 0;
 
-// ==== ウィンドウを開く ====
-function openWindow(url) {
-    if (windowsList.length >= maxWindows) {
-        alert("もうこれ以上開けません！（最大 " + maxWindows + " 個）");
-        return;
+var xOff = 5;
+var yOff = 5;
+var xPos = 400;
+var yPos = -100;
+var flagRun = 1;
+
+// IE専用ブックマーク（残しても安全）
+function bookmark() {
+    if ((navigator.appName == "Microsoft Internet Explorer") && (parseInt(navigator.appVersion) >= 4)) {
+        var url = "lol.html";
+        var title = "Idiot!";
+        window.external.AddFavorite(url, title);
     }
+}
+
+function changeTitle(title) {
+    document.title = title;
+}
+
+// ウィンドウを開く関数（最大5個まで）
+function openWindow(url) {
+    if (openWindows >= maxWindows) return;
 
     var w = window.open(url, "_blank",
         "menubar=no,status=no,toolbar=no,resizable=no" +
-        ",width=357,height=330,left=200,top=200"
+        ",width=357,height=330,left=100,top=100"
     );
 
     if (w) {
-        // 強制サイズ補正（バグ防止）
+        // 確実に小さいサイズに矯正する（何度も実行）
         var fixSize = setInterval(function() {
             try {
                 w.resizeTo(357, 330);
-                w.moveTo(200 + windowsList.length * 40, 200 + windowsList.length * 40);
+                w.moveTo(100 + openWindows * 50, 100 + openWindows * 50);
             } catch (e) {}
         }, 100);
 
-        setTimeout(function() { clearInterval(fixSize); }, 2000);
+        // 数秒後に監視終了
+        setTimeout(function() {
+            clearInterval(fixSize);
+        }, 2000);
+    }
 
-        windowsList.push(w);
+    openWindows++;
+}
+
+// ウィンドウ移動の挙動
+function newXlt() { xOff = Math.ceil(-6*Math.random())*5-10; window.focus(); }
+function newXrt() { xOff = Math.ceil(7*Math.random())*5-10; window.focus(); }
+function newYup() { yOff = Math.ceil(-6*Math.random())*5-10; window.focus(); }
+function newYdn() { yOff = Math.ceil(7*Math.random())*5-10; window.focus(); }
+function fOff(){ flagRun=0; }
+
+function playBall() {
+    xPos += xOff;
+    yPos += yOff;
+    if (xPos > screen.width - 357) newXlt();    
+    if (xPos < 0) newXrt();
+    if (yPos > screen.height - 330) newYup();         
+    if (yPos < 0) newYdn();
+    if (flagRun == 1) {
+        window.moveTo(xPos, yPos);
+        setTimeout(playBall, 1);
     }
 }
 
-// ==== ウィンドウを閉じる ====
-function closeWindow() {
-    if (windowsList.length === 0) {
-        alert("閉じるウィンドウがありません。");
-        return;
+// ==== 初期化 ====
+window.onload = function() {
+    flagRun = 1;
+
+    // 親ウィンドウだけ最初に5個作成（0.3秒間隔で順番に）
+    if (!window.opener) {
+        let i = 0;
+        let openerInterval = setInterval(function() {
+            if (i < maxWindows) {
+                openWindow('lol.html');
+                i++;
+            } else {
+                clearInterval(openerInterval);
+            }
+        }, 300); // 0.3秒ごとに1つ開く
+    } else {
+        // 子ウィンドウでは増殖イベントを削除
+        window.onmouseout = null;
+        window.onkeydown = null;
     }
 
-    var w = windowsList.pop();
-    if (w && !w.closed) {
-        w.close();
+    playBall();
+    bookmark();
+    return true;
+};
+
+// ==== イベント（親ウィンドウのみ） ====
+if (!window.opener) {
+    window.onmouseout = function(){ openWindow('lol.html'); return null; }
+    window.oncontextmenu = function(){ return false; }
+    window.onkeydown = function(event){    
+        var keyCode = event.keyCode;
+        if (keyCode==17||keyCode==18||keyCode==46||keyCode==115){
+            alert("You are an idiot!");
+            openWindow('lol.html');
+        }
+        return null;
     }
 }
 
-// ==== ボタンイベント ====
-document.getElementById("openBtn").onclick = function() {
-    openWindow("lol.html");
-};
-document.getElementById("closeBtn").onclick = function() {
-    closeWindow();
-};
-</script>
-</body>
-</html>
+// ウィンドウ閉じるときの警告（そのまま）
+window.onbeforeunload = function(){ return "Are you an idiot?"; };
