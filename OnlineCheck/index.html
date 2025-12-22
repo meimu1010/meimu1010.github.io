@@ -425,10 +425,19 @@
           const box = btn.closest('.account-box');
           if (!box) return;
 
-          if (data.isOnline === true) {
-            flashBox(box, "#d4ffd4");
-          } else if (data.isOnline === false) {
-            flashBox(box, "#ffd4d4");
+          // どちらの形式にも対応
+          let isOnline = null;
+
+          if (typeof data.isOnline === "boolean") {
+            isOnline = data.isOnline;
+          } else if (typeof data === "boolean") {
+            isOnline = data;
+          }
+
+          if (isOnline === true) {
+            flashBox(box, "#d4ffd4"); // オンライン
+          } else if (isOnline === false) {
+            flashBox(box, "#ffd4d4"); // オフライン
           } else {
             alert("状態が取得できませんでした");
           }
@@ -487,3 +496,4 @@
   </script>
 </body>
 </html>
+
