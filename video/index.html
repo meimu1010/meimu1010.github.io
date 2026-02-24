@@ -2,87 +2,113 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <meta property="og:title" content="Anime Player">
-    <meta property="og:type" content="video.other">
-    <meta property="og:video:type" content="video/mp4">
-    <meta property="og:video:width" content="1280">
-    <meta property="og:video:height" content="720">
+    <title>アニメ視聴用プレイヤー</title>
 
-    <script>
-        // URLから動画URL（urlパラメータ）を取得
-        const params = new URLSearchParams(window.location.search);
-        const videoUrl = params.get('url');
-
-        // Discordのクローラー用にメタタグを動的に反映（※反映されない場合は静的URLが必要）
-        if (videoUrl) {
-            document.write(`<meta property="og:video" content="${videoUrl}">`);
-            document.write(`<meta property="og:video:secure_url" content="${videoUrl}">`);
-        }
-    </script>
-
-    <title>Anime Generator</title>
     <style>
-        body { background: #121212; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .container { background: #1e1e1e; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); width: 90%; max-width: 500px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: none; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #5865F2; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #4752c4; }
-        .result { margin-top: 20px; word-break: break-all; background: #2f3136; padding: 10px; border-radius: 4px; display: none; }
-        video { width: 100%; margin-top: 20px; border-radius: 8px; }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0e0e0e;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: sans-serif;
+        }
+
+        video {
+            width: 90%;
+            max-width: 1000px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .controls {
+            margin-top: 20px;
+            width: 90%;
+            max-width: 1000px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: none;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin-right: 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .generated {
+            margin-top: 10px;
+            word-break: break-all;
+            color: #00ffcc;
+        }
     </style>
 </head>
 <body>
 
-<div class="container" id="generator-ui">
-    <h2>Anime Link Generator</h2>
-    <p style="font-size: 0.8rem; color: #b9bbbe;">MKVの直リンクを貼り付けてください</p>
-    <input type="text" id="mkvUrl" placeholder="https://example.com/video.mkv">
-    <button onclick="generateLink()">専用URLを生成</button>
-    
-    <div id="resultArea" class="result">
-        <p style="font-size: 0.8rem;">このURLをDiscordに貼ってください:</p>
-        <strong id="generatedUrl"></strong>
-    </div>
-</div>
-
-<div id="player-ui" style="display:none; text-align:center;">
-    <h2>Now Playing</h2>
-    <video id="mainVideo" controls autoplay>
+    <video id="videoPlayer" controls preload="metadata">
         <source id="videoSource" src="" type="video/mp4">
-        ご使用のブラウザは再生に対応していません。
+        ご使用のブラウザは動画再生に対応していません。
     </video>
-    <br><br>
-    <button onclick="window.location.href=window.location.pathname" style="width:auto; padding: 5px 20px;">ジェネレーターに戻る</button>
-</div>
 
-<script>
-    function generateLink() {
-        const inputUrl = document.getElementById('mkvUrl').value;
-        if (!inputUrl) return alert("URLを入力してください");
+    <div class="controls">
+        <input type="text" id="urlInput" placeholder="動画URLをここに貼り付け">
 
-        // ランダムな文字列を生成 (8文字)
-        const randomStr = Math.random().toString(36).substring(2, 10);
-        
-        // 現在のページのURLを取得してパラメータを付与
-        const currentUrl = window.location.origin + window.location.pathname;
-        const finalUrl = `${currentUrl}?id=${randomStr}&url=${encodeURIComponent(inputUrl)}`;
+        <button onclick="loadVideo()">動画を読み込む</button>
+        <button onclick="generateRandomUrl()">ランダム文字列付きURL生成</button>
 
-        document.getElementById('generatedUrl').innerText = finalUrl;
-        document.getElementById('resultArea').style.display = 'block';
-    }
+        <div class="generated" id="generatedUrl"></div>
+    </div>
 
-    // ページ読み込み時にパラメータがあればプレイヤーを表示
-    window.onload = function() {
-        if (videoUrl) {
-            document.getElementById('generator-ui').style.display = 'none';
-            document.getElementById('player-ui').style.display = 'block';
-            document.getElementById('videoSource').src = videoUrl;
-            document.getElementById('mainVideo').load();
+    <script>
+        function loadVideo() {
+            const url = document.getElementById("urlInput").value;
+            const video = document.getElementById("videoPlayer");
+            const source = document.getElementById("videoSource");
+
+            if (!url) {
+                alert("URLを入力してください");
+                return;
+            }
+
+            source.src = url;
+            video.load();
+            video.play();
         }
-    }
-</script>
+
+        function generateRandomString(length = 10) {
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            let result = "";
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function generateRandomUrl() {
+            const baseUrl = document.getElementById("urlInput").value;
+
+            if (!baseUrl) {
+                alert("URLを入力してください");
+                return;
+            }
+
+            const randomString = generateRandomString();
+            const newUrl = baseUrl + "?v=" + randomString;
+
+            document.getElementById("generatedUrl").textContent = newUrl;
+        }
+    </script>
 
 </body>
 </html>
