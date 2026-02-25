@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>魔法少女育成計画</title>
+    <title>Magical Girl Survival Simulator - EX Complete</title>
     <style>
         :root {
             --pastel-pink: #ffd1dc;
@@ -227,12 +227,13 @@
     <div class="scanlines"></div>
 
     <div id="setup-screen">
-        <h1 style="color:var(--deep-pink)">魔法少女育成計画</h1>
+        <h1 style="color:var(--deep-pink)">Magical Girl Survival</h1>
         <div class="setup-group">
             <p>難易度（ライバルの強さ）を選択してぽん：</p>
             <button class="setup-btn difficulty-btn" onclick="setDifficulty('easy', this)">イージー（激甘）</button>
             <button class="setup-btn difficulty-btn active" onclick="setDifficulty('normal', this)">ノーマル</button>
             <button class="setup-btn difficulty-btn" onclick="setDifficulty('hard', this)">ハード（絶望）</button>
+            <button class="setup-btn difficulty-btn" onclick="setDifficulty('veryhard', this)">ベリーハード（地獄）</button>
         </div>
         <div class="setup-group">
             <p>操作する魔法少女を選んでぽん：</p>
@@ -288,7 +289,7 @@
         isGameOver: false,
         gameSpeed: 1,
         difficulty: 'normal',
-        difficultyMults: { easy: 0.6, normal: 1.0, hard: 1.5 },
+        difficultyMults: { easy: 0.6, normal: 1.0, hard: 1.5, veryhard: 2.5 },
         characterList: [
             { name: "ハードゴア・アリス", magic: "『どんな怪我をしてもすぐに治るよ』" },
             { name: "スノーホワイト", magic: "『困っている人の心の声が聞こえるよ』" },
@@ -397,7 +398,27 @@
             { text: "鏡合わせの自分と「飴の所有権」を賭けて決闘する。", choices: [{ text: "本物の矜持を見せて勝つ", candy: 80, survival: -140, msg: "偽者を消去したが、心に穴が開いた。" }, { text: "飴を半分分け与えて和解する", candy: -40, survival: 100, msg: "自分自身を許し、魔力が安定した。" }, { text: "審判のファヴに飴を握らせる", candy: -60, survival: 80, msg: "不戦勝。金がものを言う世界。" }] },
             { text: "あなたの魔法の杖が「反抗期」を迎えた。", choices: [{ text: "力で押さえつけて従わせる", candy: 30, survival: -60, msg: "主従関係を再構築した。" }, { text: "最高級の飴で磨いて機嫌を取る", candy: -50, survival: 110, msg: "杖は光り輝き、あなたを優しく守る。" }, { text: "杖を捨てて素手で戦う", candy: 50, survival: -120, msg: "野生の魔法少女。野生の飴。" }] },
             { text: "魔法少女としての「本当の目的」が書かれた手紙を拾った。", choices: [{ text: "震える手で封を切る", candy: -50, survival: 150, msg: "真実を知り、生存への覚悟が固まった。" }, { text: "読まずに食べて証拠を消す", candy: 30, survival: -20, msg: "無知は飴、知恵は毒。" }, { text: "手紙をファヴに突きつける", candy: 20, survival: -80, msg: "「知りすぎたぽん」と笑われた。" }] },
-            { text: "世界がモノクロになり、魔法の色だけが残った。", choices: [{ text: "自分の色を街に塗り広げる", candy: 45, survival: -70, msg: "あなたが世界の支配者に見えた瞬間。" }, { text: "色のない人々に飴で彩色する", candy: -60, survival: 130, msg: "モノクロの世界に希望の飴が降る。" }, { text: "色の濃い場所を探して隠れる", candy: 10, survival: 50, msg: "コントラストの中に潜む安全。" }] }
+            { text: "世界がモノクロになり、魔法の色だけが残った。", choices: [{ text: "自分の色を街に塗り広げる", candy: 45, survival: -70, msg: "あなたが世界の支配者に見えた瞬間。" }, { text: "色のない人々に飴で彩色する", candy: -60, survival: 130, msg: "モノクロの世界に希望の飴が降る。" }, { text: "色の濃い場所を探して隠れる", candy: 10, survival: 50, msg: "コントラストの中に潜む安全。" }] },
+            { text: "自分に瓜二つの偽者が、街で悪事を働いている。", choices: [{ text: "偽者を魔法で公開処刑する", candy: 50, survival: -80, msg: "不信感は拭えず、恐怖による飴を得た。" }, { text: "飴を配って誤解を解く", candy: -40, survival: 70, msg: "市民の信頼を取り戻し、安全を確保。" }, { text: "偽者と手を組む", candy: 80, survival: -120, msg: "悪名は広まったが、飴の収集効率は倍増。" }] },
+            { text: "魔法少女のステッキが、深夜に人間のような声で鳴き始めた。", choices: [{ text: "声を無視して使い続ける", candy: 25, survival: -45, msg: "ステッキに呪われたが、魔力は高まった。" }, { text: "飴をステッキに「食わせる」", candy: -50, survival: 90, msg: "ステッキは満足し、持ち主を守る盾となった。" }, { text: "ステッキを塩水で清める", candy: 5, survival: 15, msg: "静かになったが、魔法の威力が落ちた。" }] },
+            { text: "SNSで「魔法少女の正体を特定する」懸賞金がかけられた。", choices: [{ text: "投稿者を特定して再起不能にする", candy: 30, survival: -60, msg: "口を封じたが、新たな火種を生んだ。" }, { text: "飴で情報操作を依頼する", candy: -70, survival: 130, msg: "完璧なアリバイを作り、追及を逃れた。" }, { text: "あえて正体を一部明かしてファンを作る", candy: 50, survival: -100, msg: "熱狂的な支持者を得たが、暗殺のリスク増。" }] },
+            { text: "ファヴが「キャンディーの利子がつかない不具合」を告知した。", choices: [{ text: "全ての飴を即座に消費してステータスに変える", candy: -100, survival: 200, msg: "最強の肉体を手に入れたが、一文無しに。" }, { text: "運営に抗議のデモを行う", candy: 20, survival: -40, msg: "端た飴を貰ったが、ブラックリスト入り。" }, { text: "他人の飴を代わりに保管（横領）する", candy: 60, survival: -90, msg: "富は得たが、他魔法少女から恨まれた。" }] },
+            { text: "魔法少女専用の「地下闘技場」への招待状が届いた。", choices: [{ text: "圧倒的な力で連勝する", candy: 100, survival: -150, msg: "富を得たが、体力が限界を超えた。" }, { text: "観客に飴を投げて八百長を仕掛ける", candy: -50, survival: 100, msg: "無傷で勝利。賭け金（生存率）を稼いだ。" }, { text: "招待状を破り捨てる", candy: 0, survival: 20, msg: "堅実な判断。不参加は死なない。" }] },
+            { text: "かつて救った少女が、魔法少女狩りに加担しているのを見つけた。", choices: [{ text: "彼女を魔法で洗脳し直す", candy: 35, survival: -55, msg: "飴を生成する機械として側に置いた。" }, { text: "飴を与えて説得し、引退させる", candy: -45, survival: 85, msg: "恩を返し、敵を一人減らした。" }, { text: "容赦なく排除する", candy: 20, survival: -40, msg: "心は痛むが、後腐れはない。" }] },
+            { text: "街の全ての水が「飴のシロップ」に変わってしまった。", choices: [{ text: "シロップを回収して売る", candy: 45, survival: -60, msg: "高値で売れたが、街は脱水症状に。" }, { text: "魔法でシロップを水に還元する", candy: -55, survival: 110, msg: "聖女として称えられ、守護の力が宿った。" }, { text: "自分専用のプールにする", candy: 10, survival: -20, msg: "ベタベタして動きづらくなった。" }] },
+            { text: "ファヴから「親友を一人脱落させれば飴をあげる」と打診された。", choices: [{ text: "親友を裏切り、飴を頂く", candy: 150, survival: -200, msg: "莫大な富を得たが、孤独と罪悪感に苛まれる。" }, { text: "ファヴを物理的に殴る", candy: 10, survival: -50, msg: "飴は貰えないが、気分は晴れた。" }, { text: "親友と飴を分け合い、共に生き残る誓いをする", candy: -60, survival: 140, msg: "二人の絆が、何よりも強固な壁となった。" }] },
+            { text: "魔法の力が暴走し、街をキャンディーの彫像に変えようとしている。", choices: [{ text: "暴走を抑え込むために魔力を注ぐ", candy: 40, survival: -70, msg: "鎮圧成功。破片を飴として回収。" }, { text: "暴走を利用して自分を強化する", candy: 80, survival: -150, msg: "異形の力を得た。もう後戻りはできない。" }, { text: "飴の街を切り売りする", candy: -30, survival: 60, msg: "混乱に乗じて安全圏へ逃亡。" }] },
+            { text: "魔法少女としての記憶が、徐々に飴に変換されて抜けていく。", choices: [{ text: "大切な記憶を優先的に飴にする", candy: 100, survival: -180, msg: "最強になったが、自分が誰か分からない。" }, { text: "飴を消費して記憶を固定する", candy: -80, survival: 160, msg: "人間としての尊厳を守り抜いた。" }, { text: "忘れたまま、本能で生きる", candy: 20, survival: -40, msg: "効率的な獣となった。" }] },
+            { text: "謎の宗教団体が「魔法少女の血」を求めて襲ってきた。", choices: [{ text: "返り討ちにして教団の飴を奪う", candy: 60, survival: -90, msg: "殲滅。血塗られた飴を手に入れた。" }, { text: "飴で造った偽の血を渡して騙す", candy: -30, survival: 65, msg: "信仰を逆手に取り、追手を巻いた。" }, { text: "彼らの神として君臨する", candy: 40, survival: -80, msg: "狂信的な軍団を得たが、命を狙われる。" }] },
+            { text: "自分が住んでいるアパートが、魔法少女の戦場に指定された。", choices: [{ text: "アパートごと敵を吹き飛ばす", candy: 50, survival: -100, msg: "勝利したが、帰る家を失った。" }, { text: "飴を消費して時空を歪め、アパートを隠す", candy: -70, survival: 150, msg: "平穏な日常を死守した。" }, { text: "敵を誘い出して公園で決着をつける", candy: 25, survival: -40, msg: "正々堂々と戦い、消耗した。" }] },
+            { text: "魔法少女育成計画の「プロトタイプ」が目覚めた。", choices: [{ text: "旧型を破壊してコアを飴にする", candy: 70, survival: -110, msg: "強力な魔力を得たが、システムに目を付けられた。" }, { text: "旧型に飴を与えて従順にする", candy: -60, survival: 120, msg: "古の戦士があなたの守護霊となった。" }, { text: "旧型に街の管理を任せて隠居する", candy: -20, survival: 40, msg: "一時的な平穏。" }] },
+            { text: "雨の日に、泥だらけの魔法少女の死体を見つけた。", choices: [{ text: "死体から残存する飴を抽出する", candy: 40, survival: -60, msg: "ハイエナと呼ばれたが、生き残るためだ。" }, { text: "自分の飴を使って彼女を蘇生させる", candy: -100, survival: 200, msg: "奇跡の復活。彼女はあなたの為に命を懸ける。" }, { text: "ファヴに通報する", candy: 10, survival: 0, msg: "清掃料を少し貰った。" }] },
+            { text: "世界中の時計が逆回転し始めた。", choices: [{ text: "時間の逆流に逆らって飴を集める", candy: 50, survival: -90, msg: "過去の自分と戦い、飴を奪った。" }, { text: "飴を歯車にして時間を止める", candy: -55, survival: 110, msg: "束の間の休息を得た。" }, { text: "赤ん坊に戻る前に脱出する", candy: 0, survival: 20, msg: "危機一髪。" }] },
+            { text: "鏡の中の自分が「代わってくれ」と話しかけてきた。", choices: [{ text: "鏡の自分を飴で懐柔する", candy: -40, survival: 85, msg: "鏡面世界からの視点を得て、生存率アップ。" }, { text: "鏡を粉々にする", candy: 20, survival: -50, msg: "自分の半身を殺したような喪失感。" }, { text: "本当に入れ替わる", candy: 100, survival: -250, msg: "鏡の中の富を得たが、外には戻れない。" }] },
+            { text: "街に「魔法少女専用の税務署」ができた。", choices: [{ text: "正直に飴を納税する", candy: -50, survival: 100, msg: "優良魔法少女として公的な加護を得た。" }, { text: "魔法で書類を改ざんし、脱税する", candy: 40, survival: -70, msg: "飴は守ったが、査察官（刺客）が来た。" }, { text: "税務署を物理的に破壊する", candy: 60, survival: -120, msg: "無法者の王として君臨。" }] },
+            { text: "魔法のスマホに「死のカウントダウン」が表示された。", choices: [{ text: "他人にカウントを移す（飴50消費）", candy: -50, survival: 150, msg: "誰かの犠牲の上に自分の生を繋いだ。" }, { text: "魔法の力でアプリを削除する", candy: 30, survival: -60, msg: "強引に消したが、スマホが壊れた。" }, { text: "最後の晩餐として飴を食べる", candy: 20, survival: -100, msg: "死への恐怖が飴の味を苦くする。" }] },
+            { text: "魔法少女に憧れる「狂信者」たちが、あなたの家を取り囲んだ。", choices: [{ text: "彼らを魔法で下僕にする", candy: 45, survival: -80, msg: "人間の盾を手に入れた。心は死んだ。" }, { text: "飴を聖遺物として渡し、解散させる", candy: -40, survival: 90, msg: "平和的に去ってもらった。" }, { text: "全力で逃げ出し、住所を捨てる", candy: -20, survival: 50, msg: "放浪生活の始まり。" }] },
+            { text: "ファヴが「キャンディー1000個で、願いを何でも叶えるぽん」と言った。", choices: [{ text: "命を削って飴を1000個集める", candy: 1000, survival: -1500, msg: "願いは叶ったが、あなたは消滅した。" }, { text: "ファヴを詐欺罪で訴える（物理）", candy: 10, survival: -30, msg: "いつものやり取り。" }, { text: "今のままが幸せだと笑う", candy: 0, survival: 100, msg: "足るを知る者は、システムに踊らされない。" }] }
         ];
 
     const mgEvents = [
@@ -778,5 +799,3 @@
 </script>
 </body>
 </html>
-
-
