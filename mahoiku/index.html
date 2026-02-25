@@ -117,27 +117,14 @@
         .setup-btn.active { background: var(--deep-pink); color: white; border-color: white; }
         .start-btn { padding: 15px 40px; font-size: 1.5rem; background: var(--deep-pink); color: white; border: none; cursor: pointer; margin-top: 20px; }
 
-        /* フッターエリア（スピード・音量設定） */
         #speed-ctrl {
-            padding: 8px 20px;
+            padding: 5px 20px;
             background: rgba(0,0,0,0.5);
             font-size: 0.8rem;
             display: flex;
             gap: 15px;
             align-items: center;
             border-top: 1px solid #333;
-            flex-wrap: wrap;
-        }
-        .volume-container {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        input[type="range"] {
-            cursor: pointer;
-            accent-color: var(--deep-pink);
-            height: 4px;
-            vertical-align: middle;
         }
 
         #fav-popup {
@@ -166,11 +153,20 @@
             background: transparent; color: white; border: 1px solid white; padding: 10px 20px; cursor: pointer; font-family: inherit; margin-top: 20px;
         }
         .restart-btn:hover { background: white; color: black; }
+
+        /* 追加：音量バーのスタイル */
+        .vol-slider {
+            width: 80px;
+            height: 4px;
+            accent-color: var(--deep-pink);
+            cursor: pointer;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
 
-<audio id="bgm" src="bgm.mp3" loop></audio>
+<audio id="bgm-audio" src="bgm.mp3" loop></audio>
 
 <div id="game-container">
     <div class="scanlines"></div>
@@ -202,11 +198,9 @@
         </div>
         <div id="speed-ctrl">
             モード: <span id="mode-display">NORMAL</span> | 
-            <label><input type="checkbox" id="speed-toggle" onchange="toggleSpeed()"> 2倍速モード</label> |
-            <label><input type="checkbox" id="bgm-toggle" onchange="toggleBGM()" checked> BGM再生</label>
-            <div class="volume-container">
-                🔈<input type="range" id="volume-slider" min="0" max="0.5" step="0.01" value="0.05" oninput="changeVolume(this.value)">🔊
-            </div>
+            <label><input type="checkbox" id="speed-toggle" onchange="toggleSpeed()"> 2倍速モード</label> | 
+            <label><input type="checkbox" id="bgm-toggle" checked onchange="updateBGM()"> BGM</label>
+            <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.01" value="0.05" oninput="updateBGM()">
         </div>
     </div>
     <div id="ranking-panel">
@@ -231,7 +225,7 @@
         isGameOver: false,
         gameSpeed: 1,
         difficulty: 'normal',
-        difficultyMults: { easy: 0.6, normal: 1.0, hard: 1.5 },
+        difficultyMults: { easy: 0.6, normal: 1.0, hard: 1.5 }, // NPCへの補正
         characterList: [
             { name: "ハードゴア・アリス", magic: "『どんな怪我をしてもすぐに治るよ』" },
             { name: "スノーホワイト", magic: "『困っている人の心の声が聞こえるよ』" },
@@ -255,31 +249,23 @@
 
     let npcList = [];
     const days = ["月", "火", "水", "木", "金"];
+
     let commonEvents = [];
 
-    // --- BGM & 音量制御 ---
-    const bgm = document.getElementById('bgm');
-    bgm.volume = 0.15; 
-
-    function toggleBGM() {
-        const isChecked = document.getElementById('bgm-toggle').checked;
-        if (isChecked) {
-            bgm.play().catch(e => console.log("再生制限"));
+    // 追加：BGM制御関数
+    function updateBGM() {
+        const audio = document.getElementById('bgm-audio');
+        const isEnabled = document.getElementById('bgm-toggle').checked;
+        const vol = document.getElementById('vol-slider').value;
+        
+        audio.volume = vol;
+        if (isEnabled) {
+            if (audio.paused) audio.play().catch(() => {});
         } else {
-            bgm.pause();
+            audio.pause();
         }
     }
 
-    function changeVolume(val) {
-        bgm.volume = val;
-        // スライダーを動かしたとき、もしチェックが外れていたら再生するようにする（利便性のため）
-        if (val > 0 && !document.getElementById('bgm-toggle').checked) {
-            document.getElementById('bgm-toggle').checked = true;
-            bgm.play();
-        }
-    }
-
-    // --- データ読み込み ---
     fetch("commonEvents.json")
         .then(res => res.json())
         .then(data => {
@@ -293,8 +279,7 @@
             }
         })
         .catch(err => {
-            console.error("commonEvents.json 読み込み失敗");
-            commonEvents = [{ text: "街をパトロールした。", choices: [{ text: "飴を探す", candy: 10, survival: -10, msg: "少し見つかった。" }] }];
+            console.error("commonEvents.jsonの読み込みに失敗:", err);
         });
 
     const mgEvents = [
@@ -342,12 +327,13 @@
     }
 
     function startGame() {
-        if (document.getElementById('bgm-toggle').checked) {
-            bgm.play().catch(e => console.log("再生制限回避"));
-        }
         document.getElementById('setup-screen').style.display = 'none';
         npcList = state.characterList.filter(n => n.name !== state.playerName).map(n => n.name);
         npcList.forEach(name => state.npcScores[name] = 40 + Math.floor(Math.random()*20));
+        
+        // 追加：BGM開始
+        updateBGM();
+
         triggerFav(`${state.playerName}、君の魔法は${state.magicName}だぽん。<br>金曜の夜に「最下位」だと消されるぽん。頑張るぽん！`, startTurn);
         updateUI();
         updateRanking();
@@ -403,14 +389,18 @@
     function startTurn() {
         if (state.isGameOver) return;
         if (state.dayIndex >= days.length) { processFriday(); return; }
+        
         updateUI();
         updateRanking();
+
         npcList.forEach(name => {
             const gain = Math.floor(Math.random()*15) * state.difficultyMults[state.difficulty];
             state.npcScores[name] += Math.round(gain);
         });
+
         const pool = commonEvents.concat(mgEvents);
         const ev = pool[Math.floor(Math.random() * pool.length)];
+        
         document.getElementById('choices-container').innerHTML = '';
         typeWriter(ev.text, 'message-window', () => {
             const shuffledChoices = shuffleArray([...ev.choices]);
@@ -428,12 +418,16 @@
         document.getElementById('choices-container').innerHTML = '';
         const luck = Math.random();
         let mult = 1.0; let prefix = "";
+        
         if (luck > 0.85) { mult = 1.5; prefix = "【クリティカル！】 "; }
         else if (luck < 0.15) { mult = 0.5; prefix = "【不運……】 "; }
+
         const cGained = Math.round(choice.candy * mult);
         state.candies += cGained;
         state.dayIndex++;
+
         if (cGained < 0) flashRed();
+        
         const resultMsg = `${prefix}${choice.msg} <br>（飴: ${cGained >= 0 ? '+' : ''}${cGained}）`;
         typeWriter(resultMsg, 'message-window', () => {
             setTimeout(startTurn, 1500 / state.gameSpeed);
@@ -444,19 +438,21 @@
         document.getElementById('game-main').classList.add('glitch-anim');
         setTimeout(() => {
             document.getElementById('game-main').classList.remove('glitch-anim');
+
             let finalScores = npcList.map(name => ({ name, candies: state.npcScores[name], isPlayer: false }));
             finalScores.push({ name: state.playerName, candies: state.candies, isPlayer: true });
             finalScores.sort((a,b) => a.candies - b.candies);
 
             if (finalScores.length <= 2) {
                 const survivorsList = finalScores.map(f => f.name).join('、');
-                triggerFav(`第${state.week}週の集計が終わったぽん。残りは${finalScores.length}名（${survivorsList}）だぽん。ゲームは終了だぽん！`, () => {
+                triggerFav(`第${state.week}週の集計が終わったぽん。残りは${finalScores.length}名（${survivorsList}）だぽん。ゲームはここで終了だぽん！`, () => {
                     endGameFinal(finalScores);
                 });
                 return;
             }
 
             const victim = finalScores[0];
+
             if (victim.isPlayer) {
                 gameOver();
                 return;
@@ -465,16 +461,19 @@
                 delete state.npcScores[victim.name];
                 state.survivors--;
                 updateRanking();
+
                 const murderRoll = Math.random();
                 if (murderRoll < 0.10 && (npcList.length + 1) >= 2) {
                     const remaining = npcList.slice();
                     remaining.push(state.playerName);
                     const killerIdx = Math.floor(Math.random() * remaining.length);
                     const killer = remaining[killerIdx];
+
                     let murderBaseMsg = `第${state.week}週の集計が終わったぽん。最下位は【${victim.name}】だぽん。消去したぽん。<br>`;
 
+                    // プレイヤーがキラーになった場合、選択肢を出す
                     if (killer === state.playerName) {
-                        typeWriter(murderBaseMsg + "……ドス黒い衝動が湧き上がったぽん。誰を「処理」するぽん？", 'message-window', () => {
+                        typeWriter(murderBaseMsg + "……おや、君の中にドス黒い衝動が湧き上がったぽん。誰を「処理」するぽん？", 'message-window', () => {
                             document.getElementById('choices-container').innerHTML = '';
                             npcList.forEach(targetName => {
                                 const btn = document.createElement('button');
@@ -485,6 +484,7 @@
                             });
                         });
                     } else {
+                        // NPCがキラーの場合（従来通り）
                         const targets = remaining.filter(n => n !== killer);
                         const target = targets[Math.floor(Math.random() * targets.length)];
                         executeMurder(killer, target, murderBaseMsg);
@@ -492,7 +492,7 @@
                 } else {
                     state.week++;
                     state.dayIndex = 0;
-                    triggerFav(`第${state.week-1}週の集計が終わったぽん。最下位は【${victim.name}】だぽん。消去したぽん。<br>来週も飴を集めるぽん！`, startTurn);
+                    triggerFav(`第${state.week-1}週の集計が終わったぽん。最下位は【${victim.name}】だぽん。消去したぽん。<br>来週も飴を集めまくるぽん！`, startTurn);
                 }
             }
         }, 2000 / state.gameSpeed);
@@ -501,17 +501,22 @@
     function executeMurder(killer, target, baseMsg) {
         document.getElementById('choices-container').innerHTML = '';
         let murderMsg = baseMsg + `その後、【${killer}】が【${target}】を殺したぽん！`;
+
         if (target === state.playerName) {
-            triggerFav(murderMsg, () => { gameOver(); });
+            triggerFav(murderMsg, () => {
+                gameOver();
+            });
+            return;
         } else {
             npcList = npcList.filter(n => n !== target);
             delete state.npcScores[target];
             state.survivors--;
             updateRanking();
+
             let survivorsNow = npcList.length + 1;
             if (survivorsNow <= 2) {
                 const survivorsList = npcList.concat(state.playerName).join('、');
-                triggerFav(murderMsg + `<br>残りは${survivorsNow}名。終了だぽん。`, () => {
+                triggerFav(murderMsg + `<br>現在残りは${survivorsNow}名（${survivorsList}）。ゲームを終了するぽん。`, () => {
                     endGameFinal(
                         (npcList.map(n => ({ name: n, isPlayer: false, candies: state.npcScores[n] })))
                         .concat([{ name: state.playerName, isPlayer: true, candies: state.candies }])
@@ -532,7 +537,7 @@
             <div style="text-align:center; margin-top:120px">
                 <h1 style="font-size:2.5rem">GAME END</h1>
                 <p>残りの魔法少女: ${survivorsNames}</p>
-                <p>契約終了だぽん！</p>
+                <p>二人になったのでここで終了だぽん！</p>
                 <button class="restart-btn" onclick="location.reload()">タイトルに戻る</button>
             </div>
         `;
@@ -561,7 +566,8 @@
         document.getElementById('game-main').innerHTML = `
             <div style="text-align:center; margin-top:150px">
                 <h1 class="glitch-anim" style="font-size:3rem">SYSTEM PURGE</h1>
-                <p>消去されました。</p>
+                <p>あなたは最下位になったか、殺害されました。</p>
+                <p style="color:red">魔法少女の資格を失い、消去されます...</p>
                 <button class="restart-btn" onclick="location.reload()">タイトルに戻る</button>
             </div>
         `;
