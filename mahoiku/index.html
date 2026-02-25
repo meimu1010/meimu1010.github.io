@@ -87,7 +87,23 @@
             z-index: 10;
         }
 
-        #choices-container { display: flex; flex-direction: column; gap: 8px; z-index: 10; }
+        /* 通常の選択肢（1列で大きく表示） */
+        #choices-container { 
+            display: flex;
+            flex-direction: column;
+            gap: 8px; 
+            z-index: 10; 
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* 殺害ターゲット選択時（JavaScriptでこのクラスを付与する） */
+        #choices-container.murder-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
         .choice-btn {
             background: rgba(0, 0, 0, 0.7);
             color: var(--pastel-pink);
@@ -96,6 +112,13 @@
             cursor: pointer;
             text-align: left;
             transition: all 0.2s;
+        }
+
+        /* ターゲット選択ボタン専用のスタイル */
+        .target-btn {
+            padding: 8px 4px !important;
+            font-size: 0.75rem !important;
+            text-align: center !important;
         }
         .choice-btn:hover { background: var(--deep-pink); color: #fff; }
 
@@ -116,6 +139,39 @@
         .setup-btn { background: #000; border: 1px solid var(--pastel-pink); color: var(--pastel-pink); padding: 5px; cursor: pointer; font-size: 0.8rem; }
         .setup-btn.active { background: var(--deep-pink); color: white; border-color: white; }
         .start-btn { padding: 15px 40px; font-size: 1.5rem; background: var(--deep-pink); color: white; border: none; cursor: pointer; margin-top: 20px; }
+
+        #cheat-ui {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: -2px;
+            width: calc(100% + 4px);
+            background: #1a0b12;
+            border: 2px solid var(--deep-pink);
+            border-top: none;
+            padding: 10px;
+            box-sizing: border-box;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #ff0000;
+            font-weight: bold;
+        }
+
+        .cheat-input {
+            width: 80px;
+            background: #000;
+            color: #0f0;
+            border: 1px solid #ff0000;
+            padding: 3px;
+            font-family: monospace;
+        }
+
+        #game-container {
+            overflow: visible !important;
+            margin-bottom: 60px;
+        }
 
         #speed-ctrl {
             padding: 5px 20px;
@@ -154,7 +210,6 @@
         }
         .restart-btn:hover { background: white; color: black; }
 
-        /* 追加：音量バーのスタイル */
         .vol-slider {
             width: 80px;
             height: 4px;
@@ -192,6 +247,14 @@
             <div>🧚: <span id="survivor-display">16</span>/16</div>
             <div>⏱ 第<span id="week-display">1</span>週 <span id="day-display">月</span></div>
         </div>
+
+        <div id="cheat-ui" style="display: none;">
+            <span style="color:red; font-weight:bold;">[CHEAT]</span>
+            🍬 <input type="number" id="cheat-candy" class="cheat-input" value="999">
+            <button class="setup-btn" onclick="applyCandyCheat()">変更</button>
+            <button id="kill-cheat-btn" class="setup-btn" onclick="toggleKillCheat()">殺害確定: OFF</button>
+        </div>
+
         <div id="main-view">
             <div id="message-window">...</div>
             <div id="choices-container"></div>
@@ -225,7 +288,7 @@
         isGameOver: false,
         gameSpeed: 1,
         difficulty: 'normal',
-        difficultyMults: { easy: 0.6, normal: 1.0, hard: 1.5 }, // NPCへの補正
+        difficultyMults: { easy: 0.6, normal: 1.0, hard: 1.5 },
         characterList: [
             { name: "ハードゴア・アリス", magic: "『どんな怪我をしてもすぐに治るよ』" },
             { name: "スノーホワイト", magic: "『困っている人の心の声が聞こえるよ』" },
@@ -244,18 +307,19 @@
             { name: "シスター・ナナ", magic: "『好きな人の能力を飛躍的に高めるよ』" },
             { name: "ヴェス・ウィンタープリズン", magic: "『何もないところに壁を作り出せるよ』" }
         ],
-        npcScores: {}
+        npcScores: {},
+        cheatClickCount: 0,
+        cheatUnlocked: false,
+        forceMurder: false
     };
 
     let npcList = [];
     const days = ["月", "火", "水", "木", "金"];
 
-    // 追加：BGM制御関数
     function updateBGM() {
         const audio = document.getElementById('bgm-audio');
         const isEnabled = document.getElementById('bgm-toggle').checked;
         const vol = document.getElementById('vol-slider').value;
-        
         audio.volume = vol;
         if (isEnabled) {
             if (audio.paused) audio.play().catch(() => {});
@@ -443,6 +507,29 @@
         btn.classList.add('active');
         state.difficulty = diff;
         document.getElementById('mode-display').innerText = diff.toUpperCase();
+
+        if (diff === 'normal') {
+            state.cheatClickCount++;
+            if (state.cheatClickCount === 5) {
+                state.cheatUnlocked = true;
+                alert("チートモードが有効になったぽん！開始後にパネルが出るぽん。");
+            }
+        } else {
+            state.cheatClickCount = 0;
+        }
+    }
+
+    function applyCandyCheat() {
+        const val = parseInt(document.getElementById('cheat-candy').value);
+        if (!isNaN(val)) state.candies = val;
+        updateUI();
+        updateRanking();
+    }
+
+    function toggleKillCheat() {
+        state.forceMurder = !state.forceMurder;
+        document.getElementById('kill-cheat-btn').innerText = `殺害確定: ${state.forceMurder ? 'ON' : 'OFF'}`;
+        document.getElementById('kill-cheat-btn').classList.toggle('active');
     }
 
     function toggleSpeed() {
@@ -451,12 +538,14 @@
 
     function startGame() {
         document.getElementById('setup-screen').style.display = 'none';
+        
+        if (state.cheatUnlocked) {
+            document.getElementById('cheat-ui').style.display = 'block';
+        }
+
         npcList = state.characterList.filter(n => n.name !== state.playerName).map(n => n.name);
         npcList.forEach(name => state.npcScores[name] = 40 + Math.floor(Math.random()*20));
-        
-        // 追加：BGM開始
         updateBGM();
-
         triggerFav(`${state.playerName}、君の魔法は${state.magicName}だぽん。<br>金曜の夜に「最下位」だと消されるぽん。頑張るぽん！`, startTurn);
         updateUI();
         updateRanking();
@@ -512,18 +601,19 @@
     function startTurn() {
         if (state.isGameOver) return;
         if (state.dayIndex >= days.length) { processFriday(); return; }
-        
         updateUI();
         updateRanking();
-
         npcList.forEach(name => {
             const gain = Math.floor(Math.random()*15) * state.difficultyMults[state.difficulty];
             state.npcScores[name] += Math.round(gain);
         });
-
         const pool = commonEvents.concat(mgEvents);
+        if (pool.length === 0) { 
+            state.dayIndex++; 
+            startTurn(); 
+            return; 
+        }
         const ev = pool[Math.floor(Math.random() * pool.length)];
-        
         document.getElementById('choices-container').innerHTML = '';
         typeWriter(ev.text, 'message-window', () => {
             const shuffledChoices = shuffleArray([...ev.choices]);
@@ -541,16 +631,12 @@
         document.getElementById('choices-container').innerHTML = '';
         const luck = Math.random();
         let mult = 1.0; let prefix = "";
-        
         if (luck > 0.85) { mult = 1.5; prefix = "【クリティカル！】 "; }
         else if (luck < 0.15) { mult = 0.5; prefix = "【不運……】 "; }
-
         const cGained = Math.round(choice.candy * mult);
         state.candies += cGained;
         state.dayIndex++;
-
         if (cGained < 0) flashRed();
-        
         const resultMsg = `${prefix}${choice.msg} <br>（飴: ${cGained >= 0 ? '+' : ''}${cGained}）`;
         typeWriter(resultMsg, 'message-window', () => {
             setTimeout(startTurn, 1500 / state.gameSpeed);
@@ -561,7 +647,6 @@
         document.getElementById('game-main').classList.add('glitch-anim');
         setTimeout(() => {
             document.getElementById('game-main').classList.remove('glitch-anim');
-
             let finalScores = npcList.map(name => ({ name, candies: state.npcScores[name], isPlayer: false }));
             finalScores.push({ name: state.playerName, candies: state.candies, isPlayer: true });
             finalScores.sort((a,b) => a.candies - b.candies);
@@ -575,7 +660,6 @@
             }
 
             const victim = finalScores[0];
-
             if (victim.isPlayer) {
                 gameOver();
                 return;
@@ -586,28 +670,31 @@
                 updateRanking();
 
                 const murderRoll = Math.random();
-                if (murderRoll < 0.10 && (npcList.length + 1) >= 2) {
+                if ((state.forceMurder || murderRoll < 0.10) && (npcList.length + 1) >= 2) {
                     const remaining = npcList.slice();
                     remaining.push(state.playerName);
-                    const killerIdx = Math.floor(Math.random() * remaining.length);
-                    const killer = remaining[killerIdx];
-
+                    const killer = state.forceMurder ? state.playerName : remaining[Math.floor(Math.random() * remaining.length)];
                     let murderBaseMsg = `第${state.week}週の集計が終わったぽん。最下位は【${victim.name}】だぽん。消去したぽん。<br>`;
 
-                    // プレイヤーがキラーになった場合、選択肢を出す
                     if (killer === state.playerName) {
                         typeWriter(murderBaseMsg + "……おや、君の中にドス黒い衝動が湧き上がったぽん。誰を「処理」するぽん？", 'message-window', () => {
-                            document.getElementById('choices-container').innerHTML = '';
+                            const container = document.getElementById('choices-container');
+                            container.innerHTML = '';
+                            container.classList.add('murder-grid'); // ここで4列モードに変更
+
                             npcList.forEach(targetName => {
                                 const btn = document.createElement('button');
-                                btn.className = 'choice-btn';
-                                btn.innerText = `【殺害】${targetName}`;
-                                btn.onclick = () => executeMurder(killer, targetName, murderBaseMsg);
-                                document.getElementById('choices-container').appendChild(btn);
+                                // choice-btn と target-btn の両方を付与
+                                btn.className = 'choice-btn target-btn'; 
+                                btn.innerText = `【殺害】\n${targetName}`; // 改行を入れると収まりが良い
+                                btn.onclick = () => {
+                                    container.classList.remove('murder-grid'); // 通常モードに戻す
+                                    executeMurder(killer, targetName, murderBaseMsg);
+                                };
+                                container.appendChild(btn);
                             });
                         });
                     } else {
-                        // NPCがキラーの場合（従来通り）
                         const targets = remaining.filter(n => n !== killer);
                         const target = targets[Math.floor(Math.random() * targets.length)];
                         executeMurder(killer, target, murderBaseMsg);
@@ -624,26 +711,19 @@
     function executeMurder(killer, target, baseMsg) {
         document.getElementById('choices-container').innerHTML = '';
         let murderMsg = baseMsg + `その後、【${killer}】が【${target}】を殺したぽん！`;
-
         if (target === state.playerName) {
-            triggerFav(murderMsg, () => {
-                gameOver();
-            });
+            triggerFav(murderMsg, () => { gameOver(); });
             return;
         } else {
             npcList = npcList.filter(n => n !== target);
             delete state.npcScores[target];
             state.survivors--;
             updateRanking();
-
             let survivorsNow = npcList.length + 1;
             if (survivorsNow <= 2) {
                 const survivorsList = npcList.concat(state.playerName).join('、');
                 triggerFav(murderMsg + `<br>現在残りは${survivorsNow}名（${survivorsList}）。ゲームを終了するぽん。`, () => {
-                    endGameFinal(
-                        (npcList.map(n => ({ name: n, isPlayer: false, candies: state.npcScores[n] })))
-                        .concat([{ name: state.playerName, isPlayer: true, candies: state.candies }])
-                    );
+                    endGameFinal( (npcList.map(n => ({ name: n, isPlayer: false, candies: state.npcScores[n] }))).concat([{ name: state.playerName, isPlayer: true, candies: state.candies }]) );
                 });
             } else {
                 state.week++;
