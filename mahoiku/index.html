@@ -250,8 +250,6 @@
     let npcList = [];
     const days = ["月", "火", "水", "木", "金"];
 
-    let commonEvents = [];
-
     // 追加：BGM制御関数
     function updateBGM() {
         const audio = document.getElementById('bgm-audio');
@@ -266,33 +264,158 @@
         }
     }
 
-    fetch("commonEvents.json")
-        .then(res => res.json())
-        .then(data => {
-            commonEvents = data;
-            while (commonEvents.length < 40 && commonEvents.length > 0) {
-                const base = commonEvents[Math.floor(Math.random()*commonEvents.length)];
-                commonEvents.push({
-                    ...base,
-                    text: "【再発】" + base.text
-                });
-            }
-        })
-        .catch(err => {
-            console.error("commonEvents.jsonの読み込みに失敗:", err);
-        });
+    const commonEvents = [
+            { text: "大規模なビル火災が発生。生存者がいる。", choices: [{ text: "直接救出に向かう", candy: 30, survival: -45, msg: "英雄として称えられたが消耗が激しい。" }, { text: "魔法で消火を助ける", candy: 20, survival: -15, msg: "効率的に鎮火した。" }, { text: "周囲の安全を確保する", candy: 5, survival: 10, msg: "二次被害を防いだ。" }] },
+            { text: "老人が重い荷物を運んでいる。", choices: [{ text: "目的地まで運ぶ", candy: 8, survival: 5, msg: "小さな徳を積んだ。" }, { text: "魔法で軽量化する", candy: 10, survival: -10, msg: "老人は驚いたが無事に着いた。" }, { text: "高級な台車を魔法で召喚して贈る", candy: -25, survival: 40, msg: "非常に感謝され、生存の噂が広まった。" }] },
+            { text: "魔法少女を狩る者が近くにいるらしい。", choices: [{ text: "罠を仕掛ける", candy: 25, survival: -45, msg: "返り討ちにしたが負傷した。" }, { text: "拠点を魔法で補強する", candy: -35, survival: 50, msg: "安全を確保した。" }, { text: "人混みに紛れて過ごす", candy: 0, survival: 10, msg: "やり過ごした。" }] },
+            { text: "公園で「飴をくれたらいい情報を教える」と言う不審者がいる。", choices: [{ text: "飴を35個渡す", candy: -35, survival: 60, msg: "有用な生存情報を得た。" }, { text: "力ずくで聞き出す", candy: 12, survival: -40, msg: "情報を奪ったが警戒されている。" }, { text: "相手にしない", candy: 0, survival: 5, msg: "賢明な判断だ。" }] },
+            { text: "深夜の病院で、不自然な魔力を感知した。", choices: [{ text: "霊を魔法で浄化する", candy: 20, survival: -30, msg: "感謝の念が飴に変わった。" }, { text: "魔力を隠して調査する", candy: 5, survival: 10, msg: "事件の証拠を掴んだ。" }, { text: "結界を張って放置する", candy: -25, survival: 40, msg: "飴を消費して安全を確保した。" }] },
+            { text: "自分の「魔法少女としての姿」がSNSで拡散されそうだ。", choices: [{ text: "魔法でサーバーを焼く", candy: 15, survival: -40, msg: "証拠隠滅には成功したが、管理者に目をつけられた。" }, { text: "飴をばら撒いてデマだと信じ込ませる", candy: -55, survival: 80, msg: "大量の飴を失ったが、完璧に隠蔽した。" }, { text: "何もしない", candy: 0, survival: -25, msg: "正体がバレ、生存率が大きく下がった。" }] },
+            { text: "地下水道に異形の怪物が住み着いている。", choices: [{ text: "全力で討伐する", candy: 40, survival: -55, msg: "死闘の末、飴を回収。" }, { text: "怪物の餌として飴を置く", candy: -40, survival: 60, msg: "怪物は満足して去り、安全を得た。" }, { text: "入り口を封鎖する", candy: 5, survival: 15, msg: "被害を最小限に抑えた。" }] },
+            { text: "「魔法少女ファン」を名乗る子供が、サインを求めてきた。", choices: [{ text: "派手な魔法を見せて喜ばせる", candy: 15, survival: -25, msg: "笑顔と飴をもらったが、居場所がバレた。" }, { text: "魔法のチャームをプレゼントする", candy: -25, survival: 45, msg: "子供の幸福感が、間接的にあなたを守った。" }, { text: "冷たくあしらう", candy: 0, survival: 5, msg: "リスクは避けた。" }] },
+            { text: "猛吹雪が街を襲い、多くの人が遭難している。", choices: [{ text: "街全体を暖める魔法を使う", candy: 45, survival: -80, msg: "奇跡の救助。しかし、魔力が枯渇寸前だ。" }, { text: "避難所に飴を燃料として提供する", candy: -50, survival: 60, msg: "飴の魔力で人々が救われ、信頼を得た。" }, { text: "自分だけ暖を取る", candy: 0, survival: 20, msg: "自分一人生き残る分には十分だ。" }] },
+            { text: "古い鏡の中から、自分と同じ姿の影が襲いかかってきた。", choices: [{ text: "影を力でねじ伏せる", candy: 20, survival: -50, msg: "激しい消耗を伴ったが、自分に打ち勝った。" }, { text: "影に飴を分け与える", candy: -35, survival: 60, msg: "影はあなたの優しさに満足して消えた。" }, { text: "鏡を叩き割る", candy: 5, survival: -20, msg: "不吉な予感が残った。" }] },
+            { text: "ファヴが「臨時ボーナスのチャンスだぽん」と囁いている。", choices: [{ text: "危険な賭けに乗る", candy: 60, survival: -100, msg: "成功したが命を削りすぎた。" }, { text: "飴をワイロとして渡し、情報を引き出す", candy: -50, survival: 70, msg: "ファヴは機嫌を良くし、重要情報をくれた。" }, { text: "無視して働く", candy: 10, survival: 0, msg: "堅実が一番だ。" }] },
+            { text: "工事現場でクレーンが倒壊し、通行人が下敷きになりそうだ。", choices: [{ text: "クレーンを魔法で支える", candy: 35, survival: -50, msg: "超人的な活躍で飴を稼いだ。" }, { text: "通行人をワープさせる", candy: 15, survival: -30, msg: "一瞬で救助。目撃者は少ない。" }, { text: "現場に飴のバリアを張る", candy: -35, survival: 55, msg: "飴のクッションで死者は免れた。" }] },
+            { text: "街のシンボルタワーに、魔法の時限爆弾が仕掛けられた。", choices: [{ text: "魔法で解除を試みる", candy: 40, survival: -60, msg: "大爆発は防いだが、腕に怪物のような傷を負った。" }, { text: "爆発の影響を飴で相殺する", candy: -60, survival: 80, msg: "損害は出たが、人的被害はゼロだ。" }, { text: "犯人を追う", candy: 25, survival: -40, msg: "爆発は防げなかったが、犯人から飴を奪った。" }] },
+            { text: "記憶を失った魔法少女が、あなたを親だと思い込んでいる。", choices: [{ text: "飴を与えて面倒を見る", candy: -50, survival: 90, msg: "強力な守護者として彼女があなたを守る。" }, { text: "魔法で記憶を捏造して去らせる", candy: 10, survival: -30, msg: "後味は悪いが、飴は回収した。" }, { text: "放置する", candy: 0, survival: -20, msg: "彼女は消えてしまった。" }] },
+            { text: "ある宗教団体が「魔法少女は悪魔だ」とデモを行っている。", choices: [{ text: "魔法で教祖を操る", candy: 20, survival: -50, msg: "活動を止めさせたが、強い呪いを受けた。" }, { text: "飴を供物として渡し、和解する", candy: -35, survival: 55, msg: "彼らはあなたを天使だと崇め始めた。" }, { text: "別の街へ拠点を移す", candy: -30, survival: 40, msg: "安全な場所を飴で買った。" }] },
+            { text: "深い森の奥で、願いを叶える泉を見つけた。", choices: [{ text: "「飴が欲しい」と願う", candy: 50, survival: -80, msg: "不浄な飴が手に入った。体調が悪い。" }, { text: "「命が欲しい」と願い、飴を捧げる", candy: -60, survival: 120, msg: "生存への強い活力を得た。" }, { text: "泉に触れずに去る", candy: 0, survival: 10, msg: "賢明な判断だ。" }] },
+            { text: "カジノのオーナーが魔法少女をボディーガードに雇いたがっている。", choices: [{ text: "高額報酬で引き受ける", candy: 80, survival: -110, msg: "大金（飴）を得たが、命を狙われる。" }, { text: "断る代わりに守りの飴を売る", candy: 15, survival: 0, msg: "小さな商談成立。" }, { text: "カジノを魔法で破産させる", candy: 40, survival: -60, msg: "不正を暴き、飴を奪い取った。" }] },
+            { text: "深夜の学校で「百物語」をしていた生徒が消えた。", choices: [{ text: "異界に突入して救出する", candy: 30, survival: -55, msg: "恐怖の体験だったが、報酬は得た。" }, { text: "異界の入り口を飴で封印する", candy: -35, survival: 60, msg: "生徒は戻れないが、これ以上の被害はない。" }, { text: "朝日が昇るのを待つ", candy: 5, survival: 10, msg: "あなたは安全だ。" }] },
+            { text: "魔法少女専用の「闇市」が開かれている。", choices: [{ text: "商品を奪って逃げる", candy: 50, survival: -85, msg: "指名手配されたが、戦利品は多い。" }, { text: "安全を買う（飴70消費）", candy: -70, survival: 150, msg: "最高級の安全を手に入れた。" }, { text: "冷やかしで見て回る", candy: 0, survival: 5, msg: "情報は少し入った。" }] },
+            { text: "大規模な停電が発生し、街がパニックに陥っている。", choices: [{ text: "魔法で発電する", candy: 25, survival: -40, msg: "多大な魔力を消費して飴を得た。" }, { text: "パニックを飴の力で鎮める", candy: -35, survival: 65, msg: "人々は安らぎ、暴動は収まった。" }, { text: "暗闇に乗じて他者の飴を奪う", candy: 40, survival: -70, msg: "悪い魔法少女だ。" }] },
+            { text: "謎の病が魔法少女の間で流行している。", choices: [{ text: "特効薬を魔法で生成する", candy: 30, survival: -65, msg: "自分の命を削って薬を作った。" }, { text: "飴を消費してワクチンを買う", candy: -50, survival: 100, msg: "感染を免れ、体調も万全だ。" }, { text: "感染者から距離を置く", candy: 0, survival: 10, msg: "自分だけは無傷だ。" }] },
+            { text: "空から巨大な隕石が降ってきている！", choices: [{ text: "魔法の最大出力で粉砕する", candy: 80, survival: -180, msg: "世界を救ったが、あなたは死の淵に。" }, { text: "落下地点に飴のクッションを作る", candy: -100, survival: 120, msg: "甚大な飴を失ったが、奇跡的に助かった。" }, { text: "地下シェルターに逃げ込む", candy: -20, survival: 30, msg: "文明は崩壊したが、あなたは生きている。" }] },
+            { text: "誰かがあなたに「呪いの飴」を送りつけてきた。", choices: [{ text: "呪いを解除して食べる", candy: 25, survival: -50, msg: "不快な味がしたが、力にはなった。" }, { text: "呪いを他人に転嫁する", candy: 5, survival: -30, msg: "最悪の気分だ。" }, { text: "飴を浄化して捨てる", candy: -25, survival: 45, msg: "安全第一。" }] },
+            { text: "テレビの生放送中に怪獣が現れた。", choices: [{ text: "カメラの前で戦う", candy: 60, survival: -120, msg: "一躍スターだが、全魔法少女のターゲットに。" }, { text: "魔法で放送をジャックし、隠れて戦う", candy: 20, survival: -40, msg: "堅実に処理した。" }, { text: "中継車を魔法で守る", candy: -20, survival: 30, msg: "マスコミに恩を売った。" }] },
+            { text: "捨てられたアンドロイドが魔法の核で動いている。", choices: [{ text: "核を抜き取る", candy: 40, survival: -40, msg: "冷酷な判断。飴を得た。" }, { text: "飴を与えて再起動させる", candy: -45, survival: 80, msg: "忠実なロボットがあなたを守る。" }, { text: "そのまま破壊する", candy: 5, survival: 10, msg: "危険の芽を摘んだ。" }] },
+            { text: "古い書物に「魔法少女を辞める方法」が書いてあった。", choices: [{ text: "詳しく読む", candy: -35, survival: 95, msg: "希望が見え、生存意欲が高まった。" }, { text: "嘘だと断じて燃やす", candy: 15, survival: -20, msg: "今の力に執着した。" }, { text: "仲間に飴で情報を売る", candy: 30, survival: -30, msg: "罪深い取引だ。" }] },
+            { text: "魔法の木が枯れかけている。", choices: [{ text: "自分の魔力を注ぐ", candy: 25, survival: -50, msg: "木は蘇り、少量の飴の実をつけた。" }, { text: "飴を肥料として埋める", candy: -45, survival: 85, msg: "精霊の加護を得た。" }, { text: "木を薪にして暖を取る", candy: 5, survival: -15, msg: "バチが当たりそうだ。" }] },
+            { text: "迷い込んだ並行世界から、もう一人の自分が助けを求めている。", choices: [{ text: "彼女を救って招き入れる", candy: -70, survival: 130, msg: "二人のあなたが互いを守り合う。" }, { text: "彼女を見捨てて飴だけ奪う", candy: 50, survival: -60, msg: "並行世界の自分を殺した罪悪感。" }, { text: "扉を閉じる", candy: 0, survival: 10, msg: "異変を拒絶した。" }] },
+            { text: "街を巨大な霧が包み、人々の正気を奪っている。", choices: [{ text: "霧の核を破壊する", candy: 30, survival: -60, msg: "幻覚と戦い、勝利した。" }, { text: "飴を媒介に浄化の風を起こす", candy: -55, survival: 80, msg: "清浄な空気が戻った。" }, { text: "霧の中で他人の所持品を漁る", candy: 25, survival: -30, msg: "卑しい行為だ。" }] },
+            { text: "伝説の武具がオークションに出品されている。", choices: [{ text: "力ずくで強奪する", candy: 55, survival: -110, msg: "警備をなぎ倒した。" }, { text: "全財産の飴を投じて落札する", candy: -150, survival: 300, msg: "無一文だが、最強の守りを得た。" }, { text: "見送る", candy: 5, survival: 5, msg: "平和が一番だ。" }] },
+            { text: "ファヴの隠し口座を見つけた。", choices: [{ text: "飴を不正送金する", candy: 120, survival: -180, msg: "莫大な飴を得たが、抹殺対象になった。" }, { text: "弱みとして握り、脅す", candy: 15, survival: 40, msg: "ファヴが少し優しくなった。" }, { text: "何も見なかったことにする", candy: 10, survival: 20, msg: "賢明だ。" }] },
+            { text: "魔法少女を愛でる「魔法少女喫茶」が流行っている。", choices: [{ text: "バイトとして働く", candy: 30, survival: -45, msg: "精神的に削られるが、飴は良い。" }, { text: "偽物だと抗議して飴を要求する", candy: 15, survival: -20, msg: "迷惑料をぶんどった。" }, { text: "店を魔法で改造してあげる", candy: -25, survival: 50, msg: "隠れた支援者として愛された。" }] },
+            { text: "自分の魔法が、他人の不運を吸い取って成長し始めた。", choices: [{ text: "そのまま成長させる", candy: 50, survival: -100, msg: "呪われた力。命を削る。" }, { text: "飴を消費してこの力を封印する", candy: -60, survival: 90, msg: "正しい心を取り戻した。" }, { text: "特定のターゲットに不運をぶつける", candy: 25, survival: -50, msg: "ライバルを追い詰めた。" }] },
+            { text: "街に「願いの流星群」が降る夜だ。", choices: [{ text: "全ての星を飴に変える", candy: 100, survival: -130, msg: "空前の飴獲得量。しかし運命が歪んだ。" }, { text: "星に平和を祈る", candy: 0, survival: 50, msg: "穏やかな奇跡が起きた。" }, { text: "願いを飴で買い取り、叶えてあげる", candy: -55, survival: 100, msg: "人々の希望があなたを支える。" }] },
+            { text: "魔法少女の遺品整理を依頼された。", choices: [{ text: "形見を自分のものにする", candy: 30, survival: -40, msg: "呪われた遺品だが力にはなる。" }, { text: "遺族へ飴と一緒に届ける", candy: -35, survival: 65, msg: "涙ながらに感謝された。" }, { text: "全て焼却処分する", candy: 5, survival: 10, msg: "未練を断ち切った。" }] },
+            { text: "巨大な魔法少女の銅像が動き出した。", choices: [{ text: "倒して素材にする", candy: 40, survival: -65, msg: "激戦。銅像から飴を削り出した。" }, { text: "飴を供えて鎮める", candy: -40, survival: 60, msg: "銅像は再び静寂に戻った。" }, { text: "街を壊すのを眺める", candy: 0, survival: -30, msg: "街がボロボロだ。" }] },
+            { text: "魔法少女ランキングの操作疑惑が浮上した。", choices: [{ text: "ハッキングして自分を1位にする", candy: 80, survival: -150, msg: "数字は完璧だが、刺客が絶えない。" }, { text: "証拠を飴で買い取り、公表する", candy: -60, survival: 90, msg: "正義が行われ、あなたは英雄視された。" }, { text: "静観する", candy: 5, survival: 10, msg: "泥沼には関わらない。" }] },
+            { text: "ある子供が「魔法少女になりたい」と泣いている。", choices: [{ text: "地獄（ファヴ）に繋ぐ", candy: 40, survival: -80, msg: "紹介料をもらった。あなたは悪魔だ。" }, { text: "飴をあげて、普通の幸せを諭す", candy: -25, survival: 50, msg: "一人の少女を救ったのかもしれない。" }, { text: "魔法でその記憶を消す", candy: 10, survival: -15, msg: "慈悲深い残酷。" }] },
+            { text: "突然、魔法少女としての変身が解けなくなった。", choices: [{ text: "そのままの姿で生きる", candy: 20, survival: -70, msg: "一生狙われ続ける恐怖。" }, { text: "飴を消費して解呪する", candy: -65, survival: 110, msg: "人間に戻る安らぎを得た。" }, { text: "ファヴに文句を言う", candy: 5, survival: -15, msg: "あしらわれた。" }] },
+            { text: "魔力に汚染されたひまわりが巨大化して暴れている。", choices: [{ text: "根こそぎ魔法で抜く", candy: 25, survival: -35, msg: "力技で解決したが周囲の土壌が荒れた。" }, { text: "日光を飴で遮断して眠らせる", candy: -20, survival: 50, msg: "穏やかな方法で鎮静化に成功。" }, { text: "種を回収して売る", candy: 35, survival: -50, msg: "金にはなったが毒素が飛散した。" }] },
+            { text: "深夜のデパートでマネキンたちが踊り出した。", choices: [{ text: "一緒に踊って満足させる", candy: 20, survival: -20, msg: "彼らは満足して戻ったが、防犯カメラに映った。" }, { text: "すべての首を魔法で飛ばす", candy: 30, survival: -60, msg: "恐怖映像としてニュースになった。" }, { text: "飴の鎖で拘束する", candy: -25, survival: 45, msg: "無害なオブジェに戻した。" }] },
+            { text: "記憶を食らう獏が幼稚園に居座っている。", choices: [{ text: "悪夢を魔法で具現化して戦う", candy: 45, survival: -70, msg: "壮絶な精神戦の末、勝利した。" }, { text: "子供たちの夢を飴でコーティングする", candy: -50, survival: 90, msg: "獏は去り、子供たちは安眠を得た。" }, { text: "獏と取引する", candy: 15, survival: -40, msg: "嫌な記憶を消してもらい飴を貰った。" }] },
+            { text: "空飛ぶクジラが雲をすべて食べてしまった。", choices: [{ text: "魔法の雨を降らせる", candy: 40, survival: -55, msg: "干ばつを防いだが魔力を使い果たした。" }, { text: "飴の雲を空に浮かべる", candy: -60, survival: 100, msg: "街に甘い雨が降り、絶賛された。" }, { text: "クジラを狩る", candy: 60, survival: -120, msg: "天空の肉を手に入れたが恨みを買った。" }] },
+            { text: "魔法少女のゴシップ誌があなたのスキャンダルを狙っている。", choices: [{ text: "編集部を魔法で幻惑する", candy: 15, survival: -30, msg: "記事はボツになったが疑念は残った。" }, { text: "スクープを飴で買い取る", candy: -70, survival: 140, msg: "完全に封じ込めた。平穏は高い。" }, { text: "開き直って取材に応じる", candy: 40, survival: -90, msg: "知名度は上がったが敵も増えた。" }] },
+            { text: "雨がすべてキャンディーに変わる怪現象が起きた。", choices: [{ text: "傘を魔法で広げ独占する", candy: 50, survival: -60, msg: "強欲さが目立ち、反感を買った。" }, { text: "溶ける前に人々に配り歩く", candy: 10, survival: 60, msg: "慈善活動として高い評価を得た。" }, { text: "飴雨の源流を断つ", candy: 30, survival: -40, msg: "異常事態を収束させた。" }] },
+            { text: "図書館の禁書が逃げ出し、文字が街中に溢れている。", choices: [{ text: "一文字ずつ魔法で捕まえる", candy: 35, survival: -45, msg: "気の遠くなる作業だったがやり遂げた。" }, { text: "巨大な飴の栞を本に挟む", candy: -40, survival: 75, msg: "魔導書を封印し、知恵の加護を得た。" }, { text: "溢れた文字を食べる", candy: 20, survival: -30, msg: "知識が増えたが頭痛が止まらない。" }] },
+            { text: "魔法の電波塔が狂い、人々の欲望を放送し始めた。", choices: [{ text: "アンテナを魔法でへし折る", candy: 45, survival: -80, msg: "物理的に止めたが爆発に巻き込まれた。" }, { text: "飴のノイズで放送をかき消す", candy: -55, survival: 110, msg: "羞恥の嵐から街を救い出した。" }, { text: "録音して脅迫に使う", candy: 70, survival: -160, msg: "莫大な飴を得たが、あなたは標的だ。" }] },
+            { text: "鏡の国から逆さまの魔法少女が現れた。", choices: [{ text: "物理法則を無視して戦う", candy: 50, survival: -90, msg: "三半規管が狂ったが勝利した。" }, { text: "鏡に飴を塗りつぶす", candy: -45, survival: 80, msg: "通路を遮断し、平穏を守った。" }, { text: "彼女をこちら側に引き入れる", candy: -100, survival: 200, msg: "最強の協力者を得たが代償は大きい。" }] },
+            { text: "ファヴが「メンテナンスの間、飴が2倍だぽん」と言い出した。", choices: [{ text: "不眠不休で活動する", candy: 120, survival: -200, msg: "異常な収穫だが、心身ともに崩壊寸前。" }, { text: "バグを利用して飴を増殖させる", candy: 180, survival: -300, msg: "運営にバレ、消去のカウントダウンが始まった。" }, { text: "罠だと判断して休む", candy: 0, survival: 50, msg: "生存者は慎重であるべきだ。" }] },
+            { text: "街の銅像があなたの魔法をコピーして歩き回っている。", choices: [{ text: "自分の魔法の弱点を突く", candy: 35, survival: -50, msg: "自己批判のような戦闘だった。" }, { text: "飴のペンキで色を塗り変える", candy: -30, survival: 65, msg: "魔法の回路を狂わせて停止させた。" }, { text: "自分も銅像のふりをする", candy: 10, survival: 10, msg: "誰も見分けがつかず、やり過ごした。" }] },
+            { text: "海底から沈没した魔法都市が浮上してきた。", choices: [{ text: "財宝を魔法で回収する", candy: 90, survival: -150, msg: "古代の呪いを受けたが飴は手に入れた。" }, { text: "都市に結界を張り再び沈める", candy: -80, survival: 160, msg: "世界の均衡を守り、精霊に感謝された。" }, { text: "都市の王を名乗る", candy: 50, survival: -100, msg: "束の間の栄華。刺客が押し寄せる。" }] },
+            { text: "人々の「やる気」が影となって剥がれ落ちている。", choices: [{ text: "影を縫い付ける魔法を使う", candy: 30, survival: -50, msg: "街の活力を戻したが、ひどく疲労した。" }, { text: "影を飴で固めてコレクションする", candy: 40, survival: -70, msg: "他人の熱意を奪う冷酷な魔法少女。" }, { text: "やる気のない街で昼寝する", candy: 0, survival: 30, msg: "無気力は安全を招く。" }] },
+            { text: "空に巨大な「ファヴの顔」をした月が現れた。", choices: [{ text: "月にロケット魔法を撃ち込む", candy: 60, survival: -120, msg: "不敬罪だが、溜飲は下がった。" }, { text: "お供え物として飴を積み上げる", candy: -90, survival: 180, msg: "ファヴのご機嫌を取り、生存を確約された。" }, { text: "見ないふりをして地下に潜る", candy: -10, survival: 40, msg: "狂気から逃れるにはそれしかない。" }] },
+            { text: "魔法少女を「育成」するための特別合宿に誘われた。", choices: [{ text: "地獄の特訓に耐える", candy: 70, survival: -130, msg: "実力は上がったが、友人を一人失った。" }, { text: "教官を魔法で買収する", candy: -60, survival: 100, msg: "飴で「卒業証書」を手に入れた。" }, { text: "合宿所を爆破して逃げる", candy: 40, survival: -80, msg: "自由を手に入れたが指名手配だ。" }] },
+            { text: "死んだはずの魔法少女からのメールが届いた。", choices: [{ text: "発信源を魔法で追跡する", candy: 35, survival: -60, msg: "ゴーストネットワークに接触し、飴を得た。" }, { text: "飴を添付して返信する", candy: -40, survival: 80, msg: "黄泉の国から感謝の加護が届いた。" }, { text: "スマホを破壊して忘れる", candy: 5, survival: 20, msg: "過去に囚われる者は死ぬ。" }] },
+            { text: "あなたの魔法が「自我」を持ち、勝手に人助けを始めた。", choices: [{ text: "魔法を説得して戻らせる", candy: 20, survival: -40, msg: "自分の力と対話する奇妙な時間。" }, { text: "魔法の好物（飴）を与えて懐かせる", candy: -50, survival: 110, msg: "二身一体の完璧な連携が完成した。" }, { text: "魔法を切り捨てて新しい力を探す", candy: 40, survival: -100, msg: "力を失いかけたが、純粋な飴を得た。" }] },
+            { text: "街中の信号機がすべて「飴色」に点滅し始めた。", choices: [{ text: "交通整理を魔法で行う", candy: 25, survival: -30, msg: "事故を防ぎ、小銭ならぬ小飴を稼いだ。" }, { text: "信号機をキャンディーに変えて食べる", candy: 30, survival: -50, msg: "公共物を食す背徳の味。" }, { text: "飴色を透過する魔法の眼鏡を作る", candy: -35, survival: 70, msg: "自分だけは平穏な世界を歩ける。" }] },
+            { text: "魔法少女同士の「飴の奪い合い」がスポーツイベント化された。", choices: [{ text: "卑怯な手を使って優勝する", candy: 150, survival: -250, msg: "莫大な富。だが全魔法少女の敵となった。" }, { text: "八百長を持ちかけて飴を稼ぐ", candy: 80, survival: -100, msg: "汚いやり方だが、確実に生き残れる。" }, { text: "審判員として参加し、賄賂をもらう", candy: 50, survival: -40, msg: "安全な地位で甘い汁を吸った。" }] },
+            { text: "時間が5分ごとに巻き戻るループ地帯に迷い込んだ。", choices: [{ text: "ループを利用して飴を無限回収する", candy: 100, survival: -180, msg: "精神が摩耗し、自分が誰か忘れかけた。" }, { text: "ループの核を魔法で破壊する", candy: 40, survival: -60, msg: "時間を進めたが、数年分老けた気がする。" }, { text: "飴を置いてループから出してもらう", candy: -70, survival: 150, msg: "対価を払い、現在へ帰還した。" }] },
+            { text: "「魔法少女のお葬式」に参列することになった。", choices: [{ text: "弔辞で魔法を見せて故人を偲ぶ", candy: 15, survival: -30, msg: "しめやかな飴の雨を降らせた。" }, { text: "香典として大量の飴を包む", candy: -80, survival: 160, msg: "遺族（ファヴ）に認められた。" }, { text: "棺の中から飴を盗む", candy: 60, survival: -120, msg: "死者に口なし。だが呪いは重い。" }] },
+            { text: "夢の中で「魔法少女の神様」に出会った。", choices: [{ text: "「もっと飴を」と傲慢に頼む", candy: 200, survival: -400, msg: "富は得た。だが、神はあなたに飽きた。" }, { text: "「平和を」と祈り飴を捧げる", candy: -100, survival: 300, msg: "無欲な魂に、絶対的な守護が与えられた。" }, { text: "神様を魔法で攻撃してみる", candy: 100, survival: -200, msg: "神の欠片（飴）を奪ったが、右腕を失った。" }] },
+            { text: "あなたのステータスが「バグ」で全魔法少女に公開された。", choices: [{ text: "嘘の情報を魔法で流す", candy: 40, survival: -60, msg: "攪乱に成功したが、信用も失った。" }, { text: "公開停止を飴で交渉する", candy: -90, survival: 180, msg: "プライバシーは飴で守るものだ。" }, { text: "弱さを逆手に取り、助けを乞う", candy: 10, survival: 80, msg: "憐れみという名の防壁。" }] },
+            { text: "ゴミ捨て場に「使い捨てられた魔法少女」が転がっている。", choices: [{ text: "部品を剥ぎ取って飴にする", candy: 50, survival: -70, msg: "冷酷なリサイクル。" }, { text: "飴を注入して再起動させる", candy: -60, survival: 120, msg: "魂のない人形が、あなたの盾となった。" }, { text: "丁寧に埋葬する", candy: 0, survival: 40, msg: "いつかの自分を見ているようだ。" }] },
+            { text: "魔法少女の「人気投票」が始まった。", choices: [{ text: "不正投票を魔法で行う", candy: 70, survival: -110, msg: "1位獲得。だがアンチの魔の手が迫る。" }, { text: "投票してくれた人に飴を配る", candy: -100, survival: 190, msg: "飴による支持率工作。効果は絶大。" }, { text: "最下位を目指して目立たない", candy: 5, survival: 30, msg: "注目されないことが最高の生存戦略。" }] },
+            { text: "街が「魔法少女お断り」の結界で覆われた。", choices: [{ text: "力ずくで結界を叩き割る", candy: 60, survival: -130, msg: "侵入には成功したが、体力が限界。" }, { text: "通行証を飴で偽造する", candy: -50, survival: 90, msg: "スマートに潜入し、拠点を守った。" }, { text: "結界の外で新しい街を作る", candy: 30, survival: -40, msg: "開拓者の苦労と飴。" }] },
+            { text: "鏡合わせの自分と「飴の所有権」を賭けて決闘する。", choices: [{ text: "本物の矜持を見せて勝つ", candy: 80, survival: -140, msg: "偽者を消去したが、心に穴が開いた。" }, { text: "飴を半分分け与えて和解する", candy: -40, survival: 100, msg: "自分自身を許し、魔力が安定した。" }, { text: "審判のファヴに飴を握らせる", candy: -60, survival: 80, msg: "不戦勝。金がものを言う世界。" }] },
+            { text: "あなたの魔法の杖が「反抗期」を迎えた。", choices: [{ text: "力で押さえつけて従わせる", candy: 30, survival: -60, msg: "主従関係を再構築した。" }, { text: "最高級の飴で磨いて機嫌を取る", candy: -50, survival: 110, msg: "杖は光り輝き、あなたを優しく守る。" }, { text: "杖を捨てて素手で戦う", candy: 50, survival: -120, msg: "野生の魔法少女。野生の飴。" }] },
+            { text: "魔法少女としての「本当の目的」が書かれた手紙を拾った。", choices: [{ text: "震える手で封を切る", candy: -50, survival: 150, msg: "真実を知り、生存への覚悟が固まった。" }, { text: "読まずに食べて証拠を消す", candy: 30, survival: -20, msg: "無知は飴、知恵は毒。" }, { text: "手紙をファヴに突きつける", candy: 20, survival: -80, msg: "「知りすぎたぽん」と笑われた。" }] },
+            { text: "世界がモノクロになり、魔法の色だけが残った。", choices: [{ text: "自分の色を街に塗り広げる", candy: 45, survival: -70, msg: "あなたが世界の支配者に見えた瞬間。" }, { text: "色のない人々に飴で彩色する", candy: -60, survival: 130, msg: "モノクロの世界に希望の飴が降る。" }, { text: "色の濃い場所を探して隠れる", candy: 10, survival: 50, msg: "コントラストの中に潜む安全。" }] }
+        ];
 
     const mgEvents = [
-        { text: "【遭遇】リップルが特訓をしている。", choices: [{ text: "一緒に訓練する", candy: 10, survival: -25, msg: "技術は上がったが疲弊した。" }, { text: "的に魔法を動かす", candy: 18, survival: -30, msg: "彼女は怒ったが飴を得た。" }, { text: "差し入れに飴を渡す", candy: -25, survival: 45, msg: "少し仲良くなれた。" }] },
+        // --- スノーホワイト ---
         { text: "【交流】スノーホワイトが困っている人の声を聞いている。", choices: [{ text: "手伝いを申し出る", candy: 20, survival: -20, msg: "二人で多くの人を救った。" }, { text: "彼女の代わりに飴を集める", candy: 30, survival: -45, msg: "感謝されたが危険が増した。" }, { text: "遠くから静観する", candy: 0, survival: 10, msg: "心が洗われた。" }] },
+        { text: "【葛藤】スノーホワイトが血の付いた武器を見て震えている。", choices: [{ text: "優しく声をかける", candy: -10, survival: 40, msg: "彼女の精神的な支えになった。" }, { text: "武器を奪って捨てる", candy: 0, survival: 20, msg: "彼女の「純白」を守った。" }, { text: "「これが現実だ」と説く", candy: 15, survival: -10, msg: "彼女の覚悟が決まり、飴を少し分けてくれた。" }] },
+        { text: "【捜索】スノーホワイトが迷子の子供を探している。", choices: [{ text: "一緒に探す", candy: 5, survival: 20, msg: "無事に見つかり、母親から飴をもらった。" }, { text: "魔法で子供をおびき寄せる", candy: 25, survival: -30, msg: "効率的に解決したがスノーホワイトに怪しまれた。" }, { text: "子供が持っていた飴を奪う", candy: 40, survival: -60, msg: "泣き声を聞いて彼女が駆けつけてきた！急いで逃げる。" }] },
+
+        // --- リップル ---
+        { text: "【遭遇】リップルが特訓をしている。", choices: [{ text: "一緒に訓練する", candy: 10, survival: -25, msg: "技術は上がったが疲弊した。" }, { text: "的に魔法を動かす", candy: 18, survival: -30, msg: "彼女は怒ったが飴を得た。" }, { text: "差し入れに飴を渡す", candy: -25, survival: 45, msg: "少し仲良くなれた。" }] },
+        { text: "【因縁】リップルが宿敵の情報を探している。", choices: [{ text: "情報を提供する", candy: 15, survival: -20, msg: "感謝された。彼女は復讐へと向かった。" }, { text: "復讐を止める", candy: -20, survival: 60, msg: "激しい口論になったが、彼女の命は繋がった。" }, { text: "偽情報を流して戦わせる", candy: 50, survival: -80, msg: "混乱に乗じて大量の飴を奪い取った。" }] },
+        { text: "【不器用】リップルが怪我をして手当てに苦労している。", choices: [{ text: "手伝う", candy: 0, survival: 50, msg: "「余計なことを…」と言いつつ、信頼を得た。" }, { text: "忍者道具をプレゼントする", candy: -30, survival: 40, msg: "彼女の戦闘スタイルに合い、喜ばれた。" }, { text: "弱みにつけ込み飴を要求する", candy: 45, survival: -70, msg: "くないが飛んできたが、なんとか飴は奪った。" }] },
+
+        // --- ラ・ピュセル ---
+        { text: "【正義】ラ・ピュセルが巨大な剣を振るっている。", choices: [{ text: "剣の修行に付き合う", candy: 10, survival: -15, msg: "騎士道精神を学んだ。" }, { text: "「竜騎士」と呼んであげる", candy: 0, survival: 25, msg: "照れながらも嬉しそうだ。" }, { text: "戦闘の隙に飴を回収する", candy: 35, survival: -40, msg: "激戦の余波でボロボロだ。" }] },
+        { text: "【守護】ラ・ピュセルが暴徒から街を守っている。", choices: [{ text: "背中を預けて共に戦う", candy: 20, survival: -10, msg: "見事な連携で街に平和が戻った。" }, { text: "守りが薄い場所を教える", candy: 0, survival: 40, msg: "彼女の騎士としての誇りを助けた。" }, { text: "守られている間に店から盗む", candy: 60, survival: -100, msg: "大量の飴を得たが、彼女に軽蔑された。" }] },
+        { text: "【騎士】ラ・ピュセルがスノーホワイトを守る誓いを立てている。", choices: [{ text: "応援する", candy: 5, survival: 30, msg: "「君もいい奴だな」と認められた。" }, { text: "自分の事も守ってほしいと頼む", candy: -20, survival: 70, msg: "飴と引き換えに一時的な護衛を得た。" }, { text: "「無駄な努力だ」と嘲笑う", candy: 10, survival: -30, msg: "険悪なムードになった。" }] },
+
+        // --- ハードゴア・アリス ---
+        { text: "【不滅】ハードゴア・アリスが血まみれで佇んでいる。", choices: [{ text: "手当をしてあげる", candy: -10, survival: 60, msg: "彼女は静かに懐いた。" }, { text: "うさぎのぬいぐるみを貸す", candy: 0, survival: 30, msg: "少しだけ表情が和らいだ。" }, { text: "再生力を利用して囮にする", candy: 40, survival: -50, msg: "飴は稼げたが良心が痛む。" }] },
+        { text: "【追跡】アリスが何かを探して街を徘徊している。", choices: [{ text: "白い手袋を渡す", candy: -5, survival: 40, msg: "彼女の大事なものだったようだ。" }, { text: "一緒に探してあげる", candy: 5, survival: 30, msg: "言葉は少ないが、確かな絆を感じた。" }, { text: "気味が悪いので攻撃する", candy: 20, survival: -60, msg: "切っても切っても向かってくる姿に恐怖した。" }] },
+        { text: "【献身】アリスがあなたをじっと見つめている。", choices: [{ text: "頭を撫でる", candy: 0, survival: 50, msg: "彼女は満足そうに目を閉じた。" }, { text: "飴を半分分ける", candy: -25, survival: 80, msg: "最強の盾としての信頼を得た。" }, { text: "逃げ出す", candy: 0, survival: -20, msg: "どこまでも追いかけてくる……。" }] },
+
+        // --- トップスピード ---
+        { text: "【爆速】トップスピードが箒で空を駆けている。", choices: [{ text: "後ろに乗せてもらう", candy: 15, survival: -10, msg: "あっという間に現場へ着いた。" }, { text: "妊婦さんへの伝言を頼む", candy: -20, survival: 80, msg: "彼女の「最優先事項」を助けた。" }, { text: "最高速度で競争する", candy: 10, survival: -30, msg: "振り切られたが爽快だった。" }] },
+        { text: "【休息】トップスピードが隠れ家で料理を作っている。", choices: [{ text: "一緒に食べる", candy: 0, survival: 40, msg: "家庭的な味に癒やされた。" }, { text: "食材を差し入れる", candy: -15, survival: 60, msg: "「気が利くねぇ！」と絶賛された。" }, { text: "レシピを盗んで売る", candy: 30, survival: -40, msg: "怒った彼女に上空から落とされた。" }] },
+        { text: "【覚悟】トップスピードが「あと半年」と呟いている。", choices: [{ text: "話を聞いてあげる", candy: 0, survival: 50, msg: "彼女の重荷を少し分かち合った。" }, { text: "お守りを渡す", candy: -10, survival: 70, msg: "「意地でも生き残ってやるよ」と笑った。" }, { text: "弱点を分析する", candy: 25, survival: -30, msg: "冷徹に情報を集めた。" }] },
+
+        // --- カラミティ・メアリ ---
         { text: "【危機】カラミティ・メアリが酔って暴れている。", choices: [{ text: "正面から止める", candy: 40, survival: -80, msg: "激戦の末、沈静化させた。" }, { text: "酒に睡眠薬を混ぜる", candy: 15, survival: -30, msg: "うまく眠らせた。" }, { text: "飴を置いて去る", candy: -45, survival: 60, msg: "店主から深く感謝された。" }] },
-        { text: "【取引】マジカルロイド44が怪しい機械を売っている。", choices: [{ text: "飴増殖機を買う", candy: -50, survival: 15, msg: "即座に爆発した！" }, { text: "シールドを買う", candy: -35, survival: 65, msg: "頑丈な守りを得た。" }, { text: "彼女をスクラップにする", candy: 35, survival: -60, msg: "パーツを飴と交換した。" }] },
+        { text: "【略奪】メアリがガソリンスタンドを占拠した。", choices: [{ text: "分け前を要求する", candy: 40, survival: -50, msg: "狂犬の仲間入りを果たした。" }, { text: "影から狙撃する", candy: 20, survival: -40, msg: "威嚇には成功したが睨まれた。" }, { text: "遠くから通報する", candy: 5, survival: 20, msg: "警察が来た隙に逃げた。" }] },
+        { text: "【恐怖】メアリが新しい銃を試そうとしている。", choices: [{ text: "的になる（フリをする）", candy: 50, survival: -90, msg: "命がけのパフォーマンスで気に入られた。" }, { text: "もっと強い武器を教える", candy: -20, survival: 40, msg: "興味をそらして難を逃れた。" }, { text: "隠れる", candy: 0, survival: 10, msg: "銃声が響き渡る中、息を潜めた。" }] },
+
+        // --- スイムスイム ---
         { text: "【強襲】スイムスイムが床から忍び寄ってきた！", choices: [{ text: "全力で空へ逃げる", candy: 0, survival: 20, msg: "危機一髪で回避した。" }, { text: "床を魔法で硬質化させる", candy: 15, survival: -20, msg: "彼女を閉じ込めて追い払った。" }, { text: "持っていた飴をすべて差し出す", candy: -80, survival: 150, msg: "見逃してもらえたが、ほぼ全てを失った。" }] },
-        { text: "【誘惑】クラムベリーが演奏会を開いている。", choices: [{ text: "聴き入る", candy: 0, survival: -60, msg: "旋律に当てられ、衰弱した。" }, { text: "拍手と共に飴を贈る", candy: -30, survival: 60, msg: "「強い魂」だと認められた。" }, { text: "演奏を魔法で妨害する", candy: 30, survival: -80, msg: "殺し合いに発展した。" }] },
-        { text: "【事故】たまが誤って街を穴だらけにしてしまった。", choices: [{ text: "一緒に埋め戻す", candy: 5, survival: 25, msg: "たまは泣いて喜んだ。" }, { text: "穴を利用して罠を作る", candy: 25, survival: -45, msg: "効率的に他者から奪えた。" }, { text: "魔法で修復する", candy: -35, survival: 55, msg: "街は元通りになった。" }] },
+        { text: "【教育】スイムスイムがルーラの教えを思い出している。", choices: [{ text: "新しい「教育」を施す", candy: 35, survival: -50, msg: "彼女は冷酷なリーダーへと成長した。" }, { text: "「王の資質がある」と褒める", candy: 10, survival: 30, msg: "彼女は静かに頷いた。" }, { text: "本をプレゼントする", candy: -10, survival: 40, msg: "熱心に読み始めた。隙ができた。" }] },
+        { text: "【無感情】スイムスイムが無表情にあなたを追ってくる。", choices: [{ text: "ライトで目をくらませる", candy: 10, survival: 30, msg: "弱点を見抜き、一時撤退させた。" }, { text: "水の中に誘い込む", candy: 20, survival: -40, msg: "彼女の得意フィールドで苦戦した。" }, { text: "命乞いをする", candy: -50, survival: 60, msg: "飴を半分渡して見逃してもらった。" }] },
+
+        // --- ルーラ ---
         { text: "【支配】ルーラが「跪け」と命じている。", choices: [{ text: "従うフリをする", candy: -25, survival: 45, msg: "臣下として守られた。" }, { text: "命令を魔法で跳ね返す", candy: 30, survival: -50, msg: "主導権を奪い返した。" }, { text: "背後から奇襲する", candy: 45, survival: -90, msg: "王位を簒奪し、飴を奪った。" }] },
+        { text: "【傲慢】ルーラが作戦会議を開いている。", choices: [{ text: "意見を出す", candy: 10, survival: 10, msg: "「生意気ね」と言いつつ採用された。" }, { text: "ひたすら称賛する", candy: -10, survival: 50, msg: "気分を良くした彼女に庇護された。" }, { text: "会議を台無しにする", candy: 20, survival: -60, msg: "怒りの魔法を叩き込まれた。" }] },
+        { text: "【孤高】ルーラが一人で紅茶を飲んでいる。", choices: [{ text: "最高級の茶葉を出す", candy: -20, survival: 60, msg: "優雅な時間を共有し、絆が深まった。" }, { text: "毒を盛る", candy: 40, survival: -100, msg: "失敗して処刑されかけた。" }, { text: "給仕をする", candy: 5, survival: 30, msg: "使用人として飴を少し貰った。" }] },
+
+        // --- たま ---
+        { text: "【事故】たまが誤って街を穴だらけにしてしまった。", choices: [{ text: "一緒に埋め戻す", candy: 5, survival: 25, msg: "たまは泣いて喜んだ。" }, { text: "穴を利用して罠を作る", candy: 25, survival: -45, msg: "効率的に他者から奪えた。" }, { text: "魔法で修復する", candy: -35, survival: 55, msg: "街は元通りになった。" }] },
+        { text: "【劣等感】たまが「自分なんて…」と落ち込んでいる。", choices: [{ text: "才能を褒める", candy: 0, survival: 60, msg: "彼女は自信を取り戻し、あなたを守った。" }, { text: "飴をあげて励ます", candy: -15, survival: 40, msg: "笑顔が見られた。" }, { text: "さらに追い込む", candy: 30, survival: -50, msg: "パニックになった彼女の穴掘りに巻き込まれた。" }] },
+        { text: "【突撃】たまがルーラの命令であなたを襲ってきた！", choices: [{ text: "説得する", candy: -10, survival: 50, msg: "泣きながら彼女は去っていった。" }, { text: "穴に突き落とす", candy: 20, survival: 10, msg: "自業自得な結果になった。" }, { text: "ルーラを倒すと脅す", candy: 0, survival: 30, msg: "怯えて動けなくなったようだ。" }] },
+
+        // --- ユナエル ---
+        { text: "【幻惑】ユナエルが誰かに変身して悪戯をしている。", choices: [{ text: "一緒になって騙す", candy: 25, survival: -15, msg: "二人で飴を騙し取った。" }, { text: "ピーナッツをあげる", candy: -5, survival: 30, msg: "機嫌を直して去っていった。" }, { text: "本物を見破って叱る", candy: 0, survival: 10, msg: "つまらなそうに舌を出された。" }] },
+        { text: "【偽装】ユナエルがあなたの姿に変身した！", choices: [{ text: "鏡合わせで踊る", candy: 10, survival: 20, msg: "意気投合して飴を分け合った。" }, { text: "偽物だと周囲に言いふらす", candy: 0, survival: -30, msg: "逆ギレして攻撃してきた。" }, { text: "身代わりにして逃げる", candy: 30, survival: 50, msg: "彼女にヘイトを押し付けた。" }] },
+        { text: "【姉妹】ユナエルがミナエルと喧嘩している。", choices: [{ text: "仲裁する", candy: -10, survival: 40, msg: "二人から感謝された。" }, { text: "ミナエルの肩を持つ", candy: 10, survival: -20, msg: "ユナエルに恨まれた。" }, { text: "どさくさに紛れて飴を盗む", candy: 40, survival: -50, msg: "喧嘩を止めて二人で追ってきた！" }] },
+
+        // --- ミナエル ---
+        { text: "【模倣】ミナエルが看板に化けて隠れている。", choices: [{ text: "知らないふりで通り過ぎる", candy: 0, survival: 15, msg: "やり過ごすことができた。" }, { text: "看板を蹴飛ばす", candy: 20, survival: -30, msg: "正体を現し、飴を落として逃げた。" }, { text: "姉（ユナエル）を連れてくる", candy: 10, survival: 20, msg: "姉妹で仲良く遊び始めた。" }] },
+        { text: "【潜伏】ミナエルが凶器に化けて他の魔法少女を狙っている。", choices: [{ text: "標的に教える", candy: -10, survival: 50, msg: "正義の味方として感謝された。" }, { text: "共謀して不意打ちする", candy: 40, survival: -60, msg: "酷い事をした。飴はたっぷり得た。" }, { text: "彼女を拾って持ち歩く", candy: 0, survival: 10, msg: "重たかった。途中で逃げられた。" }] },
+        { text: "【執念】ミナエルが死んだフリをして飴を稼いでいる。", choices: [{ text: "お供え物（飴）を置く", candy: -20, survival: 60, msg: "「いい奴ね」と小声で言われた。" }, { text: "本当に埋める準備をする", candy: 20, survival: -20, msg: "慌てて飛び起きて逃げていった。" }, { text: "放置する", candy: 0, survival: 0, msg: "シュールな光景だった。" }] },
+
+        // --- マジカルロイド44 ---
+        { text: "【取引】マジカルロイド44が怪しい機械を売っている。", choices: [{ text: "飴増殖機を買う", candy: -50, survival: 15, msg: "即座に爆発した！" }, { text: "シールドを買う", candy: -35, survival: 65, msg: "頑丈な守りを得た。" }, { text: "彼女をスクラップにする", candy: 35, survival: -60, msg: "パーツを飴と交換した。" }] },
+        { text: "【修理】マジカルロイドがバッテリー切れで止まっている。", choices: [{ text: "充電してあげる", candy: -10, survival: 50, msg: "起動直後、お礼の飴をもらった。" }, { text: "分解して中身を調べる", candy: 40, survival: -40, msg: "高度な技術を飴と交換した。" }, { text: "そのまま放置して錆びさせる", candy: 0, survival: 10, msg: "機能停止したままだ。" }] },
+        { text: "【実験】マジカルロイドが新発明の薬を試そうとしている。", choices: [{ text: "自分で飲む", candy: 30, survival: -70, msg: "飴の味はしたが体調が悪化した。" }, { text: "通行人に飲ませる", candy: 50, survival: -90, msg: "阿鼻叫喚の地獄絵図に。飴は稼げた。" }, { text: "燃料として飴を渡す", candy: -20, survival: 40, msg: "彼女の性能がアップした。" }] },
+
+        // --- シスター・ナナ ---
+        { text: "【慈愛】シスターナナが愛を説いている。", choices: [{ text: "共に平和を祈る", candy: 5, survival: 45, msg: "精神的な守護を得た。" }, { text: "活動資金として飴を寄付する", candy: -40, survival: 80, msg: "絶大な信頼を得た。" }, { text: "偽善だと笑う", candy: 5, survival: -25, msg: "気まずい沈黙。" }] },
+        { text: "【悲劇】シスターナナがウィンタープリズンの死に絶望している。", choices: [{ text: "寄り添って慰める", candy: -20, survival: 100, msg: "彼女の最後の理性を繋ぎ止めた。" }, { text: "「死は救いだ」と囁く", candy: 40, survival: -120, msg: "彼女は狂乱し、周囲を巻き込んで自爆した。" }, { text: "遺品を飴と交換する", candy: 50, survival: -80, msg: "最低の行為だ。でも飴は必要だ。" }] },
+        { text: "【理想】シスターナナが協力して戦おうと呼びかけている。", choices: [{ text: "同盟を組む", candy: -10, survival: 70, msg: "強力な後ろ盾を得た。" }, { text: "彼女を裏切る", candy: 60, survival: -150, msg: "計画を崩壊させ、飴を独占した。" }, { text: "黙って見守る", candy: 0, survival: 20, msg: "彼女の理想は儚く散った。" }] },
+
+        // --- ヴェス・ウィンタープリズン ---
+        { text: "【堅実】ウィンタープリズンが氷の壁を作っている。", choices: [{ text: "壁の中で休憩させてもらう", candy: 0, survival: 50, msg: "鉄壁の守りに守られた。" }, { text: "建築を手伝う", candy: 10, survival: -10, msg: "頑丈な拠点が完成した。" }, { text: "シスターナナの居場所を教える", candy: -15, survival: 70, msg: "深い感謝と守護の誓いを得た。" }] },
+        { text: "【迎撃】ウィンタープリズンが敵の襲撃を食い止めている。", choices: [{ text: "加勢する", candy: 15, survival: -20, msg: "共に敵を撃退した。" }, { text: "彼女を強化する魔法をかける", candy: -10, survival: 60, msg: "彼女は無双の強さを発揮した。" }, { text: "逃げる", candy: 0, survival: 30, msg: "彼女が時間を稼いでくれた。" }] },
+        { text: "【静寂】ウィンタープリズンが無言で修行している。", choices: [{ text: "手合わせを願う", candy: 10, survival: -30, msg: "圧倒的な力にひれ伏した。" }, { text: "防寒具を差し入れる", candy: -5, survival: 40, msg: "わずかに口角が上がった気がした。" }, { text: "氷を削ってかき氷にする", candy: 5, survival: 10, msg: "少し怒られたが、飴を貰えた。" }] },
+
+        // --- 森の音楽家クラムベリー ---
+        { text: "【誘惑】クラムベリーが演奏会を開いている。", choices: [{ text: "聴き入る", candy: 0, survival: -60, msg: "旋律に当てられ、衰弱した。" }, { text: "拍手と共に飴を贈る", candy: -30, survival: 60, msg: "「強い魂」だと認められた。" }, { text: "演奏を魔法で妨害する", candy: 30, survival: -80, msg: "殺し合いに発展した。" }] },
+        { text: "【選別】クラムベリーが「強い魔法少女」を求めて襲ってきた！", choices: [{ text: "死力を尽くして戦う", candy: 50, survival: -150, msg: "致命傷を負いながらも、認められた。" }, { text: "音楽の才能を見せる", candy: 10, survival: 40, msg: "興味の対象が戦闘から音楽に移った。" }, { text: "他の誰かの居場所を教える", candy: -20, survival: 80, msg: "彼女の矛先を逸らすことに成功した。" }] },
+        { text: "【真実】クラムベリーが試験の裏側について語り始めた。", choices: [{ text: "聞き流す", candy: 0, survival: 10, msg: "知らぬが仏、かもしれない。" }, { text: "詳細を問い詰める", candy: 0, survival: -40, msg: "知りすぎた代償として攻撃された。" }, { text: "ファヴを壊そうと提案する", candy: 30, survival: 50, msg: "「面白い提案ね」と飴をくれた。" }] },
+
+        // --- ねむりん ---
         { text: "【迷夢】ねむりんの夢の中に入り込んでしまった。", choices: [{ text: "楽しい夢を見せる", candy: 15, survival: 25, msg: "現実の彼女も満足したようだ。" }, { text: "夢から飴を具現化する", candy: 30, survival: -20, msg: "不思議な力で飴が増えた。" }, { text: "寝言を聞いてあげる", candy: 0, survival: 35, msg: "安らかな時間を過ごした。" }] },
-        { text: "【慈愛】シスターナナが愛を説いている。", choices: [{ text: "共に平和を祈る", candy: 5, survival: 45, msg: "精神的な守護を得た。" }, { text: "活動資金として飴を寄付する", candy: -40, survival: 80, msg: "絶大な信頼を得た。" }, { text: "偽善だと笑う", candy: 5, survival: -25, msg: "気まずい沈黙。" }] }
+        { text: "【怠惰】ねむりんが雲の上で昼寝している。", choices: [{ text: "一緒に寝る", candy: 0, survival: 60, msg: "最高のリフレッシュになった。" }, { text: "耳元でラッパを吹く", candy: 10, survival: -10, msg: "驚いて飴をばら撒いて落ちていった。" }, { text: "夢の相談をする", candy: -10, survival: 40, msg: "的確なアドバイスをもらった。" }] },
+        { text: "【消滅】ねむりんが「もうすぐお別れ」と言っている。", choices: [{ text: "感謝を伝える", candy: 0, survival: 70, msg: "彼女の夢は誰かの心に残った。" }, { text: "飴をたくさん食べさせる", candy: -40, survival: 50, msg: "最後に幸せな時間を過ごした。" }, { text: "魔法を奪い取る", candy: 45, survival: -90, msg: "夢の力の一部を飴に変換した。" }] }
     ];
 
     window.onload = () => {
