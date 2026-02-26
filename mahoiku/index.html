@@ -653,18 +653,26 @@
                 const btn = document.createElement('button');
                 btn.className = 'choice-btn';
                 
-                // --- チートモード用の確率表示ロジック ---
                 let probText = "";
                 if (state.cheatUnlocked) {
-                    // 確率を取得 (数値形式か、オブジェクト内のprob、デフォルトは100%)
+                    // 1. 成功確率の計算
                     let displayProb = 100;
                     if (typeof c.prob === 'number') displayProb = Math.round(c.prob * 100);
                     else if (typeof c.success === 'number') displayProb = Math.round(c.success * 100);
                     
-                    probText = ` <span style="color:#0f0; font-family:monospace; font-size:0.8rem;">[成功率:${displayProb}%]</span>`;
+                    // 2. 成功時の獲得飴数をチェック
+                    let gain = 0;
+                    if (c.success && typeof c.success === 'object') gain = c.success.candy;
+                    else gain = c.candy || 0;
+
+                    // 3. 飴が減るなら赤色、増えるなら緑色で表示
+                    const color = (gain < 0) ? "#ff4444" : "#00ff00";
+                    const mark = (gain < 0) ? "⚠" : "";
+                    
+                    probText = ` <span style="color:${color}; font-family:monospace; font-size:0.8rem;">[${mark}成功率:${displayProb}% (飴:${gain >= 0 ? '+' : ''}${gain})]</span>`;
                 }
                 
-                btn.innerHTML = c.text + probText; // innerText ではなく innerHTML を使用
+                btn.innerHTML = c.text + probText;
                 btn.onclick = () => handleChoice(c);
                 container.appendChild(btn);
             });
