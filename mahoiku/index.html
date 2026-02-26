@@ -283,7 +283,7 @@
 
 <script>
     let state = {
-        candies: 100,
+        candies: 150,
         week: 1,
         dayIndex: 0,
         survivors: 16,
@@ -539,7 +539,7 @@
         }
 
         npcList = state.characterList.filter(n => n.name !== state.playerName).map(n => n.name);
-        npcList.forEach(name => state.npcScores[name] = 85 + Math.floor(Math.random()*20));
+        npcList.forEach(name => state.npcScores[name] = 135 + Math.floor(Math.random()*20));
         updateBGM();
         triggerFav(`${state.playerName}、君の魔法は${state.magicName}だぽん。<br>金曜の夜に「最下位」だと消されるぽん。頑張るぽん！`, startTurn);
         updateUI();
