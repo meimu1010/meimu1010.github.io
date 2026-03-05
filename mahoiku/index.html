@@ -675,7 +675,7 @@
             finalScores.push({ name: state.playerName, candies: state.candies, isPlayer: true });
             finalScores.sort((a,b) => a.candies - b.candies);
 
-            if (finalScores.length <= 2) {
+            if (finalScores.length === 2) {
                 const survivorsList = finalScores.map(f => f.name).join('、');
                 triggerFav(`第${state.week}週の集計が終わったぽん。残りは${finalScores.length}名（${survivorsList}）だぽん。ゲームはここで終了だぽん！`, () => {
                     endGameFinal(finalScores);
@@ -802,3 +802,4 @@
 </script>
 </body>
 </html>
+
