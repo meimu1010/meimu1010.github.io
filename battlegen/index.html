@@ -827,13 +827,15 @@ async function startGenerate(){
     }catch(e){ console.warn('BGMデコード失敗',e); }
   }
 
-  // ═══ PHASE 3: フレームを一定間隔で再生しながらMediaRecorderで録画 ═══
+  // ═══ PHASE 3: AudioContext基準タイムで完全同期録画 ═══
+  // setTimeoutは誤差蓄積するので AudioContext.currentTime を絶対基準に使う
   setFfmpegMsg('🎬 録画中... (しばらくお待ちください)');
   setProgress(0,TOTAL,'録画中...',null);
 
-  const frameDurMs = 1000/FPS;
+  const frameDurSec = 1/FPS;
+  const frameDurMs  = 1000/FPS;
 
-  // ─ AudioContextとMediaStreamDestinationでBGMをストリーム化 ─
+  // ─ AudioContext + BGMストリーム ─
   const recAudioCtx = new AudioContext({sampleRate:44100});
   const dest = recAudioCtx.createMediaStreamDestination();
 
@@ -842,14 +844,13 @@ async function startGenerate(){
     src.buffer=bgmAudioBuf; src.loop=true;
     src.connect(dest); src.start(0);
   } else {
-    // 無音ダミー（音声トラックが必要）
     const osc=recAudioCtx.createOscillator();
     const gain=recAudioCtx.createGain(); gain.gain.value=0;
     osc.connect(gain); gain.connect(dest); osc.start();
   }
 
-  // ─ Canvas + AudioStream を合成してMediaRecorder ─
-  const videoStream=canvas.captureStream(0); // 0=手動更新
+  // ─ MediaRecorder セットアップ ─
+  const videoStream=canvas.captureStream(0);
   const videoTrack=videoStream.getVideoTracks()[0];
   const audioTrack=dest.stream.getAudioTracks()[0];
   const combined=new MediaStream([videoTrack, audioTrack]);
@@ -860,40 +861,47 @@ async function startGenerate(){
       ?'video/webm;codecs=vp8,opus':'video/webm');
 
   const chunks=[];
-  const rec=new MediaRecorder(combined,{mimeType:mime, videoBitsPerSecond:8_000_000, audioBitsPerSecond:128_000});
+  const rec=new MediaRecorder(combined,{mimeType:mime,videoBitsPerSecond:8_000_000,audioBitsPerSecond:128_000});
   rec.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
   const recDone=new Promise(r=>{ rec.onstop=r; });
+
+  // ─ AudioContext が安定するまで少し待つ ─
+  await new Promise(r=>setTimeout(r,120));
   rec.start(200);
 
-  // ─ 固定間隔でフレームを流し込む ─
-  // requestVideoFrameCallback / setTimeout どちらでも使えるように
+  // ─ AudioContext.currentTime 基準でフレームをスケジューリング ─
+  // 各フレームの「本来鳴るべき時刻」を絶対値で計算し、
+  // 現在時刻との差分だけ待つ → 遅延は次フレームで自動補正
   await new Promise(resolve=>{
     let idx=0;
-    const nextFrame=()=>{
-      if(idx>=bitmaps.length){
-        resolve(); return;
-      }
-      // canvasに描画
-      ctx.drawImage(bitmaps[idx],0,0);
-      // captureStreamに通知 (手動トリガー)
-      videoTrack.requestFrame();
+    const startAudioTime = recAudioCtx.currentTime;
+    const startPerfTime  = performance.now();
 
-      setProgress(idx+1,TOTAL,'録画中...',null);
-      idx++;
-      // 次フレームを正確なタイミングで呼ぶ
-      setTimeout(nextFrame, frameDurMs);
+    const scheduleFrame = () => {
+      if(idx >= bitmaps.length){ resolve(); return; }
+
+      // このフレームが本来表示されるべきperformance.now時刻
+      const targetMs = startPerfTime + idx * frameDurMs;
+      const nowMs    = performance.now();
+      const waitMs   = Math.max(0, targetMs - nowMs);
+
+      setTimeout(()=>{
+        ctx.drawImage(bitmaps[idx], 0, 0);
+        videoTrack.requestFrame();
+        setProgress(idx+1, TOTAL, '録画中...', null);
+        idx++;
+        scheduleFrame();
+      }, waitMs);
     };
-    // 少し待ってからスタート（AudioContext安定化）
-    setTimeout(nextFrame, 100);
+
+    scheduleFrame();
   });
 
-  // 少し余韻を持たせてから停止
-  await new Promise(r=>setTimeout(r,300));
+  await new Promise(r=>setTimeout(r,400));
   rec.stop();
   recAudioCtx.close();
   await recDone;
 
-  // ─ 全bitmapを解放 ─
   bitmaps.forEach(b=>b.close());
 
   setFfmpegMsg('✅ 完了');
