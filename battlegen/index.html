@@ -215,11 +215,14 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 <div class="step" data-step="04">
   <div class="step-title"><span class="num">4</span> BGM</div>
   <div class="bgm-row">
-    <label class="file-btn">
-      🎵 bgm.mp3 を選択
+    <span class="file-info ok" id="bgmInfo" style="font-size:.9rem">⏳ bgm.mp3 を自動読み込み中...</span>
+  </div>
+  <div class="bgm-row" style="margin-top:10px">
+    <label class="file-btn" style="font-size:.82rem;padding:7px 14px;opacity:.7">
+      📂 手動で別ファイルを選択
       <input type="file" id="bgmFile" accept="audio/*" style="display:none" onchange="loadBGM(this)">
     </label>
-    <span class="file-info" id="bgmInfo">未選択 — bgm.mp3 をアップロードしてください</span>
+    <span style="font-size:.78rem;color:#3a5a7a">同フォルダの bgm.mp3 が読み込めない場合に使用</span>
   </div>
 </div>
 
@@ -453,14 +456,31 @@ function updateScore(){
 }
 
 // ═══════════════════════════════════════════════
-// STEP 4 — BGM
+// STEP 4 — BGM (同フォルダの bgm.mp3 を自動fetch、失敗時は手動)
 // ═══════════════════════════════════════════════
+async function autoLoadBGM(){
+  const info = document.getElementById('bgmInfo');
+  try{
+    const res = await fetch('./bgm.mp3');
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    S.bgmFile = new File([blob], 'bgm.mp3', {type: 'audio/mpeg'});
+    info.textContent = '✅ bgm.mp3 を自動読み込み済み';
+    info.className = 'file-info ok';
+  }catch(e){
+    console.warn('bgm.mp3 自動読み込み失敗:', e);
+    info.textContent = '⚠ bgm.mp3 が見つかりません — 下のボタンで手動選択してください';
+    info.className = 'file-info';
+    info.style.color = '#aa7020';
+  }
+}
+
 function loadBGM(input){
   const file = input.files[0]; if(!file) return;
   S.bgmFile = file;
   const info = document.getElementById('bgmInfo');
-  info.textContent = `✅ ${file.name}`;
-  info.classList.add('ok');
+  info.textContent = `✅ ${file.name}（手動選択）`;
+  info.className = 'file-info ok';
 }
 
 // ═══════════════════════════════════════════════
@@ -881,6 +901,7 @@ async function muxWithFfmpeg(videoBlob, bgmFile){
 // ═══════════════════════════════════════════════
 updatePrompt();
 updateScore();
+autoLoadBGM();
 </script>
 </body>
 </html>
