@@ -760,7 +760,19 @@ function setFfmpegMsg(msg){ document.getElementById('progFfmpeg').textContent=ms
 
 // ═══════════════════════════════════════════════
 // MAIN GENERATE
+// ─ PNG連番 → ffmpeg.wasm libx264 エンコード方式
+//   MediaRecorder を完全廃止 → カクつきゼロ・BGM完全合成
 // ═══════════════════════════════════════════════
+
+// canvas → PNG Uint8Array
+function canvasToPng(){
+  return new Promise(res=>{
+    canvas.toBlob(blob=>{
+      blob.arrayBuffer().then(ab=>res(new Uint8Array(ab)));
+    },'image/png');
+  });
+}
+
 async function startGenerate(){
   if(!validate()) return;
   initCanvas();
@@ -774,31 +786,44 @@ async function startGenerate(){
   initProgressUI(TOTAL);
   document.getElementById('genBtn').disabled=true;
 
-  // ─── MediaRecorder setup ───
-  const stream=canvas.captureStream(FPS);
-  const chunks=[];
-  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-    ?'video/webm;codecs=vp9':'video/webm';
-  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6_000_000});
-  rec.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
-  const recDone=new Promise(r=>{ rec.onstop=r; });
-  rec.start(100); // 100ms ごとに chunk
+  // ── ffmpeg.wasm ロード ──
+  const {FFmpeg}=FFmpegWASM;
+  const {fetchFile}=FFmpegUtil;
+  const ff=new FFmpeg();
+  ff.on('log',({message})=>console.log('[ff]',message));
+  ff.on('progress',({progress})=>{
+    if(progress>0) setFfmpegMsg(`🎬 エンコード中... ${Math.round(progress*100)}%`);
+  });
+  setFfmpegMsg('⏳ ffmpeg.wasm を読み込み中...');
+  await ff.load({
+    coreURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+    wasmURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
+  });
+  setFfmpegMsg('✅ 読み込み完了 — フレーム生成中...');
 
-  const tick=()=>new Promise(r=>requestAnimationFrame(r));
-  let fc=0,pA=0,pB=0;
+  // ── フレーム描画 → PNG を ffmpeg 仮想FSに書き込み ──
+  const pad=n=>String(n).padStart(6,'0');
+  // UIフリーズ防止: 10フレームごとに1回 yield
+  const yld=()=>new Promise(r=>setTimeout(r,0));
+
+  let fc=0, pA=0, pB=0;
 
   for(let ci=0;ci<CATEGORIES.length;ci++){
     const cat=CATEGORIES[ci], winner=S.results[cat];
+    // INTRO
     for(let i=0;i<NI;i++){
-      renderIntro(i,cat,ci); fc++;
-      setProgress(fc,TOTAL,`INTRO [${cat}]`,cat);
-      if(i%4===0) await tick();
+      renderIntro(i,cat,ci);
+      await ff.writeFile(`f${pad(fc)}.png`, await canvasToPng());
+      fc++; setProgress(fc,TOTAL,`INTRO [${cat}]`,cat);
+      if(fc%10===0) await yld();
     }
     if(winner==='A') pA++; else if(winner==='B') pB++;
+    // CUT
     for(let i=0;i<NC;i++){
-      renderCut(i,winner,pA,pB); fc++;
-      setProgress(fc,TOTAL,`CUT [${winner}]`,cat);
-      if(i%4===0) await tick();
+      renderCut(i,winner,pA,pB);
+      await ff.writeFile(`f${pad(fc)}.png`, await canvasToPng());
+      fc++; setProgress(fc,TOTAL,`CUT [${winner}]`,cat);
+      if(fc%10===0) await yld();
     }
     markChipDone(cat);
   }
@@ -806,94 +831,77 @@ async function startGenerate(){
   // BLACK
   ctx.fillStyle='#000'; ctx.fillRect(0,0,CW,CH);
   for(let i=0;i<NB;i++){
-    ctx.fillStyle='#000'; ctx.fillRect(0,0,CW,CH);
+    await ff.writeFile(`f${pad(fc)}.png`, await canvasToPng());
     fc++; setProgress(fc,TOTAL,'BLACK OUT','FINAL');
-    await tick();
+    if(fc%10===0) await yld();
   }
 
   // FINAL
   const fw=pA>pB?'A':(pB>pA?'B':'Draw');
   for(let i=0;i<NF;i++){
-    renderFinal(i,fw,pA,pB); fc++;
-    setProgress(fc,TOTAL,'FINAL','FINAL');
-    if(i%4===0) await tick();
+    renderFinal(i,fw,pA,pB);
+    await ff.writeFile(`f${pad(fc)}.png`, await canvasToPng());
+    fc++; setProgress(fc,TOTAL,'FINAL','FINAL');
+    if(fc%10===0) await yld();
   }
   markChipDone('FINAL');
 
-  rec.stop();
-  await recDone;
-
-  const videoBlob=new Blob(chunks,{type:mime});
-
-  // ─── BGM合成 (ffmpeg.wasm) ───
-  let finalBlob=videoBlob;
+  // ── BGM 書き込み ──
+  let hasBgm=false;
   if(S.bgmFile){
     try{
-      setFfmpegMsg('🎵 ffmpeg.wasm で BGM 合成中...');
-      setProgress(fc,TOTAL,'BGM 合成中...',null);
-      finalBlob=await muxWithFfmpeg(videoBlob,S.bgmFile);
-      setFfmpegMsg('✅ BGM 合成完了');
-    }catch(e){
-      console.error('ffmpeg失敗',e);
-      setFfmpegMsg('⚠ BGM合成失敗 (映像のみ): '+e.message);
-    }
+      setFfmpegMsg('📦 BGM を転送中...');
+      await ff.writeFile('bgm.mp3', await fetchFile(S.bgmFile));
+      hasBgm=true;
+    }catch(e){ console.warn('BGM転送失敗',e); }
   }
 
-  // ─── 出力 ───
-  const ext=S.bgmFile?'mp4':'webm';
+  // ── ffmpeg エンコード: PNG連番 → mp4 ──
+  setProgress(TOTAL,TOTAL,'エンコード中...',null);
+  setFfmpegMsg('🎬 エンコード中... (しばらくお待ちください)');
+
+  const args=[
+    '-framerate', String(FPS),
+    '-i','f%06d.png',
+  ];
+  if(hasBgm){
+    args.push('-stream_loop','-1','-i','bgm.mp3');
+  }
+  args.push(
+    '-c:v','libx264',
+    '-preset','ultrafast',
+    '-crf','22',
+    '-pix_fmt','yuv420p',
+    '-movflags','+faststart',
+  );
+  if(hasBgm){
+    args.push('-c:a','aac','-b:a','192k','-shortest','-map','0:v:0','-map','1:a:0');
+  }
+  args.push('output.mp4');
+
+  await ff.exec(args);
+  setFfmpegMsg('✅ エンコード完了');
+
+  const data=await ff.readFile('output.mp4');
+
+  // クリーンアップ
+  for(let i=0;i<TOTAL;i++) try{ await ff.deleteFile(`f${pad(i)}.png`); }catch(e){}
+  if(hasBgm) try{ await ff.deleteFile('bgm.mp3'); }catch(e){}
+  try{ await ff.deleteFile('output.mp4'); }catch(e){}
+
+  // ── 出力 ──
+  const finalBlob=new Blob([data.buffer],{type:'video/mp4'});
   const url=URL.createObjectURL(finalBlob);
   document.getElementById('preview-video').src=url;
   const dlBtn=document.getElementById('dlBtn');
   dlBtn.href=url;
-  dlBtn.download=`${S.nameA}VS${S.nameB}.${ext}`;
-  dlBtn.textContent=`⬇ 動画をダウンロード (.${ext})`;
+  dlBtn.download=`${S.nameA}VS${S.nameB}.mp4`;
+  dlBtn.textContent='⬇ 動画をダウンロード (.mp4)';
   document.getElementById('output-wrap').classList.add('visible');
   document.getElementById('genBtn').disabled=false;
   document.getElementById('progLabel').textContent='✅ 完了!';
   document.getElementById('progPct').textContent='100%';
   document.getElementById('progFill').style.width='100%';
-}
-
-// ═══════════════════════════════════════════════
-// ffmpeg.wasm BGM合成
-// ═══════════════════════════════════════════════
-async function muxWithFfmpeg(videoBlob, bgmFile){
-  const {FFmpeg}=FFmpegWASM;
-  const {fetchFile}=FFmpegUtil;
-
-  const ff=new FFmpeg();
-  ff.on('log',({message})=>{ console.log('[ffmpeg]',message); });
-  ff.on('progress',({progress})=>{
-    setFfmpegMsg(`🎵 BGM合成中... ${Math.round(progress*100)}%`);
-  });
-
-  setFfmpegMsg('⏳ ffmpeg.wasm を読み込み中...');
-  await ff.load({
-    coreURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-    wasmURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
-  });
-
-  setFfmpegMsg('📦 ファイルを転送中...');
-  await ff.writeFile('video.webm', await fetchFile(videoBlob));
-  await ff.writeFile('bgm.mp3',    await fetchFile(bgmFile));
-
-  setFfmpegMsg('🎬 エンコード中...');
-  await ff.exec([
-    '-i','video.webm',
-    '-i','bgm.mp3',
-    '-c:v','copy',
-    '-c:a','aac','-b:a','192k',
-    '-shortest',
-    '-map','0:v:0','-map','1:a:0',
-    'output.mp4'
-  ]);
-
-  const data=await ff.readFile('output.mp4');
-  await ff.deleteFile('video.webm');
-  await ff.deleteFile('bgm.mp3');
-  await ff.deleteFile('output.mp4');
-
-  return new Blob([data.buffer],{type:'video/mp4'});
 }
 
 // ═══════════════════════════════════════════════
