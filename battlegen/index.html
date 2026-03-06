@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BATTLE VIDEO GENERATOR</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#ff3c2a;--blue:#2a8fff;--yellow:#ffd700;--cyan:#00ffff;
+  --bg:#080c10;--panel:#0d1420;--border:#1e2d40;--text:#c8d8e8;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,255,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+
+header{position:relative;text-align:center;padding:40px 20px 18px;z-index:1}
+header h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.6rem,8vw,5.2rem);letter-spacing:.12em;background:linear-gradient(135deg,var(--cyan),var(--yellow),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 22px rgba(0,255,255,.45))}
+header p{margin-top:6px;font-size:.88rem;color:#3a5a7a;letter-spacing:.22em;text-transform:uppercase}
+
+main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 80px}
+
+/* STEP PANEL */
+.step{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:26px 30px;margin-bottom:18px;position:relative;overflow:hidden;transition:border-color .3s}
+.step::after{content:attr(data-step);font-family:'Bebas Neue',sans-serif;font-size:5.5rem;color:rgba(0,255,255,.035);position:absolute;top:-8px;right:18px;line-height:1;pointer-events:none}
+.step.active{border-color:var(--cyan)}
+.step-title{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:.1em;color:var(--cyan);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.step-title .num{width:26px;height:26px;background:var(--cyan);color:var(--bg);border-radius:50%;display:grid;place-items:center;font-size:.8rem;flex-shrink:0}
+
+/* CHAR UPLOAD */
+.char-grid{display:grid;grid-template-columns:1fr 72px 1fr;gap:14px;align-items:center}
+.vs-badge{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--yellow);text-shadow:0 0 18px rgba(255,215,0,.65)}
+.char-card{background:rgba(0,0,0,.3);border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .3s,background .3s;min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.char-card:hover,.char-card.has-img{border-style:solid}
+.char-card.a:hover,.char-card.a.has-img{border-color:var(--red);background:rgba(255,60,42,.06)}
+.char-card.b:hover,.char-card.b.has-img{border-color:var(--blue);background:rgba(42,143,255,.06)}
+.char-card input[type=file]{display:none}
+.char-card .preview{width:100%;max-height:150px;object-fit:contain;border-radius:6px;display:none}
+.char-card.has-img .preview{display:block}
+.char-card.has-img .placeholder{display:none}
+.char-card .placeholder{color:#3a5a7a;font-size:.85rem}
+.char-card .placeholder svg{width:44px;height:44px;margin-bottom:6px;display:block;margin-left:auto;margin-right:auto}
+.char-name-input{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:6px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:600;padding:8px 12px;text-align:center;outline:none;transition:border-color .2s;margin-top:9px}
+.char-name-input:focus{border-color:var(--cyan)}
+
+/* GEMINI SECTION */
+.gemini-box{background:rgba(0,0,0,.35);border:1px solid #1a3a20;border-radius:10px;padding:18px 20px;margin-bottom:14px}
+.gemini-box h3{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.1em;color:#2aff80;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.prompt-area{width:100%;background:rgba(0,0,0,.5);border:1px solid #1e3a28;border-radius:7px;color:#8ab898;font-family:'Rajdhani',sans-serif;font-size:.82rem;line-height:1.55;padding:12px 14px;resize:vertical;min-height:120px;outline:none;white-space:pre-wrap}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(42,255,128,.1);border:1px solid #2aff80;color:#2aff80;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.08em;padding:8px 18px;border-radius:6px;cursor:pointer;transition:background .2s;margin-top:9px}
+.copy-btn:hover{background:rgba(42,255,128,.22)}
+.copy-btn.copied{background:rgba(42,255,128,.3);border-color:#aaffcc;color:#aaffcc}
+
+.json-box{margin-top:14px}
+.json-box label{display:block;font-size:.8rem;letter-spacing:.12em;color:#4a8a6a;text-transform:uppercase;margin-bottom:6px}
+.json-input{width:100%;background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:7px;color:#c8f0d8;font-family:'Rajdhani',sans-serif;font-size:.85rem;padding:11px 14px;resize:vertical;min-height:80px;outline:none;transition:border-color .2s;line-height:1.5}
+.json-input:focus{border-color:#2aff80}
+.apply-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(0,255,255,.1);border:1px solid var(--cyan);color:var(--cyan);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.08em;padding:8px 18px;border-radius:6px;cursor:pointer;transition:background .2s;margin-top:9px}
+.apply-btn:hover{background:rgba(0,255,255,.2)}
+.apply-status{display:inline-block;margin-left:10px;font-size:.82rem;color:#2aff80;opacity:0;transition:opacity .3s}
+.apply-status.show{opacity:1}
+
+/* CATEGORIES */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:9px}
+.cat-row{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:8px;padding:10px 13px;display:flex;flex-direction:column;gap:7px;transition:border-color .2s}
+.cat-row:hover{border-color:#2a4a6a}
+.cat-label{font-size:.78rem;letter-spacing:.15em;text-transform:uppercase;color:#5a8aaa;font-weight:600}
+.cat-btns{display:flex;gap:5px}
+.cat-btn{flex:1;padding:6px 3px;border-radius:5px;border:1px solid transparent;background:rgba(255,255,255,.05);color:#5a7a9a;font-family:'Rajdhani',sans-serif;font-size:.83rem;font-weight:700;cursor:pointer;transition:all .14s;letter-spacing:.04em}
+.cat-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.cat-btn.sel-A{background:rgba(255,60,42,.25);border-color:var(--red);color:var(--red)}
+.cat-btn.sel-B{background:rgba(42,143,255,.25);border-color:var(--blue);color:var(--blue)}
+.cat-btn.sel-D{background:rgba(180,180,180,.14);border-color:#666;color:#aaa}
+.score-display{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:13px;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.1em}
+.score-a{color:var(--red)}.score-b{color:var(--blue)}.score-sep{color:#3a5a7a}
+
+/* BGM */
+.bgm-row{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.file-btn{background:rgba(0,255,255,.08);border:1px solid var(--cyan);color:var(--cyan);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.1em;padding:9px 18px;border-radius:6px;cursor:pointer;transition:background .2s;white-space:nowrap}
+.file-btn:hover{background:rgba(0,255,255,.18)}
+.file-info{color:#4a8aaa;font-size:.88rem}
+.file-info.ok{color:#2aff80}
+
+/* SETTINGS */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.settings-grid label{display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:#5a8aaa;letter-spacing:.12em;text-transform:uppercase}
+.settings-grid select{background:#0a121e;border:1px solid var(--border);color:#fff;padding:8px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
+.settings-grid select:focus{border-color:var(--cyan)}
+
+/* GEN BUTTON */
+.gen-btn{width:100%;padding:17px;background:linear-gradient(135deg,#ff3c2a 0%,#ff8c00 50%,#ffd700 100%);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:.2em;color:#000;cursor:pointer;transition:opacity .2s,transform .1s;box-shadow:0 0 28px rgba(255,100,0,.42);margin-top:6px}
+.gen-btn:hover{opacity:.87;transform:translateY(-1px)}
+.gen-btn:active{transform:translateY(1px)}
+.gen-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
+
+/* PROGRESS */
+#progress-wrap{display:none;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 28px;margin-bottom:18px}
+#progress-wrap.visible{display:block}
+.prog-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.prog-label{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.1em;color:var(--cyan)}
+.prog-pct{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--yellow)}
+.prog-bar-bg{height:7px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-bottom:9px}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--yellow));border-radius:4px;width:0%;transition:width .08s linear;box-shadow:0 0 9px rgba(0,255,255,.5)}
+.prog-detail{font-size:.82rem;color:#3a6a8a;letter-spacing:.04em}
+.phase-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
+.phase-chip{font-size:.73rem;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:#3a5a7a;transition:all .2s;font-weight:600;letter-spacing:.04em}
+.phase-chip.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,255,.08)}
+.phase-chip.done{border-color:#1e4a30;color:#2a8a50;background:rgba(0,200,80,.05)}
+.prog-ffmpeg{margin-top:10px;font-size:.82rem;color:#5a8a6a;font-style:italic}
+
+/* OUTPUT */
+#output-wrap{display:none;background:var(--panel);border:1px solid #1e4a30;border-radius:12px;padding:22px 28px;text-align:center}
+#output-wrap.visible{display:block}
+#output-wrap h2{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.14em;color:#2aff80;margin-bottom:14px}
+#preview-video{width:100%;max-width:320px;border-radius:8px;border:1px solid #1e4a30;margin-bottom:14px}
+.dl-btn{display:inline-flex;align-items:center;gap:7px;background:rgba(42,255,128,.1);border:1px solid #2aff80;color:#2aff80;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.1em;padding:11px 26px;border-radius:8px;cursor:pointer;text-decoration:none;transition:background .2s}
+.dl-btn:hover{background:rgba(42,255,128,.2)}
+
+/* ERROR */
+.error-msg{background:rgba(255,60,42,.1);border:1px solid var(--red);color:var(--red);border-radius:8px;padding:11px 16px;margin-top:11px;font-size:.88rem;display:none}
+.error-msg.visible{display:block}
+
+#mainCanvas{display:none}
+
+@media(max-width:600px){
+  .char-grid{grid-template-columns:1fr}
+  .vs-badge{font-size:1.3rem}
+  .step{padding:18px}
+  .cat-grid{grid-template-columns:1fr 1fr}
+  .settings-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>BATTLE GENERATOR</h1>
+  <p>TikTok Character VS Video — Browser Only</p>
+</header>
+
+<main>
+
+<!-- ══ STEP 1: CHARACTERS ══ -->
+<div class="step active" data-step="01">
+  <div class="step-title"><span class="num">1</span> CHARACTERS</div>
+  <div class="char-grid">
+    <div>
+      <div class="char-card a" id="cardA" onclick="document.getElementById('fileA').click()">
+        <input type="file" id="fileA" accept="image/*" onchange="loadCharImg('A',this)">
+        <img class="preview" id="previewA" alt="">
+        <div class="placeholder">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="8" width="32" height="32" rx="4"/><circle cx="24" cy="20" r="6"/><path d="M10 40c0-8 28-8 28 0"/></svg>
+          キャラA 画像<br><span style="font-size:.76rem;opacity:.6">クリックでアップロード</span>
+        </div>
+      </div>
+      <input class="char-name-input" id="nameA" placeholder="CHARACTER A NAME" oninput="onNameChange()">
+    </div>
+    <div class="vs-badge">VS</div>
+    <div>
+      <div class="char-card b" id="cardB" onclick="document.getElementById('fileB').click()">
+        <input type="file" id="fileB" accept="image/*" onchange="loadCharImg('B',this)">
+        <img class="preview" id="previewB" alt="">
+        <div class="placeholder">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="8" width="32" height="32" rx="4"/><circle cx="24" cy="20" r="6"/><path d="M10 40c0-8 28-8 28 0"/></svg>
+          キャラB 画像<br><span style="font-size:.76rem;opacity:.6">クリックでアップロード</span>
+        </div>
+      </div>
+      <input class="char-name-input" id="nameB" placeholder="CHARACTER B NAME" oninput="onNameChange()">
+    </div>
+  </div>
+</div>
+
+<!-- ══ STEP 2: GEMINI ══ -->
+<div class="step" data-step="02">
+  <div class="step-title"><span class="num">2</span> GEMINI AI ANALYSIS</div>
+
+  <div class="gemini-box">
+    <h3>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      STEP ① — プロンプトをコピーして Gemini に貼り付け
+    </h3>
+    <textarea class="prompt-area" id="promptArea" readonly placeholder="STEP 1 でキャラ名を入力するとプロンプトが自動生成されます"></textarea>
+    <br>
+    <button class="copy-btn" id="copyPromptBtn" onclick="copyPrompt()">
+      📋 プロンプトをコピー
+    </button>
+  </div>
+
+  <div class="gemini-box" style="border-color:#1e2d50">
+    <h3 style="color:var(--cyan)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      STEP ② — Gemini の JSON 回答をここに貼り付け
+    </h3>
+    <div class="json-box">
+      <label>JSON を貼り付け</label>
+      <textarea class="json-input" id="jsonInput" placeholder='{"CharacterA":"...","Strength":"A","Speed":"B",...}'></textarea>
+      <button class="apply-btn" onclick="applyJson()">✅ JSON を適用</button>
+      <span class="apply-status" id="applyStatus">適用しました！</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ STEP 3: CATEGORY RESULTS ══ -->
+<div class="step" data-step="03">
+  <div class="step-title"><span class="num">3</span> CATEGORY RESULTS <span style="font-size:.8rem;color:#3a6a8a;font-family:Rajdhani;margin-left:6px">（手動調整も可）</span></div>
+  <div class="cat-grid" id="catGrid"></div>
+  <div class="score-display">
+    <span class="score-a" id="scoreA">A: 0</span>
+    <span class="score-sep">—</span>
+    <span class="score-b" id="scoreB">B: 0</span>
+  </div>
+</div>
+
+<!-- ══ STEP 4: BGM ══ -->
+<div class="step" data-step="04">
+  <div class="step-title"><span class="num">4</span> BGM</div>
+  <div class="bgm-row">
+    <label class="file-btn">
+      🎵 bgm.mp3 を選択
+      <input type="file" id="bgmFile" accept="audio/*" style="display:none" onchange="loadBGM(this)">
+    </label>
+    <span class="file-info" id="bgmInfo">未選択 — bgm.mp3 をアップロードしてください</span>
+  </div>
+</div>
+
+<!-- ══ STEP 5: SETTINGS ══ -->
+<div class="step" data-step="05">
+  <div class="step-title"><span class="num">5</span> SETTINGS</div>
+  <div class="settings-grid">
+    <label>FPS
+      <select id="cfgFps">
+        <option value="24">24 fps</option>
+        <option value="30" selected>30 fps</option>
+        <option value="60">60 fps（重い）</option>
+      </select>
+    </label>
+    <label>解像度
+      <select id="cfgRes">
+        <option value="540x960">540 × 960（軽量・推奨）</option>
+        <option value="1080x1920">1080 × 1920（フル HD）</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<div class="error-msg" id="errorMsg"></div>
+<button class="gen-btn" id="genBtn" onclick="startGenerate()">⚡ GENERATE VIDEO</button>
+
+<!-- PROGRESS -->
+<div id="progress-wrap">
+  <div class="prog-header">
+    <span class="prog-label" id="progLabel">RENDERING...</span>
+    <span class="prog-pct" id="progPct">0%</span>
+  </div>
+  <div class="prog-bar-bg"><div class="prog-bar-fill" id="progFill"></div></div>
+  <div class="prog-detail" id="progDetail">フレーム 0 / 0</div>
+  <div class="phase-list" id="phaseList"></div>
+  <div class="prog-ffmpeg" id="progFfmpeg"></div>
+</div>
+
+<!-- OUTPUT -->
+<div id="output-wrap">
+  <h2>✅ 生成完了！</h2>
+  <video id="preview-video" controls playsinline></video><br>
+  <a class="dl-btn" id="dlBtn" download="battle.mp4">⬇ 動画をダウンロード (.mp4)</a>
+</div>
+
+</main>
+<canvas id="mainCanvas"></canvas>
+
+<!-- ffmpeg.wasm CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════
+const CATEGORIES = [
+  "Strength","Speed","Durability","IQ","Battle IQ","Power","Combat",
+  "Defence","Endurance","Experience","Stamina","Agility","Skill"
+];
+const INTRO_DUR=0.8, CUT_DUR=1.2, FINAL_DUR=9.2, BLACK_DUR=0.5;
+const COLOR_A='#ff3c2a', COLOR_B='#2a8fff', COLOR_D='#aaaaaa';
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const S = {
+  imgA:null, imgB:null,
+  nameA:'', nameB:'',
+  bgmFile:null,
+  results: Object.fromEntries(CATEGORIES.map(c=>[c,'Draw']))
+};
+
+// ═══════════════════════════════════════════════
+// STEP 1 — 画像
+// ═══════════════════════════════════════════════
+function extractNameFromFilename(filename){
+  // 拡張子を除去
+  let name = filename.replace(/\.[^/.]+$/, '');
+  // よくある不要サフィックス・番号を除去 (_1, (1), -copy, _final など)
+  name = name.replace(/[\s_-]*(copy|final|edit|\d+)$/i, '').trim();
+  return name;
+}
+
+function loadCharImg(side, input){
+  const file = input.files[0]; if(!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = ()=>{
+    S['img'+side]=img;
+    document.getElementById('preview'+side).src=url;
+    document.getElementById('card'+side).classList.add('has-img');
+  };
+  img.src=url;
+
+  // ファイル名から名前を自動検出（手動入力が空の場合のみ）
+  const nameInput = document.getElementById('name'+side);
+  const detected = extractNameFromFilename(file.name);
+  if(detected && !nameInput.value.trim()){
+    nameInput.value = detected;
+    // ハイライトでフィードバック
+    nameInput.style.borderColor = side==='A' ? 'var(--red)' : 'var(--blue)';
+    nameInput.style.background  = side==='A' ? 'rgba(255,60,42,.14)' : 'rgba(42,143,255,.14)';
+    setTimeout(()=>{ nameInput.style.borderColor=''; nameInput.style.background=''; }, 1300);
+  }
+
+  // state・プロンプト更新
+  S['name'+side] = nameInput.value.trim();
+  updatePrompt();
+  updateScore();
+}
+
+// ═══════════════════════════════════════════════
+// STEP 2 — Gemini プロンプト
+// ═══════════════════════════════════════════════
+function onNameChange(){
+  S.nameA = document.getElementById('nameA').value.trim();
+  S.nameB = document.getElementById('nameB').value.trim();
+  updatePrompt();
+  updateScore();
+}
+
+function updatePrompt(){
+  const a = S.nameA || 'キャラA';
+  const b = S.nameB || 'キャラB';
+  const catList = CATEGORIES.map(c=>`  "${c}": ""`).join(',\n');
+  const prompt =
+`以下の2キャラクターを各カテゴリで比較し、JSONのみで回答してください。
+
+キャラクターA: ${a}
+キャラクターB: ${b}
+
+【ルール】
+1. 各カテゴリを独立して評価する（1キャラが全カテゴリ勝利にならないように）
+2. "より弱い"キャラでも技術・センス・経験で勝てるカテゴリを探すこと
+3. よほど差がない限り引き分けを多用しない
+4. 各カテゴリの値は必ず "A"・"B"・"Draw" のいずれか1つ
+
+JSON のみ返答（説明文・コードブロック不要）:
+{
+  "CharacterA": "${a}",
+  "CharacterB": "${b}",
+${catList}
+}`;
+  document.getElementById('promptArea').value = prompt;
+}
+
+async function copyPrompt(){
+  const txt = document.getElementById('promptArea').value;
+  if(!txt || txt.includes('STEP 1')) return;
+  try{
+    await navigator.clipboard.writeText(txt);
+    const btn = document.getElementById('copyPromptBtn');
+    btn.textContent='✅ コピー済み！';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='📋 プロンプトをコピー'; btn.classList.remove('copied'); },2200);
+  }catch(e){ alert('コピーに失敗しました。手動でコピーしてください。'); }
+}
+
+// ═══════════════════════════════════════════════
+// STEP 2 — JSON 適用
+// ═══════════════════════════════════════════════
+function applyJson(){
+  const raw = document.getElementById('jsonInput').value.trim();
+  if(!raw){ alert('JSONを入力してください'); return; }
+  let json;
+  try{
+    const start = raw.indexOf('{'), end = raw.lastIndexOf('}');
+    json = JSON.parse(raw.slice(start, end+1));
+  }catch(e){ alert('JSONの解析に失敗しました。Geminiの出力をそのまま貼り付けてください。\n\n'+e); return; }
+
+  // キャラ名を上書き
+  if(json.CharacterA){ document.getElementById('nameA').value=json.CharacterA; S.nameA=json.CharacterA; }
+  if(json.CharacterB){ document.getElementById('nameB').value=json.CharacterB; S.nameB=json.CharacterB; }
+
+  // カテゴリ適用
+  CATEGORIES.forEach(cat=>{
+    const val = json[cat];
+    if(val==='A'||val==='B'||val==='Draw'){
+      S.results[cat]=val;
+      const row = document.querySelector(`.cat-row[data-cat="${cat}"]`);
+      if(row){
+        row.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel-A','sel-B','sel-D'));
+        const btn = row.querySelector(`[data-val="${val}"]`);
+        if(btn) btn.classList.add(val==='A'?'sel-A':val==='B'?'sel-B':'sel-D');
+      }
+    }
+  });
+  updateScore();
+
+  const st = document.getElementById('applyStatus');
+  st.classList.add('show');
+  setTimeout(()=>st.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════════
+// STEP 3 — カテゴリグリッド
+// ═══════════════════════════════════════════════
+(function buildCatGrid(){
+  const grid = document.getElementById('catGrid');
+  CATEGORIES.forEach(cat=>{
+    const row = document.createElement('div');
+    row.className='cat-row'; row.dataset.cat=cat;
+    row.innerHTML=`<div class="cat-label">${cat}</div>
+<div class="cat-btns">
+  <button class="cat-btn sel-D" data-val="A"  onclick="setCat('${cat}','A',this)">A</button>
+  <button class="cat-btn sel-D" data-val="Draw" onclick="setCat('${cat}','Draw',this)">DRAW</button>
+  <button class="cat-btn sel-D" data-val="B"  onclick="setCat('${cat}','B',this)">B</button>
+</div>`;
+    grid.appendChild(row);
+    // 初期: Draw
+    const drawBtn = row.querySelector('[data-val="Draw"]');
+    row.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel-A','sel-B','sel-D'));
+    drawBtn.classList.add('sel-D');
+  });
+})();
+
+function setCat(cat, val, btn){
+  S.results[cat]=val;
+  btn.closest('.cat-row').querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel-A','sel-B','sel-D'));
+  btn.classList.add(val==='A'?'sel-A':val==='B'?'sel-B':'sel-D');
+  updateScore();
+}
+
+function updateScore(){
+  let a=0,b=0;
+  CATEGORIES.forEach(c=>{ if(S.results[c]==='A')a++; else if(S.results[c]==='B')b++; });
+  document.getElementById('scoreA').textContent=`${S.nameA||'A'}: ${a}`;
+  document.getElementById('scoreB').textContent=`${S.nameB||'B'}: ${b}`;
+}
+
+// ═══════════════════════════════════════════════
+// STEP 4 — BGM
+// ═══════════════════════════════════════════════
+function loadBGM(input){
+  const file = input.files[0]; if(!file) return;
+  S.bgmFile = file;
+  const info = document.getElementById('bgmInfo');
+  info.textContent = `✅ ${file.name}`;
+  info.classList.add('ok');
+}
+
+// ═══════════════════════════════════════════════
+// CANVAS & RENDER UTILS
+// ═══════════════════════════════════════════════
+let CW,CH,FPS,canvas,ctx;
+
+function initCanvas(){
+  const res = document.getElementById('cfgRes').value.split('x');
+  CW=+res[0]; CH=+res[1];
+  FPS=+document.getElementById('cfgFps').value;
+  canvas=document.getElementById('mainCanvas');
+  canvas.width=CW; canvas.height=CH;
+  ctx=canvas.getContext('2d',{willReadFrequently:true});
+}
+
+// 背景
+function drawBg(t){
+  const g=ctx.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,'#040710'); g.addColorStop(.5,'#070e18'); g.addColorStop(1,'#040710');
+  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
+  for(let k=0;k<38;k++){
+    const px=(Math.sin(k*127.1+.3)*.5+.5)*CW;
+    const py=((Math.sin(k*311.7)*.5+.5)-t*.4*(.3+Math.sin(k)*.7)+2)%1*CH;
+    const a=.25+.25*Math.sin(t*Math.PI*2+k);
+    const r=1+Math.abs(Math.sin(k*73))*2.5;
+    ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${100+k*2},${170+k},255,${a})`; ctx.fill();
+  }
+}
+
+function drawSplitBg(t){
+  if(S.imgA&&S.imgB){
+    ctx.globalAlpha=.38; ctx.drawImage(S.imgA,0,0,CW,CH/2);
+    ctx.drawImage(S.imgB,0,CH/2,CW,CH/2); ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(4,7,16,.65)'; ctx.fillRect(0,0,CW,CH);
+  }else{ drawBg(t); }
+  // 仕切り
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(0,CH/2-18); ctx.lineTo(CW,CH/2+22);
+  ctx.lineTo(CW,CH/2+30); ctx.lineTo(0,CH/2-10); ctx.closePath();
+  ctx.fillStyle='#000'; ctx.fill();
+  const gl=ctx.createLinearGradient(0,0,CW,0);
+  gl.addColorStop(0,'rgba(255,60,42,0)'); gl.addColorStop(.5,'rgba(255,215,0,.75)');
+  gl.addColorStop(1,'rgba(42,143,255,0)');
+  ctx.strokeStyle=gl; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(0,CH/2-10); ctx.lineTo(CW,CH/2+24); ctx.stroke();
+  ctx.restore();
+}
+
+function drawCharImg(img,yCR,scale,dx,dy,hR){
+  if(!img) return;
+  const th=CH*hR, tw=img.width*(th/img.height);
+  ctx.save(); ctx.drawImage(img,(CW-tw*scale)/2+dx,CH*yCR-th*scale/2+dy,tw*scale,th*scale); ctx.restore();
+}
+
+function drawVS(){
+  const cx=CW/2,cy=CH/2;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2);
+  ctx.fillStyle='rgba(8,12,22,.96)'; ctx.fill();
+  ctx.strokeStyle='rgba(200,200,200,.45)'; ctx.lineWidth=2; ctx.stroke();
+  glowText('VS',cx,cy+CW*.02,CW*.052,'#ffd700','#ffaa00',16);
+  ctx.restore();
+}
+
+function drawScoreBar(pA,pB){
+  const bx=CW*.055,by=CH-.038*CH,bw=CW*.89,bh=CH*.007;
+  ctx.fillStyle='rgba(255,255,255,.055)';
+  ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,3); ctx.fill();
+  const tot=pA+pB;
+  if(tot>0){
+    const aw=bw*pA/tot;
+    ctx.fillStyle=COLOR_A; ctx.beginPath(); ctx.roundRect(bx,by,aw,bh,3); ctx.fill();
+    ctx.fillStyle=COLOR_B; ctx.beginPath(); ctx.roundRect(bx+aw,by,bw-aw,bh,3); ctx.fill();
+  }
+  ctx.font=`bold ${CW*.028}px Rajdhani`;
+  ctx.textAlign='left'; ctx.fillStyle=COLOR_A; ctx.fillText(String(pA),bx,by-CH*.005);
+  ctx.textAlign='right'; ctx.fillStyle=COLOR_B; ctx.fillText(String(pB),bx+bw,by-CH*.005);
+}
+
+function drawScanlines(){
+  ctx.save(); ctx.globalAlpha=.045; ctx.fillStyle='#000';
+  for(let y=0;y<CH;y+=4) ctx.fillRect(0,y,CW,1);
+  ctx.restore();
+}
+
+function drawVignette(s=.55){
+  const g=ctx.createRadialGradient(CW/2,CH/2,CH*.22,CW/2,CH/2,CH*.72);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,`rgba(0,0,0,${s})`);
+  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
+}
+
+function drawFlash(fi,fd=8){
+  if(fi>=fd) return;
+  const a=fi===0?.92:(fd-fi)/fd*.65;
+  ctx.fillStyle=`rgba(255,255,255,${a})`; ctx.fillRect(0,0,CW,CH);
+}
+
+function drawGlitch(intensity,seed){
+  if(intensity<1) return;
+  let s=seed*9301+49297;
+  const rand=()=>{ s=(s*9301+49297)%233280; return s/233280; };
+  for(let i=0;i<Math.floor(intensity*3);i++){
+    const y1=Math.floor(rand()*CH), sh=2+Math.floor(rand()*16);
+    const off=Math.floor((rand()-.5)*55);
+    if(Math.abs(off)<2) continue;
+    try{ const id=ctx.getImageData(0,y1,CW,sh); ctx.putImageData(id,off,y1); }catch(e){}
+  }
+}
+
+function applyColorGrade(winner){
+  const id=ctx.getImageData(0,0,CW,CH), d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    let r=d[i],g=d[i+1],b=d[i+2];
+    r=cl((r-128)*1.1+128); g=cl((g-128)*1.1+128); b=cl((b-128)*1.1+128);
+    if(winner==='A'){ r=cl(r*1.25); b=cl(b*.85); }
+    else if(winner==='B'){ b=cl(b*1.25); r=cl(r*.85); }
+    d[i]=r; d[i+1]=g; d[i+2]=b;
+  }
+  ctx.putImageData(id,0,0);
+}
+const cl=v=>Math.max(0,Math.min(255,Math.round(v)));
+
+function applyChromatic(intensity){
+  if(intensity<.5) return;
+  const s=Math.round(intensity);
+  const id=ctx.getImageData(0,0,CW,CH), d=id.data, tmp=new Uint8ClampedArray(d);
+  for(let y=0;y<CH;y++) for(let x=0;x<CW;x++){
+    const i=(y*CW+x)*4;
+    d[i]  =tmp[(y*CW+Math.min(CW-1,x+s))*4];
+    d[i+2]=tmp[(y*CW+Math.max(0,x-s))*4+2];
+  }
+  ctx.putImageData(id,0,0);
+}
+
+// テキスト
+function fitPx(text,maxW,base){
+  let px=base; ctx.font=`${px}px "Bebas Neue"`;
+  while(px>10&&ctx.measureText(text).width>maxW){ px-=2; ctx.font=`${px}px "Bebas Neue"`; }
+  return px;
+}
+
+function glowText(text,x,y,px,color,glow,blur=22){
+  ctx.save(); ctx.font=`${px}px "Bebas Neue"`; ctx.textAlign='center';
+  ctx.shadowColor=glow||color; ctx.shadowBlur=blur; ctx.fillStyle=glow||color; ctx.fillText(text,x,y);
+  ctx.shadowBlur=blur*.45; ctx.fillText(text,x,y);
+  ctx.shadowBlur=0; ctx.strokeStyle='#000'; ctx.lineWidth=px*.18; ctx.strokeText(text,x,y);
+  ctx.fillStyle=color; ctx.fillText(text,x,y);
+  ctx.restore();
+}
+
+function centerText(lines,yR,basePx,color,glow){
+  const mW=CW*.88, cy=CH*yR, sp=basePx*.32;
+  const th=lines.length*basePx+(lines.length-1)*sp;
+  let y=cy-th/2+basePx;
+  lines.forEach(line=>{
+    const px=fitPx(line,mW,basePx);
+    glowText(line,CW/2,y,px,color,glow);
+    y+=px+sp;
+  });
+}
+
+function drawProgNum(ci){
+  ctx.save(); ctx.font=`bold ${CW*.026}px Rajdhani`; ctx.textAlign='right';
+  ctx.fillStyle='rgba(180,180,180,.55)';
+  ctx.fillText(`${ci+1}/${CATEGORIES.length}`,CW-CW*.038,CH*.036);
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════
+// FRAME RENDERERS
+// ═══════════════════════════════════════════════
+function renderIntro(i,cat,ci){
+  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**2, scale=1+.06*ease, shake=(1-t)*4;
+  drawSplitBg(t); drawBg(t*.5);
+  drawCharImg(S.imgA,.22,scale,(Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2,.37);
+  drawCharImg(S.imgB,.78,scale,(Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2,.37);
+  drawVS();
+  ctx.save(); ctx.translate(0,-(1-ease)*CH*.058);
+  centerText([cat.toUpperCase()],.5,CW*.115,'#00ffff','#009999');
+  ctx.restore();
+  drawProgNum(ci); drawScanlines(); drawVignette(.5);
+  applyChromatic(Math.max(0,8*(1-t*3)));
+}
+
+function renderCut(i,winner,pA,pB){
+  const t=i/(CUT_DUR*FPS);
+  drawBg(t*.3);
+  if(winner==='Draw'){
+    drawCharImg(S.imgA,.28,1+.05*t,(Math.random()-.5)*6,(Math.random()-.5)*6,.37);
+    drawCharImg(S.imgB,.72,1+.05*t,(Math.random()-.5)*6,(Math.random()-.5)*6,.37);
+    const p=.9+.1*Math.sin(t*Math.PI*6);
+    centerText(['DRAW'],.5,CW*.13*p,COLOR_D,'#888');
+  }else{
+    const img=winner==='A'?S.imgA:S.imgB, wc=winner==='A'?COLOR_A:COLOR_B;
+    const sc=1+.18*t, sh=Math.max(0,15*(1-t*2));
+    drawCharImg(img,.5,sc,(Math.random()-.5)*sh*2,(Math.random()-.5)*sh*2,.72);
+    applyColorGrade(winner);
+    const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
+    centerText([wn],.88,CW*.062,wc,wc);
+    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
+    centerText([`${pA}  -  ${pB}`],.12,CW*.145,sc2,sc2);
+    const gi=Math.max(0,4*(1-t*4));
+    if(gi>0) drawGlitch(gi,i);
+  }
+  drawScoreBar(pA,pB); drawScanlines(); drawVignette(.55); drawFlash(i,7);
+}
+
+function renderFinal(i,winner,pA,pB){
+  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*3);
+  drawBg(t*.2);
+  const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
+  if(fi){
+    const sc=1+.28*t, sh=Math.max(0,14*(1-t*3));
+    drawCharImg(fi,.5,sc,(Math.random()-.5)*sh*2,(Math.random()-.5)*sh*2,.82);
+    applyColorGrade(winner);
+  }else{
+    drawCharImg(S.imgA,.28,1+.05*t,0,0,.37);
+    drawCharImg(S.imgB,.72,1+.05*t,0,0,.37);
+  }
+  const p=1+.04*Math.sin(t*Math.PI*8);
+  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
+  const lines=wn?['WINNER',wn.toUpperCase()]:['DRAW'];
+  const wc=winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
+  const wg=winner==='A'?'#aa2218':(winner==='B'?'#1860aa':'#666');
+  ctx.globalAlpha=eI;
+  centerText(lines,.14,CW*.148*p,wc,wg);
+  ctx.globalAlpha=1;
+  if(t>.25){
+    const sa=Math.min(1,(t-.25)*4);
+    ctx.globalAlpha=sa;
+    centerText([`${pA} - ${pB}`],.9,CW*.105,'#b8b8b8','#555');
+    ctx.globalAlpha=1;
+  }
+  if(i<15) drawGlitch(Math.max(0,5*(1-i/15)),i+9999);
+  drawScanlines(); drawVignette(.6); drawFlash(i,20);
+}
+
+// ═══════════════════════════════════════════════
+// VALIDATION
+// ═══════════════════════════════════════════════
+function validate(){
+  if(!S.imgA||!S.imgB){ showErr('両方のキャラクター画像をアップロードしてください'); return false; }
+  hideErr(); return true;
+}
+function showErr(m){ const e=document.getElementById('errorMsg'); e.textContent=m; e.classList.add('visible'); }
+function hideErr(){ document.getElementById('errorMsg').classList.remove('visible'); }
+
+// ═══════════════════════════════════════════════
+// PROGRESS UI
+// ═══════════════════════════════════════════════
+let chips={};
+function initProgressUI(total){
+  document.getElementById('progress-wrap').classList.add('visible');
+  document.getElementById('output-wrap').classList.remove('visible');
+  const list=document.getElementById('phaseList'); list.innerHTML=''; chips={};
+  [...CATEGORIES,'FINAL'].forEach(c=>{
+    const el=document.createElement('span');
+    el.className='phase-chip'; el.textContent=c; list.appendChild(el); chips[c]=el;
+  });
+  setProgress(0,total,'準備中...',null);
+}
+function setProgress(done,total,label,cat){
+  const pct=done/total*100;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progPct').textContent=pct.toFixed(1)+'%';
+  document.getElementById('progLabel').textContent=label;
+  document.getElementById('progDetail').textContent=`フレーム ${done} / ${total}`;
+  if(cat&&chips[cat]){
+    Object.values(chips).forEach(c=>c.classList.remove('active'));
+    chips[cat].classList.add('active');
+  }
+}
+function markChipDone(cat){ if(chips[cat]){ chips[cat].classList.remove('active'); chips[cat].classList.add('done'); } }
+function setFfmpegMsg(msg){ document.getElementById('progFfmpeg').textContent=msg; }
+
+// ═══════════════════════════════════════════════
+// MAIN GENERATE
+// ═══════════════════════════════════════════════
+async function startGenerate(){
+  if(!validate()) return;
+  initCanvas();
+  S.nameA=document.getElementById('nameA').value.trim()||'Character A';
+  S.nameB=document.getElementById('nameB').value.trim()||'Character B';
+
+  const NI=Math.round(INTRO_DUR*FPS), NC=Math.round(CUT_DUR*FPS);
+  const NF=Math.round(FINAL_DUR*FPS), NB=Math.round(BLACK_DUR*FPS);
+  const TOTAL=CATEGORIES.length*(NI+NC)+NB+NF;
+
+  initProgressUI(TOTAL);
+  document.getElementById('genBtn').disabled=true;
+
+  // ─── MediaRecorder setup ───
+  const stream=canvas.captureStream(FPS);
+  const chunks=[];
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+    ?'video/webm;codecs=vp9':'video/webm';
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6_000_000});
+  rec.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
+  const recDone=new Promise(r=>{ rec.onstop=r; });
+  rec.start(100); // 100ms ごとに chunk
+
+  const tick=()=>new Promise(r=>requestAnimationFrame(r));
+  let fc=0,pA=0,pB=0;
+
+  for(let ci=0;ci<CATEGORIES.length;ci++){
+    const cat=CATEGORIES[ci], winner=S.results[cat];
+    for(let i=0;i<NI;i++){
+      renderIntro(i,cat,ci); fc++;
+      setProgress(fc,TOTAL,`INTRO [${cat}]`,cat);
+      if(i%4===0) await tick();
+    }
+    if(winner==='A') pA++; else if(winner==='B') pB++;
+    for(let i=0;i<NC;i++){
+      renderCut(i,winner,pA,pB); fc++;
+      setProgress(fc,TOTAL,`CUT [${winner}]`,cat);
+      if(i%4===0) await tick();
+    }
+    markChipDone(cat);
+  }
+
+  // BLACK
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,CW,CH);
+  for(let i=0;i<NB;i++){
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,CW,CH);
+    fc++; setProgress(fc,TOTAL,'BLACK OUT','FINAL');
+    await tick();
+  }
+
+  // FINAL
+  const fw=pA>pB?'A':(pB>pA?'B':'Draw');
+  for(let i=0;i<NF;i++){
+    renderFinal(i,fw,pA,pB); fc++;
+    setProgress(fc,TOTAL,'FINAL','FINAL');
+    if(i%4===0) await tick();
+  }
+  markChipDone('FINAL');
+
+  rec.stop();
+  await recDone;
+
+  const videoBlob=new Blob(chunks,{type:mime});
+
+  // ─── BGM合成 (ffmpeg.wasm) ───
+  let finalBlob=videoBlob;
+  if(S.bgmFile){
+    try{
+      setFfmpegMsg('🎵 ffmpeg.wasm で BGM 合成中...');
+      setProgress(fc,TOTAL,'BGM 合成中...',null);
+      finalBlob=await muxWithFfmpeg(videoBlob,S.bgmFile);
+      setFfmpegMsg('✅ BGM 合成完了');
+    }catch(e){
+      console.error('ffmpeg失敗',e);
+      setFfmpegMsg('⚠ BGM合成失敗 (映像のみ): '+e.message);
+    }
+  }
+
+  // ─── 出力 ───
+  const ext=S.bgmFile?'mp4':'webm';
+  const url=URL.createObjectURL(finalBlob);
+  document.getElementById('preview-video').src=url;
+  const dlBtn=document.getElementById('dlBtn');
+  dlBtn.href=url;
+  dlBtn.download=`${S.nameA}VS${S.nameB}.${ext}`;
+  dlBtn.textContent=`⬇ 動画をダウンロード (.${ext})`;
+  document.getElementById('output-wrap').classList.add('visible');
+  document.getElementById('genBtn').disabled=false;
+  document.getElementById('progLabel').textContent='✅ 完了!';
+  document.getElementById('progPct').textContent='100%';
+  document.getElementById('progFill').style.width='100%';
+}
+
+// ═══════════════════════════════════════════════
+// ffmpeg.wasm BGM合成
+// ═══════════════════════════════════════════════
+async function muxWithFfmpeg(videoBlob, bgmFile){
+  const {FFmpeg}=FFmpegWASM;
+  const {fetchFile}=FFmpegUtil;
+
+  const ff=new FFmpeg();
+  ff.on('log',({message})=>{ console.log('[ffmpeg]',message); });
+  ff.on('progress',({progress})=>{
+    setFfmpegMsg(`🎵 BGM合成中... ${Math.round(progress*100)}%`);
+  });
+
+  setFfmpegMsg('⏳ ffmpeg.wasm を読み込み中...');
+  await ff.load({
+    coreURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+    wasmURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
+  });
+
+  setFfmpegMsg('📦 ファイルを転送中...');
+  await ff.writeFile('video.webm', await fetchFile(videoBlob));
+  await ff.writeFile('bgm.mp3',    await fetchFile(bgmFile));
+
+  setFfmpegMsg('🎬 エンコード中...');
+  await ff.exec([
+    '-i','video.webm',
+    '-i','bgm.mp3',
+    '-c:v','copy',
+    '-c:a','aac','-b:a','192k',
+    '-shortest',
+    '-map','0:v:0','-map','1:a:0',
+    'output.mp4'
+  ]);
+
+  const data=await ff.readFile('output.mp4');
+  await ff.deleteFile('video.webm');
+  await ff.deleteFile('bgm.mp3');
+  await ff.deleteFile('output.mp4');
+
+  return new Blob([data.buffer],{type:'video/mp4'});
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+updatePrompt();
+updateScore();
+</script>
+</body>
+</html>
