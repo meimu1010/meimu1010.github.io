@@ -271,9 +271,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 </main>
 <canvas id="mainCanvas"></canvas>
 
-<!-- ffmpeg.wasm CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+<!-- 外部ライブラリ不要 -->
 
 <script>
 'use strict';
@@ -760,18 +758,11 @@ function setFfmpegMsg(msg){ document.getElementById('progFfmpeg').textContent=ms
 
 // ═══════════════════════════════════════════════
 // MAIN GENERATE
-// ─ PNG連番 → ffmpeg.wasm libx264 エンコード方式
-//   MediaRecorder を完全廃止 → カクつきゼロ・BGM完全合成
+// ─ 方式: 全フレームをメモリに描画→ImageBitmapで保持
+//   → OffscreenCanvas+AudioContext でリアルタイム再生
+//   → MediaRecorder で映像+音声を同時キャプチャ
+//   GitHub Pages完全対応・CORS不要
 // ═══════════════════════════════════════════════
-
-// canvas → PNG Uint8Array
-function canvasToPng(){
-  return new Promise(res=>{
-    canvas.toBlob(blob=>{
-      blob.arrayBuffer().then(ab=>res(new Uint8Array(ab)));
-    },'image/png');
-  });
-}
 
 async function startGenerate(){
   if(!validate()) return;
@@ -786,117 +777,133 @@ async function startGenerate(){
   initProgressUI(TOTAL);
   document.getElementById('genBtn').disabled=true;
 
-  // ── ffmpeg.wasm ロード ──
-  const {FFmpeg}=FFmpegWASM;
-  const {fetchFile}=FFmpegUtil;
-  const ff=new FFmpeg();
-  ff.on('log',({message})=>console.log('[ff]',message));
-  ff.on('progress',({progress})=>{
-    if(progress>0) setFfmpegMsg(`🎬 エンコード中... ${Math.round(progress*100)}%`);
-  });
-  setFfmpegMsg('⏳ ffmpeg.wasm を読み込み中...');
-  await ff.load({
-    coreURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-    wasmURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
-  });
-  setFfmpegMsg('✅ 読み込み完了 — フレーム生成中...');
-
-  // ── フレーム描画 → PNG を ffmpeg 仮想FSに書き込み ──
-  const pad=n=>String(n).padStart(6,'0');
-  // UIフリーズ防止: 10フレームごとに1回 yield
+  // ═══ PHASE 1: 全フレームをImageBitmapとしてRAMに収集 ═══
+  setFfmpegMsg('📸 フレームを生成中...');
   const yld=()=>new Promise(r=>setTimeout(r,0));
-
+  const bitmaps=[]; // ImageBitmap[]
   let fc=0, pA=0, pB=0;
 
   for(let ci=0;ci<CATEGORIES.length;ci++){
     const cat=CATEGORIES[ci], winner=S.results[cat];
-    // INTRO
     for(let i=0;i<NI;i++){
       renderIntro(i,cat,ci);
-      await ff.writeFile(`f${pad(fc)}.png`, await canvasToPng());
+      bitmaps.push(await createImageBitmap(canvas));
       fc++; setProgress(fc,TOTAL,`INTRO [${cat}]`,cat);
-      if(fc%10===0) await yld();
+      if(fc%12===0) await yld();
     }
     if(winner==='A') pA++; else if(winner==='B') pB++;
-    // CUT
     for(let i=0;i<NC;i++){
       renderCut(i,winner,pA,pB);
-      await ff.writeFile(`f${pad(fc)}.png`, await canvasToPng());
+      bitmaps.push(await createImageBitmap(canvas));
       fc++; setProgress(fc,TOTAL,`CUT [${winner}]`,cat);
-      if(fc%10===0) await yld();
+      if(fc%12===0) await yld();
     }
     markChipDone(cat);
   }
-
-  // BLACK
   ctx.fillStyle='#000'; ctx.fillRect(0,0,CW,CH);
   for(let i=0;i<NB;i++){
-    await ff.writeFile(`f${pad(fc)}.png`, await canvasToPng());
+    bitmaps.push(await createImageBitmap(canvas));
     fc++; setProgress(fc,TOTAL,'BLACK OUT','FINAL');
-    if(fc%10===0) await yld();
+    if(fc%12===0) await yld();
   }
-
-  // FINAL
   const fw=pA>pB?'A':(pB>pA?'B':'Draw');
   for(let i=0;i<NF;i++){
     renderFinal(i,fw,pA,pB);
-    await ff.writeFile(`f${pad(fc)}.png`, await canvasToPng());
+    bitmaps.push(await createImageBitmap(canvas));
     fc++; setProgress(fc,TOTAL,'FINAL','FINAL');
-    if(fc%10===0) await yld();
+    if(fc%12===0) await yld();
   }
   markChipDone('FINAL');
 
-  // ── BGM 書き込み ──
-  let hasBgm=false;
+  // ═══ PHASE 2: BGMをAudioBufferとしてデコード ═══
+  let bgmAudioBuf=null;
   if(S.bgmFile){
     try{
-      setFfmpegMsg('📦 BGM を転送中...');
-      await ff.writeFile('bgm.mp3', await fetchFile(S.bgmFile));
-      hasBgm=true;
-    }catch(e){ console.warn('BGM転送失敗',e); }
+      setFfmpegMsg('🎵 BGM をデコード中...');
+      const audioCtx=new AudioContext();
+      const ab=await S.bgmFile.arrayBuffer();
+      bgmAudioBuf=await audioCtx.decodeAudioData(ab);
+      audioCtx.close();
+    }catch(e){ console.warn('BGMデコード失敗',e); }
   }
 
-  // ── ffmpeg エンコード: PNG連番 → mp4 ──
-  setProgress(TOTAL,TOTAL,'エンコード中...',null);
-  setFfmpegMsg('🎬 エンコード中... (しばらくお待ちください)');
+  // ═══ PHASE 3: フレームを一定間隔で再生しながらMediaRecorderで録画 ═══
+  setFfmpegMsg('🎬 録画中... (しばらくお待ちください)');
+  setProgress(0,TOTAL,'録画中...',null);
 
-  const args=[
-    '-framerate', String(FPS),
-    '-i','f%06d.png',
-  ];
-  if(hasBgm){
-    args.push('-stream_loop','-1','-i','bgm.mp3');
+  const frameDurMs = 1000/FPS;
+
+  // ─ AudioContextとMediaStreamDestinationでBGMをストリーム化 ─
+  const recAudioCtx = new AudioContext({sampleRate:44100});
+  const dest = recAudioCtx.createMediaStreamDestination();
+
+  if(bgmAudioBuf){
+    const src=recAudioCtx.createBufferSource();
+    src.buffer=bgmAudioBuf; src.loop=true;
+    src.connect(dest); src.start(0);
+  } else {
+    // 無音ダミー（音声トラックが必要）
+    const osc=recAudioCtx.createOscillator();
+    const gain=recAudioCtx.createGain(); gain.gain.value=0;
+    osc.connect(gain); gain.connect(dest); osc.start();
   }
-  args.push(
-    '-c:v','libx264',
-    '-preset','ultrafast',
-    '-crf','22',
-    '-pix_fmt','yuv420p',
-    '-movflags','+faststart',
-  );
-  if(hasBgm){
-    args.push('-c:a','aac','-b:a','192k','-shortest','-map','0:v:0','-map','1:a:0');
-  }
-  args.push('output.mp4');
 
-  await ff.exec(args);
-  setFfmpegMsg('✅ エンコード完了');
+  // ─ Canvas + AudioStream を合成してMediaRecorder ─
+  const videoStream=canvas.captureStream(0); // 0=手動更新
+  const videoTrack=videoStream.getVideoTracks()[0];
+  const audioTrack=dest.stream.getAudioTracks()[0];
+  const combined=new MediaStream([videoTrack, audioTrack]);
 
-  const data=await ff.readFile('output.mp4');
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+    ?'video/webm;codecs=vp9,opus'
+    :(MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+      ?'video/webm;codecs=vp8,opus':'video/webm');
 
-  // クリーンアップ
-  for(let i=0;i<TOTAL;i++) try{ await ff.deleteFile(`f${pad(i)}.png`); }catch(e){}
-  if(hasBgm) try{ await ff.deleteFile('bgm.mp3'); }catch(e){}
-  try{ await ff.deleteFile('output.mp4'); }catch(e){}
+  const chunks=[];
+  const rec=new MediaRecorder(combined,{mimeType:mime, videoBitsPerSecond:8_000_000, audioBitsPerSecond:128_000});
+  rec.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
+  const recDone=new Promise(r=>{ rec.onstop=r; });
+  rec.start(200);
 
-  // ── 出力 ──
-  const finalBlob=new Blob([data.buffer],{type:'video/mp4'});
+  // ─ 固定間隔でフレームを流し込む ─
+  // requestVideoFrameCallback / setTimeout どちらでも使えるように
+  await new Promise(resolve=>{
+    let idx=0;
+    const nextFrame=()=>{
+      if(idx>=bitmaps.length){
+        resolve(); return;
+      }
+      // canvasに描画
+      ctx.drawImage(bitmaps[idx],0,0);
+      // captureStreamに通知 (手動トリガー)
+      videoTrack.requestFrame();
+
+      setProgress(idx+1,TOTAL,'録画中...',null);
+      idx++;
+      // 次フレームを正確なタイミングで呼ぶ
+      setTimeout(nextFrame, frameDurMs);
+    };
+    // 少し待ってからスタート（AudioContext安定化）
+    setTimeout(nextFrame, 100);
+  });
+
+  // 少し余韻を持たせてから停止
+  await new Promise(r=>setTimeout(r,300));
+  rec.stop();
+  recAudioCtx.close();
+  await recDone;
+
+  // ─ 全bitmapを解放 ─
+  bitmaps.forEach(b=>b.close());
+
+  setFfmpegMsg('✅ 完了');
+  const finalBlob=new Blob(chunks,{type:mime});
   const url=URL.createObjectURL(finalBlob);
   document.getElementById('preview-video').src=url;
   const dlBtn=document.getElementById('dlBtn');
   dlBtn.href=url;
-  dlBtn.download=`${S.nameA}VS${S.nameB}.mp4`;
-  dlBtn.textContent='⬇ 動画をダウンロード (.mp4)';
+  dlBtn.download=`${S.nameA}VS${S.nameB}.webm`;
+  dlBtn.textContent='⬇ 動画をダウンロード (.webm)';
   document.getElementById('output-wrap').classList.add('visible');
   document.getElementById('genBtn').disabled=false;
   document.getElementById('progLabel').textContent='✅ 完了!';
@@ -904,6 +911,12 @@ async function startGenerate(){
   document.getElementById('progFill').style.width='100%';
 }
 
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
