@@ -1,0 +1,2162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魔法少女育成計画 ～選ばれし者たちへ～</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;700;900&family=Shippori+Mincho+B1:wght@400;700;800&family=Cinzel+Decorative:wght@400;700&display=swap');
+
+:root {
+  --bg: #06010f;
+  --surface: #0d0120;
+  --pink: #f72585;
+  --rose: #c9184a;
+  --pale-pink: #ffb3c6;
+  --purple: #7209b7;
+  --deep: #3a0ca3;
+  --cyan: #4cc9f0;
+  --gold: #ffd60a;
+  --silver: #c8c8d0;
+  --white: #f8f0ff;
+  --text-main: #ede0f5;
+  --text-sub: #9b8aac;
+  --glow-pink: 0 0 24px #f7258566, 0 0 60px #f7258522;
+  --glow-gold: 0 0 16px #ffd60a88;
+  --panel-bg: rgba(13,1,32,0.92);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: 'Noto Serif JP', serif;
+}
+
+/* ─── CANVAS BACKDROP ─── */
+#bg-canvas {
+  position: fixed; inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ─── SCENE BACKGROUND ─── */
+#scene-bg {
+  position: fixed; inset: 0;
+  z-index: 1;
+  transition: background 1.2s ease, opacity 0.6s ease;
+  pointer-events: none;
+}
+
+/* ─── VIGNETTE ─── */
+#vignette {
+  position: fixed; inset: 0; z-index: 2;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(6,1,15,0.7) 100%);
+  pointer-events: none;
+}
+
+/* ─── MAIN WRAPPER ─── */
+#game {
+  position: fixed; inset: 0; z-index: 3;
+  display: flex; flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* ─── CHARACTER AREA ─── */
+#char-area {
+  position: absolute;
+  bottom: 220px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  padding: 0 80px;
+  pointer-events: none;
+}
+
+.char-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: opacity 0.6s ease, transform 0.6s ease, filter 0.6s ease;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.char-figure.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.char-figure.dim {
+  opacity: 0.35;
+  filter: grayscale(0.5) brightness(0.6);
+}
+
+.char-emoji {
+  font-size: clamp(70px, 12vw, 100px);
+  filter: drop-shadow(0 0 20px rgba(247,37,133,0.5));
+  animation: char-float 4s ease-in-out infinite;
+  line-height: 1;
+}
+
+.char-figure.speaking .char-emoji {
+  filter: drop-shadow(0 0 30px rgba(247,37,133,0.9));
+  animation: char-float 3s ease-in-out infinite, char-pulse 1.5s ease-in-out infinite;
+}
+
+.char-name-tag {
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  color: var(--pale-pink);
+  background: rgba(247,37,133,0.15);
+  border: 1px solid rgba(247,37,133,0.4);
+  padding: 3px 12px;
+  border-radius: 20px;
+  margin-top: 8px;
+  white-space: nowrap;
+}
+
+/* ─── DIALOGUE BOX ─── */
+#dialogue-wrap {
+  padding: 0 20px 20px;
+  pointer-events: none;
+}
+
+#dialogue-box {
+  position: relative;
+  background: var(--panel-bg);
+  border: 1px solid rgba(247,37,133,0.3);
+  border-radius: 6px;
+  padding: 22px 28px 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 40px rgba(247,37,133,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+  pointer-events: all;
+  cursor: pointer;
+  min-height: 130px;
+  overflow: hidden;
+}
+
+#dialogue-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--pink), transparent);
+  opacity: 0.7;
+}
+
+#speaker-name {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--pink);
+  text-shadow: var(--glow-pink);
+  margin-bottom: 10px;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#speaker-name::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(247,37,133,0.4), transparent);
+}
+
+#dialogue-text {
+  font-size: clamp(14px, 2vw, 17px);
+  line-height: 2;
+  color: var(--text-main);
+  min-height: 64px;
+  letter-spacing: 0.05em;
+}
+
+#advance-hint {
+  position: absolute;
+  bottom: 12px; right: 18px;
+  font-size: 11px;
+  color: var(--text-sub);
+  letter-spacing: 0.2em;
+  animation: blink 1.4s ease-in-out infinite;
+}
+
+/* ─── CHOICES ─── */
+#choice-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6,1,15,0.75);
+  backdrop-filter: blur(6px);
+  gap: 14px;
+  padding: 40px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+#choice-wrap.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.choice-label {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: 14px;
+  color: var(--text-sub);
+  letter-spacing: 0.4em;
+  margin-bottom: 8px;
+}
+
+.choice-btn {
+  width: 100%;
+  max-width: 560px;
+  background: rgba(13,1,32,0.85);
+  border: 1px solid rgba(247,37,133,0.35);
+  color: var(--text-main);
+  font-family: 'Noto Serif JP', serif;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+  padding: 16px 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.choice-btn::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--pink);
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+
+.choice-btn:hover {
+  border-color: var(--pink);
+  background: rgba(247,37,133,0.12);
+  box-shadow: 0 0 20px rgba(247,37,133,0.15);
+  transform: translateX(4px);
+}
+
+.choice-btn:hover::before { transform: scaleY(1); }
+
+/* ─── TITLE SCREEN ─── */
+#title-screen {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: var(--bg);
+  transition: opacity 0.8s ease;
+}
+
+#title-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.title-ornament {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(247,37,133,0.15);
+  pointer-events: none;
+}
+
+.title-main-logo {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.title-en {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(10px, 1.5vw, 14px);
+  letter-spacing: 0.5em;
+  color: var(--text-sub);
+  margin-bottom: 16px;
+}
+
+.title-jp {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: clamp(32px, 6vw, 58px);
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  background: linear-gradient(135deg, var(--white) 0%, var(--pale-pink) 40%, var(--pink) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+  margin-bottom: 6px;
+  animation: title-shimmer 4s ease-in-out infinite;
+}
+
+.title-sub {
+  font-size: clamp(12px, 1.8vw, 15px);
+  letter-spacing: 0.6em;
+  color: var(--text-sub);
+  margin-top: 8px;
+}
+
+.title-divider {
+  display: flex; align-items: center; gap: 16px;
+  margin: 28px 0;
+  justify-content: center;
+}
+
+.title-divider-line {
+  width: 100px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--pink));
+}
+.title-divider-line:last-child {
+  background: linear-gradient(90deg, var(--pink), transparent);
+}
+
+.title-star {
+  color: var(--pink);
+  font-size: 18px;
+  text-shadow: var(--glow-pink);
+  animation: spin-slow 6s linear infinite;
+}
+
+.title-start-btn {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: 17px;
+  letter-spacing: 0.5em;
+  color: var(--white);
+  background: transparent;
+  border: 1px solid var(--pink);
+  padding: 14px 48px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  animation: pulse-border 2.5s ease-in-out infinite;
+}
+
+.title-start-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--rose), var(--purple));
+  transform: translateY(100%);
+  transition: transform 0.35s ease;
+}
+
+.title-start-btn span { position: relative; z-index: 1; }
+
+.title-start-btn:hover::before { transform: translateY(0); }
+.title-start-btn:hover { box-shadow: var(--glow-pink); letter-spacing: 0.7em; }
+
+/* ─── CHAPTER TITLE ─── */
+#chapter-overlay {
+  position: fixed; inset: 0; z-index: 40;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(6,1,15,0.96);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+#chapter-overlay.visible {
+  opacity: 1;
+}
+
+.chapter-num {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 13px;
+  letter-spacing: 0.6em;
+  color: var(--text-sub);
+  margin-bottom: 16px;
+}
+
+.chapter-title-text {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: clamp(22px, 4vw, 38px);
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--white);
+  text-align: center;
+  animation: chapter-slide 0.8s ease forwards;
+}
+
+.chapter-line {
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--pink), transparent);
+  margin: 18px auto;
+  animation: chapter-line-expand 0.8s 0.3s ease forwards;
+}
+
+/* ─── ENDING ─── */
+#ending-screen {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: var(--bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.2s ease;
+  padding: 40px;
+  text-align: center;
+}
+
+#ending-screen.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.ending-type {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(11px, 1.5vw, 13px);
+  letter-spacing: 0.6em;
+  color: var(--text-sub);
+  margin-bottom: 16px;
+}
+
+.ending-title {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 800;
+  margin-bottom: 24px;
+  animation: fadeInUp 1s 0.4s forwards;
+  opacity: 0;
+}
+
+.ending-title.true { color: var(--gold); text-shadow: var(--glow-gold); }
+.ending-title.bad { color: var(--rose); text-shadow: 0 0 24px rgba(201,24,74,0.6); }
+.ending-title.normal { color: var(--silver); }
+
+.ending-body {
+  max-width: 560px;
+  font-size: 15px;
+  line-height: 2.2;
+  color: var(--text-sub);
+  margin-bottom: 40px;
+  animation: fadeInUp 1s 0.8s forwards;
+  opacity: 0;
+}
+
+.ending-btn {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: 14px;
+  letter-spacing: 0.4em;
+  color: var(--white);
+  background: transparent;
+  border: 1px solid rgba(247,37,133,0.4);
+  padding: 12px 36px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: fadeInUp 1s 1.2s forwards;
+  opacity: 0;
+}
+
+.ending-btn:hover {
+  border-color: var(--pink);
+  background: rgba(247,37,133,0.1);
+  box-shadow: var(--glow-pink);
+}
+
+/* ─── GLITCH ─── */
+.glitch {
+  animation: glitch 0.3s ease;
+}
+
+/* ─── STATUS BAR ─── */
+#status-bar {
+  position: fixed;
+  top: 16px; right: 20px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.status-item {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--text-sub);
+  background: rgba(13,1,32,0.7);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(247,37,133,0.15);
+}
+
+/* ─── SKIP / LOG ─── */
+#ui-controls {
+  position: fixed;
+  top: 16px; left: 20px;
+  z-index: 30;
+  display: flex;
+  gap: 8px;
+}
+
+.ui-btn {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 13px;
+  letter-spacing: 0.25em;
+  color: var(--text-sub);
+  background: rgba(13,1,32,0.7);
+  border: 1px solid rgba(247,37,133,0.15);
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: none;
+}
+
+.ui-btn:hover {
+  border-color: rgba(247,37,133,0.5);
+  color: var(--white);
+}
+
+.ui-btn.active { display: inline-block; }
+
+/* ─── ANIMATIONS ─── */
+@keyframes char-float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes char-pulse {
+  0%,100% { filter: drop-shadow(0 0 20px rgba(247,37,133,0.6)); }
+  50% { filter: drop-shadow(0 0 40px rgba(247,37,133,1)); }
+}
+
+@keyframes blink {
+  0%,100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes title-shimmer {
+  0%,100% { filter: brightness(1); }
+  50% { filter: brightness(1.15) drop-shadow(0 0 20px rgba(247,37,133,0.4)); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-border {
+  0%,100% { box-shadow: 0 0 8px rgba(247,37,133,0.2); }
+  50% { box-shadow: 0 0 24px rgba(247,37,133,0.5); }
+}
+
+@keyframes chapter-slide {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes chapter-line-expand {
+  from { width: 0; }
+  to { width: 200px; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); filter: none; }
+  20% { transform: translate(-4px, 2px); filter: hue-rotate(90deg); }
+  40% { transform: translate(4px, -2px); filter: hue-rotate(180deg); }
+  60% { transform: translate(-2px, -4px); filter: hue-rotate(270deg); }
+  80% { transform: translate(2px, 4px); filter: none; }
+  100% { transform: translate(0); filter: none; }
+}
+
+@keyframes screen-flash {
+  0%,100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+#flash-overlay {
+  position: fixed; inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  opacity: 0;
+}
+
+
+/* ─── SAVE PANEL ─── */
+#save-panel {
+  position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:rgba(6,1,15,0.88);backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;transition:opacity 0.35s ease;padding:30px;
+}
+#save-panel.visible{opacity:1;pointer-events:all;}
+.save-panel-inner{
+  background:rgba(13,1,32,0.97);border:1px solid rgba(247,37,133,0.35);
+  border-radius:6px;padding:28px 32px;width:100%;max-width:480px;
+  box-shadow:0 0 40px rgba(247,37,133,0.08);
+}
+.save-panel-title{
+  font-family:'Shippori Mincho B1',serif;font-size:18px;letter-spacing:0.5em;
+  color:var(--gold);text-align:center;margin-bottom:20px;text-shadow:var(--glow-gold);
+}
+.save-slot{
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;
+  padding:12px 14px;border:1px solid rgba(247,37,133,0.2);border-radius:4px;
+  margin-bottom:10px;background:rgba(247,37,133,0.03);
+}
+.slot-info{min-width:0;}
+.slot-num{font-size:10px;color:var(--text-sub);letter-spacing:0.3em;margin-bottom:3px;}
+.slot-chapter{font-size:15px;color:var(--white);font-weight:500;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.slot-preview{font-size:13px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.slot-date{font-size:12px;color:var(--text-sub);margin-top:2px;}
+.slot-btns{display:flex;gap:6px;flex-shrink:0;}
+.slot-btn{font-family:'Noto Serif JP',serif;font-size:13px;letter-spacing:0.2em;padding:8px 16px;border-radius:3px;cursor:pointer;transition:all 0.2s;border:1px solid;}
+.slot-save{background:transparent;border-color:rgba(247,37,133,0.5);color:var(--pink);}
+.slot-save:hover{background:rgba(247,37,133,0.15);}
+.slot-load{background:transparent;border-color:rgba(255,214,10,0.5);color:var(--gold);}
+.slot-load:hover:not(:disabled){background:rgba(255,214,10,0.1);}
+.slot-load:disabled{opacity:0.3;cursor:not-allowed;}
+.save-panel-close{
+  font-family:'Noto Serif JP',serif;font-size:14px;letter-spacing:0.3em;
+  color:var(--text-sub);background:transparent;border:1px solid rgba(247,37,133,0.2);
+  padding:8px 24px;border-radius:3px;cursor:pointer;margin-top:14px;width:100%;
+  transition:all 0.2s;
+}
+.save-panel-close:hover{border-color:var(--pink);color:var(--white);}
+
+
+/* ─── ??? BUTTON ─── */
+.title-mystery-btn {
+  display: block;
+  margin: 14px auto 0;
+  background: transparent;
+  border: 1px solid rgba(153,102,204,0.6);
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: 14px;
+  letter-spacing: 0.6em;
+  color: rgba(200,160,255,0.85);
+  cursor: pointer;
+  padding: 10px 36px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 10px rgba(153,102,204,0.5);
+  box-shadow: 0 0 12px rgba(153,102,204,0.15);
+}
+.title-mystery-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, #3a006a, #1a0030);
+  transform: translateY(100%);
+  transition: transform 0.35s ease;
+}
+.title-mystery-btn span { position: relative; z-index: 1; }
+.title-mystery-btn:hover::before { transform: translateY(0); }
+.title-mystery-btn:hover {
+  color: #fff;
+  letter-spacing: 0.8em;
+  box-shadow: 0 0 20px rgba(153,102,204,0.5);
+  border-color: rgba(200,160,255,0.9);
+}
+
+
+/* ─── BACKLOG ─── */
+#backlog-panel {
+  position:fixed;inset:0;z-index:70;background:rgba(6,1,15,0.92);
+  backdrop-filter:blur(10px);display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;transition:opacity 0.3s;
+}
+#backlog-panel.visible{opacity:1;pointer-events:all;}
+#backlog-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 24px;border-bottom:1px solid rgba(247,37,133,0.2);
+  font-family:'Shippori Mincho B1',serif;font-size:13px;letter-spacing:0.4em;color:var(--gold);
+}
+#backlog-close{
+  background:transparent;border:1px solid rgba(247,37,133,0.3);color:var(--text-sub);
+  font-family:'Noto Serif JP',serif;font-size:11px;letter-spacing:0.2em;
+  padding:5px 14px;border-radius:3px;cursor:pointer;transition:all 0.2s;
+}
+#backlog-close:hover{border-color:var(--pink);color:var(--white);}
+#backlog-list{flex:1;overflow-y:auto;padding:16px 24px;display:flex;flex-direction:column;gap:10px;}
+#backlog-list::-webkit-scrollbar{width:4px;}
+#backlog-list::-webkit-scrollbar-thumb{background:rgba(247,37,133,0.3);border-radius:2px;}
+.backlog-entry{padding:10px 14px;border-left:2px solid rgba(247,37,133,0.15);transition:border-color 0.2s;}
+.backlog-entry:hover{border-left-color:rgba(247,37,133,0.5);}
+.backlog-speaker{font-size:13px;letter-spacing:0.3em;margin-bottom:4px;color:var(--pink);}
+.backlog-speaker.narration{color:var(--text-sub);font-style:italic;}
+.backlog-text{font-size:15px;line-height:1.8;color:rgba(255,255,255,0.85);}
+.backlog-choice{
+  padding:8px 14px;border:1px solid rgba(247,37,133,0.25);border-radius:3px;
+  font-size:12px;color:var(--gold);letter-spacing:0.1em;background:rgba(247,37,133,0.05);
+}
+.backlog-choice::before{content:'▶ ';}
+
+/* ─── CHAPTER SELECT ─── */
+#chapter-select-screen {
+  position:fixed;inset:0;z-index:55;background:rgba(6,1,15,0.97);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.4s;padding:30px 20px;
+}
+#chapter-select-screen.visible{opacity:1;pointer-events:all;}
+.chapter-select-title{
+  font-family:'Shippori Mincho B1',serif;font-size:15px;letter-spacing:0.6em;
+  color:var(--gold);text-shadow:var(--glow-gold);margin-bottom:24px;
+}
+.chapter-select-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  width:100%;max-width:560px;max-height:60vh;overflow-y:auto;
+}
+.chapter-select-grid::-webkit-scrollbar{width:3px;}
+.chapter-select-grid::-webkit-scrollbar-thumb{background:rgba(247,37,133,0.3);}
+.chapter-select-btn{
+  background:rgba(13,1,32,0.9);border:1px solid rgba(247,37,133,0.2);
+  font-family:'Noto Serif JP',serif;font-size:13px;letter-spacing:0.1em;
+  color:var(--text-sub);padding:12px 8px;border-radius:4px;cursor:pointer;
+  transition:all 0.2s;text-align:center;line-height:1.6;
+}
+.chapter-select-btn:hover{
+  border-color:var(--pink);color:var(--white);background:rgba(247,37,133,0.08);
+  box-shadow:0 0 12px rgba(247,37,133,0.15);
+}
+.chapter-select-btn .ch-num{font-size:11px;color:var(--pink);letter-spacing:0.3em;display:block;margin-bottom:4px;}
+.chapter-select-back{
+  margin-top:20px;background:transparent;border:1px solid rgba(247,37,133,0.2);
+  font-family:'Noto Serif JP',serif;font-size:11px;letter-spacing:0.3em;
+  color:var(--text-sub);padding:8px 28px;border-radius:3px;cursor:pointer;transition:all 0.2s;
+}
+.chapter-select-back:hover{border-color:var(--pink);color:var(--white);}
+
+/* ─── ??? SELECT ─── */
+#mystery-select-screen {
+  position:fixed;inset:0;z-index:55;background:rgba(3,0,12,0.98);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.5s;padding:30px 20px;
+}
+#mystery-select-screen.visible{opacity:1;pointer-events:all;}
+.mystery-select-title{
+  font-family:'Shippori Mincho B1',serif;font-size:13px;letter-spacing:0.6em;
+  color:rgba(200,160,255,0.9);text-shadow:0 0 20px rgba(153,102,204,0.5);
+  margin-bottom:8px;
+}
+.mystery-select-sub{
+  font-family:'Noto Serif JP',serif;font-size:11px;letter-spacing:0.2em;
+  color:rgba(200,160,255,0.4);margin-bottom:30px;
+}
+.mystery-char-list{display:flex;flex-direction:column;gap:12px;width:100%;max-width:380px;}
+.mystery-char-btn{
+  background:rgba(20,0,40,0.9);border:1px solid rgba(153,102,204,0.3);
+  font-family:'Noto Serif JP',serif;font-size:13px;letter-spacing:0.3em;
+  color:rgba(200,160,255,0.8);padding:16px 24px;border-radius:4px;cursor:pointer;
+  transition:all 0.3s;display:flex;align-items:center;gap:14px;
+  position:relative;overflow:hidden;
+}
+.mystery-char-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(153,102,204,0.15),transparent);
+  transform:translateX(-100%);transition:transform 0.35s;
+}
+.mystery-char-btn:hover::before{transform:translateX(0);}
+.mystery-char-btn:hover{border-color:rgba(200,160,255,0.7);color:#fff;box-shadow:0 0 20px rgba(153,102,204,0.3);}
+.mystery-char-btn .mystery-emoji{font-size:24px;flex-shrink:0;}
+.mystery-char-btn .mystery-info{text-align:left;}
+.mystery-char-btn .mystery-name{font-size:16px;letter-spacing:0.3em;display:block;}
+.mystery-char-btn .mystery-origin{font-size:12px;color:rgba(200,160,255,0.4);letter-spacing:0.2em;display:block;margin-top:3px;}
+.mystery-select-back{
+  margin-top:20px;background:transparent;border:1px solid rgba(153,102,204,0.2);
+  font-family:'Noto Serif JP',serif;font-size:11px;letter-spacing:0.3em;
+  color:rgba(200,160,255,0.4);padding:8px 28px;border-radius:3px;cursor:pointer;transition:all 0.2s;
+}
+.mystery-select-back:hover{border-color:rgba(200,160,255,0.6);color:rgba(200,160,255,0.9);}
+
+/* ─── LOG BUTTON ─── */
+#btn-log { }
+
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="scene-bg"></div>
+<div id="vignette"></div>
+<div id="flash-overlay"></div>
+
+<!-- STATUS -->
+<div id="status-bar">
+  <div class="status-item" id="chapter-indicator">第一章</div>
+</div>
+
+<!-- UI CONTROLS -->
+<div id="ui-controls">
+  <button class="ui-btn active" id="btn-skip" onclick="skipDialogue()">SKIP</button>
+  <button class="ui-btn active" onclick="openSavePanel('save')">SAVE</button>
+  <button class="ui-btn active" onclick="openSavePanel('load')">LOAD</button>
+  <button class="ui-btn active" id="btn-log" onclick="openBacklog()">LOG</button>
+</div>
+
+<!-- SAVE PANEL -->
+<div id="save-panel">
+  <div class="save-panel-inner">
+    <div class="save-panel-title" id="save-panel-title">セーブ</div>
+    <div id="save-slot-1" class="save-slot">
+      <div class="slot-info"><div class="slot-num">SLOT  1</div><div class="slot-chapter">空きスロット</div><div class="slot-preview"></div><div class="slot-date"></div></div>
+      <div class="slot-btns"><button class="slot-btn slot-save" onclick="saveGame(1)">セーブ</button><button class="slot-btn slot-load" onclick="loadGame(1)">ロード</button></div>
+    </div>
+    <div id="save-slot-2" class="save-slot">
+      <div class="slot-info"><div class="slot-num">SLOT  2</div><div class="slot-chapter">空きスロット</div><div class="slot-preview"></div><div class="slot-date"></div></div>
+      <div class="slot-btns"><button class="slot-btn slot-save" onclick="saveGame(2)">セーブ</button><button class="slot-btn slot-load" onclick="loadGame(2)">ロード</button></div>
+    </div>
+    <div id="save-slot-3" class="save-slot">
+      <div class="slot-info"><div class="slot-num">SLOT  3</div><div class="slot-chapter">空きスロット</div><div class="slot-preview"></div><div class="slot-date"></div></div>
+      <div class="slot-btns"><button class="slot-btn slot-save" onclick="saveGame(3)">セーブ</button><button class="slot-btn slot-load" onclick="loadGame(3)">ロード</button></div>
+    </div>
+    <button class="save-panel-close" onclick="closeSavePanel()">閉じる</button>
+  </div>
+</div>
+
+<!-- MAIN GAME -->
+<div id="game">
+  <div id="char-area">
+    <div class="char-figure" id="char-left">
+      <div class="char-emoji" id="char-left-emoji">🌸</div>
+      <div class="char-name-tag" id="char-left-name">スノーホワイト</div>
+    </div>
+    <div class="char-figure" id="char-right">
+      <div class="char-emoji" id="char-right-emoji">🐱</div>
+      <div class="char-name-tag" id="char-right-name">ファヴ</div>
+    </div>
+  </div>
+
+  <div id="dialogue-wrap">
+    <div id="dialogue-box" onclick="advance()">
+      <div id="speaker-name"></div>
+      <div id="dialogue-text"></div>
+      <div id="advance-hint">▼ クリックで続ける</div>
+    </div>
+  </div>
+</div>
+
+<!-- CHOICES -->
+<div id="choice-wrap">
+  <div class="choice-label">― 選択 ―</div>
+  <div id="choice-container"></div>
+</div>
+
+<!-- CHAPTER TITLE -->
+<div id="chapter-overlay">
+  <div class="chapter-num" id="chapter-num-text">CHAPTER 1</div>
+  <div class="chapter-line"></div>
+  <div class="chapter-title-text" id="chapter-title-text">選ばれし少女</div>
+  <div class="chapter-line"></div>
+</div>
+
+
+<!-- BACKLOG -->
+<div id="backlog-panel">
+  <div id="backlog-header">
+    <span>会 話 ロ グ</span>
+    <button id="backlog-close" onclick="closeBacklog()">閉 じ る</button>
+  </div>
+  <div id="backlog-list"></div>
+</div>
+
+<!-- CHAPTER SELECT -->
+<div id="chapter-select-screen">
+  <div class="chapter-select-title">章 を 選 択</div>
+  <div class="chapter-select-grid" id="chapter-select-grid"></div>
+  <button class="chapter-select-back" onclick="closeChapterSelect()">← 戻 る</button>
+</div>
+
+<!-- ??? SELECT -->
+<div id="mystery-select-screen">
+  <div class="mystery-select-title">？ ？ ？</div>
+  <div class="mystery-select-sub">― 迷い込んだ者たちへ ―</div>
+  <div class="mystery-char-list" id="mystery-char-list">
+    <button class="mystery-char-btn" onclick="startKeiichi()">
+      <span class="mystery-emoji">🎒</span>
+      <span class="mystery-info">
+        <span class="mystery-name">前 原 圭 一</span>
+        <span class="mystery-origin">ひぐらしのなく頃に</span>
+      </span>
+    </button>
+  </div>
+  <button class="mystery-select-back" onclick="closeMysterySelect()">← 戻 る</button>
+</div>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen">
+  <div class="title-ornament" style="width:600px;height:600px;top:50%;left:50%;transform:translate(-50%,-50%);animation:spin-slow 30s linear infinite;"></div>
+  <div class="title-ornament" style="width:400px;height:400px;top:50%;left:50%;transform:translate(-50%,-50%);animation:spin-slow 20s linear infinite reverse;"></div>
+  <div class="title-ornament" style="width:200px;height:200px;top:50%;left:50%;transform:translate(-50%,-50%);animation:spin-slow 10s linear infinite;"></div>
+
+  <div class="title-main-logo">
+    <div class="title-en">Magical Girl Raising Project</div>
+    <div class="title-jp">魔法少女育成計画</div>
+    <div class="title-sub">～ 選 ば れ し 者 た ち へ ～</div>
+    <div class="title-divider">
+      <div class="title-divider-line"></div>
+      <div class="title-star">✦</div>
+      <div class="title-divider-line"></div>
+    </div>
+    <button class="title-start-btn" onclick="startGame()"><span>は じ め る</span></button>
+    <button class="title-mystery-btn" onclick="startMysteryRoute()"><span>？ ？ ？</span></button>
+  </div>
+</div>
+
+<!-- ENDING -->
+<div id="ending-screen">
+  <div class="ending-type" id="ending-type-label">TRUE ENDING</div>
+  <div class="chapter-line" style="width:200px;margin:0 auto 20px;background:linear-gradient(90deg,transparent,var(--pink),transparent);height:1px;"></div>
+  <div class="ending-title" id="ending-title-text"></div>
+  <div class="ending-body" id="ending-body-text"></div>
+  <button class="ending-btn" onclick="restartGame()">も う 一 度 プ レ イ す る</button>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────
+//  PARTICLE CANVAS
+// ─────────────────────────────────────────────────
+const bgCanvas = document.getElementById('bg-canvas');
+const bCtx = bgCanvas.getContext('2d');
+bgCanvas.width = window.innerWidth;
+bgCanvas.height = window.innerHeight;
+
+const bgParticles = Array.from({length:80}, () => ({
+  x: Math.random() * bgCanvas.width,
+  y: Math.random() * bgCanvas.height,
+  r: Math.random() * 1.5 + 0.3,
+  vy: -(Math.random() * 0.4 + 0.1),
+  vx: (Math.random() - 0.5) * 0.2,
+  o: Math.random(),
+  color: Math.random() < 0.6 ? '#f72585' : (Math.random() < 0.5 ? '#ffd60a' : '#4cc9f0'),
+  isStar: Math.random() < 0.25
+}));
+
+function drawBgStar(x,y,r,color,alpha) {
+  bCtx.save();
+  bCtx.globalAlpha = alpha;
+  bCtx.translate(x,y);
+  bCtx.fillStyle = color;
+  bCtx.shadowColor = color;
+  bCtx.shadowBlur = 6;
+  bCtx.beginPath();
+  for(let i=0;i<5;i++){
+    const a1 = (i*Math.PI*2/5) - Math.PI/2;
+    const a2 = a1 + Math.PI/5;
+    if(i===0) bCtx.moveTo(Math.cos(a1)*r*2, Math.sin(a1)*r*2);
+    else bCtx.lineTo(Math.cos(a1)*r*2, Math.sin(a1)*r*2);
+    bCtx.lineTo(Math.cos(a2)*r*0.8, Math.sin(a2)*r*0.8);
+  }
+  bCtx.closePath();
+  bCtx.fill();
+  bCtx.restore();
+}
+
+function animateBg() {
+  bCtx.clearRect(0,0,bgCanvas.width,bgCanvas.height);
+  bgParticles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.o -= 0.002;
+    if(p.o <= 0 || p.y < -10) {
+      p.x = Math.random()*bgCanvas.width;
+      p.y = bgCanvas.height + 10;
+      p.o = Math.random() * 0.6 + 0.1;
+    }
+    if(p.isStar) { drawBgStar(p.x,p.y,p.r,p.color,p.o*0.7); }
+    else {
+      bCtx.globalAlpha = p.o*0.5;
+      bCtx.fillStyle = p.color;
+      bCtx.shadowColor = p.color;
+      bCtx.shadowBlur = 4;
+      bCtx.beginPath();
+      bCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      bCtx.fill();
+    }
+  });
+  requestAnimationFrame(animateBg);
+}
+animateBg();
+
+window.addEventListener('resize', () => {
+  bgCanvas.width = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+});
+
+// ─────────────────────────────────────────────────
+//  SCENE BACKGROUNDS
+// ─────────────────────────────────────────────────
+const SCENES = {
+  title:   'radial-gradient(ellipse at 30% 60%, #1a0030 0%, #06010f 70%)',
+  town:    'radial-gradient(ellipse at 50% 30%, #0d1a2e 0%, #06010f 80%)',
+  night:   'radial-gradient(ellipse at 20% 80%, #0a001f 0%, #06010f 70%)',
+  forest:  'radial-gradient(ellipse at 60% 40%, #001a0a 0%, #06010f 75%)',
+  magic:   'radial-gradient(ellipse at 50% 50%, #1a0030 0%, #06010f 60%)',
+  danger:  'radial-gradient(ellipse at 50% 20%, #1f0010 0%, #06010f 65%)',
+  dark:    'radial-gradient(ellipse at 50% 80%, #0f000f 0%, #06010f 80%)',
+  sacred:  'radial-gradient(ellipse at 50% 50%, #1a1200 0%, #06010f 70%)',
+  void:    '#020006',
+};
+
+function setScene(key) {
+  const bg = document.getElementById('scene-bg');
+  bg.style.background = SCENES[key] || SCENES.night;
+}
+
+// ─────────────────────────────────────────────────
+//  TEXT TYPEWRITER
+// ─────────────────────────────────────────────────
+let typeTimeout = null;
+let isTyping = false;
+let currentFullText = '';
+let currentDisplayIndex = 0;
+
+function typeText(text, speed = 30) {
+  clearTimeout(typeTimeout);
+  isTyping = true;
+  currentFullText = text;
+  currentDisplayIndex = 0;
+  const el = document.getElementById('dialogue-text');
+  el.innerHTML = '';
+
+  function type() {
+    if (currentDisplayIndex < currentFullText.length) {
+      el.innerHTML = currentFullText.substring(0, ++currentDisplayIndex);
+      typeTimeout = setTimeout(type, speed);
+    } else {
+      isTyping = false;
+    }
+  }
+  type();
+}
+
+function finishTyping() {
+  clearTimeout(typeTimeout);
+  isTyping = false;
+  document.getElementById('dialogue-text').innerHTML = currentFullText;
+  currentDisplayIndex = currentFullText.length;
+}
+
+// ─────────────────────────────────────────────────
+//  CHARACTER DISPLAY
+// ─────────────────────────────────────────────────
+function showChar(side, emoji, name, speaking=false) {
+  const fig = document.getElementById(`char-${side}`);
+  document.getElementById(`char-${side}-emoji`).textContent = emoji;
+  document.getElementById(`char-${side}-name`).textContent = name;
+  fig.classList.remove('hidden');
+  fig.classList.add('visible');
+  if (speaking) {
+    fig.classList.add('speaking');
+    const other = side === 'left' ? 'right' : 'left';
+    const otherFig = document.getElementById(`char-${other}`);
+    if (otherFig.classList.contains('visible')) otherFig.classList.add('dim');
+    fig.classList.remove('dim');
+  }
+}
+
+function hideChar(side) {
+  document.getElementById(`char-${side}`).classList.remove('visible','speaking','dim');
+}
+
+function hideAllChars() {
+  ['left','right'].forEach(s => hideChar(s));
+}
+
+function setSpeaking(side) {
+  ['left','right'].forEach(s => {
+    const f = document.getElementById(`char-${s}`);
+    if (f.classList.contains('visible')) {
+      if (s === side) { f.classList.add('speaking'); f.classList.remove('dim'); }
+      else { f.classList.remove('speaking'); f.classList.add('dim'); }
+    }
+  });
+}
+
+function bothSpeak() {
+  ['left','right'].forEach(s => {
+    const f = document.getElementById(`char-${s}`);
+    f.classList.remove('dim','speaking');
+  });
+}
+
+// ─────────────────────────────────────────────────
+//  FLASH EFFECT
+// ─────────────────────────────────────────────────
+function flash(color='#ffffff', duration=300) {
+  const fl = document.getElementById('flash-overlay');
+  fl.style.background = color;
+  fl.style.animation = `screen-flash ${duration}ms ease`;
+  fl.style.opacity = '1';
+  setTimeout(() => { fl.style.opacity = '0'; fl.style.animation = ''; }, duration);
+}
+
+function glitchEffect() {
+  const db = document.getElementById('dialogue-box');
+  db.classList.add('glitch');
+  setTimeout(() => db.classList.remove('glitch'), 350);
+}
+
+// ─────────────────────────────────────────────────
+//  CHAPTER TITLE
+// ─────────────────────────────────────────────────
+function showChapterTitle(num, title, cb) {
+  const ov = document.getElementById('chapter-overlay');
+  document.getElementById('chapter-num-text').textContent = num;
+  document.getElementById('chapter-title-text').textContent = title;
+  document.getElementById('chapter-indicator').textContent = title;
+  ov.classList.add('visible');
+  waitingChoice = true;  // advance()をブロック
+  setTimeout(() => {
+    ov.classList.remove('visible');
+    setTimeout(() => {
+      waitingChoice = false;
+      cb();
+    }, 700);
+  }, 2200);
+}
+
+// ─────────────────────────────────────────────────
+//  DIALOGUE ENGINE
+// ─────────────────────────────────────────────────
+let script = [];
+let scriptIndex = 0;
+let waitingChoice = false;
+let skipMode = false;
+
+function setDialogue(speaker, text, speakerColor='') {
+  const nameEl = document.getElementById('speaker-name');
+  nameEl.textContent = speaker;
+  nameEl.style.color = speakerColor || 'var(--pink)';
+  nameEl.style.textShadow = speakerColor ? `0 0 20px ${speakerColor}88` : 'var(--glow-pink)';
+  addLog(speaker, text, 'dialogue', speakerColor);
+  typeText(text, skipMode ? 0 : 30);
+}
+
+function setNarration(text) {
+  document.getElementById('speaker-name').textContent = '';
+  document.getElementById('speaker-name').style.color = '';
+  addLog('', text, 'narration');
+  typeText(text, skipMode ? 0 : 25);
+}
+
+function showChoices(choices) {
+  waitingChoice = true;
+  document.getElementById('dialogue-box').style.pointerEvents = 'none';
+  const wrap = document.getElementById('choice-wrap');
+  const container = document.getElementById('choice-container');
+  container.innerHTML = '';
+
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.text;
+    btn.onclick = () => {
+      addLog('', c.text, 'choice');
+      wrap.classList.remove('visible');
+      waitingChoice = false;
+      document.getElementById('dialogue-box').style.pointerEvents = '';
+      setTimeout(() => {
+        const ns = typeof c.next === 'function' ? c.next() : c.next;
+        if (ns === null || ns === undefined) {
+          runNext();
+        } else if (Array.isArray(ns)) {
+          script.splice(scriptIndex, 0, ...ns);
+          runScript();
+        } else {
+          script = ns;
+          for (const [k, v] of Object.entries(SCRIPT_MAP)) {
+            if (v === ns) { currentScriptName = k; break; }
+          }
+          scriptIndex = 0;
+          runScript();
+        }
+      }, 400);
+    };
+    container.appendChild(btn);
+  });
+
+  setTimeout(() => wrap.classList.add('visible'), 100);
+}
+
+function showEnding(type, title, body) {
+  const es = document.getElementById('ending-screen');
+  const typeLabel = document.getElementById('ending-type-label');
+  const titleEl = document.getElementById('ending-title-text');
+  const bodyEl = document.getElementById('ending-body-text');
+
+  const labels = { true: 'TRUE ENDING', bad: 'BAD ENDING', normal: 'ENDING' };
+  typeLabel.textContent = labels[type] || 'ENDING';
+  titleEl.textContent = title;
+  titleEl.className = `ending-title ${type}`;
+  bodyEl.textContent = body;
+
+  setTimeout(() => { es.classList.add('visible'); }, 300);
+}
+
+// ─────────────────────────────────────────────────
+//  SCRIPT RUNNER
+// ─────────────────────────────────────────────────
+function runScript() {
+  if (scriptIndex >= script.length) return;
+  const node = script[scriptIndex];
+
+  switch(node.type) {
+    case 'scene': setScene(node.bg); runNext(); break;
+    case 'show': showChar(node.side, node.emoji, node.name, node.speaking !== false); runNext(); break;
+    case 'hide': hideChar(node.side); runNext(); break;
+    case 'hideAll': hideAllChars(); runNext(); break;
+    case 'speak': setSpeaking(node.side); runNext(); break;
+    case 'both': bothSpeak(); runNext(); break;
+    case 'flash': flash(node.color, node.dur); runNext(); break;
+    case 'glitch': glitchEffect(); runNext(); break;
+    case 'chapter':
+      showChapterTitle(node.num, node.title, () => { runNext(); });
+      break;
+    case 'dialogue':
+      setDialogue(node.speaker, node.text, node.color);
+      break;
+    case 'narration':
+      setNarration(node.text);
+      break;
+    case 'choice':
+      showChoices(node.choices);
+      break;
+    case 'ending':
+      showEnding(node.endType, node.title, node.body);
+      break;
+    default: runNext();
+  }
+}
+
+function runNext() {
+  scriptIndex++;
+  runScript();
+}
+
+function advance() {
+  if (waitingChoice) return;
+  if (isTyping) { finishTyping(); return; }
+  scriptIndex++;
+  if (skipMode) {
+    setTimeout(runScript, 20);
+  } else {
+    runScript();
+  }
+}
+
+function skipDialogue() {
+  skipMode = !skipMode;
+  document.getElementById('btn-skip').style.color = skipMode ? 'var(--pink)' : '';
+}
+
+// ─────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────
+//  SAVE / LOAD SYSTEM
+// ─────────────────────────────────────────────────
+const SAVE_SLOTS = 3;
+let saveData = {};
+
+function initSaveSystem() {
+  try { const raw = localStorage.getItem('mahoiku_saves'); saveData = raw ? JSON.parse(raw) : {}; }
+  catch(e) { saveData = {}; }
+  updateSaveUI();
+}
+
+function saveGame(slot) {
+  const chapterText = document.getElementById('chapter-indicator').textContent;
+  const dialogueText = document.getElementById('dialogue-text').textContent.slice(0, 28);
+  saveData[slot] = { scriptName: currentScriptName, index: scriptIndex,
+    chapter: chapterText, preview: dialogueText || '…',
+    date: new Date().toLocaleString('ja-JP', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) };
+  try { localStorage.setItem('mahoiku_saves', JSON.stringify(saveData)); } catch(e) {}
+  updateSaveUI();
+  showNotification('セーブしました（スロット' + slot + '）');
+}
+
+function loadGame(slot) {
+  const d = saveData[slot];
+  if (!d) { showNotification('セーブデータがありません'); return; }
+  const target = SCRIPT_MAP[d.scriptName];
+  if (!target) { showNotification('セーブデータが壊れています'); return; }
+  script = target; currentScriptName = d.scriptName; scriptIndex = d.index;
+  hideAllChars(); closeSavePanel(); runScript();
+  showNotification('ロードしました');
+}
+
+function showNotification(msg) {
+  let el = document.getElementById('save-notification');
+  if (!el) {
+    el = document.createElement('div'); el.id = 'save-notification';
+    el.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(13,1,32,0.95);border:1px solid var(--pink);color:var(--white);font-family:"Noto Serif JP",serif;font-size:13px;letter-spacing:0.2em;padding:10px 24px;border-radius:4px;z-index:200;transition:opacity 0.4s;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg; el.style.opacity = '1';
+  clearTimeout(el._t); el._t = setTimeout(() => { el.style.opacity = '0'; }, 2200);
+}
+
+function updateSaveUI() {
+  for (let i = 1; i <= SAVE_SLOTS; i++) {
+    const d = saveData[i]; const slotEl = document.getElementById('save-slot-' + i);
+    if (!slotEl) continue;
+    if (d) {
+      slotEl.querySelector('.slot-chapter').textContent = d.chapter || '？';
+      slotEl.querySelector('.slot-preview').textContent = d.preview || '…';
+      slotEl.querySelector('.slot-date').textContent = d.date || '';
+      slotEl.querySelector('.slot-load').disabled = false;
+    } else {
+      slotEl.querySelector('.slot-chapter').textContent = '空きスロット';
+      slotEl.querySelector('.slot-preview').textContent = '';
+      slotEl.querySelector('.slot-date').textContent = '';
+      slotEl.querySelector('.slot-load').disabled = true;
+    }
+  }
+}
+
+function openSavePanel(mode) {
+  const panel = document.getElementById('save-panel');
+  panel.dataset.mode = mode;
+  document.getElementById('save-panel-title').textContent = mode === 'save' ? 'セーブ' : 'ロード';
+  for (let i = 1; i <= SAVE_SLOTS; i++) {
+    document.getElementById('save-slot-' + i).querySelector('.slot-save').style.display = mode === 'save' ? '' : 'none';
+    document.getElementById('save-slot-' + i).querySelector('.slot-load').style.display = mode === 'load' ? '' : 'none';
+  }
+  panel.classList.add('visible');
+}
+
+function closeSavePanel() { document.getElementById('save-panel').classList.remove('visible'); }
+
+// ─────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────
+//  BACKLOG
+// ─────────────────────────────────────────────────
+const backlogEntries = [];
+
+function addLog(speaker, text, type='dialogue') {
+  backlogEntries.push({ speaker, text, type });
+  if (backlogEntries.length > 200) backlogEntries.shift();
+}
+
+function openBacklog() {
+  const list = document.getElementById('backlog-list');
+  list.innerHTML = '';
+  backlogEntries.forEach(e => {
+    const div = document.createElement('div');
+    if (e.type === 'choice') {
+      div.className = 'backlog-choice';
+      div.textContent = e.text;
+    } else {
+      div.className = 'backlog-entry';
+      const sp = document.createElement('div');
+      sp.className = 'backlog-speaker' + (e.type === 'narration' ? ' narration' : '');
+      sp.textContent = e.type === 'narration' ? '― 地の文 ―' : e.speaker;
+      sp.style.color = e.color || '';
+      const tx = document.createElement('div');
+      tx.className = 'backlog-text';
+      tx.textContent = e.text;
+      div.appendChild(sp);
+      div.appendChild(tx);
+    }
+    list.appendChild(div);
+  });
+  list.scrollTop = list.scrollHeight;
+  document.getElementById('backlog-panel').classList.add('visible');
+}
+
+function closeBacklog() {
+  document.getElementById('backlog-panel').classList.remove('visible');
+}
+
+// ─────────────────────────────────────────────────
+//  CHAPTER SELECT
+// ─────────────────────────────────────────────────
+const CHAPTER_INDEX = [
+  { label:'第1話', title:'夢と魔法の世界へようこそ！', script:'MAIN', index:0 },
+  { label:'第2話', title:'フレンドを増やそう！',         script:'MAIN', index:null },
+  { label:'第3話', title:'生物として息の根がとまる',     script:'MAIN', index:null },
+  { label:'第4話', title:'清く正しく美しく',             script:'MAIN', index:null },
+  { label:'第5話', title:'女王と、お姫様',               script:'MAIN', index:null },
+  { label:'第6話', title:'消えていく名前たち',           script:'MAIN', index:null },
+  { label:'第7話', title:'不死と狂乱',                   script:'MAIN', index:null },
+  { label:'第8話', title:'壁の向こうの愛情',             script:'MAIN', index:null },
+  { label:'第9話', title:'報われない善意',               script:'MAIN', index:null },
+  { label:'第10話', title:'さよならを言えなかった',      script:'MAIN', index:null },
+  { label:'第11話', title:'最強の終わり',               script:'MAIN', index:null },
+  { label:'第12話', title:'File not found',              script:'MAIN', index:null },
+];
+
+function buildChapterIndex() {
+  MAIN.forEach((node, i) => {
+    if (node.type === 'chapter') {
+      const title = node.title;
+      const entry = CHAPTER_INDEX.find(c => c.title === title);
+      if (entry) entry.index = i;
+    }
+  });
+}
+
+function openChapterSelect() {
+  hideTitleScreen();
+  buildChapterIndex();
+  const grid = document.getElementById('chapter-select-grid');
+  grid.innerHTML = '';
+  CHAPTER_INDEX.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = 'chapter-select-btn';
+    btn.innerHTML = '<span class="ch-num">' + ch.label + '</span>' + ch.title;
+    btn.onclick = () => {
+      closeChapterSelect();
+      hideTitleScreen();
+      initSaveSystem();
+      backlogEntries.length = 0;
+      script = SCRIPT_MAP[ch.script];
+      currentScriptName = ch.script;
+      scriptIndex = ch.index !== null ? ch.index : 0;
+      setScene('town');
+      setTimeout(() => { runScript(); }, 100);
+    };
+    grid.appendChild(btn);
+  });
+  document.getElementById('chapter-select-screen').classList.add('visible');
+}
+
+function closeChapterSelect() {
+  document.getElementById('chapter-select-screen').classList.remove('visible');
+  showTitleScreen();
+}
+
+// ─────────────────────────────────────────────────
+//  ??? SELECT
+// ─────────────────────────────────────────────────
+function openMysterySelect() {
+  hideTitleScreen();
+  document.getElementById('mystery-select-screen').classList.add('visible');
+}
+
+function closeMysterySelect() {
+  document.getElementById('mystery-select-screen').classList.remove('visible');
+  showTitleScreen();
+}
+
+function startKeiichi() {
+  closeMysterySelect();
+  hideTitleScreen();
+  initSaveSystem();
+  backlogEntries.length = 0;
+  script = ROUTE_KEIICHI;
+  currentScriptName = 'ROUTE_KEIICHI';
+  scriptIndex = 0;
+  setScene('void');
+  setTimeout(() => { runScript(); }, 100);
+}
+
+function hideTitleScreen() {
+  const ts = document.getElementById('title-screen');
+  ts.classList.add('fade-out');
+  setTimeout(() => { ts.style.display = 'none'; }, 900);
+}
+
+function showTitleScreen() {
+  const ts = document.getElementById('title-screen');
+  ts.style.display = 'flex';
+  ts.style.opacity = '0';
+  ts.classList.remove('fade-out');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { ts.style.opacity = '1'; });
+  });
+}
+
+// ─────────────────────────────────────────────────
+//  SCRIPT TRACKER
+// ─────────────────────────────────────────────────
+let currentScriptName = 'MAIN';
+const SCRIPT_MAP = {};
+
+// ═══════════════════════════════════════════════
+//  MAIN STORY  ── アニメ12話完全準拠
+// ═══════════════════════════════════════════════
+const MAIN = [
+
+  // ┌──────────────────────────────────────┐
+  // │  第1話「夢と魔法の世界へようこそ！」   │
+  // └──────────────────────────────────────┘
+  { type:'chapter', num:'第  1  話', title:'夢と魔法の世界へようこそ！' },
+  { type:'scene', bg:'town' },
+  { type:'hideAll' },
+  { type:'narration', text:'ソーシャルゲーム「魔法少女育成計画」——数万人に一人の割合で、プレイヤーが本物の魔法少女になれるという噂があった。' },
+  { type:'narration', text:'N市に住む中学生、姫河小雪は幼い頃からずっと魔法少女に憧れていた。清く、正しく、誰かのために力を使う——それが彼女の夢だった。' },
+  { type:'scene', bg:'magic' },
+  { type:'show', side:'left', emoji:'🌸', name:'小雪', speaking:true },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+  { type:'dialogue', speaker:'小雪', text:'……また今週もキャンディ少なかった。人助けって、難しいな。', color:'#ffb3c6' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'おめでとうぽん！　姫河小雪ちゃん、あなたは本物の魔法少女に選ばれたよ！', color:'#e8e8e8' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'小雪', text:'え……えっ！？　飛び出してきた！？　ファヴ……本物？', color:'#ffb3c6' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'ぼくはファヴ、このゲームの管理人だぽん。小雪ちゃんには魔法少女になれる素質があったんだ。', color:'#e8e8e8' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'小雪', text:'じゃあ……本当に、魔法少女になれるの？', color:'#ffb3c6' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'困っている人の心の声が聞こえる——それが小雪ちゃんの魔法だよ。変身してみるぽん？', color:'#e8e8e8' },
+  { type:'flash', color:'#ffffff', dur:700 },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'narration', text:'白いドレス。純白のリボン。鏡に映った姿は、子供の頃にずっと夢に見ていた、あの姿だった。' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'これが……わたし。本当になれた……！', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'スノーホワイト。それが君の名前だぽん。これからよろしくね！', color:'#e8e8e8' },
+  { type:'narration', text:'ファヴは明るく笑っていた。その笑顔の奥に何が潜んでいるか、このとき小雪には分からなかった。' },
+
+  { type:'scene', bg:'night' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'show', side:'right', emoji:'⚔️', name:'ラ・ピュセル', speaking:true },
+  { type:'narration', text:'その夜、N市の魔法少女たちを繋ぐチャットルームに招待された。十六人のメンバー——その中に、見知った名前があった。' },
+  { type:'dialogue', speaker:'ラ・ピュセル', text:'スノーホワイト！　俺だよ！　颯太！　岸辺颯太！', color:'#a0c4ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'颯太くん！？　颯太くんも魔法少女になってたの！？', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ラ・ピュセル', text:'「魔法少女」って言い方はちょっと恥ずかしいけど……でも俺、ずっとこういう正義の味方に憧れてたんだよ！　ラ・ピュセル、参上！', color:'#a0c4ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'颯太くんらしい……。でも正直、知ってる人がいて良かった。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ラ・ピュセル', text:'俺がお前の師匠役をやる。スノーホワイトのことは絶対守るから、安心して人助けだけ考えてろ。', color:'#a0c4ff' },
+  { type:'narration', text:'その言葉が、どれほど心強かったか。——まだ、守れると信じていられた頃の話だ。' },
+
+  // ┌──────────────────────────┐
+  // │  第2話「フレンドを増やそう！」│
+  // └──────────────────────────┘
+  { type:'chapter', num:'第  2  話', title:'フレンドを増やそう！' },
+  { type:'scene', bg:'magic' },
+  { type:'show', side:'left', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'narration', text:'魔法少女たちはチャットルームを通じて緩やかに繋がりを持ち始めていた。それぞれが人助けをし、キャンディを集め、まだ和やかな空気があった。' },
+  { type:'dialogue', speaker:'ファヴ', text:'お知らせだぽん。N市の魔法少女が増えすぎちゃったから、最終的に半分の八人に減らすことになったよ。毎週キャンディの獲得数が一番少ない魔法少女の資格を剥奪します。みんな人助け頑張ってね！', color:'#e8e8e8' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'資格を剥奪されたら……どうなるの？', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'ファヴ', text:'魔法少女じゃなくなるだけだぽん。', color:'#e8e8e8' },
+  { type:'narration', text:'ファヴはそれだけ言って、会話を切った。魔法少女たちの間に、静かな緊張が走った。' },
+
+  { type:'scene', bg:'night' },
+  { type:'show', side:'left', emoji:'😴', name:'ねむりん', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'narration', text:'ねむりんは他人の夢の中に入れる魔法少女。夜しか活動できず、引きこもりがちな性格だった。' },
+  { type:'dialogue', speaker:'ねむりん', text:'スノーホワイトちゃん、あたし夢の中ではすごくキャンディ集められるんだけど、昼間は眠くて動けないし、なかなか現実でカウントされなくて……', color:'#c8a0ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'ねむりんさんの魔法って、すごく大事だと思いますよ。悪夢で苦しんでいる人を助けてあげられるって、本当に素敵なことです。', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'ねむりん', text:'ありがとう……。スノーホワイトちゃんは優しいね。', color:'#c8a0ff' },
+  { type:'narration', text:'その夜、ねむりんは一人の少女の夢の中に入った。スイムスイム——変身前の名前は坂凪綾名という小学生で、お姫様ごっこが好きな子だった。' },
+  { type:'show', side:'left', emoji:'😴', name:'ねむりん', speaking:true },
+  { type:'show', side:'right', emoji:'🌊', name:'綾名', speaking:false },
+  { type:'narration', text:'夢の中でねむりんは、いつものように優しく語りかけた。何気ない、本当に何気ない一言だった。' },
+  { type:'dialogue', speaker:'ねむりん', text:'女の子はみんなお姫様なんだよ。誰かに仕えなくてもいい——あなた自身がお姫様になればいいんだよ。', color:'#c8a0ff' },
+  { type:'narration', text:'ねむりんは知らなかった。その言葉が、一人の少女の中でまったく違う意味として根付いていくことを。' },
+
+  // ┌──────────────────────────────────────────┐
+  // │  第3話「生物として息の根がとまる」         │
+  // └──────────────────────────────────────────┘
+  { type:'chapter', num:'第  3  話', title:'生物として息の根がとまる' },
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'narration', text:'最初の週が終わった。マジカルキャンディの集計結果——最下位は、ねむりん。' },
+  { type:'dialogue', speaker:'ファヴ', text:'今週の結果発表だぽん。最下位はねむりんだよ。魔法少女の資格を剥奪します。今まで頑張ってくれてありがとうね！', color:'#e8e8e8' },
+  { type:'narration', text:'あっさりと。まるで何でもないことのように。' },
+  { type:'narration', text:'ねむりんは資格剥奪の通知を受けた後、「最後に一つだけ」と夢の中へ入っていった——スイムスイムの夢の中へ。そのまま、目を覚ますことはなかった。' },
+  { type:'show', side:'left', emoji:'😴', name:'ねむりん', speaking:true },
+  { type:'show', side:'right', emoji:'🌊', name:'綾名', speaking:false },
+  { type:'dialogue', speaker:'ねむりん', text:'最後に……誰かの夢を、良くしてあげられたら——', color:'#c8a0ff' },
+  { type:'flash', color:'#ffffff', dur:600 },
+  { type:'hideAll' },
+
+  { type:'scene', bg:'night' },
+  { type:'show', side:'left', emoji:'⛪', name:'シスターナナ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'narration', text:'翌日。シスターナナは端末の過去ログを調べていた——ねむりんの最後の発言を探しながら。そのとき、別のログが目に入った。ファヴとクラムベリーのやりとり。' },
+  { type:'dialogue', speaker:'シスターナナ', text:'これは……「脱落した魔法少女は現実でも——」　みなさん、今すぐ集まってください！', color:'#fffacd' },
+
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'narration', text:'魔法少女たちがチャットルームに集まった。シスターナナが発見したログの内容——「脱落者は死ぬ」——が広まり、動揺が広がる。' },
+  { type:'dialogue', speaker:'ファヴ', text:'なあにぽん？', color:'#e8e8e8' },
+  { type:'show', side:'left', emoji:'⛪', name:'シスターナナ', speaking:true },
+  { type:'dialogue', speaker:'シスターナナ', text:'ファヴ、聞かせてください。魔法少女の資格を剥奪されると、どうなるんですか。ねむりんさんは今——', color:'#fffacd' },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'dialogue', speaker:'ファヴ', text:'生物として息の根がとまることだぽん。', color:'#aaaaaa' },
+  { type:'flash', color:'#8b0000', dur:400 },
+  { type:'show', side:'left', emoji:'😨', name:'スノーホワイト', speaking:true },
+  { type:'dialogue', speaker:'スノーホワイト', text:'死……死ぬってこと？　ただ資格を失うだけじゃなくて？', color:'#f0e6ff' },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'dialogue', speaker:'ファヴ', text:'魔法の力が体を支えていたんだよ。辞めたら結局死ぬから同じことだぽん。', color:'#aaaaaa' },
+  { type:'show', side:'left', emoji:'⛪', name:'シスターナナ', speaking:true },
+  { type:'dialogue', speaker:'シスターナナ', text:'最初から……知っていたんですか？　なぜ言わなかったんですか！', color:'#fffacd' },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'dialogue', speaker:'ファヴ', text:'聞かれなかったから。あ、それとバージョンアップのお知らせもあるぽん。これからは他の魔法少女のマジカルキャンディを奪えるようになったよ。ゲームがより面白くなるね！', color:'#e8e8e8' },
+  { type:'narration', text:'死の告知も、新ルールの発表も——ファヴはまったく同じ、明るい声で言った。誰も言葉を返せなかった。' },
+
+  { type:'choice', choices: [
+    { text:'「魔法少女を辞めます」とファヴに告げる',
+      next: () => BAD_END_QUIT },
+    { text:'……何も言えなかった。でも、辞めない。',
+      next: null }
+  ]},
+
+  // ┌──────────────────────────┐
+  // │  第4話「清く正しく美しく」   │
+  // └──────────────────────────┘
+  { type:'chapter', num:'第  4  話', title:'清く正しく美しく' },
+  { type:'scene', bg:'night' },
+  { type:'show', side:'left', emoji:'🌀', name:'リップル', speaking:true },
+  { type:'show', side:'right', emoji:'🧙', name:'トップスピード', speaking:false },
+  { type:'narration', text:'リップルは一人で動くことを好む魔法少女だった。そこにトップスピードが声をかけてきた。' },
+  { type:'dialogue', speaker:'リップル', text:'……なんで付いてくる。', color:'#ff8080' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'トップスピード', text:'付いてくんじゃないよ！　コンビ組もうってこと。一緒のほうが絶対効率いいじゃん！', color:'#98fb98' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'リップル', text:'断る。馴れ馴れしい奴は信用できない。', color:'#ff8080' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'トップスピード', text:'はーっ正直！　まあ、あたしにも色々事情があるんだよ。', color:'#98fb98' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'リップル', text:'……何の事情だ。', color:'#ff8080' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'トップスピード', text:'内緒。でも絶対に生き残るって決めてるから、そこだけは信じて。', color:'#98fb98' },
+  { type:'narration', text:'リップルは何も言わなかった。しばらく間があって、ただ一言だけ返した。' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'リップル', text:'……足は引っ張るな。', color:'#ff8080' },
+
+  { type:'scene', bg:'town' },
+  { type:'show', side:'left', emoji:'⛪', name:'シスターナナ', speaking:true },
+  { type:'show', side:'right', emoji:'🧊', name:'ヴェス・ウィンタープリズン', speaking:false },
+  { type:'narration', text:'シスターナナは変わらず「みんなで協力する道」を探し続けていた。唯一無二のパートナー、ヴェス・ウィンタープリズンと一緒に。' },
+  { type:'dialogue', speaker:'シスターナナ', text:'ヴェス、わたし諦めたくないんです。みんなが協力し合えば、絶対に誰も死なずに済む方法が見つかるはずです。', color:'#fffacd' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ヴェス・ウィンタープリズン', text:'……俺はお前の考えが無謀だとは思ってる。でもお前が行くなら俺も行く。それだけだ。', color:'#88ccff' },
+
+  // ┌────────────────────────────────┐
+  // │  第5話「女王と、お姫様」          │
+  // └────────────────────────────────┘
+  { type:'chapter', num:'第  5  話', title:'女王と、お姫様' },
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'👑', name:'ルーラ', speaking:true },
+  { type:'show', side:'right', emoji:'🌊', name:'スイムスイム', speaking:false },
+  { type:'narration', text:'ルーラはスイムスイム、たま、ミナエル、ユナエルの四人チームのリーダーだった。傲慢で支配的——部下を駒として使うことを疑わなかった。' },
+  { type:'narration', text:'しかしスイムスイムの頭の中には、ねむりんの夢の言葉がずっと鳴り続けていた。「あなた自身がお姫様になればいいんだよ」——お姫様になるには、王様を倒さなければならない。' },
+  { type:'dialogue', speaker:'ルーラ', text:'スイムスイム、今夜スノーホワイトのキャンディを奪いに行くわ。準備しなさい。', color:'#ffcc00' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スイムスイム', text:'……わかった。', color:'#9999ff' },
+
+  { type:'scene', bg:'night' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'show', side:'right', emoji:'⚔️', name:'ラ・ピュセル', speaking:true },
+  { type:'narration', text:'その夜、スノーホワイトとラ・ピュセルはルーラの一派に奇襲された。たまが穴を掘り、ミナエル・ユナエルが囮になってラ・ピュセルを引き離す——周到な罠だった。' },
+  { type:'dialogue', speaker:'ラ・ピュセル', text:'スノーホワイト！', color:'#a0c4ff' },
+  { type:'narration', text:'キャンディを奪われた。ラ・ピュセルが追い付いたときにはすでに遅かった。' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'颯太くん、怪我ない？　キャンディはまた集めればいい。', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'ラ・ピュセル', text:'……俺が弱かった。次は絶対守る。', color:'#a0c4ff' },
+
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'👑', name:'ルーラ', speaking:true },
+  { type:'show', side:'right', emoji:'🌊', name:'スイムスイム', speaking:false },
+  { type:'narration', text:'その夜——スイムスイムは部下にルーラのキャンディを奪わせた。' },
+  { type:'dialogue', speaker:'ルーラ', text:'どういうこと……わたしのキャンディが！　お前たち、なぜ——！', color:'#ffcc00' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スイムスイム', text:'……お姫様になるには、王様を倒さないといけないから。', color:'#9999ff' },
+  { type:'narration', text:'その週——ルーラが脱落した。スイムスイムが新しいリーダーになった。感情のない、静かなリーダーが。' },
+
+  // ┌──────────────────────────────────────────────┐
+  // │  第6話「ラ・ピュセルとマジカロイド44の消滅」   │
+  // └──────────────────────────────────────────────┘
+  // ┌──────────────────────────────────────────────┐
+  // │  第6話「消えていく名前たち」                  │
+  // └──────────────────────────────────────────────┘
+  { type:'chapter', num:'第  6  話', title:'消えていく名前たち' },
+  { type:'scene', bg:'forest' },
+  { type:'show', side:'left', emoji:'⚔️', name:'ラ・ピュセル', speaking:true },
+  { type:'show', side:'right', emoji:'🫐', name:'クラムベリー', speaking:false },
+  { type:'narration', text:'夜の森。ラ・ピュセルはクラムベリーに呼び出されていた。N市最古参の魔法少女——戦闘狂として恐れられる存在。' },
+  { type:'dialogue', speaker:'ラ・ピュセル', text:'……俺を試したいのか。', color:'#a0c4ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'クラムベリー', text:'そうだ。長剣を持つと聞いた。かかってきなさい。', color:'#9966cc' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'ラ・ピュセル', text:'断ったら？', color:'#a0c4ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'クラムベリー', text:'逃げる者に用はない。……でも、あなたはそういうタイプに見えない。', color:'#9966cc' },
+  { type:'narration', text:'ラ・ピュセルは剣を抜いた。クラムベリーの音の魔法が轟く。長年の実戦経験——ラ・ピュセルの勇気では、それを超えられなかった。' },
+  { type:'flash', color:'#9966cc', dur:500 },
+  { type:'show', side:'left', emoji:'💔', name:'ラ・ピュセル', speaking:true },
+  { type:'dialogue', speaker:'ラ・ピュセル', text:'……スノーホワイト。お前のことを守りたかった。ずっと……それだけは、本当のことだった。', color:'#a0c4ff' },
+  { type:'flash', color:'#ffffff', dur:900 },
+  { type:'hideAll' },
+
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'😭', name:'スノーホワイト', speaking:true },
+  { type:'narration', text:'翌朝、チャットルームから「ラ・ピュセル」の名前が消えた。スノーホワイトは一人で泣いた。声を殺して。誰にも聞かれないように。' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'颯太くんが……颯太くんが死んだ。わたしが……わたしが弱かったから——', color:'#f0e6ff' },
+  { type:'narration', text:'自分が何もできなかったことへの後悔が、胸の奥で焼け続けた。' },
+
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'show', side:'right', emoji:'🤖', name:'マジカロイド44', speaking:true },
+  { type:'narration', text:'そのころ、マジカロイド44はキャンディ集めに行き詰まり、カラミティ・メアリにコンビを組もうと持ちかけた。断られ、追い詰められたマジカロイド44は、スノーホワイトのキャンディを奪おうと夜道で待ち伏せた。' },
+  { type:'dialogue', speaker:'マジカロイド44', text:'ごめんなさい……でもこうするしかない！', color:'#ffdd88' },
+  { type:'narration', text:'マジカロイド44の装備した道具がスノーホワイトに向く——その瞬間、突然現れた影がスノーホワイトを突き飛ばした。' },
+  { type:'show', side:'left', emoji:'🐰', name:'ハードゴア・アリス', speaking:false },
+  { type:'show', side:'right', emoji:'🤖', name:'マジカロイド44', speaking:false },
+  { type:'narration', text:'ハードゴア・アリス——言葉を持たない、黒い魔法少女。どんな傷でも再生する不死の体で、マジカロイド44に立ちふさがった。' },
+  { type:'flash', color:'#8b0000', dur:500 },
+  { type:'hideAll' },
+  { type:'narration', text:'マジカロイド44は消えた。ハードゴア・アリスに倒された。' },
+  { type:'show', side:'left', emoji:'😨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🐰', name:'ハードゴア・アリス', speaking:false },
+  { type:'dialogue', speaker:'スノーホワイト', text:'あなた……なんでわたしを——', color:'#f0e6ff' },
+  { type:'narration', text:'ハードゴア・アリスは答えなかった。血だらけの体がみるみる再生していく。ただスノーホワイトを見て、無言で立っていた。' },
+  { type:'narration', text:'スノーホワイトは怖かった。この魔法少女が何者なのか、なぜ自分を助けたのか——何も分からなかった。' },
+  { type:'show', side:'left', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'dialogue', speaker:'ファヴ', text:'今週の最下位はマジカロイド44だぽん。魔法少女の資格を剥奪します。今まで頑張ってくれてありがとうね！', color:'#e8e8e8' },
+  { type:'narration', text:'また一人、消えた。今度は自分を殺そうとした相手なのに——スノーホワイトの胸の中には、罪悪感だけが残った。' },
+
+  { type:'choice', choices: [
+    { text:'ハードゴア・アリスに礼を言う',
+      next: [
+        { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+        { type:'show', side:'right', emoji:'🐰', name:'ハードゴア・アリス', speaking:false },
+        { type:'dialogue', speaker:'スノーホワイト', text:'……助けてくれて、ありがとう。あなたが来てくれなかったら、わたし……', color:'#f0e6ff' },
+        { type:'narration', text:'ハードゴア・アリスはただ、静かにうなずいた。その小さな仕草が、なぜか泣きそうなほど嬉しかった。' },
+      ]},
+    { text:'怖くて何も言えなかった',
+      next: [
+        { type:'narration', text:'スノーホワイトは逃げるように立ち去った。助けてもらったのに、お礼も言えなかった。その罪悪感がまた、胸に積み重なった。' },
+      ]}
+  ]},
+
+  // ┌────────────────────────────────────────────────────┐
+  // │  第7話「不死と狂乱」                               │
+  // └────────────────────────────────────────────────────┘
+  { type:'chapter', num:'第  7  話', title:'不死と狂乱' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🔫', name:'カラミティ・メアリ', speaking:true },
+  { type:'show', side:'right', emoji:'🐰', name:'ハードゴア・アリス', speaking:false },
+  { type:'narration', text:'カラミティ・メアリはマジカロイド44を倒した者の名をファヴから聞き出した——ハードゴア・アリス。彼女への怒りを、街中で市民を巻き込む形でぶつけ始めた。' },
+  { type:'dialogue', speaker:'カラミティ・メアリ', text:'出てこいよ、ハードゴア・アリス！　お前のせいで仲間が死んだんだ！', color:'#cc4444' },
+  { type:'narration', text:'銃声が響く。無関係の人々が逃げ惑う。ハードゴア・アリスは何度撃たれても立ち上がり続けた——しかしカラミティ・メアリはそれを楽しんでいた。' },
+  { type:'scene', bg:'night' },
+  { type:'show', side:'left', emoji:'😨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🐰', name:'ハードゴア・アリス', speaking:false },
+  { type:'narration', text:'スノーホワイトはハードゴア・アリスの影に怯えながらも、人々の心の声に引き寄せられて現場に向かっていた。そこにもアリスがいた——血まみれで、それでもスノーホワイトの前に立って。' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……あなたはわたしを助けてくれた。でもわたし、あなたのことが怖くて。ごめんなさい。', color:'#f0e6ff' },
+  { type:'narration', text:'ハードゴア・アリスは何も言わなかった。ただ、うさぎのぬいぐるみをそっとスノーホワイトの手に押し付けた。' },
+  { type:'narration', text:'彼女の正体は——1話でスノーホワイトが助けた、鍵をなくして泣いていたあの少女。鳩田亜子。スノーホワイトに会いたくて、ゲームをやり続けて魔法少女になった少女だった。' },
+
+  // ┌────────────────────────────────────────┐
+  // │  第8話「壁の向こうの愛情」               │
+  // └────────────────────────────────────────┘
+  { type:'chapter', num:'第  8  話', title:'壁の向こうの愛情' },
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'⛪', name:'シスターナナ', speaking:true },
+  { type:'show', side:'right', emoji:'🧊', name:'ヴェス・ウィンタープリズン', speaking:false },
+  { type:'narration', text:'シスターナナは話し合いによる解決を信じ続けていた。スイムスイムの拠点に会談を申し込んだ。ヴェスは反対しながらも、ナナのそばに立った。' },
+  { type:'dialogue', speaker:'シスターナナ', text:'ヴェス……怖いですか？', color:'#fffacd' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ヴェス・ウィンタープリズン', text:'怖い。だがお前が行くなら俺も行く。それだけだ。', color:'#88ccff' },
+  { type:'flash', color:'#8b0000', dur:300 },
+  { type:'narration', text:'廃寺。それは罠だった。スイムスイムたちは最初から戦闘のつもりだった。' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🧊', name:'ヴェス・ウィンタープリズン', speaking:true },
+  { type:'dialogue', speaker:'ヴェス・ウィンタープリズン', text:'ナナ——走れ！　今すぐ！', color:'#88ccff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'シスターナナ', text:'でも——！', color:'#fffacd' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'ヴェス・ウィンタープリズン', text:'俺のことはいい！　走れと言っている！', color:'#88ccff' },
+  { type:'flash', color:'#8b0000', dur:700 },
+  { type:'hideAll' },
+  { type:'narration', text:'ヴェスはシスターナナを逃がした。そして、スイムスイムの矛が彼女を貫いた。' },
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'😔', name:'シスターナナ', speaking:true },
+  { type:'narration', text:'一人残されたシスターナナは、それでも仲間に声をかけ続けた。でも誰も応えなかった。ヴェスを失った事実が、じわじわと彼女を蝕んでいた。' },
+  { type:'dialogue', speaker:'シスターナナ', text:'……ヴェス、待っていて。すぐ行くから。', color:'#fffacd' },
+  { type:'flash', color:'#ffffff', dur:1000 },
+  { type:'hideAll' },
+  { type:'narration', text:'シスターナナは自ら命を絶った。その夜、静かに。' },
+
+  // ┌────────────────────────────────────────────────┐
+  // │  第9話「報われない善意」                        │
+  // └────────────────────────────────────────────────┘
+  { type:'chapter', num:'第  9  話', title:'報われない善意' },
+  { type:'scene', bg:'night' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🐰', name:'ハードゴア・アリス', speaking:false },
+  { type:'narration', text:'国道での惨劇——カラミティ・メアリが暴れる中、スノーホワイトとハードゴア・アリスは共に市民を救助していた。ミナエルが斧に変身してスノーホワイトに迫る——アリスが身代わりに飛び込んだ。' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'アリスちゃん！', color:'#f0e6ff' },
+  { type:'narration', text:'アリスの体はまた再生した。でもスノーホワイトには分かった——アリスは傷つくたびに、本当に苦しんでいる。' },
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'🌱', name:'たま', speaking:true },
+  { type:'show', side:'right', emoji:'🌊', name:'スイムスイム', speaking:false },
+  { type:'narration', text:'たまはスイムスイムの部下だった。おとなしく、誰かを傷つけることが苦手な魔法少女。彼女は密かにシスターナナたちに情報を流し、助けようとしていた。' },
+  { type:'dialogue', speaker:'たま', text:'……ごめんなさい。でも、みんなが死ぬのは嫌で……', color:'#aaffaa' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スイムスイム', text:'たま。お前が情報を漏らしていたのは、知ってた。', color:'#9999ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'たま', text:'……スイムスイムちゃん——', color:'#aaffaa' },
+  { type:'flash', color:'#8b0000', dur:500 },
+  { type:'hideAll' },
+  { type:'narration', text:'たまは消えた。スイムスイムは感情を見せなかった。' },
+
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'😨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🐰', name:'ハードゴア・アリス', speaking:false },
+  { type:'narration', text:'ファヴから「生存人数を4人に絞る」という通知が届いた。スノーホワイトの隣にはハードゴア・アリスがいた。' },
+
+  { type:'choice', choices: [
+    { text:'「一緒にいて」とアリスに頼む',
+      next: () => BAD_END_TOGETHER },
+    { text:'「来ないで！」と叫んで走り去る',
+      next: null }
+  ]},
+
+  { type:'dialogue', speaker:'スノーホワイト', text:'来ないで！　あなたの側にいたら……あなたまで死んでしまう！', color:'#f0e6ff' },
+  { type:'narration', text:'翌日——スノーホワイトはアリスを見つけた。スイムスイムに襲われ、変身を解かれた状態で倒れているアリスを。うさぎのぬいぐるみのラッキーアイテムを握りしめたまま。' },
+  { type:'show', side:'left', emoji:'😭', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'💔', name:'ハードゴア・アリス', speaking:false },
+  { type:'dialogue', speaker:'スノーホワイト', text:'アリスちゃん……！　アリスちゃん、しっかりして——！', color:'#f0e6ff' },
+  { type:'show', side:'right', emoji:'🐰', name:'ハードゴア・アリス', speaking:true },
+  { type:'dialogue', speaker:'ハードゴア・アリス', text:'……会え、た。スノーホワイト……さん。ずっと、会いたかった。あなたに助けてもらったから……あなたの側に、いたかった、だけ、で——', color:'#ffaaaa' },
+  { type:'flash', color:'#ffffff', dur:900 },
+  { type:'hideAll' },
+  { type:'narration', text:'アリスは消えた。最後の言葉を残して。スノーホワイトは初めて、アリスが1話の「あの女の子」だったことを知った。' },
+  { type:'show', side:'left', emoji:'😭', name:'スノーホワイト', speaking:true },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……あの子が、亜子ちゃんが……わたしのせいで——わたしが「来ないで」って言ったから——', color:'#f0e6ff' },
+  { type:'narration', text:'何もできなかった後悔が、今度は罪悪感と一緒にスノーホワイトを押しつぶした。' },
+
+  // ┌────────────────────────────────────────────────┐
+  // │  第10話「さよならを言えなかった」               │
+  // └────────────────────────────────────────────────┘
+  { type:'chapter', num:'第  10  話', title:'さよならを言えなかった' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🌀', name:'リップル', speaking:true },
+  { type:'show', side:'right', emoji:'🧙', name:'トップスピード', speaking:false },
+  { type:'narration', text:'カラミティ・メアリとの死闘。銃を乱射する彼女を、リップルとトップスピードの二人でようやく止めた。' },
+  { type:'dialogue', speaker:'リップル', text:'……終わった。', color:'#ff8080' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'トップスピード', text:'やったじゃん！　リップルちゃん強かったねえ——', color:'#98fb98' },
+  { type:'flash', color:'#8b0000', dur:150 },
+  { type:'narration', text:'その瞬間——スイムスイムの矛が、背後からトップスピードを貫いた。戦いが終わった隙を狙っていた。' },
+  { type:'show', side:'right', emoji:'💔', name:'トップスピード', speaking:true },
+  { type:'dialogue', speaker:'トップスピード', text:'あ……リップルちゃん、ごめん。先に行くね。……あと半年、待ってほしかったな。', color:'#98fb98' },
+  { type:'flash', color:'#ffffff', dur:700 },
+  { type:'show', side:'left', emoji:'😡', name:'リップル', speaking:true },
+  { type:'show', side:'right', emoji:'🌊', name:'スイムスイム', speaking:false },
+  { type:'narration', text:'リップルは崩れていくトップスピードを受け止めた。そのとき初めて気づいた——トップスピードの腹に、小さな命の気配があったことを。' },
+  { type:'narration', text:'ずっと内緒にしていた「理由」は、これだったのか。あと半年——子供が生まれるまで、生き残りたかったのか。' },
+  { type:'dialogue', speaker:'リップル', text:'……お前を、必ず殺す。', color:'#ff4444' },
+  { type:'narration', text:'スイムスイムはすでに消えていた。リップルの怒りだけが、夜の空気に燃え続けた。' },
+
+  // ┌────────────────────────────────────┐
+  // │  第11話「最強の終わり」              │
+  // └────────────────────────────────────┘
+  { type:'chapter', num:'第  11  話', title:'最強の終わり' },
+  { type:'scene', bg:'forest' },
+  { type:'show', side:'left', emoji:'🌊', name:'スイムスイム', speaking:true },
+  { type:'show', side:'right', emoji:'🫐', name:'クラムベリー', speaking:false },
+  { type:'narration', text:'スイムスイムは最後の「王様」に向かった。クラムベリー——N市最強の魔法少女。' },
+  { type:'dialogue', speaker:'スイムスイム', text:'あなたのキャンディが欲しい。', color:'#9999ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'クラムベリー', text:'……お前のような子が来るとは思わなかった。かかってきなさい。', color:'#9966cc' },
+  { type:'flash', color:'#9966cc', dur:500 },
+  { type:'narration', text:'クラムベリーの強力な音波攻撃——しかしスイムスイムの魔法は「あらゆる物体を通り抜けること」。攻撃は届かない。' },
+  { type:'show', side:'right', emoji:'💔', name:'クラムベリー', speaking:true },
+  { type:'dialogue', speaker:'クラムベリー', text:'……なるほど。私が求め続けた「強者」は、こんなところにいたか。', color:'#9966cc' },
+  { type:'flash', color:'#ffffff', dur:700 },
+  { type:'hideAll' },
+  { type:'narration', text:'クラムベリーが倒れた。このデスゲームの仕掛け人が、そのゲームの中で消えた。' },
+  { type:'narration', text:'その後——リップルとスノーホワイトは合流した。ファヴがスイムスイムの弱点を教えた。「変身が解けた一瞬だけ、通り抜け能力が消える」。カラミティ・メアリから奪ったアイテムを使い、リップルはスイムスイムを倒した。' },
+  { type:'narration', text:'生き残ったのは——スノーホワイトとリップルだけになった。' },
+
+  // ┌──────────────────────────┐
+  // │  第12話「File not found」  │
+  // └──────────────────────────┘
+  { type:'chapter', num:'第  12  話', title:'File not found' },
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+  { type:'narration', text:'ファヴがスノーホワイトの前に現れた。' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'ファヴ……颯太くんも、ねむりんさんも、マジカロイドさんも、シスターナナさんも、アリスちゃんも、トップスピードさんも——みんな死んだ。これは何のためのゲームだったの？', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'せっかくだから教えてあげるぽん。このゲームはクラムベリーが望んで、ぼくが作った。強い魔法少女を育てるための「試験」だよ。', color:'#888888' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……試験？　みんなを殺して、試験？', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'本来の育成計画なら落選した候補者は記憶を消して日常に戻るだけだったんだけどね。でもそっちのほうが面白かったんだぽん。混乱して、焦って、必死になって——ぼくはそういうのを見るのが好きだから。', color:'#888888' },
+  { type:'glitch' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'楽しんでた……！？　みんなが死んでいくのを——ずっと、楽しんでたの！？', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'そうだぽん。……それで、スノーホワイトには新しいマスターになってもらいたいんだよね。どうかぽん？', color:'#888888' },
+  { type:'narration', text:'そのとき——リップルが現れた。カラミティ・メアリから奪った、魔法の国のアイテムを手に。' },
+  { type:'show', side:'left', emoji:'🌀', name:'リップル', speaking:true },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+  { type:'dialogue', speaker:'リップル', text:'トップスピードの敵だ。それだけだ。', color:'#ff4444' },
+
+  { type:'choice', choices: [
+    { text:'「リップル、待って。わたしも一緒に行く」', next: () => ROUTE_TOGETHER },
+    { text:'「……お願い、リップル。わたしにはできない」', next: () => ROUTE_ENTRUST }
+  ]}
+];
+
+// ════════════════════════════════════════
+//  TRUE END  ──  一緒に立ち向かう
+// ════════════════════════════════════════
+const ROUTE_TOGETHER = [
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🌀', name:'リップル', speaking:false },
+  { type:'dialogue', speaker:'スノーホワイト', text:'わたしも行く。一人にはしない。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'リップル', text:'……邪魔するな。でも——来るなとは言わない。', color:'#ff8080' },
+  { type:'show', side:'left', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'show', side:'right', emoji:'🌀', name:'リップル', speaking:false },
+  { type:'dialogue', speaker:'ファヴ', text:'待ってよ。マスターになれば何でも願いを叶えてあげるぽん！', color:'#888888' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……聞こえる。ファヴの心の声。「あのアイテムで攻撃されたらまずい」——それが弱点でしょ。', color:'#f0e6ff' },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'dialogue', speaker:'ファヴ', text:'っ……！　読めるのかぽん！？', color:'#888888' },
+  { type:'show', side:'left', emoji:'🌀', name:'リップル', speaking:true },
+  { type:'flash', color:'#ffffff', dur:900 },
+  { type:'hideAll' },
+  { type:'narration', text:'リップルが魔法の国のアイテムを振り下ろした。ファヴの端末が砕け——光の粒になって消えた。' },
+  { type:'scene', bg:'town' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🌀', name:'リップル', speaking:false },
+  { type:'narration', text:'N市に、静かな朝が来た。「魔法少女育成計画」のゲームは、ひっそりと人間世界から姿を消した。' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'リップル……生きてくれてありがとう。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'リップル', text:'……礼はいらない。でも、見ていたぞ。お前が最後まで逃げなかったのを。', color:'#ff8080' },
+  { type:'narration', text:'スノーホワイトは空を見上げた。死んでいった魔法少女たちの声が、かすかに聞こえた気がした。ねむりん、颯太くん、マジカロイド44さん、シスターナナさん、ヴェスさん、たまちゃん、アリスちゃん、トップスピードさん——' },
+  { type:'narration', text:'その声を忘れないでいること。それが自分にできる、唯一のことだと思った。' },
+  { type:'ending', endType:'true', title:'すべての声が聴こえる世界へ',
+    body:'スノーホワイトは生き残った。\n\n何もできないと泣き続けた少女が、最後にただ一つだけ——誰かの声を聴くことができた。\n\nねむりん、ラ・ピュセル、マジカロイド44、シスターナナ、ヴェス・ウィンタープリズン、たま、ハードゴア・アリス、トップスピード……\nすべての名前を、姫河小雪は胸に刻んだ。\n\n── TRUE ENDING ──' }
+];
+
+// ════════════════════════════════════════
+//  NORMAL END  ──  リップルに任せる
+// ════════════════════════════════════════
+const ROUTE_ENTRUST = [
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'😔', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🌀', name:'リップル', speaking:false },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……お願い、リップル。わたしには……できなかった。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'リップル', text:'最初からそのつもりだ。下がってろ。', color:'#ff8080' },
+  { type:'flash', color:'#ffffff', dur:900 },
+  { type:'hideAll' },
+  { type:'narration', text:'リップルが一人でファヴに向かった。スノーホワイトはその背中を見ていることしかできなかった。' },
+  { type:'narration', text:'ファヴの端末が砕け、ゲームは終わった。' },
+  { type:'scene', bg:'town' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'dialogue', speaker:'スノーホワイト', text:'颯太くん……わたし、もっと強くなるよ。次は——絶対に、誰も死なせない。', color:'#f0e6ff' },
+  { type:'ending', endType:'normal', title:'誓いの夜明け',
+    body:'スノーホワイトは生き残った。\n\nずっと流されてきた少女が、最後に初めて、自分の言葉で誓いを立てた。\nラ・ピュセルの「守る」という言葉は、今も胸の中に生きている。\n\n── ENDING ──' }
+];
+
+// ════════════════════════════════════════════════════════
+//  ??? 隠しルート  ──  前原圭一
+//  ※ タイトル画面の「???」を選んだときのみ到達できる
+//  ※ 通常ルートでは一切登場しない
+// ════════════════════════════════════════════════════════
+const ROUTE_KEIICHI = [
+  { type:'chapter', num:'？？？', title:'オヤシロさまの呪い' },
+  { type:'scene', bg:'void' },
+  { type:'hideAll' },
+  { type:'narration', text:'――場所も時間も、何もかもが歪んでいた。' },
+  { type:'narration', text:'気がつくと、男が一人、N市の夜道に立っていた。' },
+  { type:'show', side:'left', emoji:'🎒', name:'前原圭一', speaking:true },
+  { type:'dialogue', speaker:'前原圭一', text:'……ここ、どこだ？　雛見沢じゃない。レナは……梨花ちゃんは？', color:'#ffd700' },
+  { type:'narration', text:'前原圭一——雛見沢村の転校生。何度も繰り返す惨劇の中で、死に続けてきた少年。しかし彼はある意味で「運命に抗う力」を持っていた。' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🎒', name:'前原圭一', speaking:false },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'narration', text:'そこへスノーホワイトが現れた。心の声が聞こえる——この少年の心の中に、何か強烈なものを感じた。' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……あなた、どこから来たの？　この街は今、とても危険で——', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'前原圭一', text:'危険は知ってる。俺、ずっと死んできたから。何度も。でも今回は絶対に諦めない——それだけは決めてきた。', color:'#ffd700' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'何度も……死んできた？', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'前原圭一', text:'俺のいた村では、毎年誰かが死んだ。俺も死んだ。仲間も死んだ。でも諦めなかったら——ちゃんと変えられたんだ。運命は、変えられる。', color:'#ffd700' },
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'show', side:'right', emoji:'🎒', name:'前原圭一', speaking:false },
+  { type:'narration', text:'ファヴが現れた。この「異物」の存在を、計算に入れていなかった。' },
+  { type:'dialogue', speaker:'ファヴ', text:'なんだこれ……ゲームのデータにない存在だよ。どこから来たんだぽん？', color:'#aaaaaa' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'前原圭一', text:'お前がこのゲームを仕切ってるのか。……話を聞いてもらう。誰も死ななくていい方法がある。', color:'#ffd700' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'ファヴ', text:'はあ？　何言ってるの。ゲームはもう始まってるんだぽん。', color:'#aaaaaa' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'前原圭一', text:'ゲームなら、ルールは変えられるはずだ。俺は何度でも諦めない。それがどういう意味か——お前には分からないだろうけど。', color:'#ffd700' },
+  { type:'scene', bg:'magic' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🎒', name:'前原圭一', speaking:false },
+  { type:'narration', text:'スノーホワイトは前原圭一の心の声を聞いた。「諦めたくない」「みんなに生きていてほしい」「何度死んでも、また立ち上がる」——純粋で、怖いくらい真剣な声だった。' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……あなたの心の声、聞こえます。あなたは本当に——諦めたことが一度もないんですね。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'前原圭一', text:'ああ。仲間が死ぬのを、何度も見てきた。だから分かる——死んでしまう運命でも、変えられる。変えてみせる。', color:'#ffd700' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……わたしは今まで、ずっと何もできなかった。流されて、守られて、泣いてるだけで。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'前原圭一', text:'俺もそうだった。最初はずっとそうだった。でも——それでも動けば、変わる。一人じゃなくていい。', color:'#ffd700' },
+  { type:'scene', bg:'sacred' },
+  { type:'show', side:'left', emoji:'🎒', name:'前原圭一', speaking:true },
+  { type:'show', side:'right', emoji:'🌀', name:'リップル', speaking:false },
+  { type:'narration', text:'前原圭一はリップルにも話しかけた。最初は拒絶された。当然だった。' },
+  { type:'dialogue', speaker:'前原圭一', text:'お前の大切な人が死んだのは知ってる。でも一人で突っ込んで死んだら、その人が悲しむんじゃないか？', color:'#ffd700' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'リップル', text:'……うるさい。お前に何が分かる。', color:'#ff8080' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'前原圭一', text:'俺も仲間を失った。何人も。だから分かる——生き残ることも、戦いの一つだ。', color:'#ffd700' },
+
+  { type:'choice', choices: [
+    { text:'「一人で突っ込んでも、トップスピードは喜ばない」と言う',
+      next: [
+        { type:'show', side:'left', emoji:'🎒', name:'前原圭一', speaking:true },
+        { type:'dialogue', speaker:'前原圭一', text:'一人で死ぬつもりで突っ込んでも……トップスピードは喜ばないんじゃないか。お前に生きていてほしかったはずだ。', color:'#ffd700' },
+        { type:'show', side:'right', emoji:'🌀', name:'リップル', speaking:true },
+        { type:'dialogue', speaker:'リップル', text:'……うるさい。でも。', color:'#ff8080' },
+        { type:'narration', text:'リップルは少しだけ、前原圭一を見た。拒絶ではなかった。' },
+      ]},
+    { text:'黙って見守る',
+      next: [
+        { type:'narration', text:'前原圭一は何も言わなかった。時には黙って隣にいることの方が、言葉より届くこともある——それを彼は知っていた。' },
+      ]}
+  ]},
+
+  { type:'narration', text:'リップルは何も言わなかった。でも、拳の力がわずかに緩んだ。' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🎒', name:'前原圭一', speaking:true },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+  { type:'narration', text:'最後の夜。前原圭一はスノーホワイト、リップルと共にファヴの前に立った。' },
+  { type:'dialogue', speaker:'前原圭一', text:'ファヴ。このゲームを終わらせる。魔法少女の記憶を消して、全員を日常に戻せ。本来の「育成計画」のルールでな。', color:'#ffd700' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'なんで部外者のお前にそんな命令されなきゃいけないんだぽん。', color:'#888888' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'前原圭一', text:'お前のゲームに「答えのないループ」はない。必ず終わりがある。俺はそれを知ってる。', color:'#ffd700' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'dialogue', speaker:'スノーホワイト', text:'ファヴ……聞こえる。あなたの心の声。「もう終わりにしたい」——本当はそう思ってるんでしょ？', color:'#f0e6ff' },
+  { type:'show', side:'right', emoji:'🌀', name:'リップル', speaking:true },
+  { type:'dialogue', speaker:'リップル', text:'……俺たち三人、全員お前に向かってる。どうする。', color:'#ff8080' },
+  { type:'flash', color:'#ffffff', dur:1200 },
+  { type:'hideAll' },
+  { type:'narration', text:'ファヴの端末が砕けた。' },
+  { type:'scene', bg:'town' },
+  { type:'show', side:'left', emoji:'🎒', name:'前原圭一', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'narration', text:'夜明けのN市。前原圭一は、来た時と同じように突然そこに立っていた。帰る方法は分からないが——今はそれでよかった。' },
+  { type:'dialogue', speaker:'前原圭一', text:'……終わったな。スノーホワイト、お前は本当に強かった。諦めなかった。', color:'#ffd700' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'前原くん……あなたがいなかったら、わたしはまだ何もできないままだったと思う。ありがとう。', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'前原圭一', text:'礼はいらない。俺は……また雛見沢に戻らないといけないから。まだ、やることがあるんだ。', color:'#ffd700' },
+  { type:'narration', text:'前原圭一は笑った。どこか遠くを見る目で、でも確かに希望を持った目で。' },
+  { type:'narration', text:'次の瞬間——彼の姿は消えていた。まるで最初からいなかったように。' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……前原くん。あなたの村でも、みんなが生きられますように。', color:'#f0e6ff' },
+  { type:'ending', endType:'true', title:'奇跡と、諦めない意志',
+    body:'死んでしまう運命でも、変えられる。\n\nその言葉を、姫河小雪はずっと忘れないだろう。\n何もできないと泣いていた少女と、何度死んでも諦めなかった少年が出会った、ただ一度の夜。\n\n前原圭一は雛見沢へ帰った。\nスノーホワイトはN市で生き続けた。\n\n── ??? ENDING ──' }
+];
+
+
+// ════════════════════════════════════════════════
+//  BAD END A  ── 魔法少女を辞めると告げる（3話）
+// ════════════════════════════════════════════════
+const BAD_END_QUIT = [
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'😔', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……わたし、魔法少女を辞めます。こんなゲームには参加しない。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'辞めたら結局死ぬから同じことだぽん。でも——そう言うなら、仕方ないね。', color:'#aaaaaa' },
+  { type:'flash', color:'#ffffff', dur:1200 },
+  { type:'hideAll' },
+  { type:'narration', text:'スノーホワイトは魔法少女の力を失った。' },
+  { type:'narration', text:'翌朝、N市のニュースに姫河小雪の訃報が小さく載っていた。享年十四歳。死因：心不全。' },
+  { type:'narration', text:'彼女が知ることはなかった——残された魔法少女たちが、その後どうなったかを。' },
+  { type:'ending', endType:'bad', title:'逃げた先にあるもの',
+    body:'スノーホワイトは逃げた。\n\nそれが死を意味すると分かっていても、恐怖に勝てなかった。\n魔法少女でいることの重さを、最後まで受け入れられなかった。\n\nねむりんが死んだ夜と同じように、静かに——\n姫河小雪は目を覚まさなかった。\n\n── BAD ENDING ──' }
+];
+
+// ════════════════════════════════════════════════
+//  BAD END B  ── アリスと一緒にいると決める（9話）
+// ════════════════════════════════════════════════
+const BAD_END_TOGETHER = [
+  { type:'scene', bg:'night' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🐰', name:'ハードゴア・アリス', speaking:false },
+  { type:'dialogue', speaker:'スノーホワイト', text:'一緒にいて、アリスちゃん。一人は……もう嫌だから。', color:'#f0e6ff' },
+  { type:'narration', text:'ハードゴア・アリスはうなずいた。その目が、嬉しそうに細くなった。' },
+  { type:'narration', text:'しかし——二人でいることで、スイムスイムに居場所が知れた。' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🌊', name:'スイムスイム', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'narration', text:'スイムスイムは二人を同時に狙った。アリスは何度でも再生する——でも変身が解ける瞬間を狙えばいい。それを知っていた。' },
+  { type:'dialogue', speaker:'スイムスイム', text:'……二人いると思ったら、やりやすい。', color:'#9999ff' },
+  { type:'flash', color:'#8b0000', dur:300 },
+  { type:'show', side:'left', emoji:'🐰', name:'ハードゴア・アリス', speaking:true },
+  { type:'dialogue', speaker:'ハードゴア・アリス', text:'スノーホワイトさん……逃げて。', color:'#ffaaaa' },
+  { type:'flash', color:'#ffffff', dur:800 },
+  { type:'hideAll' },
+  { type:'narration', text:'アリスが先に倒れた。次に、スノーホワイトに矛が向いた。' },
+  { type:'narration', text:'心の声を聞く魔法少女は、スイムスイムの「何も考えていない」という心に、恐怖すら感じられなかった。' },
+  { type:'flash', color:'#ffffff', dur:1500 },
+  { type:'hideAll' },
+  { type:'narration', text:'スノーホワイトは消えた。アリスの隣で。' },
+  { type:'ending', endType:'bad', title:'手をつないだまま',
+    body:'スノーホワイトは一人でいることを恐れた。\n\nその選択が、アリスとスノーホワイトの両方を危険にさらした。\n\n二人は同じ夜に消えた。\nでも最後は——ずっと会いたかった少女の隣にいられた。\n\n── BAD ENDING ──' }
+];
+
+// ─── SCRIPT MAP ───
+SCRIPT_MAP['MAIN']          = MAIN;
+SCRIPT_MAP['ROUTE_TOGETHER']= ROUTE_TOGETHER;
+SCRIPT_MAP['ROUTE_ENTRUST'] = ROUTE_ENTRUST;
+SCRIPT_MAP['ROUTE_KEIICHI']  = ROUTE_KEIICHI;
+SCRIPT_MAP['BAD_END_QUIT']   = BAD_END_QUIT;
+SCRIPT_MAP['BAD_END_TOGETHER']= BAD_END_TOGETHER;
+
+// ─────────────────────────────────────────────────
+//  GAME CONTROL
+// ─────────────────────────────────────────────────
+function startGame() {
+  openChapterSelect();
+}
+
+function startMysteryRoute() {
+  openMysterySelect();
+}
+
+function restartGame() {
+  document.getElementById('ending-screen').classList.remove('visible');
+  location.reload();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') advance();
+});
+</script>
+</body>
+</html>
