@@ -281,7 +281,8 @@ const CATEGORIES = [
   "Strength","Speed","Durability","IQ","Battle IQ","Power","Combat",
   "Defence","Endurance","Experience","Stamina","Agility","Skill"
 ];
-const INTRO_DUR=0.8, CUT_DUR=1.2, FINAL_DUR=9.2, BLACK_DUR=0.5;
+// BPM≈138 (beat=0.435s) に合わせて調整
+const INTRO_DUR=0.870, CUT_DUR=1.304, FINAL_DUR=9.2, BLACK_DUR=0.435;
 const COLOR_A='#ff3c2a', COLOR_B='#2a8fff', COLOR_D='#aaaaaa';
 
 // ═══════════════════════════════════════════════
@@ -826,96 +827,130 @@ async function startGenerate(){
     }catch(e){ console.warn('BGMデコード失敗',e); }
   }
 
-  // ═══ PHASE 3: AudioContext基準タイムで完全同期録画 ═══
-  // setTimeoutは誤差蓄積するので AudioContext.currentTime を絶対基準に使う
-  setFfmpegMsg('🎬 録画中... (しばらくお待ちください)');
-  setProgress(0,TOTAL,'録画中...',null);
+  // ═══ PHASE 3: rAF + AudioContext.currentTime 完全同期録画 ═══
+  // requestAnimationFrameのコールバック内でAudioContext.currentTimeを読み
+  // 「今何フレーム目であるべきか」を計算して描画。
+  // setTimeoutを一切使わないので早回し・音ズレが発生しない。
+  // スキップが多い場合は自動再試行（最大3回）。
+  setFfmpegMsg('🎬 録画中...');
+  setProgress(0, TOTAL, '録画中...', null);
 
-  const frameDurSec = 1/FPS;
-  const frameDurMs  = 1000/FPS;
+  const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+    ? 'video/webm;codecs=vp9,opus'
+    : (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+      ? 'video/webm;codecs=vp8,opus' : 'video/webm');
 
-  // ─ AudioContext + BGMストリーム ─
-  const recAudioCtx = new AudioContext({sampleRate:44100});
-  const dest = recAudioCtx.createMediaStreamDestination();
+  // ── 録画関数（再試行できるよう関数化） ──
+  const runRecord = (attempt) => new Promise(async (resolveRec) => {
+    setFfmpegMsg(attempt > 0 ? `🔄 再録画中... (${attempt}回目)` : '🎬 録画中...');
 
-  if(bgmAudioBuf){
-    const src=recAudioCtx.createBufferSource();
-    src.buffer=bgmAudioBuf; src.loop=true;
-    src.connect(dest); src.start(0);
-  } else {
-    const osc=recAudioCtx.createOscillator();
-    const gain=recAudioCtx.createGain(); gain.gain.value=0;
-    osc.connect(gain); gain.connect(dest); osc.start();
-  }
+    const recAudioCtx = new AudioContext({ sampleRate: 44100 });
+    const dest = recAudioCtx.createMediaStreamDestination();
 
-  // ─ MediaRecorder セットアップ ─
-  const videoStream=canvas.captureStream(0);
-  const videoTrack=videoStream.getVideoTracks()[0];
-  const audioTrack=dest.stream.getAudioTracks()[0];
-  const combined=new MediaStream([videoTrack, audioTrack]);
+    let bgmSrc = null;
+    if (bgmAudioBuf) {
+      bgmSrc = recAudioCtx.createBufferSource();
+      bgmSrc.buffer = bgmAudioBuf; bgmSrc.loop = true;
+      bgmSrc.connect(dest); bgmSrc.start(0);
+    } else {
+      const osc = recAudioCtx.createOscillator();
+      const g = recAudioCtx.createGain(); g.gain.value = 0;
+      osc.connect(g); g.connect(dest); osc.start();
+    }
 
-  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
-    ?'video/webm;codecs=vp9,opus'
-    :(MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
-      ?'video/webm;codecs=vp8,opus':'video/webm');
+    const videoStream = canvas.captureStream(0);
+    const videoTrack  = videoStream.getVideoTracks()[0];
+    const combined    = new MediaStream([videoTrack, dest.stream.getAudioTracks()[0]]);
 
-  const chunks=[];
-  const rec=new MediaRecorder(combined,{mimeType:mime,videoBitsPerSecond:8_000_000,audioBitsPerSecond:128_000});
-  rec.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
-  const recDone=new Promise(r=>{ rec.onstop=r; });
+    const chunks = [];
+    const rec = new MediaRecorder(combined, {
+      mimeType: mime, videoBitsPerSecond: 8_000_000, audioBitsPerSecond: 128_000
+    });
+    rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    const recStopped = new Promise(r => { rec.onstop = r; });
 
-  // ─ AudioContext が安定するまで少し待つ ─
-  await new Promise(r=>setTimeout(r,120));
-  rec.start(200);
+    // AudioContextが安定するまで待つ
+    await new Promise(r => setTimeout(r, 150));
+    rec.start(100);
 
-  // ─ AudioContext.currentTime 基準でフレームをスケジューリング ─
-  // 各フレームの「本来鳴るべき時刻」を絶対値で計算し、
-  // 現在時刻との差分だけ待つ → 遅延は次フレームで自動補正
-  await new Promise(resolve=>{
-    let idx=0;
-    const startAudioTime = recAudioCtx.currentTime;
-    const startPerfTime  = performance.now();
+    // AudioContextスタート時刻を記録
+    const audioStart = recAudioCtx.currentTime;
+    let lastDrawnIdx = -1;
+    let skippedTotal = 0;
+    let rafId;
 
-    const scheduleFrame = () => {
-      if(idx >= bitmaps.length){ resolve(); return; }
+    const result = await new Promise(resolveLoop => {
+      const loop = () => {
+        // 今何秒経ったか（AudioContext基準 = 音と完全同期）
+        const elapsed  = recAudioCtx.currentTime - audioStart;
+        const targetIdx = Math.min(
+          Math.floor(elapsed * FPS),
+          bitmaps.length - 1
+        );
 
-      // このフレームが本来表示されるべきperformance.now時刻
-      const targetMs = startPerfTime + idx * frameDurMs;
-      const nowMs    = performance.now();
-      const waitMs   = Math.max(0, targetMs - nowMs);
+        if (targetIdx > lastDrawnIdx) {
+          const skipped = targetIdx - lastDrawnIdx - 1;
+          skippedTotal += skipped;
+          lastDrawnIdx  = targetIdx;
 
-      setTimeout(()=>{
-        ctx.drawImage(bitmaps[idx], 0, 0);
-        videoTrack.requestFrame();
-        setProgress(idx+1, TOTAL, '録画中...', null);
-        idx++;
-        scheduleFrame();
-      }, waitMs);
-    };
+          ctx.drawImage(bitmaps[targetIdx], 0, 0);
+          videoTrack.requestFrame();
+          setProgress(targetIdx + 1, TOTAL, attempt > 0 ? '再録画中...' : '録画中...', null);
+        }
 
-    scheduleFrame();
+        if (lastDrawnIdx >= bitmaps.length - 1) {
+          resolveLoop({ skippedTotal });
+          return;
+        }
+        rafId = requestAnimationFrame(loop);
+      };
+      rafId = requestAnimationFrame(loop);
+    });
+
+    cancelAnimationFrame(rafId);
+    await new Promise(r => setTimeout(r, 350));
+    rec.stop();
+    recAudioCtx.close();
+    await recStopped;
+
+    resolveRec({ chunks, skippedTotal: result.skippedTotal });
   });
 
-  await new Promise(r=>setTimeout(r,400));
-  rec.stop();
-  recAudioCtx.close();
-  await recDone;
+  // ── 最大3回試行、スキップ率5%未満なら合格 ──
+  const MAX_ATTEMPTS = 3;
+  const SKIP_THRESHOLD = Math.floor(TOTAL * 0.05); // 5%
+  let finalChunks;
 
-  bitmaps.forEach(b=>b.close());
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const { chunks, skippedTotal } = await runRecord(attempt);
+    console.log(`録画 attempt${attempt}: skip=${skippedTotal}/${TOTAL}`);
+    if (skippedTotal <= SKIP_THRESHOLD || attempt === MAX_ATTEMPTS - 1) {
+      if (skippedTotal > SKIP_THRESHOLD) {
+        setFfmpegMsg(`⚠ スキップ ${skippedTotal}f — 最良の結果を使用`);
+      } else {
+        setFfmpegMsg('✅ 完了');
+      }
+      finalChunks = chunks;
+      break;
+    }
+    setFfmpegMsg(`⚠ スキップ多 (${skippedTotal}f) → 再試行...`);
+    await new Promise(r => setTimeout(r, 500));
+  }
 
-  setFfmpegMsg('✅ 完了');
-  const finalBlob=new Blob(chunks,{type:mime});
-  const url=URL.createObjectURL(finalBlob);
-  document.getElementById('preview-video').src=url;
-  const dlBtn=document.getElementById('dlBtn');
-  dlBtn.href=url;
-  dlBtn.download=`${S.nameA}VS${S.nameB}.webm`;
-  dlBtn.textContent='⬇ 動画をダウンロード (.webm)';
+  bitmaps.forEach(b => b.close());
+
+  const finalBlob = new Blob(finalChunks, { type: mime });
+  const url = URL.createObjectURL(finalBlob);
+  document.getElementById('preview-video').src = url;
+  const dlBtn = document.getElementById('dlBtn');
+  dlBtn.href     = url;
+  dlBtn.download = `${S.nameA}VS${S.nameB}.webm`;
+  dlBtn.textContent = '⬇ 動画をダウンロード (.webm)';
   document.getElementById('output-wrap').classList.add('visible');
-  document.getElementById('genBtn').disabled=false;
-  document.getElementById('progLabel').textContent='✅ 完了!';
-  document.getElementById('progPct').textContent='100%';
-  document.getElementById('progFill').style.width='100%';
+  document.getElementById('genBtn').disabled = false;
+  document.getElementById('progLabel').textContent = '✅ 完了!';
+  document.getElementById('progPct').textContent = '100%';
+  document.getElementById('progFill').style.width = '100%';
 }
 
 // ═══════════════════════════════════════════════
