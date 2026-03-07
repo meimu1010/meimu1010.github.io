@@ -13,21 +13,15 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:16px;min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,255,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
-
 header{position:relative;text-align:center;padding:40px 20px 18px;z-index:1}
 header h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.6rem,8vw,5.2rem);letter-spacing:.12em;background:linear-gradient(135deg,var(--cyan),var(--yellow),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 22px rgba(0,255,255,.45))}
 header p{margin-top:6px;font-size:.88rem;color:#3a5a7a;letter-spacing:.22em;text-transform:uppercase}
-
 main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 80px}
-
-/* STEP PANEL */
 .step{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:26px 30px;margin-bottom:18px;position:relative;overflow:hidden;transition:border-color .3s}
 .step::after{content:attr(data-step);font-family:'Bebas Neue',sans-serif;font-size:5.5rem;color:rgba(0,255,255,.035);position:absolute;top:-8px;right:18px;line-height:1;pointer-events:none}
 .step.active{border-color:var(--cyan)}
 .step-title{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:.1em;color:var(--cyan);margin-bottom:14px;display:flex;align-items:center;gap:10px}
 .step-title .num{width:26px;height:26px;background:var(--cyan);color:var(--bg);border-radius:50%;display:grid;place-items:center;font-size:.8rem;flex-shrink:0}
-
-/* CHAR UPLOAD */
 .char-grid{display:grid;grid-template-columns:1fr 72px 1fr;gap:14px;align-items:center}
 .vs-badge{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--yellow);text-shadow:0 0 18px rgba(255,215,0,.65)}
 .char-card{background:rgba(0,0,0,.3);border:2px dashed var(--border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:border-color .3s,background .3s;min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
@@ -42,15 +36,12 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .char-card .placeholder svg{width:44px;height:44px;margin-bottom:6px;display:block;margin-left:auto;margin-right:auto}
 .char-name-input{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:6px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:600;padding:8px 12px;text-align:center;outline:none;transition:border-color .2s;margin-top:9px}
 .char-name-input:focus{border-color:var(--cyan)}
-
-/* GEMINI SECTION */
 .gemini-box{background:rgba(0,0,0,.35);border:1px solid #1a3a20;border-radius:10px;padding:18px 20px;margin-bottom:14px}
 .gemini-box h3{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.1em;color:#2aff80;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .prompt-area{width:100%;background:rgba(0,0,0,.5);border:1px solid #1e3a28;border-radius:7px;color:#8ab898;font-family:'Rajdhani',sans-serif;font-size:.82rem;line-height:1.55;padding:12px 14px;resize:vertical;min-height:120px;outline:none;white-space:pre-wrap}
 .copy-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(42,255,128,.1);border:1px solid #2aff80;color:#2aff80;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.08em;padding:8px 18px;border-radius:6px;cursor:pointer;transition:background .2s;margin-top:9px}
 .copy-btn:hover{background:rgba(42,255,128,.22)}
 .copy-btn.copied{background:rgba(42,255,128,.3);border-color:#aaffcc;color:#aaffcc}
-
 .json-box{margin-top:14px}
 .json-box label{display:block;font-size:.8rem;letter-spacing:.12em;color:#4a8a6a;text-transform:uppercase;margin-bottom:6px}
 .json-input{width:100%;background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:7px;color:#c8f0d8;font-family:'Rajdhani',sans-serif;font-size:.85rem;padding:11px 14px;resize:vertical;min-height:80px;outline:none;transition:border-color .2s;line-height:1.5}
@@ -59,8 +50,6 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .apply-btn:hover{background:rgba(0,255,255,.2)}
 .apply-status{display:inline-block;margin-left:10px;font-size:.82rem;color:#2aff80;opacity:0;transition:opacity .3s}
 .apply-status.show{opacity:1}
-
-/* CATEGORIES */
 .cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:9px}
 .cat-row{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:8px;padding:10px 13px;display:flex;flex-direction:column;gap:7px;transition:border-color .2s}
 .cat-row:hover{border-color:#2a4a6a}
@@ -73,27 +62,35 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .cat-btn.sel-D{background:rgba(180,180,180,.14);border-color:#666;color:#aaa}
 .score-display{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:13px;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.1em}
 .score-a{color:var(--red)}.score-b{color:var(--blue)}.score-sep{color:#3a5a7a}
-
-/* BGM */
 .bgm-row{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
 .file-btn{background:rgba(0,255,255,.08);border:1px solid var(--cyan);color:var(--cyan);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.88rem;letter-spacing:.1em;padding:9px 18px;border-radius:6px;cursor:pointer;transition:background .2s;white-space:nowrap}
 .file-btn:hover{background:rgba(0,255,255,.18)}
 .file-info{color:#4a8aaa;font-size:.88rem}
 .file-info.ok{color:#2aff80}
 
-/* SETTINGS */
+/* ── STYLE SELECTOR ── */
+.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.style-card{background:rgba(0,0,0,.35);border:2px solid var(--border);border-radius:10px;padding:16px 12px 14px;text-align:center;cursor:pointer;transition:border-color .25s,background .25s,transform .15s}
+.style-card:hover{border-color:#3a6a8a;transform:translateY(-2px)}
+.style-card.sel{border-color:var(--cyan);background:rgba(0,255,255,.06);transform:translateY(-2px)}
+.style-icon{font-size:2rem;margin-bottom:7px;display:block}
+.style-name{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.12em;color:var(--cyan)}
+.style-card.sel .style-name{color:#fff}
+.style-desc{font-size:.72rem;color:#4a6a8a;margin-top:4px;line-height:1.45}
+.style-card.sel .style-desc{color:#6a9aaa}
+
+/* ── SETTINGS ── */
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
 .settings-grid label{display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:#5a8aaa;letter-spacing:.12em;text-transform:uppercase}
 .settings-grid select{background:#0a121e;border:1px solid var(--border);color:#fff;padding:8px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
 .settings-grid select:focus{border-color:var(--cyan)}
+.est-time-box{margin-top:12px;padding:10px 14px;background:rgba(0,0,0,.3);border:1px solid #1e3a50;border-radius:7px;font-size:.85rem;color:#4a7a9a;letter-spacing:.04em}
+.est-time-box span{color:var(--yellow);font-weight:700;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.08em}
 
-/* GEN BUTTON */
 .gen-btn{width:100%;padding:17px;background:linear-gradient(135deg,#ff3c2a 0%,#ff8c00 50%,#ffd700 100%);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:.2em;color:#000;cursor:pointer;transition:opacity .2s,transform .1s;box-shadow:0 0 28px rgba(255,100,0,.42);margin-top:6px}
 .gen-btn:hover{opacity:.87;transform:translateY(-1px)}
 .gen-btn:active{transform:translateY(1px)}
 .gen-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
-
-/* PROGRESS */
 #progress-wrap{display:none;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 28px;margin-bottom:18px}
 #progress-wrap.visible{display:block}
 .prog-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
@@ -107,40 +104,33 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .phase-chip.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,255,255,.08)}
 .phase-chip.done{border-color:#1e4a30;color:#2a8a50;background:rgba(0,200,80,.05)}
 .prog-ffmpeg{margin-top:10px;font-size:.82rem;color:#5a8a6a;font-style:italic}
-
-/* OUTPUT */
 #output-wrap{display:none;background:var(--panel);border:1px solid #1e4a30;border-radius:12px;padding:22px 28px;text-align:center}
 #output-wrap.visible{display:block}
 #output-wrap h2{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.14em;color:#2aff80;margin-bottom:14px}
 #preview-video{width:100%;max-width:320px;border-radius:8px;border:1px solid #1e4a30;margin-bottom:14px}
 .dl-btn{display:inline-flex;align-items:center;gap:7px;background:rgba(42,255,128,.1);border:1px solid #2aff80;color:#2aff80;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.1em;padding:11px 26px;border-radius:8px;cursor:pointer;text-decoration:none;transition:background .2s}
 .dl-btn:hover{background:rgba(42,255,128,.2)}
-
-/* ERROR */
 .error-msg{background:rgba(255,60,42,.1);border:1px solid var(--red);color:var(--red);border-radius:8px;padding:11px 16px;margin-top:11px;font-size:.88rem;display:none}
 .error-msg.visible{display:block}
-
 #mainCanvas{display:none}
-
 @media(max-width:600px){
   .char-grid{grid-template-columns:1fr}
   .vs-badge{font-size:1.3rem}
   .step{padding:18px}
   .cat-grid{grid-template-columns:1fr 1fr}
   .settings-grid{grid-template-columns:1fr}
+  .style-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
-
 <header>
   <h1>BATTLE GENERATOR</h1>
   <p>TikTok Character VS Video — Browser Only</p>
 </header>
-
 <main>
 
-<!-- ══ STEP 1: CHARACTERS ══ -->
+<!-- STEP 1: CHARACTERS -->
 <div class="step active" data-step="01">
   <div class="step-title"><span class="num">1</span> CHARACTERS</div>
   <div class="char-grid">
@@ -170,10 +160,9 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
   </div>
 </div>
 
-<!-- ══ STEP 2: GEMINI ══ -->
+<!-- STEP 2: GEMINI -->
 <div class="step" data-step="02">
   <div class="step-title"><span class="num">2</span> GEMINI AI ANALYSIS</div>
-
   <div class="gemini-box">
     <h3>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
@@ -181,11 +170,8 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
     </h3>
     <textarea class="prompt-area" id="promptArea" readonly placeholder="STEP 1 でキャラ名を入力するとプロンプトが自動生成されます"></textarea>
     <br>
-    <button class="copy-btn" id="copyPromptBtn" onclick="copyPrompt()">
-      📋 プロンプトをコピー
-    </button>
+    <button class="copy-btn" id="copyPromptBtn" onclick="copyPrompt()">📋 プロンプトをコピー</button>
   </div>
-
   <div class="gemini-box" style="border-color:#1e2d50">
     <h3 style="color:var(--cyan)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
@@ -200,7 +186,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
   </div>
 </div>
 
-<!-- ══ STEP 3: CATEGORY RESULTS ══ -->
+<!-- STEP 3: CATEGORIES -->
 <div class="step" data-step="03">
   <div class="step-title"><span class="num">3</span> CATEGORY RESULTS <span style="font-size:.8rem;color:#3a6a8a;font-family:Rajdhani;margin-left:6px">（手動調整も可）</span></div>
   <div class="cat-grid" id="catGrid"></div>
@@ -211,7 +197,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
   </div>
 </div>
 
-<!-- ══ STEP 4: BGM ══ -->
+<!-- STEP 4: BGM -->
 <div class="step" data-step="04">
   <div class="step-title"><span class="num">4</span> BGM</div>
   <div class="bgm-row">
@@ -226,13 +212,34 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
   </div>
 </div>
 
-<!-- ══ STEP 5: SETTINGS ══ -->
+<!-- STEP 5: STYLE -->
 <div class="step" data-step="05">
-  <div class="step-title"><span class="num">5</span> SETTINGS</div>
+  <div class="step-title"><span class="num">5</span> VISUAL STYLE</div>
+  <div class="style-grid">
+    <div class="style-card sel" data-style="battle" onclick="selectStyle(this)">
+      <span class="style-icon">⚡</span>
+      <div class="style-name">BATTLE</div>
+      <div class="style-desc">グリッチ・パーティクル背景・カラーグレード</div>
+    </div>
+    <div class="style-card" data-style="neon" onclick="selectStyle(this)">
+      <span class="style-icon">🌈</span>
+      <div class="style-name">NEON PULSE</div>
+      <div class="style-desc">ネオンライン・波形リング・グロー強め</div>
+    </div>
+    <div class="style-card" data-style="cinema" onclick="selectStyle(this)">
+      <span class="style-icon">🎬</span>
+      <div class="style-name">CINEMA</div>
+      <div class="style-desc">映画風レターボックス・白黒フラッシュ</div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 6: SETTINGS -->
+<div class="step" data-step="06">
+  <div class="step-title"><span class="num">6</span> SETTINGS</div>
   <div class="settings-grid">
     <label>FPS
-      <select id="cfgFps">
-        <option value="24">24 fps</option>
+      <select id="cfgFps" onchange="updateEstTime()">
         <option value="30" selected>30 fps</option>
         <option value="60">60 fps</option>
       </select>
@@ -242,6 +249,10 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
         <option value="540x960">540 × 960</option>
       </select>
     </label>
+  </div>
+  <div class="est-time-box" id="estTimeBox">
+    ⏱ 推定生成時間：<span id="estTimeVal">—</span>
+    <span style="color:#3a5a7a;font-size:.78rem;margin-left:6px">（フレーム生成 + リアルタイム録画）</span>
   </div>
 </div>
 
@@ -264,14 +275,11 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 <div id="output-wrap">
   <h2>✅ 生成完了！</h2>
   <video id="preview-video" controls playsinline></video><br>
-  <a class="dl-btn" id="dlBtn" download="battle.mp4">⬇ 動画をダウンロード (.mp4)</a>
+  <a class="dl-btn" id="dlBtn" download="battle.webm">⬇ 動画をダウンロード (.webm)</a>
 </div>
 
 </main>
 <canvas id="mainCanvas"></canvas>
-
-<!-- 外部ライブラリ不要 -->
-
 <script>
 'use strict';
 // ═══════════════════════════════════════════════
@@ -282,7 +290,7 @@ const CATEGORIES = [
   "Defence","Endurance","Experience","Stamina","Agility","Skill"
 ];
 // 動画合計36.0s: 13*(0.8+1.2)+0.8+9.2=36.0
-const INTRO_DUR=0.8, CUT_DUR=1.2, FINAL_DUR=9.12, BLACK_DUR=0.8;
+const INTRO_DUR=0.8, CUT_DUR=1.2, FINAL_DUR=9.2, BLACK_DUR=0.8;
 const COLOR_A='#ff3c2a', COLOR_B='#2a8fff', COLOR_D='#aaaaaa';
 
 // ═══════════════════════════════════════════════
@@ -292,6 +300,7 @@ const S = {
   imgA:null, imgB:null,
   nameA:'', nameB:'',
   bgmFile:null,
+  style:'battle',
   results: Object.fromEntries(CATEGORIES.map(c=>[c,'Draw']))
 };
 
@@ -299,13 +308,10 @@ const S = {
 // STEP 1 — 画像
 // ═══════════════════════════════════════════════
 function extractNameFromFilename(filename){
-  // 拡張子を除去
   let name = filename.replace(/\.[^/.]+$/, '');
-  // よくある不要サフィックス・番号を除去 (_1, (1), -copy, _final など)
   name = name.replace(/[\s_-]*(copy|final|edit|\d+)$/i, '').trim();
   return name;
 }
-
 function loadCharImg(side, input){
   const file = input.files[0]; if(!file) return;
   const url = URL.createObjectURL(file);
@@ -316,39 +322,30 @@ function loadCharImg(side, input){
     document.getElementById('card'+side).classList.add('has-img');
   };
   img.src=url;
-
-  // ファイル名から名前を自動検出（手動入力が空の場合のみ）
   const nameInput = document.getElementById('name'+side);
   const detected = extractNameFromFilename(file.name);
   if(detected && !nameInput.value.trim()){
     nameInput.value = detected;
-    // ハイライトでフィードバック
     nameInput.style.borderColor = side==='A' ? 'var(--red)' : 'var(--blue)';
     nameInput.style.background  = side==='A' ? 'rgba(255,60,42,.14)' : 'rgba(42,143,255,.14)';
     setTimeout(()=>{ nameInput.style.borderColor=''; nameInput.style.background=''; }, 1300);
   }
-
-  // state・プロンプト更新
   S['name'+side] = nameInput.value.trim();
-  updatePrompt();
-  updateScore();
+  updatePrompt(); updateScore();
 }
 
 // ═══════════════════════════════════════════════
-// STEP 2 — Gemini プロンプト
+// STEP 2 — Gemini
 // ═══════════════════════════════════════════════
 function onNameChange(){
   S.nameA = document.getElementById('nameA').value.trim();
   S.nameB = document.getElementById('nameB').value.trim();
-  updatePrompt();
-  updateScore();
+  updatePrompt(); updateScore();
 }
-
 function updatePrompt(){
-  const a = S.nameA || 'キャラA';
-  const b = S.nameB || 'キャラB';
+  const a=S.nameA||'キャラA', b=S.nameB||'キャラB';
   const catList = CATEGORIES.map(c=>`  "${c}": ""`).join(',\n');
-  const prompt =
+  document.getElementById('promptArea').value =
 `以下の2キャラクターを各カテゴリで比較し、JSONのみで回答してください。
 
 キャラクターA: ${a}
@@ -366,86 +363,67 @@ JSON のみ返答（説明文・コードブロック不要）:
   "CharacterB": "${b}",
 ${catList}
 }`;
-  document.getElementById('promptArea').value = prompt;
 }
-
 async function copyPrompt(){
   const txt = document.getElementById('promptArea').value;
   if(!txt || txt.includes('STEP 1')) return;
   try{
     await navigator.clipboard.writeText(txt);
-    const btn = document.getElementById('copyPromptBtn');
-    btn.textContent='✅ コピー済み！';
-    btn.classList.add('copied');
+    const btn=document.getElementById('copyPromptBtn');
+    btn.textContent='✅ コピー済み！'; btn.classList.add('copied');
     setTimeout(()=>{ btn.textContent='📋 プロンプトをコピー'; btn.classList.remove('copied'); },2200);
   }catch(e){ alert('コピーに失敗しました。手動でコピーしてください。'); }
 }
-
-// ═══════════════════════════════════════════════
-// STEP 2 — JSON 適用
-// ═══════════════════════════════════════════════
 function applyJson(){
   const raw = document.getElementById('jsonInput').value.trim();
   if(!raw){ alert('JSONを入力してください'); return; }
   let json;
   try{
-    const start = raw.indexOf('{'), end = raw.lastIndexOf('}');
-    json = JSON.parse(raw.slice(start, end+1));
-  }catch(e){ alert('JSONの解析に失敗しました。Geminiの出力をそのまま貼り付けてください。\n\n'+e); return; }
-
-  // キャラ名を上書き
+    const s=raw.indexOf('{'),e=raw.lastIndexOf('}');
+    json=JSON.parse(raw.slice(s,e+1));
+  }catch(e){ alert('JSONの解析に失敗しました。\n\n'+e); return; }
   if(json.CharacterA){ document.getElementById('nameA').value=json.CharacterA; S.nameA=json.CharacterA; }
   if(json.CharacterB){ document.getElementById('nameB').value=json.CharacterB; S.nameB=json.CharacterB; }
-
-  // カテゴリ適用
   CATEGORIES.forEach(cat=>{
-    const val = json[cat];
+    const val=json[cat];
     if(val==='A'||val==='B'||val==='Draw'){
       S.results[cat]=val;
-      const row = document.querySelector(`.cat-row[data-cat="${cat}"]`);
+      const row=document.querySelector(`.cat-row[data-cat="${cat}"]`);
       if(row){
         row.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel-A','sel-B','sel-D'));
-        const btn = row.querySelector(`[data-val="${val}"]`);
+        const btn=row.querySelector(`[data-val="${val}"]`);
         if(btn) btn.classList.add(val==='A'?'sel-A':val==='B'?'sel-B':'sel-D');
       }
     }
   });
   updateScore();
-
-  const st = document.getElementById('applyStatus');
-  st.classList.add('show');
-  setTimeout(()=>st.classList.remove('show'), 2500);
+  const st=document.getElementById('applyStatus');
+  st.classList.add('show'); setTimeout(()=>st.classList.remove('show'),2500);
 }
 
 // ═══════════════════════════════════════════════
 // STEP 3 — カテゴリグリッド
 // ═══════════════════════════════════════════════
 (function buildCatGrid(){
-  const grid = document.getElementById('catGrid');
+  const grid=document.getElementById('catGrid');
   CATEGORIES.forEach(cat=>{
-    const row = document.createElement('div');
+    const row=document.createElement('div');
     row.className='cat-row'; row.dataset.cat=cat;
     row.innerHTML=`<div class="cat-label">${cat}</div>
 <div class="cat-btns">
-  <button class="cat-btn sel-D" data-val="A"  onclick="setCat('${cat}','A',this)">A</button>
+  <button class="cat-btn" data-val="A" onclick="setCat('${cat}','A',this)">A</button>
   <button class="cat-btn sel-D" data-val="Draw" onclick="setCat('${cat}','Draw',this)">DRAW</button>
-  <button class="cat-btn sel-D" data-val="B"  onclick="setCat('${cat}','B',this)">B</button>
+  <button class="cat-btn" data-val="B" onclick="setCat('${cat}','B',this)">B</button>
 </div>`;
     grid.appendChild(row);
-    // 初期: Draw
-    const drawBtn = row.querySelector('[data-val="Draw"]');
-    row.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel-A','sel-B','sel-D'));
-    drawBtn.classList.add('sel-D');
   });
 })();
-
-function setCat(cat, val, btn){
+function setCat(cat,val,btn){
   S.results[cat]=val;
   btn.closest('.cat-row').querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel-A','sel-B','sel-D'));
   btn.classList.add(val==='A'?'sel-A':val==='B'?'sel-B':'sel-D');
   updateScore();
 }
-
 function updateScore(){
   let a=0,b=0;
   CATEGORIES.forEach(c=>{ if(S.results[c]==='A')a++; else if(S.results[c]==='B')b++; });
@@ -454,40 +432,61 @@ function updateScore(){
 }
 
 // ═══════════════════════════════════════════════
-// STEP 4 — BGM (同フォルダの bgm.mp3 を自動fetch、失敗時は手動)
+// STEP 4 — BGM
 // ═══════════════════════════════════════════════
 async function autoLoadBGM(){
-  const info = document.getElementById('bgmInfo');
+  const info=document.getElementById('bgmInfo');
   try{
-    const res = await fetch('./bgm.mp3');
+    const res=await fetch('./bgm.mp3');
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const blob = await res.blob();
-    S.bgmFile = new File([blob], 'bgm.mp3', {type: 'audio/mpeg'});
-    info.textContent = '✅ bgm.mp3 を自動読み込み済み';
-    info.className = 'file-info ok';
+    S.bgmFile=new File([await res.blob()],'bgm.mp3',{type:'audio/mpeg'});
+    info.textContent='✅ bgm.mp3 を自動読み込み済み'; info.className='file-info ok';
   }catch(e){
-    console.warn('bgm.mp3 自動読み込み失敗:', e);
-    info.textContent = '⚠ bgm.mp3 が見つかりません — 下のボタンで手動選択してください';
-    info.className = 'file-info';
-    info.style.color = '#aa7020';
+    info.textContent='⚠ bgm.mp3 が見つかりません — 下のボタンで手動選択してください';
+    info.className='file-info'; info.style.color='#aa7020';
   }
 }
-
 function loadBGM(input){
-  const file = input.files[0]; if(!file) return;
-  S.bgmFile = file;
-  const info = document.getElementById('bgmInfo');
-  info.textContent = `✅ ${file.name}（手動選択）`;
-  info.className = 'file-info ok';
+  const file=input.files[0]; if(!file) return;
+  S.bgmFile=file;
+  const info=document.getElementById('bgmInfo');
+  info.textContent=`✅ ${file.name}（手動選択）`; info.className='file-info ok';
 }
 
 // ═══════════════════════════════════════════════
-// CANVAS & RENDER UTILS
+// STEP 5 — スタイル選択
+// ═══════════════════════════════════════════════
+function selectStyle(el){
+  document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  S.style = el.dataset.style;
+}
+
+// ═══════════════════════════════════════════════
+// STEP 6 — 推定生成時間
+// ═══════════════════════════════════════════════
+function updateEstTime(){
+  const fps = +document.getElementById('cfgFps').value;
+  const NI=Math.round(INTRO_DUR*fps), NC=Math.round(CUT_DUR*fps);
+  const NF=Math.round(FINAL_DUR*fps), NB=Math.round(BLACK_DUR*fps);
+  const totalFrames = CATEGORIES.length*(NI+NC)+NB+NF;
+  // 実測ベース係数：30fps≈2.5ms/frame生成、60fps≈4ms/frame
+  // +リアルタイム録画時間(= 動画尺) + バッファ5秒
+  const msPerFrame = fps===60 ? 4.0 : 2.5;
+  const genSec = totalFrames * msPerFrame / 1000;
+  const recSec = totalFrames / fps; // リアルタイム録画
+  const total = Math.round(genSec + recSec + 5);
+  const m = Math.floor(total/60), s = total%60;
+  document.getElementById('estTimeVal').textContent =
+    m>0 ? `約${m}分${s}秒` : `約${s}秒`;
+}
+
+// ═══════════════════════════════════════════════
+// CANVAS UTILS (共通)
 // ═══════════════════════════════════════════════
 let CW,CH,FPS,canvas,ctx;
-
 function initCanvas(){
-  const res = document.getElementById('cfgRes').value.split('x');
+  const res=document.getElementById('cfgRes').value.split('x');
   CW=+res[0]; CH=+res[1];
   FPS=+document.getElementById('cfgFps').value;
   canvas=document.getElementById('mainCanvas');
@@ -495,56 +494,90 @@ function initCanvas(){
   ctx=canvas.getContext('2d',{willReadFrequently:true});
 }
 
-// 背景
-function drawBg(t){
-  const g=ctx.createLinearGradient(0,0,0,CH);
-  g.addColorStop(0,'#040710'); g.addColorStop(.5,'#070e18'); g.addColorStop(1,'#040710');
-  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
-  for(let k=0;k<38;k++){
-    const px=(Math.sin(k*127.1+.3)*.5+.5)*CW;
-    const py=((Math.sin(k*311.7)*.5+.5)-t*.4*(.3+Math.sin(k)*.7)+2)%1*CH;
-    const a=.25+.25*Math.sin(t*Math.PI*2+k);
-    const r=1+Math.abs(Math.sin(k*73))*2.5;
-    ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2);
-    ctx.fillStyle=`rgba(${100+k*2},${170+k},255,${a})`; ctx.fill();
-  }
-}
+const cl=v=>Math.max(0,Math.min(255,Math.round(v)));
 
-function drawSplitBg(t){
-  if(S.imgA&&S.imgB){
-    ctx.globalAlpha=.38; ctx.drawImage(S.imgA,0,0,CW,CH/2);
-    ctx.drawImage(S.imgB,0,CH/2,CW,CH/2); ctx.globalAlpha=1;
-    ctx.fillStyle='rgba(4,7,16,.65)'; ctx.fillRect(0,0,CW,CH);
-  }else{ drawBg(t); }
-  // 仕切り
-  ctx.save();
-  ctx.beginPath(); ctx.moveTo(0,CH/2-18); ctx.lineTo(CW,CH/2+22);
-  ctx.lineTo(CW,CH/2+30); ctx.lineTo(0,CH/2-10); ctx.closePath();
-  ctx.fillStyle='#000'; ctx.fill();
-  const gl=ctx.createLinearGradient(0,0,CW,0);
-  gl.addColorStop(0,'rgba(255,60,42,0)'); gl.addColorStop(.5,'rgba(255,215,0,.75)');
-  gl.addColorStop(1,'rgba(42,143,255,0)');
-  ctx.strokeStyle=gl; ctx.lineWidth=2.5;
-  ctx.beginPath(); ctx.moveTo(0,CH/2-10); ctx.lineTo(CW,CH/2+24); ctx.stroke();
+function drawScanlines(){
+  ctx.save(); ctx.globalAlpha=.045; ctx.fillStyle='#000';
+  for(let y=0;y<CH;y+=4) ctx.fillRect(0,y,CW,1);
   ctx.restore();
 }
-
+function drawVignette(s=.55){
+  const g=ctx.createRadialGradient(CW/2,CH/2,CH*.22,CW/2,CH/2,CH*.72);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,`rgba(0,0,0,${s})`);
+  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
+}
+function drawFlash(fi,fd=8){
+  if(fi>=fd) return;
+  const a=fi===0?.92:(fd-fi)/fd*.65;
+  ctx.fillStyle=`rgba(255,255,255,${a})`; ctx.fillRect(0,0,CW,CH);
+}
+function drawGlitch(intensity,seed){
+  if(intensity<1) return;
+  let s=seed*9301+49297;
+  const rand=()=>{ s=(s*9301+49297)%233280; return s/233280; };
+  for(let i=0;i<Math.floor(intensity*3);i++){
+    const y1=Math.floor(rand()*CH), sh=2+Math.floor(rand()*16);
+    const off=Math.floor((rand()-.5)*55);
+    if(Math.abs(off)<2) continue;
+    try{ const id=ctx.getImageData(0,y1,CW,sh); ctx.putImageData(id,off,y1); }catch(e){}
+  }
+}
+function applyColorGrade(winner){
+  const id=ctx.getImageData(0,0,CW,CH), d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    let r=d[i],g=d[i+1],b=d[i+2];
+    r=cl((r-128)*1.1+128); g=cl((g-128)*1.1+128); b=cl((b-128)*1.1+128);
+    if(winner==='A'){ r=cl(r*1.25); b=cl(b*.85); }
+    else if(winner==='B'){ b=cl(b*1.25); r=cl(r*.85); }
+    d[i]=r; d[i+1]=g; d[i+2]=b;
+  }
+  ctx.putImageData(id,0,0);
+}
+function applyChromatic(intensity){
+  if(intensity<.5) return;
+  const s=Math.round(intensity);
+  const id=ctx.getImageData(0,0,CW,CH), d=id.data, tmp=new Uint8ClampedArray(d);
+  for(let y=0;y<CH;y++) for(let x=0;x<CW;x++){
+    const i=(y*CW+x)*4;
+    d[i]  =tmp[(y*CW+Math.min(CW-1,x+s))*4];
+    d[i+2]=tmp[(y*CW+Math.max(0,x-s))*4+2];
+  }
+  ctx.putImageData(id,0,0);
+}
+function fitPx(text,maxW,base){
+  let px=base; ctx.font=`${px}px "Bebas Neue"`;
+  while(px>10&&ctx.measureText(text).width>maxW){ px-=2; ctx.font=`${px}px "Bebas Neue"`; }
+  return px;
+}
+function glowText(text,x,y,px,color,glow,blur=22){
+  ctx.save(); ctx.font=`${px}px "Bebas Neue"`; ctx.textAlign='center';
+  ctx.shadowColor=glow||color; ctx.shadowBlur=blur; ctx.fillStyle=glow||color; ctx.fillText(text,x,y);
+  ctx.shadowBlur=blur*.45; ctx.fillText(text,x,y);
+  ctx.shadowBlur=0; ctx.strokeStyle='#000'; ctx.lineWidth=px*.18; ctx.strokeText(text,x,y);
+  ctx.fillStyle=color; ctx.fillText(text,x,y);
+  ctx.restore();
+}
+function centerText(lines,yR,basePx,color,glow){
+  const mW=CW*.88, cy=CH*yR, sp=basePx*.32;
+  const th=lines.length*basePx+(lines.length-1)*sp;
+  let y=cy-th/2+basePx;
+  lines.forEach(line=>{
+    const px=fitPx(line,mW,basePx);
+    glowText(line,CW/2,y,px,color,glow);
+    y+=px+sp;
+  });
+}
 function drawCharImg(img,yCR,scale,dx,dy,hR){
   if(!img) return;
   const th=CH*hR, tw=img.width*(th/img.height);
   ctx.save(); ctx.drawImage(img,(CW-tw*scale)/2+dx,CH*yCR-th*scale/2+dy,tw*scale,th*scale); ctx.restore();
 }
-
-function drawVS(){
-  const cx=CW/2,cy=CH/2;
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2);
-  ctx.fillStyle='rgba(8,12,22,.96)'; ctx.fill();
-  ctx.strokeStyle='rgba(200,200,200,.45)'; ctx.lineWidth=2; ctx.stroke();
-  glowText('VS',cx,cy+CW*.02,CW*.052,'#ffd700','#ffaa00',16);
+function drawProgNum(ci){
+  ctx.save(); ctx.font=`bold ${CW*.026}px Rajdhani`; ctx.textAlign='right';
+  ctx.fillStyle='rgba(180,180,180,.55)';
+  ctx.fillText(`${ci+1}/${CATEGORIES.length}`,CW-CW*.038,CH*.036);
   ctx.restore();
 }
-
 function drawScoreBar(pA,pB){
   const bx=CW*.055,by=CH-.038*CH,bw=CW*.89,bh=CH*.007;
   ctx.fillStyle='rgba(255,255,255,.055)';
@@ -560,162 +593,367 @@ function drawScoreBar(pA,pB){
   ctx.textAlign='right'; ctx.fillStyle=COLOR_B; ctx.fillText(String(pB),bx+bw,by-CH*.005);
 }
 
-function drawScanlines(){
-  ctx.save(); ctx.globalAlpha=.045; ctx.fillStyle='#000';
-  for(let y=0;y<CH;y+=4) ctx.fillRect(0,y,CW,1);
-  ctx.restore();
-}
-
-function drawVignette(s=.55){
-  const g=ctx.createRadialGradient(CW/2,CH/2,CH*.22,CW/2,CH/2,CH*.72);
-  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,`rgba(0,0,0,${s})`);
+// ═══════════════════════════════════════════════
+// STYLE: BATTLE (デフォルト)
+// ═══════════════════════════════════════════════
+function B_drawBg(t){
+  const g=ctx.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,'#040710'); g.addColorStop(.5,'#070e18'); g.addColorStop(1,'#040710');
   ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
-}
-
-function drawFlash(fi,fd=8){
-  if(fi>=fd) return;
-  const a=fi===0?.92:(fd-fi)/fd*.65;
-  ctx.fillStyle=`rgba(255,255,255,${a})`; ctx.fillRect(0,0,CW,CH);
-}
-
-function drawGlitch(intensity,seed){
-  if(intensity<1) return;
-  let s=seed*9301+49297;
-  const rand=()=>{ s=(s*9301+49297)%233280; return s/233280; };
-  for(let i=0;i<Math.floor(intensity*3);i++){
-    const y1=Math.floor(rand()*CH), sh=2+Math.floor(rand()*16);
-    const off=Math.floor((rand()-.5)*55);
-    if(Math.abs(off)<2) continue;
-    try{ const id=ctx.getImageData(0,y1,CW,sh); ctx.putImageData(id,off,y1); }catch(e){}
+  for(let k=0;k<38;k++){
+    const px=(Math.sin(k*127.1+.3)*.5+.5)*CW;
+    const py=((Math.sin(k*311.7)*.5+.5)-t*.4*(.3+Math.sin(k)*.7)+2)%1*CH;
+    const a=.25+.25*Math.sin(t*Math.PI*2+k);
+    const r=1+Math.abs(Math.sin(k*73))*2.5;
+    ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${100+k*2},${170+k},255,${a})`; ctx.fill();
   }
 }
-
-function applyColorGrade(winner){
-  const id=ctx.getImageData(0,0,CW,CH), d=id.data;
-  for(let i=0;i<d.length;i+=4){
-    let r=d[i],g=d[i+1],b=d[i+2];
-    r=cl((r-128)*1.1+128); g=cl((g-128)*1.1+128); b=cl((b-128)*1.1+128);
-    if(winner==='A'){ r=cl(r*1.25); b=cl(b*.85); }
-    else if(winner==='B'){ b=cl(b*1.25); r=cl(r*.85); }
-    d[i]=r; d[i+1]=g; d[i+2]=b;
-  }
-  ctx.putImageData(id,0,0);
-}
-const cl=v=>Math.max(0,Math.min(255,Math.round(v)));
-
-function applyChromatic(intensity){
-  if(intensity<.5) return;
-  const s=Math.round(intensity);
-  const id=ctx.getImageData(0,0,CW,CH), d=id.data, tmp=new Uint8ClampedArray(d);
-  for(let y=0;y<CH;y++) for(let x=0;x<CW;x++){
-    const i=(y*CW+x)*4;
-    d[i]  =tmp[(y*CW+Math.min(CW-1,x+s))*4];
-    d[i+2]=tmp[(y*CW+Math.max(0,x-s))*4+2];
-  }
-  ctx.putImageData(id,0,0);
-}
-
-// テキスト
-function fitPx(text,maxW,base){
-  let px=base; ctx.font=`${px}px "Bebas Neue"`;
-  while(px>10&&ctx.measureText(text).width>maxW){ px-=2; ctx.font=`${px}px "Bebas Neue"`; }
-  return px;
-}
-
-function glowText(text,x,y,px,color,glow,blur=22){
-  ctx.save(); ctx.font=`${px}px "Bebas Neue"`; ctx.textAlign='center';
-  ctx.shadowColor=glow||color; ctx.shadowBlur=blur; ctx.fillStyle=glow||color; ctx.fillText(text,x,y);
-  ctx.shadowBlur=blur*.45; ctx.fillText(text,x,y);
-  ctx.shadowBlur=0; ctx.strokeStyle='#000'; ctx.lineWidth=px*.18; ctx.strokeText(text,x,y);
-  ctx.fillStyle=color; ctx.fillText(text,x,y);
+function B_drawSplitBg(t){
+  if(S.imgA&&S.imgB){
+    ctx.globalAlpha=.38; ctx.drawImage(S.imgA,0,0,CW,CH/2);
+    ctx.drawImage(S.imgB,0,CH/2,CW,CH/2); ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(4,7,16,.65)'; ctx.fillRect(0,0,CW,CH);
+  }else{ B_drawBg(t); }
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(0,CH/2-18); ctx.lineTo(CW,CH/2+22);
+  ctx.lineTo(CW,CH/2+30); ctx.lineTo(0,CH/2-10); ctx.closePath();
+  ctx.fillStyle='#000'; ctx.fill();
+  const gl=ctx.createLinearGradient(0,0,CW,0);
+  gl.addColorStop(0,'rgba(255,60,42,0)'); gl.addColorStop(.5,'rgba(255,215,0,.75)');
+  gl.addColorStop(1,'rgba(42,143,255,0)');
+  ctx.strokeStyle=gl; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(0,CH/2-10); ctx.lineTo(CW,CH/2+24); ctx.stroke();
   ctx.restore();
 }
-
-function centerText(lines,yR,basePx,color,glow){
-  const mW=CW*.88, cy=CH*yR, sp=basePx*.32;
-  const th=lines.length*basePx+(lines.length-1)*sp;
-  let y=cy-th/2+basePx;
-  lines.forEach(line=>{
-    const px=fitPx(line,mW,basePx);
-    glowText(line,CW/2,y,px,color,glow);
-    y+=px+sp;
-  });
-}
-
-function drawProgNum(ci){
-  ctx.save(); ctx.font=`bold ${CW*.026}px Rajdhani`; ctx.textAlign='right';
-  ctx.fillStyle='rgba(180,180,180,.55)';
-  ctx.fillText(`${ci+1}/${CATEGORIES.length}`,CW-CW*.038,CH*.036);
+function B_drawVS(){
+  const cx=CW/2,cy=CH/2;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2);
+  ctx.fillStyle='rgba(8,12,22,.96)'; ctx.fill();
+  ctx.strokeStyle='rgba(200,200,200,.45)'; ctx.lineWidth=2; ctx.stroke();
+  glowText('VS',cx,cy+CW*.02,CW*.052,'#ffd700','#ffaa00',16);
   ctx.restore();
 }
-
-// ═══════════════════════════════════════════════
-// FRAME RENDERERS
-// ═══════════════════════════════════════════════
-function renderIntro(i,cat,ci){
+function B_renderIntro(i,cat,ci){
   const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**2, scale=1+.06*ease, shake=(1-t)*4;
-  drawSplitBg(t); drawBg(t*.5);
+  B_drawSplitBg(t); B_drawBg(t*.5);
   drawCharImg(S.imgA,.22,scale,(Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2,.37);
   drawCharImg(S.imgB,.78,scale,(Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2,.37);
-  drawVS();
+  B_drawVS();
   ctx.save(); ctx.translate(0,-(1-ease)*CH*.058);
   centerText([cat.toUpperCase()],.5,CW*.115,'#00ffff','#009999');
   ctx.restore();
   drawProgNum(ci); drawScanlines(); drawVignette(.5);
   applyChromatic(Math.max(0,8*(1-t*3)));
 }
-
-function renderCut(i,winner,pA,pB){
+function B_renderCut(i,winner,pA,pB){
   const t=i/(CUT_DUR*FPS);
-  drawBg(t*.3);
+  B_drawBg(t*.3);
   if(winner==='Draw'){
     drawCharImg(S.imgA,.28,1+.05*t,(Math.random()-.5)*6,(Math.random()-.5)*6,.37);
     drawCharImg(S.imgB,.72,1+.05*t,(Math.random()-.5)*6,(Math.random()-.5)*6,.37);
-    const p=.9+.1*Math.sin(t*Math.PI*6);
-    centerText(['DRAW'],.5,CW*.13*p,COLOR_D,'#888');
+    centerText(['DRAW'],.5,CW*.13*(.9+.1*Math.sin(t*Math.PI*6)),COLOR_D,'#888');
   }else{
     const img=winner==='A'?S.imgA:S.imgB, wc=winner==='A'?COLOR_A:COLOR_B;
-    const sc=1+.18*t, sh=Math.max(0,15*(1-t*2));
-    drawCharImg(img,.5,sc,(Math.random()-.5)*sh*2,(Math.random()-.5)*sh*2,.72);
+    const sh=Math.max(0,15*(1-t*2));
+    drawCharImg(img,.5,1+.18*t,(Math.random()-.5)*sh*2,(Math.random()-.5)*sh*2,.72);
     applyColorGrade(winner);
     const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
     centerText([wn],.88,CW*.062,wc,wc);
     const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
     centerText([`${pA}  -  ${pB}`],.12,CW*.145,sc2,sc2);
-    const gi=Math.max(0,4*(1-t*4));
-    if(gi>0) drawGlitch(gi,i);
+    if(t<.9) drawGlitch(Math.max(0,4*(1-t*4)),i);
   }
   drawScoreBar(pA,pB); drawScanlines(); drawVignette(.55); drawFlash(i,7);
 }
-
-function renderFinal(i,winner,pA,pB){
+function B_renderFinal(i,winner,pA,pB){
   const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*3);
-  drawBg(t*.2);
+  B_drawBg(t*.2);
   const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
   if(fi){
-    const sc=1+.28*t, sh=Math.max(0,14*(1-t*3));
-    drawCharImg(fi,.5,sc,(Math.random()-.5)*sh*2,(Math.random()-.5)*sh*2,.82);
+    const sh=Math.max(0,14*(1-t*3));
+    drawCharImg(fi,.5,1+.28*t,(Math.random()-.5)*sh*2,(Math.random()-.5)*sh*2,.82);
     applyColorGrade(winner);
-  }else{
-    drawCharImg(S.imgA,.28,1+.05*t,0,0,.37);
-    drawCharImg(S.imgB,.72,1+.05*t,0,0,.37);
-  }
+  }else{ drawCharImg(S.imgA,.28,1+.05*t,0,0,.37); drawCharImg(S.imgB,.72,1+.05*t,0,0,.37); }
   const p=1+.04*Math.sin(t*Math.PI*8);
   const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
-  const lines=wn?['WINNER',wn.toUpperCase()]:['DRAW'];
   const wc=winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
   const wg=winner==='A'?'#aa2218':(winner==='B'?'#1860aa':'#666');
-  ctx.globalAlpha=eI;
-  centerText(lines,.14,CW*.148*p,wc,wg);
-  ctx.globalAlpha=1;
-  if(t>.25){
-    const sa=Math.min(1,(t-.25)*4);
-    ctx.globalAlpha=sa;
-    centerText([`${pA} - ${pB}`],.9,CW*.105,'#b8b8b8','#555');
-    ctx.globalAlpha=1;
-  }
+  ctx.globalAlpha=eI; centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.14,CW*.148*p,wc,wg); ctx.globalAlpha=1;
+  if(t>.25){ ctx.globalAlpha=Math.min(1,(t-.25)*4); centerText([`${pA} - ${pB}`],.9,CW*.105,'#b8b8b8','#555'); ctx.globalAlpha=1; }
   if(i<15) drawGlitch(Math.max(0,5*(1-i/15)),i+9999);
   drawScanlines(); drawVignette(.6); drawFlash(i,20);
+}
+
+// ═══════════════════════════════════════════════
+// STYLE: NEON PULSE
+// ネオンリング・波形・左右からスライドイン
+// ═══════════════════════════════════════════════
+function N_drawBg(t){
+  ctx.fillStyle='#020410'; ctx.fillRect(0,0,CW,CH);
+  // 放射状ネオンリング (中心から拡張)
+  const cx=CW/2, cy=CH*.48;
+  for(let r=0;r<5;r++){
+    const radius = CW*(0.18+r*0.16) + Math.sin(t*1.8+r*1.2)*CW*0.015;
+    const hue = (200 + r*30 + t*20) % 360;
+    const a = (.08 - r*.01) * (0.7+0.3*Math.sin(t*3+r));
+    ctx.strokeStyle=`hsla(${hue},100%,65%,${a})`; ctx.lineWidth=1.5+r*.3;
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,Math.PI*2); ctx.stroke();
+  }
+  // 縦グリッドライン
+  for(let k=0;k<9;k++){
+    const x=(k+.5)*CW/9;
+    const a=.025+.01*Math.sin(t*2+k);
+    ctx.strokeStyle=`rgba(0,200,255,${a})`; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CH); ctx.stroke();
+  }
+}
+function N_drawWave(t, y0, hue, amp, speed){
+  ctx.save(); ctx.lineWidth=2; ctx.globalAlpha=.7;
+  const grad=ctx.createLinearGradient(0,0,CW,0);
+  grad.addColorStop(0,`hsla(${hue},100%,65%,0)`);
+  grad.addColorStop(.3,`hsla(${hue},100%,65%,1)`);
+  grad.addColorStop(.7,`hsla(${hue+30},100%,65%,1)`);
+  grad.addColorStop(1,`hsla(${hue+30},100%,65%,0)`);
+  ctx.strokeStyle=grad;
+  ctx.beginPath();
+  for(let x=0;x<CW;x++){
+    const y=y0+Math.sin((x/CW)*Math.PI*5+t*speed)*amp+Math.sin((x/CW)*Math.PI*11+t*(speed*.7))*amp*.4;
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke(); ctx.restore();
+}
+function N_renderIntro(i,cat,ci){
+  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**2;
+  N_drawBg(t);
+  // 左からA、右からBがスライドイン
+  if(S.imgA){
+    ctx.save(); ctx.globalAlpha=.55+ease*.4;
+    const ox=(1-ease)*-CW*.3;
+    ctx.translate(ox,0); drawCharImg(S.imgA,.25,1,0,0,.38); ctx.restore();
+  }
+  if(S.imgB){
+    ctx.save(); ctx.globalAlpha=.55+ease*.4;
+    const ox=(1-ease)*CW*.3;
+    ctx.translate(ox,0); drawCharImg(S.imgB,.75,1,0,0,.38); ctx.restore();
+  }
+  N_drawWave(t, CH*.5, 180, CH*.025, 4);
+  N_drawWave(t+.5, CH*.5, 300, CH*.018, 5.5);
+  // VSバッジ（ネオン）
+  const cx=CW/2, cy=CH*.5;
+  ctx.save();
+  ctx.shadowColor='#00ffff'; ctx.shadowBlur=30;
+  ctx.strokeStyle='rgba(0,255,255,.5)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(cx,cy,CW*.055,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+  glowText('VS',cx,cy+CW*.018,CW*.044,'#00ffff','#00ffff',24);
+  ctx.save(); ctx.globalAlpha=ease;
+  ctx.translate((1-ease)*CW*.12,0);
+  centerText([cat.toUpperCase()],.5,CW*.11,'#00ffff','#006688');
+  ctx.restore();
+  drawProgNum(ci); drawVignette(.4);
+}
+function N_renderCut(i,winner,pA,pB){
+  const t=i/(CUT_DUR*FPS);
+  N_drawBg(t);
+  if(winner==='Draw'){
+    if(S.imgA){ ctx.save(); ctx.globalAlpha=.65; drawCharImg(S.imgA,.28,1,0,0,.38); ctx.restore(); }
+    if(S.imgB){ ctx.save(); ctx.globalAlpha=.65; drawCharImg(S.imgB,.72,1,0,0,.38); ctx.restore(); }
+    N_drawWave(t, CH*.5, 0, CH*.03, 5);
+    centerText(['DRAW'],.5,CW*.13,COLOR_D,'#666');
+  }else{
+    const img=winner==='A'?S.imgA:S.imgB;
+    const wHue=winner==='A'?0:210;
+    const wc=winner==='A'?COLOR_A:COLOR_B;
+    // グロー付きキャラ拡大
+    if(img){
+      ctx.save();
+      ctx.shadowColor=`hsl(${wHue},100%,60%)`; ctx.shadowBlur=CW*.05*(1+Math.sin(t*4)*.3);
+      drawCharImg(img,.45,1+.14*t,0,0,.72); ctx.restore();
+    }
+    // 多重波形
+    N_drawWave(t,    CH*.5, wHue,     CH*.032, 4);
+    N_drawWave(t+.3, CH*.5, wHue+40,  CH*.02,  6);
+    const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
+    centerText([wn],.88,CW*.062,wc,wc);
+    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
+    centerText([`${pA}  -  ${pB}`],.1,CW*.14,sc2,sc2);
+    // ネオンライン横断エフェクト (CUT開始時)
+    if(t<.2){
+      const a=(.2-t)/.2;
+      ctx.fillStyle=`rgba(0,255,255,${a*.18})`; ctx.fillRect(0,0,CW,CH);
+    }
+  }
+  drawScoreBar(pA,pB); drawVignette(.45); drawFlash(i,5);
+}
+function N_renderFinal(i,winner,pA,pB){
+  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*2.2);
+  N_drawBg(t);
+  const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
+  const wHue=winner==='A'?0:(winner==='B'?210:0);
+  const wc=winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
+  if(fi){
+    ctx.save();
+    ctx.shadowColor=`hsl(${wHue},100%,60%)`;
+    ctx.shadowBlur=CW*.07*(1+Math.sin(t*3)*.25);
+    drawCharImg(fi,.45,1+.22*t,0,0,.78); ctx.restore();
+  }else{ drawCharImg(S.imgA,.25,1,0,0,.38); drawCharImg(S.imgB,.75,1,0,0,.38); }
+  // パルス波形 × 4本
+  for(let w=0;w<4;w++) N_drawWave(t+w*.25, CH*.5, wHue+w*20, CH*.014*(4-w), 3+w);
+  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
+  ctx.globalAlpha=eI;
+  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.12,CW*.14*(1+.025*Math.sin(t*Math.PI*5)),wc,wc);
+  ctx.globalAlpha=1;
+  if(t>.3){ ctx.globalAlpha=Math.min(1,(t-.3)*3); centerText([`${pA} - ${pB}`],.9,CW*.1,'#b8b8b8','#555'); ctx.globalAlpha=1; }
+  drawVignette(.45); drawFlash(i,12);
+}
+
+// ═══════════════════════════════════════════════
+// STYLE: CINEMA
+// 映画レターボックス・モノクロ・タイポ強調
+// ═══════════════════════════════════════════════
+const LB=0.10; // レターボックス高さ比
+function C_letterbox(){
+  const h=CH*LB; ctx.fillStyle='#000';
+  ctx.fillRect(0,0,CW,h); ctx.fillRect(0,CH-h,CW,h);
+}
+function C_drawBg(t){
+  ctx.fillStyle='#0a0a0b'; ctx.fillRect(0,0,CW,CH);
+  // 粒子ノイズ (フィルムグレイン)
+  ctx.save(); ctx.globalAlpha=.018+Math.random()*.015;
+  for(let k=0;k<120;k++){
+    const gx=Math.sin(k*371.1+t*200)*.5+.5, gy=Math.sin(k*193.7+t*270)*.5+.5;
+    ctx.fillStyle=Math.random()>.5?'#fff':'#888';
+    ctx.fillRect(gx*CW,gy*CH,1+Math.random(),1+Math.random());
+  }
+  ctx.restore();
+  // 中央縦光線
+  for(let k=0;k<2;k++){
+    const x=(k===0?CW*.35:CW*.65)+Math.sin(t*0.4+k)*CW*.04;
+    const a=.03+.015*Math.sin(t*1.2+k);
+    const lg=ctx.createLinearGradient(0,0,0,CH);
+    lg.addColorStop(0,'rgba(255,255,255,0)');
+    lg.addColorStop(.4,`rgba(255,255,255,${a})`);
+    lg.addColorStop(.6,`rgba(255,255,255,${a})`);
+    lg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=lg; ctx.fillRect(x-2,0,4,CH);
+  }
+}
+function C_applyBW(amount){
+  const id=ctx.getImageData(0,0,CW,CH), d=id.data;
+  for(let i=0;i<d.length;i+=4){
+    const gray=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
+    d[i]  =cl(d[i]  *(1-amount)+gray*amount);
+    d[i+1]=cl(d[i+1]*(1-amount)+gray*amount);
+    d[i+2]=cl(d[i+2]*(1-amount)+gray*amount);
+    // 強コントラスト
+    d[i]  =cl((d[i]  -128)*1.3+128);
+    d[i+1]=cl((d[i+1]-128)*1.3+128);
+    d[i+2]=cl((d[i+2]-128)*1.3+128);
+  }
+  ctx.putImageData(id,0,0);
+}
+function C_divider(){
+  ctx.save(); ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1;
+  ctx.setLineDash([CW*.025,CW*.012]);
+  ctx.beginPath(); ctx.moveTo(0,CH/2); ctx.lineTo(CW,CH/2); ctx.stroke();
+  ctx.setLineDash([]); ctx.restore();
+}
+function C_renderIntro(i,cat,ci){
+  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**2;
+  C_drawBg(t);
+  if(S.imgA){ ctx.save(); ctx.globalAlpha=.5+ease*.45; drawCharImg(S.imgA,.28,1,0,0,.36); ctx.restore(); }
+  if(S.imgB){ ctx.save(); ctx.globalAlpha=.5+ease*.45; drawCharImg(S.imgB,.72,1,0,0,.36); ctx.restore(); }
+  C_applyBW(0.75); C_divider();
+  // フェードイン + タイポグラフィ
+  ctx.save(); ctx.globalAlpha=ease;
+  centerText([cat.toUpperCase()],.5,CW*.105,'#ffffff','#999999');
+  ctx.restore();
+  // カテゴリ番号（映画スタイル）
+  ctx.save();
+  ctx.font=`${CW*.022}px Rajdhani`; ctx.textAlign='center';
+  ctx.fillStyle=`rgba(150,150,150,${ease*.7})`;
+  ctx.fillText(`ROUND ${ci+1} / ${CATEGORIES.length}`, CW*.5, CH*LB+CH*.045);
+  ctx.restore();
+  C_letterbox(); drawVignette(.65);
+  // フィルムノイズ
+  if(Math.random()>.7){
+    ctx.save(); ctx.globalAlpha=.04+Math.random()*.04;
+    ctx.fillStyle=Math.random()>.5?'#fff':'#000'; ctx.fillRect(0,0,CW,CH);
+    ctx.restore();
+  }
+}
+function C_renderCut(i,winner,pA,pB){
+  const t=i/(CUT_DUR*FPS);
+  C_drawBg(t);
+  if(winner==='Draw'){
+    if(S.imgA){ ctx.save(); ctx.globalAlpha=.6; drawCharImg(S.imgA,.28,1,0,0,.38); ctx.restore(); }
+    if(S.imgB){ ctx.save(); ctx.globalAlpha=.6; drawCharImg(S.imgB,.72,1,0,0,.38); ctx.restore(); }
+    C_applyBW(0.92);
+    centerText(['DRAW'],.5,CW*.12,'#dddddd','#888888');
+  }else{
+    const img=winner==='A'?S.imgA:S.imgB;
+    if(img){ ctx.save(); ctx.globalAlpha=.88; drawCharImg(img,.45,1+.16*t,0,0,.74); ctx.restore(); }
+    // 勝者はカラー残しで他はモノクロ
+    C_applyBW(0.65);
+    const wc=winner==='A'?'#ff7755':'#5599ff';
+    const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
+    centerText([wn],.87,CW*.06,wc,'#ffffff');
+    ctx.save(); ctx.font=`${CW*.03}px Rajdhani`; ctx.textAlign='center';
+    ctx.fillStyle='rgba(200,200,200,.7)';
+    ctx.fillText(`${pA}  —  ${pB}`,CW*.5,CH*.12); ctx.restore();
+    // 白閃光
+    if(i<8){ ctx.fillStyle=`rgba(255,255,255,${(8-i)/8*.75})`; ctx.fillRect(0,0,CW,CH); }
+  }
+  drawScoreBar(pA,pB); C_letterbox(); drawVignette(.7);
+  if(Math.random()>.75){
+    ctx.save(); ctx.globalAlpha=.03+Math.random()*.03; ctx.fillStyle='#fff'; ctx.fillRect(0,0,CW,CH); ctx.restore();
+  }
+}
+function C_renderFinal(i,winner,pA,pB){
+  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*1.8);
+  C_drawBg(t);
+  const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
+  if(fi){ ctx.save(); ctx.globalAlpha=.82; drawCharImg(fi,.44,1+.18*t,0,0,.8); ctx.restore(); }
+  else{ drawCharImg(S.imgA,.25,1,0,0,.38); drawCharImg(S.imgB,.75,1,0,0,.38); }
+  C_applyBW(0.55);
+  // 勝者名は彩色
+  const wc=winner==='A'?'#ff7755':(winner==='B'?'#5599ff':'#cccccc');
+  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
+  ctx.globalAlpha=eI;
+  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.11,CW*.14,wc,'#ffffff');
+  ctx.globalAlpha=1;
+  if(t>.35){ ctx.globalAlpha=Math.min(1,(t-.35)*3); centerText([`${pA}  —  ${pB}`],.9,CW*.09,'#aaaaaa','#555'); ctx.globalAlpha=1; }
+  // ズームアウト演出（スクロールクレジット風）
+  ctx.save(); ctx.font=`${CW*.02}px Rajdhani`; ctx.textAlign='center';
+  ctx.fillStyle=`rgba(120,120,120,${Math.min(1,(t-.5)*2)})`;
+  if(t>.5) ctx.fillText('THE END', CW*.5, CH*(1-LB)-.045*CH);
+  ctx.restore();
+  C_letterbox(); drawVignette(.72);
+  if(i<18){ ctx.fillStyle=`rgba(255,255,255,${Math.max(0,(18-i)/18*.8)})`; ctx.fillRect(0,0,CW,CH); }
+  if(Math.random()>.8){
+    ctx.save(); ctx.globalAlpha=.025+Math.random()*.02; ctx.fillStyle='#fff'; ctx.fillRect(0,0,CW,CH); ctx.restore();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// DISPATCHER — S.style に応じて分岐
+// ═══════════════════════════════════════════════
+function renderIntro(i,cat,ci){
+  if(S.style==='neon')   return N_renderIntro(i,cat,ci);
+  if(S.style==='cinema') return C_renderIntro(i,cat,ci);
+  return B_renderIntro(i,cat,ci);
+}
+function renderCut(i,winner,pA,pB){
+  if(S.style==='neon')   return N_renderCut(i,winner,pA,pB);
+  if(S.style==='cinema') return C_renderCut(i,winner,pA,pB);
+  return B_renderCut(i,winner,pA,pB);
+}
+function renderFinal(i,winner,pA,pB){
+  if(S.style==='neon')   return N_renderFinal(i,winner,pA,pB);
+  if(S.style==='cinema') return C_renderFinal(i,winner,pA,pB);
+  return B_renderFinal(i,winner,pA,pB);
 }
 
 // ═══════════════════════════════════════════════
@@ -758,12 +996,7 @@ function setFfmpegMsg(msg){ document.getElementById('progFfmpeg').textContent=ms
 
 // ═══════════════════════════════════════════════
 // MAIN GENERATE
-// ─ 方式: 全フレームをメモリに描画→ImageBitmapで保持
-//   → OffscreenCanvas+AudioContext でリアルタイム再生
-//   → MediaRecorder で映像+音声を同時キャプチャ
-//   GitHub Pages完全対応・CORS不要
 // ═══════════════════════════════════════════════
-
 async function startGenerate(){
   if(!validate()) return;
   initCanvas();
@@ -777,11 +1010,10 @@ async function startGenerate(){
   initProgressUI(TOTAL);
   document.getElementById('genBtn').disabled=true;
 
-  // ═══ PHASE 1: 全フレームをImageBitmapとしてRAMに収集 ═══
+  // ─ PHASE 1: 全フレームをImageBitmapとしてRAMに収集 ─
   setFfmpegMsg('📸 フレームを生成中...');
   const yld=()=>new Promise(r=>setTimeout(r,0));
-  const bitmaps=[]; // ImageBitmap[]
-  let fc=0, pA=0, pB=0;
+  const bitmaps=[]; let fc=0, pA=0, pB=0;
 
   for(let ci=0;ci<CATEGORIES.length;ci++){
     const cat=CATEGORIES[ci], winner=S.results[cat];
@@ -815,158 +1047,104 @@ async function startGenerate(){
   }
   markChipDone('FINAL');
 
-  // ═══ PHASE 2: BGMをAudioBufferとしてデコード ═══
+  // ─ PHASE 2: BGMデコード ─
   let bgmAudioBuf=null;
   if(S.bgmFile){
     try{
       setFfmpegMsg('🎵 BGM をデコード中...');
       const audioCtx=new AudioContext();
-      const ab=await S.bgmFile.arrayBuffer();
-      bgmAudioBuf=await audioCtx.decodeAudioData(ab);
+      bgmAudioBuf=await audioCtx.decodeAudioData(await S.bgmFile.arrayBuffer());
       audioCtx.close();
     }catch(e){ console.warn('BGMデコード失敗',e); }
   }
 
-  // ═══ PHASE 3: rAF + AudioContext.currentTime 完全同期録画 ═══
-  // requestAnimationFrameのコールバック内でAudioContext.currentTimeを読み
-  // 「今何フレーム目であるべきか」を計算して描画。
-  // setTimeoutを一切使わないので早回し・音ズレが発生しない。
-  // スキップが多い場合は自動再試行（最大3回）。
+  // ─ PHASE 3: rAF + AudioContext.currentTime 完全同期録画 ─
   setFfmpegMsg('🎬 録画中...');
-  setProgress(0, TOTAL, '録画中...', null);
+  setProgress(0,TOTAL,'録画中...',null);
 
-  const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
-    ? 'video/webm;codecs=vp9,opus'
-    : (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
-      ? 'video/webm;codecs=vp8,opus' : 'video/webm');
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+    ?'video/webm;codecs=vp9,opus'
+    :(MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+      ?'video/webm;codecs=vp8,opus':'video/webm');
 
-  // ── 録画関数（再試行できるよう関数化） ──
-  const runRecord = (attempt) => new Promise(async (resolveRec) => {
-    setFfmpegMsg(attempt > 0 ? `🔄 再録画中... (${attempt}回目)` : '🎬 録画中...');
-
-    const recAudioCtx = new AudioContext({ sampleRate: 44100 });
-    const dest = recAudioCtx.createMediaStreamDestination();
-
-    let bgmSrc = null;
-    if (bgmAudioBuf) {
-      bgmSrc = recAudioCtx.createBufferSource();
-      bgmSrc.buffer = bgmAudioBuf; bgmSrc.loop = true;
-      bgmSrc.connect(dest); bgmSrc.start(0);
-    } else {
-      const osc = recAudioCtx.createOscillator();
-      const g = recAudioCtx.createGain(); g.gain.value = 0;
+  const runRecord=(attempt)=>new Promise(async(resolveRec)=>{
+    setFfmpegMsg(attempt>0?`🔄 再録画中... (${attempt}回目)`:'🎬 録画中...');
+    const recAudioCtx=new AudioContext({sampleRate:44100});
+    const dest=recAudioCtx.createMediaStreamDestination();
+    if(bgmAudioBuf){
+      const src=recAudioCtx.createBufferSource();
+      src.buffer=bgmAudioBuf; src.loop=true; src.connect(dest); src.start(0);
+    }else{
+      const osc=recAudioCtx.createOscillator();
+      const g=recAudioCtx.createGain(); g.gain.value=0;
       osc.connect(g); g.connect(dest); osc.start();
     }
-
-    const videoStream = canvas.captureStream(0);
-    const videoTrack  = videoStream.getVideoTracks()[0];
-    const combined    = new MediaStream([videoTrack, dest.stream.getAudioTracks()[0]]);
-
-    const chunks = [];
-    const rec = new MediaRecorder(combined, {
-      mimeType: mime, videoBitsPerSecond: 8_000_000, audioBitsPerSecond: 128_000
-    });
-    rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-    const recStopped = new Promise(r => { rec.onstop = r; });
-
-    // AudioContextが安定するまで待つ
-    await new Promise(r => setTimeout(r, 150));
+    const videoStream=canvas.captureStream(0);
+    const videoTrack=videoStream.getVideoTracks()[0];
+    const combined=new MediaStream([videoTrack,dest.stream.getAudioTracks()[0]]);
+    const chunks=[];
+    const rec=new MediaRecorder(combined,{mimeType:mime,videoBitsPerSecond:8_000_000,audioBitsPerSecond:128_000});
+    rec.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
+    const recStopped=new Promise(r=>{ rec.onstop=r; });
+    await new Promise(r=>setTimeout(r,150));
     rec.start(100);
-
-    // AudioContextスタート時刻を記録
-    const audioStart = recAudioCtx.currentTime;
-    let lastDrawnIdx = -1;
-    let skippedTotal = 0;
-    let rafId;
-
-    const result = await new Promise(resolveLoop => {
-      const loop = () => {
-        // 今何秒経ったか（AudioContext基準 = 音と完全同期）
-        const elapsed  = recAudioCtx.currentTime - audioStart;
-        const targetIdx = Math.min(
-          Math.floor(elapsed * FPS),
-          bitmaps.length - 1
-        );
-
-        if (targetIdx > lastDrawnIdx) {
-          const skipped = targetIdx - lastDrawnIdx - 1;
-          skippedTotal += skipped;
-          lastDrawnIdx  = targetIdx;
-
-          ctx.drawImage(bitmaps[targetIdx], 0, 0);
+    const audioStart=recAudioCtx.currentTime;
+    let lastDrawnIdx=-1, skippedTotal=0, rafId;
+    const result=await new Promise(resolveLoop=>{
+      const loop=()=>{
+        const elapsed=recAudioCtx.currentTime-audioStart;
+        const targetIdx=Math.min(Math.floor(elapsed*FPS),bitmaps.length-1);
+        if(targetIdx>lastDrawnIdx){
+          skippedTotal+=targetIdx-lastDrawnIdx-1;
+          lastDrawnIdx=targetIdx;
+          ctx.drawImage(bitmaps[targetIdx],0,0);
           videoTrack.requestFrame();
-          setProgress(targetIdx + 1, TOTAL, attempt > 0 ? '再録画中...' : '録画中...', null);
+          setProgress(targetIdx+1,TOTAL,attempt>0?'再録画中...':'録画中...',null);
         }
-
-        if (lastDrawnIdx >= bitmaps.length - 1) {
-          resolveLoop({ skippedTotal });
-          return;
-        }
-        rafId = requestAnimationFrame(loop);
+        if(lastDrawnIdx>=bitmaps.length-1){ resolveLoop({skippedTotal}); return; }
+        rafId=requestAnimationFrame(loop);
       };
-      rafId = requestAnimationFrame(loop);
+      rafId=requestAnimationFrame(loop);
     });
-
     cancelAnimationFrame(rafId);
-    await new Promise(r => setTimeout(r, 350));
-    rec.stop();
-    recAudioCtx.close();
-    await recStopped;
-
-    resolveRec({ chunks, skippedTotal: result.skippedTotal });
+    await new Promise(r=>setTimeout(r,350));
+    rec.stop(); recAudioCtx.close(); await recStopped;
+    resolveRec({chunks,skippedTotal:result.skippedTotal});
   });
 
-  // ── 最大3回試行、スキップ率5%未満なら合格 ──
-  const MAX_ATTEMPTS = 3;
-  const SKIP_THRESHOLD = Math.floor(TOTAL * 0.05); // 5%
+  const MAX_ATTEMPTS=3, SKIP_THRESHOLD=Math.floor(TOTAL*.05);
   let finalChunks;
-
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const { chunks, skippedTotal } = await runRecord(attempt);
-    console.log(`録画 attempt${attempt}: skip=${skippedTotal}/${TOTAL}`);
-    if (skippedTotal <= SKIP_THRESHOLD || attempt === MAX_ATTEMPTS - 1) {
-      if (skippedTotal > SKIP_THRESHOLD) {
-        setFfmpegMsg(`⚠ スキップ ${skippedTotal}f — 最良の結果を使用`);
-      } else {
-        setFfmpegMsg('✅ 完了');
-      }
-      finalChunks = chunks;
-      break;
+  for(let attempt=0;attempt<MAX_ATTEMPTS;attempt++){
+    const {chunks,skippedTotal}=await runRecord(attempt);
+    if(skippedTotal<=SKIP_THRESHOLD||attempt===MAX_ATTEMPTS-1){
+      setFfmpegMsg(skippedTotal>SKIP_THRESHOLD?`⚠ スキップ${skippedTotal}f — 最良の結果を使用`:'✅ 完了');
+      finalChunks=chunks; break;
     }
-    setFfmpegMsg(`⚠ スキップ多 (${skippedTotal}f) → 再試行...`);
-    await new Promise(r => setTimeout(r, 500));
+    setFfmpegMsg(`⚠ スキップ多(${skippedTotal}f) → 再試行...`);
+    await new Promise(r=>setTimeout(r,500));
   }
 
-  bitmaps.forEach(b => b.close());
-
-  const finalBlob = new Blob(finalChunks, { type: mime });
-  const url = URL.createObjectURL(finalBlob);
-  document.getElementById('preview-video').src = url;
-  const dlBtn = document.getElementById('dlBtn');
-  dlBtn.href     = url;
-  dlBtn.download = `${S.nameA}VS${S.nameB}.webm`;
-  dlBtn.textContent = '⬇ 動画をダウンロード (.webm)';
+  bitmaps.forEach(b=>b.close());
+  const finalBlob=new Blob(finalChunks,{type:mime});
+  const url=URL.createObjectURL(finalBlob);
+  document.getElementById('preview-video').src=url;
+  const dlBtn=document.getElementById('dlBtn');
+  dlBtn.href=url; dlBtn.download=`${S.nameA}VS${S.nameB}.webm`;
+  dlBtn.textContent='⬇ 動画をダウンロード (.webm)';
   document.getElementById('output-wrap').classList.add('visible');
-  document.getElementById('genBtn').disabled = false;
-  document.getElementById('progLabel').textContent = '✅ 完了!';
-  document.getElementById('progPct').textContent = '100%';
-  document.getElementById('progFill').style.width = '100%';
+  document.getElementById('genBtn').disabled=false;
+  document.getElementById('progLabel').textContent='✅ 完了!';
+  document.getElementById('progPct').textContent='100%';
+  document.getElementById('progFill').style.width='100%';
 }
 
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
-// ═══════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════
-// ═══════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════
 updatePrompt();
 updateScore();
+updateEstTime();
 autoLoadBGM();
 </script>
 </body>
 </html>
-
-
