@@ -289,8 +289,8 @@ const CATEGORIES = [
   "Strength","Speed","Durability","IQ","Battle IQ","Power","Combat",
   "Defence","Endurance","Experience","Stamina","Agility","Skill"
 ];
-// 動画合計36.0s: 13*(0.8+1.2)+0.8+9.2=36.0
-const INTRO_DUR=0.8, CUT_DUR=1.2, FINAL_DUR=9.2, BLACK_DUR=0.8;
+// 動画合計35.8s: 13*(0.8+1.2)+0.5+9.1=35.8
+const INTRO_DUR=0.8, CUT_DUR=1.2, FINAL_DUR=9.1, BLACK_DUR=0.5;
 const COLOR_A='#ff3c2a', COLOR_B='#2a8fff', COLOR_D='#aaaaaa';
 
 // ═══════════════════════════════════════════════
@@ -760,26 +760,32 @@ function N_renderCut(i,winner,pA,pB){
   if(winner==='Draw'){
     if(S.imgA){ ctx.save(); ctx.globalAlpha=.65; drawCharImg(S.imgA,.28,1,0,0,.38); ctx.restore(); }
     if(S.imgB){ ctx.save(); ctx.globalAlpha=.65; drawCharImg(S.imgB,.72,1,0,0,.38); ctx.restore(); }
-    N_drawWave(t, CH*.5, 0, CH*.03, 5);
+    // キャラの上を波が通過
+    N_drawWave(t, CH*.28, 0,   CH*.04, 5);
+    N_drawWave(t+.4, CH*.28, 60,  CH*.025, 7);
+    N_drawWave(t, CH*.72, 0,   CH*.04, 5);
+    N_drawWave(t+.4, CH*.72, 60,  CH*.025, 7);
     centerText(['DRAW'],.5,CW*.13,COLOR_D,'#666');
   }else{
     const img=winner==='A'?S.imgA:S.imgB;
     const wHue=winner==='A'?0:210;
     const wc=winner==='A'?COLOR_A:COLOR_B;
+    const charY=CH*.45; // キャラ中心Y
     // グロー付きキャラ拡大
     if(img){
       ctx.save();
       ctx.shadowColor=`hsl(${wHue},100%,60%)`; ctx.shadowBlur=CW*.05*(1+Math.sin(t*4)*.3);
       drawCharImg(img,.45,1+.14*t,0,0,.72); ctx.restore();
     }
-    // 多重波形
-    N_drawWave(t,    CH*.5, wHue,     CH*.032, 4);
-    N_drawWave(t+.3, CH*.5, wHue+40,  CH*.02,  6);
+    // キャラの上中心に集中する大きな波 × 3本
+    const wAmp=CH*.045*(0.6+t*.4); // 時間と共に大きく
+    N_drawWave(t,      charY,        wHue,    wAmp, 4);
+    N_drawWave(t+.25,  charY-CH*.06, wHue+40, wAmp*.7, 6);
+    N_drawWave(t+.5,   charY+CH*.06, wHue+80, wAmp*.7, 5);
     const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
     centerText([wn],.88,CW*.062,wc,wc);
     const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
     centerText([`${pA}  -  ${pB}`],.1,CW*.14,sc2,sc2);
-    // ネオンライン横断エフェクト (CUT開始時)
     if(t<.2){
       const a=(.2-t)/.2;
       ctx.fillStyle=`rgba(0,255,255,${a*.18})`; ctx.fillRect(0,0,CW,CH);
@@ -793,14 +799,20 @@ function N_renderFinal(i,winner,pA,pB){
   const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
   const wHue=winner==='A'?0:(winner==='B'?210:0);
   const wc=winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
+  const charY=CH*.45;
   if(fi){
     ctx.save();
     ctx.shadowColor=`hsl(${wHue},100%,60%)`;
     ctx.shadowBlur=CW*.07*(1+Math.sin(t*3)*.25);
     drawCharImg(fi,.45,1+.22*t,0,0,.78); ctx.restore();
   }else{ drawCharImg(S.imgA,.25,1,0,0,.38); drawCharImg(S.imgB,.75,1,0,0,.38); }
-  // パルス波形 × 4本
-  for(let w=0;w<4;w++) N_drawWave(t+w*.25, CH*.5, wHue+w*20, CH*.014*(4-w), 3+w);
+  // キャラ中心に集まる大波 — 時間経過で振幅増大
+  const pulse = 0.5+t*.5;
+  for(let w=0;w<5;w++){
+    const offsetY = (w-2)*CH*.055; // -2~+2 でキャラ中心に集中
+    const amp = CH*(.05-Math.abs(w-2)*.008)*pulse;
+    N_drawWave(t+w*.2, charY+offsetY, wHue+w*25, amp, 3+w*.6);
+  }
   const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
   ctx.globalAlpha=eI;
   centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.12,CW*.14*(1+.025*Math.sin(t*Math.PI*5)),wc,wc);
@@ -818,27 +830,71 @@ function C_letterbox(){
   const h=CH*LB; ctx.fillStyle='#000';
   ctx.fillRect(0,0,CW,h); ctx.fillRect(0,CH-h,CW,h);
 }
-function C_drawBg(t){
-  ctx.fillStyle='#0a0a0b'; ctx.fillRect(0,0,CW,CH);
-  // 粒子ノイズ (フィルムグレイン)
-  ctx.save(); ctx.globalAlpha=.018+Math.random()*.015;
-  for(let k=0;k<120;k++){
-    const gx=Math.sin(k*371.1+t*200)*.5+.5, gy=Math.sin(k*193.7+t*270)*.5+.5;
-    ctx.fillStyle=Math.random()>.5?'#fff':'#888';
-    ctx.fillRect(gx*CW,gy*CH,1+Math.random(),1+Math.random());
+function C_drawBg(t, wHue=-1){
+  ctx.fillStyle='#06060a'; ctx.fillRect(0,0,CW,CH);
+  // 背景光柱：赤・青 or 勝者カラー
+  const hA = wHue>=0 ? wHue : 0;
+  const hB = wHue>=0 ? wHue : 220;
+  const cols = [[CW*.22,hA],[CW*.5,0],[CW*.78,hB]];
+  cols.forEach(([x,h],k)=>{
+    const a=.055+.025*Math.sin(t*1.5+k);
+    const lg=ctx.createLinearGradient(0,0,0,CH);
+    lg.addColorStop(0,`hsla(${h},80%,55%,0)`);
+    lg.addColorStop(.35,`hsla(${h},80%,55%,${a})`);
+    lg.addColorStop(.65,`hsla(${h},80%,55%,${a})`);
+    lg.addColorStop(1,`hsla(${h},80%,55%,0)`);
+    ctx.fillStyle=lg;
+    const w=CW*(0.05+0.02*Math.sin(t*.8+k));
+    ctx.fillRect(x-w/2,0,w,CH);
+  });
+  // フィルムグレイン（多め）
+  ctx.save(); ctx.globalAlpha=.028+Math.random()*.022;
+  for(let k=0;k<180;k++){
+    const gx=Math.random()*CW, gy=Math.random()*CH;
+    ctx.fillStyle=Math.random()>.4?'#fff':'#666';
+    ctx.fillRect(gx,gy,Math.random()<.1?2:1,Math.random()<.1?2:1);
   }
   ctx.restore();
-  // 中央縦光線
-  for(let k=0;k<2;k++){
-    const x=(k===0?CW*.35:CW*.65)+Math.sin(t*0.4+k)*CW*.04;
-    const a=.03+.015*Math.sin(t*1.2+k);
-    const lg=ctx.createLinearGradient(0,0,0,CH);
-    lg.addColorStop(0,'rgba(255,255,255,0)');
-    lg.addColorStop(.4,`rgba(255,255,255,${a})`);
-    lg.addColorStop(.6,`rgba(255,255,255,${a})`);
-    lg.addColorStop(1,'rgba(255,255,255,0)');
-    ctx.fillStyle=lg; ctx.fillRect(x-2,0,4,CH);
+  // 水平スクラッチライン（ランダム）
+  if(Math.random()>.82){
+    ctx.save(); ctx.globalAlpha=.08+Math.random()*.08;
+    ctx.strokeStyle='#fff'; ctx.lineWidth=.5+Math.random();
+    const ys=Math.random()*CH;
+    ctx.beginPath(); ctx.moveTo(0,ys); ctx.lineTo(CW,ys); ctx.stroke();
+    ctx.restore();
   }
+}
+// 左から伸びる下線
+function C_drawUnderline(progress, y, color){
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=2;
+  ctx.shadowColor=color; ctx.shadowBlur=8;
+  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW*progress,y); ctx.stroke();
+  ctx.restore();
+}
+// スタンプエフェクト（巨大テキストをドン！）
+function C_stampText(text, yR, px, color, scaleT){
+  const sc = scaleT<.15 ? (1+(1-scaleT/.15)*0.6) : 1; // 最初は大きく縮む
+  const alpha = scaleT<.05 ? scaleT/.05 : 1;
+  const cx=CW/2, cy=CH*yR;
+  ctx.save();
+  ctx.translate(cx,cy); ctx.scale(sc,sc); ctx.translate(-cx,-cy);
+  ctx.globalAlpha=alpha;
+  ctx.font=`${px}px "Bebas Neue"`; ctx.textAlign='center';
+  ctx.shadowColor=color; ctx.shadowBlur=40;
+  ctx.strokeStyle='#000'; ctx.lineWidth=px*.2;
+  ctx.strokeText(text,cx,cy);
+  ctx.fillStyle=color; ctx.fillText(text,cx,cy);
+  // ノイズライン（スタンプ感）
+  if(scaleT<.12){
+    ctx.globalAlpha=(.12-scaleT)/.12*.6;
+    ctx.strokeStyle=color; ctx.lineWidth=3;
+    for(let k=0;k<6;k++){
+      const ry=cy-px*.5+Math.random()*px;
+      ctx.beginPath(); ctx.moveTo(cx-CW*.3,ry); ctx.lineTo(cx+CW*.3,ry); ctx.stroke();
+    }
+  }
+  ctx.restore();
 }
 function C_applyBW(amount){
   const id=ctx.getImageData(0,0,CW,CH), d=id.data;
@@ -861,80 +917,109 @@ function C_divider(){
   ctx.setLineDash([]); ctx.restore();
 }
 function C_renderIntro(i,cat,ci){
-  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**2;
+  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**3;
   C_drawBg(t);
-  if(S.imgA){ ctx.save(); ctx.globalAlpha=.5+ease*.45; drawCharImg(S.imgA,.28,1,0,0,.36); ctx.restore(); }
-  if(S.imgB){ ctx.save(); ctx.globalAlpha=.5+ease*.45; drawCharImg(S.imgB,.72,1,0,0,.36); ctx.restore(); }
-  C_applyBW(0.75); C_divider();
-  // フェードイン + タイポグラフィ
-  ctx.save(); ctx.globalAlpha=ease;
-  centerText([cat.toUpperCase()],.5,CW*.105,'#ffffff','#999999');
-  ctx.restore();
-  // カテゴリ番号（映画スタイル）
+  // キャラ（上下ズームイン）
+  const charScale = 1 + (1-ease)*0.12;
+  if(S.imgA){ ctx.save(); ctx.globalAlpha=.5+ease*.45; drawCharImg(S.imgA,.28,charScale,0,0,.36); ctx.restore(); }
+  if(S.imgB){ ctx.save(); ctx.globalAlpha=.5+ease*.45; drawCharImg(S.imgB,.72,charScale,0,0,.36); ctx.restore(); }
+  C_applyBW(0.72);
+  // カテゴリ名：上からドロップイン
+  const dropY = -(1-ease)*CH*.12;
   ctx.save();
-  ctx.font=`${CW*.022}px Rajdhani`; ctx.textAlign='center';
-  ctx.fillStyle=`rgba(150,150,150,${ease*.7})`;
-  ctx.fillText(`ROUND ${ci+1} / ${CATEGORIES.length}`, CW*.5, CH*LB+CH*.045);
+  ctx.translate(0, dropY); ctx.globalAlpha=ease;
+  centerText([cat.toUpperCase()],.5,CW*.11,'#ffffff','#cccccc');
   ctx.restore();
-  C_letterbox(); drawVignette(.65);
-  // フィルムノイズ
-  if(Math.random()>.7){
-    ctx.save(); ctx.globalAlpha=.04+Math.random()*.04;
-    ctx.fillStyle=Math.random()>.5?'#fff':'#000'; ctx.fillRect(0,0,CW,CH);
-    ctx.restore();
-  }
+  // カテゴリ名の下線が左から伸びる
+  const lineY = CH*.5 + CW*.11*.6;
+  C_drawUnderline(ease, lineY, '#ffffff');
+  // ラウンド表示（右上、英字スタイル）
+  ctx.save();
+  ctx.font=`600 ${CW*.02}px Rajdhani`; ctx.textAlign='right';
+  ctx.fillStyle=`rgba(180,180,180,${ease*.8})`;
+  ctx.letterSpacing='0.15em';
+  ctx.fillText(`${ci+1}  /  ${CATEGORIES.length}`, CW*.96, CH*LB+CH*.042);
+  ctx.restore();
+  C_letterbox(); drawVignette(.6);
 }
 function C_renderCut(i,winner,pA,pB){
   const t=i/(CUT_DUR*FPS);
-  C_drawBg(t);
+  const wHue=winner==='A'?0:(winner==='B'?220:-1);
+  C_drawBg(t, wHue>=0?wHue:-1);
   if(winner==='Draw'){
-    if(S.imgA){ ctx.save(); ctx.globalAlpha=.6; drawCharImg(S.imgA,.28,1,0,0,.38); ctx.restore(); }
-    if(S.imgB){ ctx.save(); ctx.globalAlpha=.6; drawCharImg(S.imgB,.72,1,0,0,.38); ctx.restore(); }
-    C_applyBW(0.92);
-    centerText(['DRAW'],.5,CW*.12,'#dddddd','#888888');
+    if(S.imgA){ ctx.save(); ctx.globalAlpha=.65; drawCharImg(S.imgA,.28,1,0,0,.38); ctx.restore(); }
+    if(S.imgB){ ctx.save(); ctx.globalAlpha=.65; drawCharImg(S.imgB,.72,1,0,0,.38); ctx.restore(); }
+    C_applyBW(0.88);
+    centerText(['DRAW'],.5,CW*.13,'#cccccc','#777777');
   }else{
     const img=winner==='A'?S.imgA:S.imgB;
-    if(img){ ctx.save(); ctx.globalAlpha=.88; drawCharImg(img,.45,1+.16*t,0,0,.74); ctx.restore(); }
-    // 勝者はカラー残しで他はモノクロ
-    C_applyBW(0.65);
-    const wc=winner==='A'?'#ff7755':'#5599ff';
+    // キャラ：弾けるようにズームイン
+    const zoomEase = t<.3 ? 1+(.3-t)/.3*0.35 : 1+t*.1;
+    if(img){ ctx.save(); ctx.globalAlpha=.92; drawCharImg(img,.45,zoomEase,0,0,.75); ctx.restore(); }
+    // 勝者カラー残し・他モノクロ
+    C_applyBW(0.58);
+    const wc=winner==='A'?'#ff6644':'#4488ff';
     const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
-    centerText([wn],.87,CW*.06,wc,'#ffffff');
-    ctx.save(); ctx.font=`${CW*.03}px Rajdhani`; ctx.textAlign='center';
-    ctx.fillStyle='rgba(200,200,200,.7)';
-    ctx.fillText(`${pA}  —  ${pB}`,CW*.5,CH*.12); ctx.restore();
-    // 白閃光
-    if(i<8){ ctx.fillStyle=`rgba(255,255,255,${(8-i)/8*.75})`; ctx.fillRect(0,0,CW,CH); }
+    // 勝者名：スタンプ演出（ドン！）
+    C_stampText(wn, .85, CW*.075, wc, t);
+    // スコア（下線付き）
+    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
+    C_stampText(`${pA} — ${pB}`, .1, CW*.1, sc2, t);
+    // 勝者の色カラーフラッシュ
+    if(i<6){
+      const flashA=(6-i)/6*.5;
+      ctx.fillStyle=winner==='A'?`rgba(255,80,40,${flashA})`:`rgba(40,100,255,${flashA})`;
+      ctx.fillRect(0,0,CW,CH);
+    }
   }
-  drawScoreBar(pA,pB); C_letterbox(); drawVignette(.7);
-  if(Math.random()>.75){
-    ctx.save(); ctx.globalAlpha=.03+Math.random()*.03; ctx.fillStyle='#fff'; ctx.fillRect(0,0,CW,CH); ctx.restore();
-  }
+  drawScoreBar(pA,pB); C_letterbox(); drawVignette(.68);
 }
 function C_renderFinal(i,winner,pA,pB){
-  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*1.8);
-  C_drawBg(t);
+  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*1.6);
+  const wHue=winner==='A'?0:(winner==='B'?220:-1);
+  C_drawBg(t, wHue);
   const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
-  if(fi){ ctx.save(); ctx.globalAlpha=.82; drawCharImg(fi,.44,1+.18*t,0,0,.8); ctx.restore(); }
-  else{ drawCharImg(S.imgA,.25,1,0,0,.38); drawCharImg(S.imgB,.75,1,0,0,.38); }
-  C_applyBW(0.55);
-  // 勝者名は彩色
-  const wc=winner==='A'?'#ff7755':(winner==='B'?'#5599ff':'#cccccc');
+  // キャラ：ゆっくり前進ズーム
+  if(fi){ ctx.save(); ctx.globalAlpha=.88; drawCharImg(fi,.44,1+.25*t,0,0,.82); ctx.restore(); }
+  else{ drawCharImg(S.imgA,.26,1+.08*t,0,0,.4); drawCharImg(S.imgB,.74,1+.08*t,0,0,.4); }
+  // 勝者カラーを少し残す
+  C_applyBW(0.45);
+  const wc=winner==='A'?'#ff6644':(winner==='B'?'#4488ff':'#bbbbbb');
   const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
+  // WINNER文字：スタンプ
   ctx.globalAlpha=eI;
-  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.11,CW*.14,wc,'#ffffff');
-  ctx.globalAlpha=1;
-  if(t>.35){ ctx.globalAlpha=Math.min(1,(t-.35)*3); centerText([`${pA}  —  ${pB}`],.9,CW*.09,'#aaaaaa','#555'); ctx.globalAlpha=1; }
-  // ズームアウト演出（スクロールクレジット風）
-  ctx.save(); ctx.font=`${CW*.02}px Rajdhani`; ctx.textAlign='center';
-  ctx.fillStyle=`rgba(120,120,120,${Math.min(1,(t-.5)*2)})`;
-  if(t>.5) ctx.fillText('THE END', CW*.5, CH*(1-LB)-.045*CH);
-  ctx.restore();
-  C_letterbox(); drawVignette(.72);
-  if(i<18){ ctx.fillStyle=`rgba(255,255,255,${Math.max(0,(18-i)/18*.8)})`; ctx.fillRect(0,0,CW,CH); }
-  if(Math.random()>.8){
-    ctx.save(); ctx.globalAlpha=.025+Math.random()*.02; ctx.fillStyle='#fff'; ctx.fillRect(0,0,CW,CH); ctx.restore();
+  C_stampText(wn?'WINNER':'DRAW', .1, CW*.09, '#ffffff', t);
+  // 勝者名：巨大スタンプ
+  if(wn){
+    const nameT=Math.max(0,t-.08);
+    C_stampText(wn.toUpperCase(), .2, CW*.155, wc, nameT);
   }
+  ctx.globalAlpha=1;
+  // スコア（徐々にフェードイン + 下線）
+  if(t>.25){
+    const sa=Math.min(1,(t-.25)*3);
+    ctx.globalAlpha=sa;
+    centerText([`${pA}  —  ${pB}`],.9,CW*.095,'#cccccc','#666666');
+    C_drawUnderline(sa, CH*.93, '#666666');
+    ctx.globalAlpha=1;
+  }
+  // 光柱爆発（開幕 + 中盤パルス）
+  if(t<.15||Math.sin(t*Math.PI*4)>.85){
+    const bA = t<.15 ? (0.15-t)/0.15 : (Math.sin(t*Math.PI*4)-.85)/.15;
+    ctx.save(); ctx.globalAlpha=bA*.35;
+    ctx.fillStyle=wHue>=0?`hsl(${wHue},100%,70%)`:'#ffffff';
+    ctx.fillRect(0,0,CW,CH); ctx.restore();
+  }
+  // THE END（後半）
+  if(t>.6){
+    ctx.save();
+    ctx.font=`600 ${CW*.022}px Rajdhani`; ctx.textAlign='center';
+    ctx.fillStyle=`rgba(160,160,160,${Math.min(1,(t-.6)*3)})`;
+    ctx.fillText('— THE END —', CW*.5, CH*(1-LB)-.04*CH);
+    ctx.restore();
+  }
+  C_letterbox(); drawVignette(.7);
+  if(i<22){ ctx.fillStyle=`rgba(255,255,255,${Math.max(0,(22-i)/22*.85)})`; ctx.fillRect(0,0,CW,CH); }
 }
 
 // ═══════════════════════════════════════════════
