@@ -221,15 +221,15 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       <div class="style-name">BATTLE</div>
       <div class="style-desc">グリッチ・パーティクル背景・カラーグレード</div>
     </div>
-    <div class="style-card" data-style="aura" onclick="selectStyle(this)">
-      <span class="style-icon">🔮</span>
-      <div class="style-name">AURA</div>
-      <div class="style-desc">闘気オーラ・稲妻・紫金エネルギーバースト</div>
+    <div class="style-card" data-style="striker" onclick="selectStyle(this)">
+      <span class="style-icon">🚀</span>
+      <div class="style-name">STRIKER</div>
+      <div class="style-desc">左右スライドイン・勝者突進・敗者吹っ飛び</div>
     </div>
-    <div class="style-card" data-style="blade" onclick="selectStyle(this)">
-      <span class="style-icon">⚔️</span>
-      <div class="style-name">BLADE</div>
-      <div class="style-desc">斬撃・速度線・刀傷・アニメ戦闘系</div>
+    <div class="style-card" data-style="drop" onclick="selectStyle(this)">
+      <span class="style-icon">⬇️</span>
+      <div class="style-name">DROP</div>
+      <div class="style-desc">上下から落下登場・勝者シェイクズーム</div>
     </div>
   </div>
 </div>
@@ -584,6 +584,35 @@ function centerText(lines,yR,basePx,color,glow){
     y+=px+sp;
   });
 }
+// カテゴリ日本語訳
+const CAT_JA = {
+  "Strength":"筋力","Speed":"速度","Durability":"耐久力","IQ":"知能",
+  "Battle IQ":"戦闘知能","Power":"能力値","Combat":"格闘技術",
+  "Defence":"防御力","Endurance":"持久力","Experience":"経験値",
+  "Stamina":"スタミナ","Agility":"俊敏性","Skill":"技術"
+};
+// カテゴリ名を英語大文字 + 上に小さく日本語で描画
+function drawCatLabel(cat, yR, enPx, enColor, enGlow){
+  const ja = CAT_JA[cat] || '';
+  const cx = CW/2;
+  const enY = CH*yR;
+  // 日本語：英語より少し上、サイズは英語の約38%
+  const jaPx = Math.round(enPx * 0.38);
+  const jaY  = enY - enPx * 0.62;
+  // 日本語テキスト（細めフォント・やや透過）
+  ctx.save();
+  ctx.font = `500 ${jaPx}px "Noto Sans JP", "Hiragino Kaku Gothic Pro", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = enColor;
+  ctx.globalAlpha = 0.72;
+  ctx.shadowColor = enGlow || enColor;
+  ctx.shadowBlur = 8;
+  ctx.fillText(ja, cx, jaY);
+  ctx.restore();
+  // 英語テキスト（通常glowText）
+  const px = fitPx(cat.toUpperCase(), CW*.88, enPx);
+  glowText(cat.toUpperCase(), cx, enY, px, enColor, enGlow);
+}
 function drawCharImg(img,yCR,scale,dx,dy,hR){
   if(!img) return;
   const th=CH*hR, tw=img.width*(th/img.height);
@@ -659,7 +688,7 @@ function B_renderIntro(i,cat,ci){
   drawCharImg(S.imgB,.78,scale,(Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2,.37);
   B_drawVS();
   ctx.save(); ctx.translate(0,-(1-ease)*CH*.058);
-  centerText([cat.toUpperCase()],.5,CW*.115,'#00ffff','#009999');
+  drawCatLabel(cat,.5,CW*.115,'#00ffff','#009999');
   ctx.restore();
   drawProgNum(ci); drawScanlines(); drawVignette(.5);
   applyChromatic(Math.max(0,8*(1-t*3)));
@@ -704,560 +733,511 @@ function B_renderFinal(i,winner,pA,pB){
 }
 
 // ═══════════════════════════════════════════════
-// STYLE: AURA — 闘気オーラ・稲妻・紫金エネルギー
-// コンセプト: DB/鬼滅風アニメ戦闘。紫×金の圧倒的オーラ。
+// STYLE: STRIKER
+// 左右スライドイン→衝突→勝者が前に突進→敗者吹き飛び
+// キャラの動きで魅せるTikTokバトル
 // ═══════════════════════════════════════════════
 
-// シード乱数
-function A_rnd(s){ return((Math.sin(s*127.1+31.4)*43758.5453)%1+1)%1; }
+// easing関数
+function ST_easeOutCubic(t){ return 1-(1-t)**3; }
+function ST_easeOutBack(t){ const c=1.70158; return 1+(c+1)*(t-1)**3+c*(t-1)**2; }
+function ST_easeOutBounce(t){
+  if(t<1/2.75) return 7.5625*t*t;
+  if(t<2/2.75){ t-=1.5/2.75; return 7.5625*t*t+.75; }
+  if(t<2.5/2.75){ t-=2.25/2.75; return 7.5625*t*t+.9375; }
+  t-=2.625/2.75; return 7.5625*t*t+.984375;
+}
 
-// ── 稲妻 ──
-function A_lightning(x1,y1,x2,y2,seed,width,color,branches){
+// キャラ描画（中心座標 + スケール）
+function ST_char(img, cx, cy, sc, hR, alpha, glowColor){
+  if(!img) return;
+  const th=CH*hR, tw=img.width*(th/img.height);
   ctx.save();
-  ctx.strokeStyle=color; ctx.lineWidth=width;
-  ctx.shadowColor=color; ctx.shadowBlur=width*8;
-  const pts=[[x1,y1]];
-  const segs=10;
-  for(let i=1;i<segs;i++){
-    const r=i/segs;
-    const mx=x1+(x2-x1)*r, my=y1+(y2-y1)*r;
-    const perp=(A_rnd(seed+i*7.3)-.5)*CW*.14*(1-r*.6);
-    pts.push([mx+perp,my]);
-  }
-  pts.push([x2,y2]);
-  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
-  pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
-  ctx.stroke();
-  // 白コア
-  ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=width*.35; ctx.shadowBlur=width*3;
-  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
-  pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
-  ctx.stroke();
-  // 枝
-  if(branches>0){
-    for(let b=0;b<3;b++){
-      const idx=2+Math.floor(A_rnd(seed+b*31)*6);
-      if(!pts[idx]) continue;
-      const bx=pts[idx][0]+( A_rnd(seed+b*17)-.5)*CW*.2;
-      const by=pts[idx][1]+A_rnd(seed+b*23)*CH*.12;
-      A_lightning(pts[idx][0],pts[idx][1],bx,by,seed+b*100,width*.5,color,0);
-    }
+  ctx.globalAlpha = alpha??1;
+  if(glowColor){ ctx.shadowColor=glowColor; ctx.shadowBlur=CW*.05; }
+  ctx.drawImage(img, cx-tw*sc/2, cy-th*sc/2, tw*sc, th*sc);
+  ctx.restore();
+}
+
+// 暗い背景（TikTokバトル定番）
+function ST_bg(t){
+  ctx.fillStyle='#070910'; ctx.fillRect(0,0,CW,CH);
+  // うっすら斜めライン
+  ctx.save(); ctx.globalAlpha=.03;
+  for(let k=0;k<10;k++){
+    const x=(k/10+t*.04%1)*CW*1.4-CW*.2;
+    ctx.strokeStyle='#4488ff'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x-CW*.3,CH); ctx.stroke();
   }
   ctx.restore();
 }
 
-// ── オーラパーティクル群 ──
-function A_aura(cx,cy,radius,intensity,t,hue){
-  ctx.save();
-  for(let k=0;k<40;k++){
-    const angle=A_rnd(k*7)*Math.PI*2;
-    const life= (A_rnd(k*13)+t*.6*(0.4+A_rnd(k*19)*.6))%1;
-    const r=radius*(0.4+life*.8)*(0.85+A_rnd(k*3)*.3);
-    const px=cx+Math.cos(angle+life)*r;
-    const py=cy+Math.sin(angle*2+life*.5)*r*.4; // 縦方向に圧縮→炎柱っぽく
-    const sz=CW*.022*(1-life)*(0.5+A_rnd(k*11)*.5)*intensity;
-    if(sz<1) continue;
-    const h=hue+A_rnd(k*7)*40-20;
-    const a=(1-life)*(0.5+A_rnd(k*29)*.4)*intensity;
-    const g=ctx.createRadialGradient(px,py,0,px,py,sz);
-    g.addColorStop(0,`hsla(${h},100%,88%,${a})`);
-    g.addColorStop(.5,`hsla(${h-20},100%,60%,${a*.6})`);
-    g.addColorStop(1,`hsla(${h-40},80%,30%,0)`);
-    ctx.fillStyle=g; ctx.shadowColor=`hsl(${h},100%,70%)`; ctx.shadowBlur=sz*3;
-    ctx.beginPath(); ctx.arc(px,py,sz,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-}
-
-// ── 背景 ──
-function A_drawBg(t, hue=280){
-  const g=ctx.createLinearGradient(0,0,0,CH);
-  g.addColorStop(0,'#06020e'); g.addColorStop(.5,'#0b0518'); g.addColorStop(1,'#04010a');
-  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
-  // 極光カーテン（縦グラデ）
-  for(let k=0;k<5;k++){
-    const x=CW*(0.1+k*.2)+Math.sin(t*.7+k)*CW*.06;
-    const w=CW*(0.06+A_rnd(k*7)*.06);
-    const a=0.06+0.04*Math.sin(t*1.3+k);
-    const lg=ctx.createLinearGradient(0,0,0,CH);
-    lg.addColorStop(0,`hsla(${hue+k*15},100%,55%,0)`);
-    lg.addColorStop(.35,`hsla(${hue+k*15},100%,55%,${a})`);
-    lg.addColorStop(.65,`hsla(${hue+k*10},100%,45%,${a*.7})`);
-    lg.addColorStop(1,`hsla(${hue+k*10},100%,35%,0)`);
-    ctx.fillStyle=lg; ctx.fillRect(x-w/2,0,w,CH);
-  }
-  // 星屑
-  ctx.save();
-  for(let k=0;k<60;k++){
-    const sx=A_rnd(k*31)*CW, sy=A_rnd(k*17)*CH;
-    const sa=(0.3+A_rnd(k*53)*.7)*(0.5+0.5*Math.sin(t*3+k));
-    ctx.fillStyle=`rgba(255,255,255,${sa*0.4})`; ctx.beginPath();
-    ctx.arc(sx,sy,A_rnd(k*7)*.8+.3,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-}
-
-// ── 分割背景（INTRO用）──
-function A_drawSplitBg(t){
-  if(S.imgA&&S.imgB){
-    ctx.globalAlpha=.32; ctx.drawImage(S.imgA,0,0,CW,CH/2);
-    ctx.drawImage(S.imgB,0,CH/2,CW,CH/2); ctx.globalAlpha=1;
-    ctx.fillStyle='rgba(4,1,12,.72)'; ctx.fillRect(0,0,CW,CH);
-  }
-  // 中央の金色オーラライン
-  const gl=ctx.createLinearGradient(0,0,CW,0);
-  gl.addColorStop(0,'rgba(180,120,0,0)');
-  gl.addColorStop(.3,'rgba(255,200,0,.9)');
-  gl.addColorStop(.5,'rgba(255,240,120,1)');
-  gl.addColorStop(.7,'rgba(255,200,0,.9)');
-  gl.addColorStop(1,'rgba(180,120,0,0)');
-  for(let d=-1;d<=1;d++){
-    ctx.strokeStyle=gl; ctx.lineWidth= d===0?3:1;
-    ctx.shadowColor='#ffcc00'; ctx.shadowBlur= d===0?22:8;
-    ctx.beginPath(); ctx.moveTo(0,CH/2+d*4); ctx.lineTo(CW,CH/2+d*4); ctx.stroke();
-  }
-  ctx.shadowBlur=0;
-}
-
-// ── VSバッジ ──
-function A_drawVS(t){
-  const cx=CW/2,cy=CH*.5;
-  const pulse=.5+.5*Math.sin(t*Math.PI*7);
-  // オーラリング
-  for(let r=0;r<3;r++){
-    const rad=CW*(.065+r*.022+pulse*.008);
-    ctx.save();
-    ctx.strokeStyle=`hsla(${280+r*20},100%,${60+r*10}%,${.5-r*.12})`;
-    ctx.lineWidth=2.5-r*.6; ctx.shadowColor='#aa44ff'; ctx.shadowBlur=18;
-    ctx.beginPath(); ctx.arc(cx,cy,rad,0,Math.PI*2); ctx.stroke();
-    ctx.restore();
-  }
-  ctx.save();
-  ctx.fillStyle='rgba(8,2,20,.96)';
-  ctx.beginPath(); ctx.arc(cx,cy,CW*.062,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-  glowText('VS',cx,cy+CW*.02,CW*.052,'#ffdd44','#cc8800',20);
-  // 稲妻を VS から放射
-  if(Math.sin(t*13)>.6){
-    const angle=A_rnd(Math.floor(t*30))*Math.PI*2;
-    A_lightning(cx,cy,cx+Math.cos(angle)*CW*.22,cy+Math.sin(angle)*CH*.12,
-      Math.floor(t*30),1.5,'rgba(180,100,255,0.9)',0);
-  }
-}
-
-// ── INTRO ──
-function A_renderIntro(i,cat,ci){
-  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**3, shake=(1-ease)*4;
-  A_drawBg(t);
-  A_drawSplitBg(t);
-  // キャラ
-  drawCharImg(S.imgA,.22,1+.04*(1-ease),(Math.random()-.5)*shake,(Math.random()-.5)*shake*.5,.38);
-  drawCharImg(S.imgB,.78,1+.04*(1-ease),(Math.random()-.5)*shake,(Math.random()-.5)*shake*.5,.38);
-  // キャラ周囲のオーラ
-  if(ease>.3){
-    const fi=(ease-.3)/.7;
-    A_aura(CW/2,CH*.22,CW*.18,fi*.7,t*1.2,280);
-    A_aura(CW/2,CH*.78,CW*.18,fi*.7,t*1.2+5,260);
-  }
-  A_drawVS(t);
-  // カテゴリ名（下からスライドアップ）
-  ctx.save(); ctx.translate(0,(1-ease)*CH*.08); ctx.globalAlpha=ease;
-  centerText([cat.toUpperCase()],.5,CW*.115,'#ffdd44','#cc8800');
-  ctx.restore();
-  // 稲妻（intro後半）
-  if(ease>.6 && Math.sin(t*17)>.4){
-    A_lightning(0,CH*.5*A_rnd(Math.floor(t*15)),CW,CH*.5+A_rnd(Math.floor(t*15)+1)*CH*.3,
-      Math.floor(t*15),2,'rgba(160,80,255,0.6)',2);
-  }
-  drawProgNum(ci); drawVignette(.52);
-  applyChromatic(Math.max(0,7*(1-t*3)));
-}
-
-// ── CUT ──
-function A_renderCut(i,winner,pA,pB){
-  const t=i/(CUT_DUR*FPS);
-  const wHue=winner==='A'?15:(winner==='B'?220:280);
-  const wc =winner==='A'?COLOR_A:(winner==='B'?COLOR_B:'#cc88ff');
-  A_drawBg(t, wHue);
-
-  if(winner==='Draw'){
-    drawCharImg(S.imgA,.28,1+.04*t,0,0,.38);
-    drawCharImg(S.imgB,.72,1+.04*t,0,0,.38);
-    A_aura(CW*.3,CH*.28,CW*.15,.6,t*1.5,280);
-    A_aura(CW*.7,CH*.72,CW*.15,.6,t*1.5+3,260);
-    centerText(['DRAW'],.5,CW*.13,'#cc88ff','#884488');
-  } else {
-    const img=winner==='A'?S.imgA:S.imgB;
-    const zE=1-(1-Math.min(1,t*2.2))**3; // キャラズームイン
-    if(img){
-      ctx.save();
-      ctx.shadowColor=`hsl(${wHue},100%,65%)`; ctx.shadowBlur=CW*.07*(0.5+zE*.5);
-      drawCharImg(img,.45,1+.22*zE,0,0,.78); ctx.restore();
-    }
-    // 勝者キャラ全体を包む大オーラ
-    A_aura(CW/2,CH*.45,CW*.32,(0.4+zE*.8),t*1.8,wHue);
-    // 稲妻（複数）
-    const lCount=Math.floor(2+t*3);
-    for(let L=0;L<lCount;L++){
-      if(A_rnd(Math.floor(t*20)+L*7)>.35) continue;
-      const sx=A_rnd(L*31+Math.floor(t*12))*CW;
-      const ex=A_rnd(L*17+Math.floor(t*12)+1)*CW;
-      A_lightning(sx,-20,ex,CH+20, L*100+Math.floor(t*20),
-        1.8+L*.4, `hsla(${wHue+L*20},100%,70%,0.85)`, L<2?1:0);
-    }
-    applyColorGrade(winner);
-    const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
-    // 名前：スタンプ（ドン！）
-    const nSc=t<.12?1+(1-t/.12)*.5:1;
-    ctx.save(); ctx.translate(CW*.5,CH*.88); ctx.scale(nSc,nSc); ctx.translate(-CW*.5,-CH*.88);
-    centerText([wn],.88,CW*.07,wc,wc); ctx.restore();
-    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#cc88ff');
-    centerText([`${pA}  —  ${pB}`],.1,CW*.13,sc2,sc2);
-    // 開幕紫フラッシュ
-    if(i<8){ ctx.fillStyle=`hsla(${wHue},80%,30%,${(8-i)/8*.5})`; ctx.fillRect(0,0,CW,CH); }
-  }
-  drawScoreBar(pA,pB); drawVignette(.5); drawFlash(i,6);
-}
-
-// ── FINAL ──
-function A_renderFinal(i,winner,pA,pB){
-  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*2);
-  const wHue=winner==='A'?15:(winner==='B'?220:280);
-  const wc =winner==='A'?COLOR_A:(winner==='B'?COLOR_B:'#cc88ff');
-  A_drawBg(t, wHue);
-  const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
-  if(fi){
-    ctx.save();
-    ctx.shadowColor=`hsl(${wHue},100%,65%)`; ctx.shadowBlur=CW*.09*(1+Math.sin(t*Math.PI*4)*.3);
-    drawCharImg(fi,.45,1+.28*t,0,0,.84); ctx.restore();
-  } else {
-    drawCharImg(S.imgA,.27,1+.06*t,0,0,.4);
-    drawCharImg(S.imgB,.73,1+.06*t,0,0,.4);
-  }
-  // 全身を包む巨大オーラ（時間で拡大）
-  const auraR=CW*(.28+t*.22);
-  A_aura(CW/2,CH*.45,auraR,(0.6+t*.6),t*2,wHue);
-  A_aura(CW/2,CH*.45,auraR*.55,(0.5+t*.5),t*2+3,wHue+40);
-  // 定期的な稲妻爆発
-  const lPhase=(t*2.2)%1;
-  if(lPhase<.45){
-    const lp=lPhase/.45;
-    for(let L=0;L<5;L++){
-      if(A_rnd(L*13+Math.floor(t*30))>.5) continue;
-      const angle=A_rnd(L*7+Math.floor(t*20))*Math.PI*2;
-      const len=CW*(.3+A_rnd(L*11)*.4);
-      A_lightning(CW/2,CH*.45,
-        CW/2+Math.cos(angle)*len, CH*.45+Math.sin(angle)*len*.5,
-        L*50+Math.floor(t*25), 2.5*(1-lp*.5),
-        `hsla(${wHue+L*25},100%,75%,${0.9-lp*.3})`, 1);
-    }
-  }
-  applyColorGrade(winner==='Draw'?null:winner);
-  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
-  const pulse=1+.045*Math.sin(t*Math.PI*9);
-  ctx.globalAlpha=eI;
-  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.1,CW*.145*pulse,wc,'#aa44ff');
-  ctx.globalAlpha=1;
-  if(t>.28){
-    ctx.globalAlpha=Math.min(1,(t-.28)*3);
-    centerText([`${pA}  —  ${pB}`],.9,CW*.105,wc,'#884488');
-    ctx.globalAlpha=1;
-  }
-  // 開幕紫爆発フラッシュ
-  if(i<20){ ctx.fillStyle=`hsla(${wHue},70%,25%,${Math.max(0,(20-i)/20*.65)})`; ctx.fillRect(0,0,CW,CH); }
-  drawVignette(.55); drawFlash(i,18);
-}
-
-// ═══════════════════════════════════════════════
-// STYLE: BLADE — 斬撃・速度線・刀傷・アニメ戦闘
-// コンセプト: 紫×金の刀剣。斬撃が走り、速度線が爆発する。
-// ═══════════════════════════════════════════════
-
-function BL_rnd(s){ return((Math.sin(s*311.7+491.3)*39842.1167)%1+1)%1; }
-
-// ── 速度線（放射状・横断） ──
-function BL_speedLines(cx,cy,count,len,width,color,t,seed){
-  ctx.save(); ctx.strokeStyle=color; ctx.shadowColor=color; ctx.shadowBlur=width*6;
-  for(let k=0;k<count;k++){
-    const angle=BL_rnd(k*7+seed)*Math.PI*2;
-    const r0=BL_rnd(k*13+seed)*len*.25;
-    const r1=r0+len*(0.4+BL_rnd(k*19+seed)*.6);
-    const a=0.4+BL_rnd(k*23+seed)*.5;
-    ctx.globalAlpha=a; ctx.lineWidth=width*(0.5+BL_rnd(k*31+seed)*.5);
+// 地面衝撃ライン（スライドイン着地後）
+function ST_dustLines(cx, cy, alpha, side){
+  ctx.save(); ctx.globalAlpha=alpha;
+  ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=1.5;
+  for(let k=0;k<6;k++){
+    const len=CW*(.06+k*.025);
+    const y=cy+( k%2===0?-1:1)*CH*.015*k;
+    const dir=side==='L'?-1:1;
     ctx.beginPath();
-    ctx.moveTo(cx+Math.cos(angle)*r0, cy+Math.sin(angle)*r0);
-    ctx.lineTo(cx+Math.cos(angle)*r1, cy+Math.sin(angle)*r1);
+    ctx.moveTo(cx, y);
+    ctx.lineTo(cx+dir*len, y);
     ctx.stroke();
   }
   ctx.restore();
 }
 
-// ── 斬撃ライン ──
-function BL_slash(x1,y1,x2,y2,width,color,alpha){
-  ctx.save();
-  ctx.globalAlpha=alpha;
-  // メイン斬撃
-  const grad=ctx.createLinearGradient(x1,y1,x2,y2);
-  grad.addColorStop(0,'rgba(255,255,255,0)');
-  grad.addColorStop(.35,color);
-  grad.addColorStop(.65,color);
-  grad.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.strokeStyle=grad; ctx.lineWidth=width;
-  ctx.shadowColor=color; ctx.shadowBlur=width*5;
-  ctx.lineCap='round';
-  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-  // 白コア
-  ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=width*.25; ctx.shadowBlur=width*2;
-  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-  ctx.restore();
-}
-
-// ── 斬撃複数 ──
-function BL_slashBurst(cx,cy,t,baseColor,seed,count){
-  for(let k=0;k<count;k++){
-    const phase=(t+BL_rnd(k*7+seed)*.5)%1;
-    if(phase>.55) continue;
-    const fade=1-phase/.55;
-    const angle=-Math.PI*.35+BL_rnd(k*13+seed)*Math.PI*.7;
-    const len=CW*(0.3+BL_rnd(k*19+seed)*.45);
-    const px=cx+(BL_rnd(k*23+seed)-.5)*CW*.3;
-    const py=cy+(BL_rnd(k*29+seed)-.5)*CH*.25;
-    BL_slash(px-Math.cos(angle)*len/2, py-Math.sin(angle)*len/2,
-             px+Math.cos(angle)*len/2, py+Math.sin(angle)*len/2,
-             3+k*.8, baseColor, fade*.85);
-  }
-}
-
-// ── 衝撃波エフェクト ──
-function BL_impact(cx,cy,progress,color1,color2){
-  if(progress<=0||progress>=1) return;
-  // リング
-  for(let r=0;r<3;r++){
-    const rp=Math.max(0,progress-r*.12);
-    if(rp<=0) continue;
-    const radius=CW*.5*rp;
-    const a=(1-rp)*(0.7-r*.15);
-    ctx.save(); ctx.globalAlpha=a;
-    ctx.strokeStyle=r%2===0?color1:color2;
-    ctx.lineWidth=CW*.016*(1-rp); ctx.shadowColor=color1; ctx.shadowBlur=20;
-    ctx.beginPath(); ctx.arc(cx,cy,radius,0,Math.PI*2); ctx.stroke();
-    ctx.restore();
-  }
-}
-
-// ── 背景 ──
-function BL_drawBg(t, hue=280){
-  const g=ctx.createLinearGradient(0,0,0,CH);
-  g.addColorStop(0,'#08040e'); g.addColorStop(.5,'#0e071a'); g.addColorStop(1,'#050210');
-  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
-  // 斜め速度線（背景）
-  ctx.save(); ctx.globalAlpha=.04;
-  for(let k=0;k<18;k++){
-    const phase=((k/18)+(t*.07))%1;
-    const x=phase*CW*1.5-CW*.25;
-    ctx.strokeStyle=`hsl(${hue},80%,60%)`; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x-CW*.28,CH); ctx.stroke();
-  }
-  ctx.restore();
-  // 中央グロー
-  const rg=ctx.createRadialGradient(CW/2,CH*.45,0,CW/2,CH*.45,CW*.5);
-  rg.addColorStop(0,`hsla(${hue},80%,25%,0.12)`);
-  rg.addColorStop(.6,`hsla(${hue},60%,15%,0.06)`);
-  rg.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=rg; ctx.fillRect(0,0,CW,CH);
-}
-
-// ── 分割背景 ──
-function BL_drawSplitBg(t){
-  if(S.imgA&&S.imgB){
-    ctx.globalAlpha=.35; ctx.drawImage(S.imgA,0,0,CW,CH/2);
-    ctx.drawImage(S.imgB,0,CH/2,CW,CH/2); ctx.globalAlpha=1;
-    ctx.fillStyle='rgba(6,3,14,.72)'; ctx.fillRect(0,0,CW,CH);
-  }
-  // 中央の金刀光
-  const gl=ctx.createLinearGradient(0,0,CW,0);
-  gl.addColorStop(0,'rgba(120,80,0,0)');
-  gl.addColorStop(.25,'rgba(220,160,0,.8)');
-  gl.addColorStop(.5,'rgba(255,220,80,1)');
-  gl.addColorStop(.75,'rgba(220,160,0,.8)');
-  gl.addColorStop(1,'rgba(120,80,0,0)');
-  // 斜め斬撃ライン
-  const yt=CH/2, yb=CH/2;
-  BL_slash(0,yt-8,CW,yb+8,4,'rgba(200,150,0,0.9)',1);
-  BL_slash(0,yt+3,CW,yb-3,2,'rgba(255,220,100,0.6)',1);
-}
-
-// ── VSバッジ ──
-function BL_drawVS(t){
+// VS バッジ（STRIKER版）
+function ST_vsRing(t, alpha){
   const cx=CW/2, cy=CH*.5;
   const pulse=.5+.5*Math.sin(t*Math.PI*8);
-  // 六角形フレーム
-  ctx.save();
-  ctx.strokeStyle=`rgba(200,160,0,${0.6+pulse*.3})`; ctx.lineWidth=2.5;
-  ctx.shadowColor='#cc9900'; ctx.shadowBlur=16;
-  ctx.beginPath();
-  for(let v=0;v<6;v++){
-    const a=v/6*Math.PI*2-Math.PI/6, r=CW*.065;
-    v===0?ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
-  }
-  ctx.closePath(); ctx.stroke();
-  ctx.fillStyle='rgba(8,4,18,.95)'; ctx.fill();
+  ctx.save(); ctx.globalAlpha=alpha;
+  ctx.fillStyle='rgba(6,8,18,.95)';
+  ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=`rgba(255,210,50,${.6+pulse*.3})`; ctx.lineWidth=2.5;
+  ctx.shadowColor='#ffcc00'; ctx.shadowBlur=16;
+  ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2); ctx.stroke();
   ctx.restore();
-  glowText('VS',cx,cy+CW*.02,CW*.052,'#ffdd44','#cc8800',22);
-  // パルス斬撃
-  if(pulse>.8){
-    BL_slash(cx-CW*.08,cy-CH*.04,cx+CW*.08,cy+CH*.04,3,'rgba(255,200,0,0.9)',pulse*.8);
-    BL_slash(cx+CW*.08,cy-CH*.04,cx-CW*.08,cy+CH*.04,3,'rgba(180,100,255,0.9)',pulse*.8);
-  }
+  glowText('VS',cx,cy+CW*.022,CW*.054,'#ffdd44','#cc8800',20);
 }
 
 // ── INTRO ──
-function BL_renderIntro(i,cat,ci){
-  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**3, shake=(1-ease)*5;
-  BL_drawBg(t);
-  BL_drawSplitBg(t);
-  // 背景速度線（intro用爆発）
-  if(ease>.25){
-    const sp=(ease-.25)/.75;
-    BL_speedLines(CW/2,CH*.22,20,CW*.35,1.2,'rgba(200,160,50,0.5)',t,1);
-    BL_speedLines(CW/2,CH*.78,20,CW*.35,1.2,'rgba(180,100,255,0.5)',t,50);
+// A: 左外 → 右 (CW*.24) へ高速スライドイン→オーバーシュート→制動
+// B: 右外 → 左 (CW*.76) へ高速スライドイン→オーバーシュート→制動
+// 着地後にそれぞれ細かくシェイク
+function ST_renderIntro(i, cat, ci){
+  const t = i/(INTRO_DUR*FPS);
+  ST_bg(t);
+
+  // スライドフェーズ(0→0.55): easeOutBack でオーバーシュート感
+  const sT = Math.min(1, t/0.55);
+  const sE = ST_easeOutBack(sT);
+  // 着地後シェイク(0.55→1.0)
+  const settled = Math.max(0,(t-0.55)/0.45);
+  const shakeAmp = (1-settled)*5.5;
+  const shakeA = sT>=1 ? Math.sin(i*1.7)*shakeAmp : 0;
+  const shakeB = sT>=1 ? Math.sin(i*1.9+1)*shakeAmp : 0;
+
+  const ayTarget=CH*.26, byTarget=CH*.74;
+  const axPos = -CW*.35 + (CW*.26+CW*.35)*sE;    // 左外→CW*.26
+  const bxPos =  CW*1.35 - (CW*1.35-CW*.74)*sE; // 右外→CW*.74
+
+  ST_char(S.imgA, axPos+shakeA, ayTarget, 1, .38, .95);
+  ST_char(S.imgB, bxPos+shakeB, byTarget, 1, .38, .95);
+
+  // 着地後の足元ダスト
+  if(sT>.9 && settled<.5){
+    const da=(1-settled*2)*.7;
+    ST_dustLines(CW*.26-CW*.04, ayTarget+CH*.18, da, 'L');
+    ST_dustLines(CW*.74+CW*.04, byTarget+CH*.18, da, 'R');
   }
-  // キャラ
-  drawCharImg(S.imgA,.22,1+.05*(1-ease),(Math.random()-.5)*shake,(Math.random()-.5)*shake*.6,.38);
-  drawCharImg(S.imgB,.78,1+.05*(1-ease),(Math.random()-.5)*shake,(Math.random()-.5)*shake*.6,.38);
-  BL_drawVS(t);
-  // カテゴリ名（左からスライド）
-  ctx.save(); ctx.translate((1-ease)*-CW*.15,0); ctx.globalAlpha=ease;
-  // 背景バー
-  ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,CH*.46,CW,CH*.085);
-  centerText([cat.toUpperCase()],.5,CW*.115,'#ffdd44','#cc8800');
+
+  // VS（スライド完了後にズームイン登場）
+  const vsT=Math.min(1,Math.max(0,(t-.5)/.35));
+  if(vsT>0){
+    const vsE=ST_easeOutBack(vsT);
+    const cx=CW/2,cy=CH*.5;
+    ctx.save(); ctx.globalAlpha=vsT;
+    ctx.translate(cx,cy); ctx.scale(vsE,vsE); ctx.translate(-cx,-cy);
+    ST_vsRing(t,1);
+    ctx.restore();
+  }
+
+  // カテゴリ名（下からスライドアップ）
+  const cT=Math.min(1,t/.5);
+  const cE=ST_easeOutBack(cT);
+  ctx.save();
+  ctx.translate(0,(1-cE)*CH*.12); ctx.globalAlpha=cT;
+  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(0,CH*.465,CW,CH*.085);
+  drawCatLabel(cat,.5,CW*.11,'#00e5ff','#006688');
   ctx.restore();
-  // 斬撃エフェクト（後半）
-  if(ease>.5){
-    BL_slashBurst(CW/2,CH*.5,t*2.5,'rgba(200,160,0,0.8)',1,3);
-  }
-  drawProgNum(ci); drawVignette(.52);
-  applyChromatic(Math.max(0,6*(1-t*3)));
+
+  drawProgNum(ci); drawScanlines(); drawVignette(.5);
+  applyChromatic(Math.max(0,6*(1-t*3.5)));
 }
 
 // ── CUT ──
-function BL_renderCut(i,winner,pA,pB){
-  const t=i/(CUT_DUR*FPS);
-  const wHue=winner==='A'?15:(winner==='B'?220:280);
-  const wc =winner==='A'?COLOR_A:(winner==='B'?COLOR_B:'#cc88ff');
-  const slashColor=winner==='A'?'rgba(255,80,30,0.9)':(winner==='B'?'rgba(50,130,255,0.9)':'rgba(180,120,255,0.9)');
-  BL_drawBg(t, wHue);
+// 勝利: 勝者が現在位置から中央へ突進ズーム (1.0→1.3倍) + 着地シェイク
+//       敗者は反対方向へ吹き飛び退場 (位置 + フェードアウト)
+// DRAW: 両キャラが内側に少し寄ってヘッドバンプ → 跳ね返る
+function ST_renderCut(i, winner, pA, pB){
+  const t = i/(CUT_DUR*FPS);
+  ST_bg(t);
 
   if(winner==='Draw'){
-    drawCharImg(S.imgA,.28,1+.04*t,0,0,.38);
-    drawCharImg(S.imgB,.72,1+.04*t,0,0,.38);
-    BL_speedLines(CW*.3,CH*.28,16,CW*.25,1,'rgba(180,120,255,0.4)',t,1);
-    BL_speedLines(CW*.7,CH*.72,16,CW*.25,1,'rgba(180,120,255,0.4)',t,30);
-    BL_slashBurst(CW/2,CH*.5,t*3,'rgba(150,100,200,0.7)',5,4);
-    centerText(['DRAW'],.5,CW*.13,'#cc88ff','#884488');
+    // 内側に寄る→跳ね返り
+    const mT=Math.min(1,t*2.5);
+    const mE=ST_easeOutCubic(mT);
+    const bT=Math.max(0,t*2.5-1);
+    const bE=ST_easeOutBounce(Math.min(1,bT));
+    const ax=CW*.26+mE*CW*.1 - bE*CW*.08;
+    const bx=CW*.74-mE*CW*.1 + bE*CW*.08;
+    ST_char(S.imgA, ax, CH*.38, 1+mE*.04, .36, 1);
+    ST_char(S.imgB, bx, CH*.62, 1+mE*.04, .36, 1);
+    // 衝突フラッシュ
+    if(mT>.92&&mT<1){ const fa=(mT-.92)/.08; ctx.fillStyle=`rgba(255,255,255,${fa*.35})`; ctx.fillRect(0,0,CW,CH); }
+    centerText(['DRAW'],.5,CW*.13,COLOR_D,'#555');
+
   } else {
-    const img=winner==='A'?S.imgA:S.imgB;
-    const zE=1-(1-Math.min(1,t*2))**3;
-    if(img){
+    const wImg  = winner==='A'?S.imgA:S.imgB;
+    const lImg  = winner==='A'?S.imgB:S.imgA;
+    const wc    = winner==='A'?COLOR_A:COLOR_B;
+    const wxSrc = winner==='A'?CW*.26:CW*.74; // 勝者スタート位置
+    const wxDst = CW*.5;                       // 勝者ゴール位置（中央）
+    const lxSrc = winner==='A'?CW*.74:CW*.26; // 敗者スタート位置
+    const lxBlowDir = winner==='A'?1:-1;       // 敗者吹き飛び方向
+
+    // フェーズ1(0→0.4): 勝者が中央に突進
+    const rushT = Math.min(1, t/0.4);
+    const rushE = ST_easeOutCubic(rushT);
+    const wX = wxSrc + (wxDst-wxSrc)*rushE;
+    const wY = winner==='A'?CH*.26:CH*.74;
+    const wSc = 1 + rushE*.28; // 近づくにつれ大きく
+
+    // フェーズ2(0.4→1.0): 着地後シェイク
+    const shT = Math.max(0,(t-.4)/.6);
+    const shAmp = (1-shT)*9*(rushT>=1?1:0);
+    const shX = Math.sin(i*2.1)*shAmp;
+    const shY = Math.cos(i*1.7)*shAmp*.5;
+
+    // 敗者: フェーズ1で吹き飛び始める
+    const lX = lxSrc + lxBlowDir*rushE*CW*.55;
+    const lY = winner==='A'?CH*.74:CH*.26;
+    const lAlpha = Math.max(0, 1-rushE*1.3);
+    const lTilt = lxBlowDir*rushE*25; // 回転っぽく見せる（ctx.rotate）
+
+    // 敗者を先に描画（奥にいる感）
+    if(lImg&&lAlpha>0){
+      const th=CH*.32, tw=lImg.width*(th/lImg.height);
       ctx.save();
-      ctx.shadowColor=`hsl(${wHue},100%,65%)`; ctx.shadowBlur=CW*.07*(0.4+zE*.6);
-      drawCharImg(img,.45,1+.24*zE,0,0,.78); ctx.restore();
+      ctx.globalAlpha=lAlpha*.8;
+      ctx.translate(lX, lY);
+      ctx.rotate(lTilt*Math.PI/180);
+      ctx.drawImage(lImg,-tw/2,-th/2,tw,th);
+      ctx.restore();
     }
-    // 爆発的速度線
-    BL_speedLines(CW/2,CH*.45,30,CW*.5,2.5,`hsla(${wHue},100%,65%,0.7)`,t,Math.floor(t*15));
-    // 斬撃爆発
-    BL_slashBurst(CW/2,CH*.45,t*3.5,slashColor,Math.floor(t*20),6);
-    // 衝撃波
-    BL_impact(CW/2,CH*.45,t*1.3,`hsl(${wHue},100%,65%)`,`rgba(255,220,0,0.8)`);
+
+    // 勝者
+    ctx.save();
+    ctx.shadowColor=wc; ctx.shadowBlur=CW*.04*(rushE+.3);
+    ST_char(wImg, wX+shX, wY+shY, wSc, .7, 1);
+    ctx.restore();
+
     applyColorGrade(winner);
+
     const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
-    // 名前スタンプ
-    const nSc=t<.12?1+(1-t/.12)*.55:1;
-    ctx.save(); ctx.translate(CW*.5,CH*.87); ctx.scale(nSc,nSc); ctx.translate(-CW*.5,-CH*.87);
-    centerText([wn],.87,CW*.07,wc,wc); ctx.restore();
-    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#cc88ff');
-    centerText([`${pA}  —  ${pB}`],.1,CW*.13,sc2,sc2);
-    // 開幕フラッシュ
-    if(i<8){ ctx.fillStyle=`hsla(${wHue},70%,30%,${(8-i)/8*.55})`; ctx.fillRect(0,0,CW,CH); }
-    // 横断斬撃ライン（勝利演出）
-    if(t>.3){
-      const lp=Math.min(1,(t-.3)/.4);
-      BL_slash(-CW*.1,CH*.42,CW*1.1,CH*.5,5,`hsla(${wHue},100%,70%,${lp*.7})`,1);
-      BL_slash(-CW*.1,CH*.55,CW*1.1,CH*.47,3,'rgba(255,220,80,0.5)',lp);
+    // 名前: 突進完了後にeaseOutBackでスタンプ
+    if(t>.38){
+      const nT=Math.min(1,(t-.38)/.28);
+      const nE=ST_easeOutBack(nT);
+      ctx.save();
+      ctx.translate(CW*.5,CH*.88); ctx.scale(nE,nE); ctx.translate(-CW*.5,-CH*.88);
+      centerText([wn],.88,CW*.068,wc,wc);
+      ctx.restore();
     }
+    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#aaa');
+    centerText([`${pA}  —  ${pB}`],.1,CW*.13,sc2,sc2);
+
+    // 開幕白フラッシュ
+    if(i<6){ ctx.fillStyle=`rgba(255,255,255,${(6-i)/6*.6})`; ctx.fillRect(0,0,CW,CH); }
   }
-  drawScoreBar(pA,pB); drawVignette(.5); drawFlash(i,6);
+
+  drawScoreBar(pA,pB); drawScanlines(); drawVignette(.5); drawFlash(i,6);
 }
 
 // ── FINAL ──
-function BL_renderFinal(i,winner,pA,pB){
-  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*2.2);
-  const wHue=winner==='A'?15:(winner==='B'?220:280);
-  const wc =winner==='A'?COLOR_A:(winner==='B'?COLOR_B:'#cc88ff');
-  const slashColor=winner==='A'?'rgba(255,80,30,0.9)':(winner==='B'?'rgba(50,130,255,0.9)':'rgba(180,120,255,0.9)');
-  BL_drawBg(t, wHue);
+// 勝者キャラが左右にゆったりパンしながら画面いっぱいにズーム
+// 定期的に左右シェイクで「魅せ」ポーズ感
+function ST_renderFinal(i, winner, pA, pB){
+  const t = i/(FINAL_DUR*FPS), eI=Math.min(1,t*2.5);
+  const wc=winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
+  ST_bg(t);
+
   const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
   if(fi){
+    // ズームイン（0→0.6で完了）
+    const zT=Math.min(1,t/.6);
+    const zE=ST_easeOutCubic(zT);
+    const sc=.55+.55*zE;
+    // ズーム完了後: 左右にゆったりパン（カメラワーク感）
+    const panX=zE>=1?Math.sin(t*Math.PI*.8)*CW*.04:0;
+    // 定期シェイク（1秒周期の短い揺れ）
+    const shPhase=(t-.6)%1;
+    const shAmp=zE>=1&&shPhase<.18 ? Math.sin(shPhase/0.18*Math.PI)*CW*.018 : 0;
+
     ctx.save();
-    ctx.shadowColor=`hsl(${wHue},100%,65%)`; ctx.shadowBlur=CW*.09*(1+Math.sin(t*Math.PI*5)*.3);
-    drawCharImg(fi,.45,1+.3*t,0,0,.84); ctx.restore();
+    ctx.shadowColor=wc; ctx.shadowBlur=CW*.06*(0.4+zE*.6);
+    ST_char(fi, CW*.5+panX+shAmp, CH*.44, sc, .82, 1);
+    ctx.restore();
+    applyColorGrade(winner);
   } else {
-    drawCharImg(S.imgA,.27,1+.06*t,0,0,.4);
-    drawCharImg(S.imgB,.73,1+.06*t,0,0,.4);
+    // Draw: 両キャラが向き合い左右に揺れる
+    const bob=Math.sin(t*Math.PI*4)*CW*.022;
+    ST_char(S.imgA, CW*.5-CW*.18+bob, CH*.35, .9, .38, 1);
+    ST_char(S.imgB, CW*.5+CW*.18-bob, CH*.65, .9, .38, 1);
   }
-  // 爆発的速度線（拡大）
-  const speedInt=0.5+t*0.8;
-  BL_speedLines(CW/2,CH*.45,38,CW*(0.4+t*.3),3,`hsla(${wHue},100%,65%,${speedInt*.7})`,t,Math.floor(t*10));
-  BL_speedLines(CW/2,CH*.45,18,CW*(0.35+t*.25),1.5,'rgba(255,220,80,0.5)',t+.5,80);
-  // 連続斬撃バースト（周期）
-  const slashPhase=(t*1.8)%1;
-  if(slashPhase<.5){
-    BL_slashBurst(CW/2,CH*.45,slashPhase*2,slashColor,Math.floor(t*20),8);
-  }
-  // 周期的衝撃波
-  for(let w=0;w<3;w++){
-    const wp=(t*1.5+w*.33)%1;
-    BL_impact(CW/2,CH*.45,wp,`hsl(${wHue},100%,65%)`,'rgba(255,220,0,0.7)');
-  }
-  applyColorGrade(winner==='Draw'?null:winner);
+
   const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
-  const pulse=1+.04*Math.sin(t*Math.PI*10);
+  const pulse=1+.04*Math.sin(t*Math.PI*9);
   ctx.globalAlpha=eI;
-  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.1,CW*.145*pulse,wc,'#cc8800');
+  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.1,CW*.145*pulse,wc,wc);
   ctx.globalAlpha=1;
-  if(t>.28){
-    ctx.globalAlpha=Math.min(1,(t-.28)*3);
-    centerText([`${pA}  —  ${pB}`],.9,CW*.105,wc,'#884488');
-    ctx.globalAlpha=1;
+  if(t>.3){ ctx.globalAlpha=Math.min(1,(t-.3)*3); centerText([`${pA}  —  ${pB}`],.9,CW*.1,wc,'#334'); ctx.globalAlpha=1; }
+  if(i<22){ ctx.fillStyle=`rgba(255,255,255,${Math.max(0,(22-i)/22*.7)})`; ctx.fillRect(0,0,CW,CH); }
+  drawScanlines(); drawVignette(.55); drawFlash(i,18);
+}
+
+// ═══════════════════════════════════════════════
+// STYLE: DROP
+// 上下から落下登場→着地バウンス→勝者シェイクズームイン
+// ═══════════════════════════════════════════════
+
+function DR_easeOutQuart(t){ return 1-(1-t)**4; }
+function DR_easeOutBack(t){ const c=1.70158; return 1+(c+1)*(t-1)**3+c*(t-1)**2; }
+function DR_easeOutBounce(t){
+  if(t<1/2.75) return 7.5625*t*t;
+  if(t<2/2.75){ t-=1.5/2.75; return 7.5625*t*t+.75; }
+  if(t<2.5/2.75){ t-=2.25/2.75; return 7.5625*t*t+.9375; }
+  t-=2.625/2.75; return 7.5625*t*t+.984375;
+}
+
+function DR_char(img, cx, cy, sc, hR, alpha, glow){
+  if(!img) return;
+  const th=CH*hR, tw=img.width*(th/img.height);
+  ctx.save();
+  ctx.globalAlpha=alpha??1;
+  if(glow){ ctx.shadowColor=glow; ctx.shadowBlur=CW*.05; }
+  ctx.drawImage(img, cx-tw*sc/2, cy-th*sc/2, tw*sc, th*sc);
+  ctx.restore();
+}
+
+function DR_bg(t){
+  const g=ctx.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,'#050508'); g.addColorStop(.5,'#090912'); g.addColorStop(1,'#040407');
+  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
+  // 横グリッドライン（TikTok定番）
+  for(let k=0;k<12;k++){
+    const y=CH*k/12;
+    ctx.fillStyle=`rgba(255,255,255,${.012+.005*Math.sin(t*2+k)})`; ctx.fillRect(0,y,CW,1);
   }
-  // 定期的に大斬撃が画面を横断
-  if(Math.sin(t*Math.PI*3)>.7){
-    const sp=Math.sin(t*Math.PI*3);
-    BL_slash(-CW*.2,CH*.3,CW*1.2,CH*.65,8,`hsla(${wHue},100%,75%,${(sp-.7)/.3*.6})`,1);
-    BL_slash(-CW*.2,CH*.6,CW*1.2,CH*.35,5,'rgba(255,220,80,0.5)',1);
+}
+
+// 着地衝撃波
+function DR_landRing(cx, cy, progress, color){
+  if(progress<=0||progress>=1) return;
+  ctx.save();
+  ctx.globalAlpha=(1-progress)*.65;
+  ctx.strokeStyle=color; ctx.lineWidth=3*(1-progress);
+  ctx.shadowColor=color; ctx.shadowBlur=14;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, CW*.22*progress, CH*.022*progress, 0,0,Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── INTRO ──
+// A: 上から落下バウンス → 上半分に着地
+// B: 下から上昇バウンス → 下半分に着地
+// 着地後に強シェイク → 収まる
+function DR_renderIntro(i, cat, ci){
+  const t = i/(INTRO_DUR*FPS);
+  DR_bg(t);
+
+  // 落下(0→0.6)
+  const dT = Math.min(1, t/.6);
+  const dE  = DR_easeOutBounce(dT);
+  const ayTarget=CH*.26, byTarget=CH*.74;
+
+  // A: 上外(-CH*.25) → ayTarget
+  const ay = -CH*.25 + (ayTarget+CH*.25)*dE;
+  // B: 下外(CH*1.25) → byTarget
+  const by2 = CH*1.25 - (CH*1.25-byTarget)*dE;
+
+  // 着地後シェイク(0.6→1.0)
+  const shT = Math.max(0,(t-.6)/.4);
+  const shAmp = (1-shT)*8;
+  const shA = dT>=1 ? Math.sin(i*2.3)*shAmp : 0;
+  const shB = dT>=1 ? Math.sin(i*2.1+1)*shAmp : 0;
+
+  DR_char(S.imgA, CW*.5+shA, ay, 1, .38, .95);
+  DR_char(S.imgB, CW*.5+shB, by2, 1, .38, .95);
+
+  // 着地衝撃リング
+  if(dT>.7&&dT<.98){
+    const rp=(dT-.7)/.28;
+    DR_landRing(CW*.5, ayTarget+CH*.18, rp, '#ffffff');
+    DR_landRing(CW*.5, byTarget-CH*.18, rp, '#ffffff');
   }
-  if(i<22){ ctx.fillStyle=`hsla(${wHue},70%,25%,${Math.max(0,(22-i)/22*.65)})`; ctx.fillRect(0,0,CW,CH); }
-  drawVignette(.55); drawFlash(i,18);
+
+  // VS（落下完了後にポップイン）
+  const vsT=Math.min(1,Math.max(0,(t-.55)/.3));
+  if(vsT>0){
+    const vsE=DR_easeOutBack(vsT);
+    const cx=CW/2,cy=CH*.5;
+    ctx.save(); ctx.globalAlpha=vsT;
+    ctx.translate(cx,cy); ctx.scale(vsE,vsE); ctx.translate(-cx,-cy);
+    ctx.fillStyle='rgba(6,6,16,.95)';
+    ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle=`rgba(255,210,50,${vsT})`; ctx.lineWidth=2.5;
+    ctx.shadowColor='#ffcc00'; ctx.shadowBlur=16;
+    ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+    glowText('VS',cx,cy+CW*.022,CW*.054,'#ffdd44','#cc8800',20);
+  }
+
+  // カテゴリ名（右からスライドイン）
+  const cT=Math.min(1,t/.5);
+  const cE=DR_easeOutBack(cT);
+  ctx.save();
+  ctx.translate((1-cE)*CW*.25,0); ctx.globalAlpha=cT;
+  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(0,CH*.465,CW,CH*.085);
+  drawCatLabel(cat,.5,CW*.11,'#ff9900','#994400');
+  ctx.restore();
+
+  drawProgNum(ci); drawScanlines(); drawVignette(.5);
+  applyChromatic(Math.max(0,6*(1-t*3.5)));
+}
+
+// ── CUT ──
+// 勝利: 勝者が上(or下)から強くスライドダウン→画面中央でシェイク→ズーム
+//       敗者は反対方向に吹き飛んで消える（Yが上下に離脱）
+// DRAW: 両キャラが内側に向かってバウンス
+function DR_renderCut(i, winner, pA, pB){
+  const t = i/(CUT_DUR*FPS);
+  DR_bg(t);
+
+  if(winner==='Draw'){
+    const mT=Math.min(1,t*2.8);
+    const mE=DR_easeOutBounce(mT);
+    // 上から寄り・下から寄り
+    const ay=CH*.26+mE*CH*.1;
+    const by2=CH*.74-mE*CH*.1;
+    DR_char(S.imgA, CW*.5, ay, 1+mE*.05, .36, 1);
+    DR_char(S.imgB, CW*.5, by2, 1+mE*.05, .36, 1);
+    centerText(['DRAW'],.5,CW*.13,COLOR_D,'#555');
+  } else {
+    const wImg = winner==='A'?S.imgA:S.imgB;
+    const lImg = winner==='A'?S.imgB:S.imgA;
+    const wc   = winner==='A'?COLOR_A:COLOR_B;
+    const wySrc= winner==='A'?CH*.26:CH*.74; // 勝者スタート Y
+    const wyDst= CH*.44;                      // ゴール Y（中央）
+    const lyBlowDir = winner==='A'?1:-1;       // 敗者吹き飛び方向（Y）
+
+    // フェーズ1(0→0.38): 勝者が中央Yに向かって突進
+    const rushT=Math.min(1,t/.38);
+    const rushE=DR_easeOutQuart(rushT);
+    const wY=wySrc+(wyDst-wySrc)*rushE;
+    const wSc=1+rushE*.3;
+
+    // フェーズ2(0.38→1.0): 着地後シェイク→収まる
+    const shT=Math.max(0,(t-.38)/.62);
+    const shAmp=(1-Math.min(1,shT*1.5))*11*(rushT>=1?1:0);
+    const shX=Math.sin(i*2.5)*shAmp;
+    const shY2=Math.cos(i*1.9)*shAmp*.4;
+
+    // 敗者: Y方向に吹き飛び
+    const lySrc=winner==='A'?CH*.74:CH*.26;
+    const lY=lySrc+lyBlowDir*rushE*CH*.6;
+    const lAlpha=Math.max(0,1-rushE*1.4);
+
+    // 敗者
+    if(lImg&&lAlpha>0) DR_char(lImg, CW*.5, lY, .7-rushE*.15, .3, lAlpha*.8);
+
+    // 勝者
+    ctx.save();
+    ctx.shadowColor=wc; ctx.shadowBlur=CW*.045*(rushE+.3);
+    DR_char(wImg, CW*.5+shX, wY+shY2, wSc, .72, 1);
+    ctx.restore();
+
+    // 着地衝撃リング（突進完了時）
+    if(rushT>.85&&rushT<1){
+      const rp=(rushT-.85)/.15;
+      DR_landRing(CW*.5, wyDst+CH*.2, rp, wc);
+    }
+
+    applyColorGrade(winner);
+
+    const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
+    if(t>.36){
+      const nT=Math.min(1,(t-.36)/.28);
+      const nE=DR_easeOutBack(nT);
+      ctx.save();
+      ctx.translate(CW*.5,CH*.88); ctx.scale(nE,nE); ctx.translate(-CW*.5,-CH*.88);
+      centerText([wn],.88,CW*.068,wc,wc);
+      ctx.restore();
+    }
+    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#aaa');
+    centerText([`${pA}  —  ${pB}`],.1,CW*.13,sc2,sc2);
+    if(i<6){ ctx.fillStyle=`rgba(255,255,255,${(6-i)/6*.6})`; ctx.fillRect(0,0,CW,CH); }
+  }
+  drawScoreBar(pA,pB); drawScanlines(); drawVignette(.5); drawFlash(i,6);
+}
+
+// ── FINAL ──
+// 勝者が上から降りてきてズームイン → 上下に微ジャンプ → 左右シェイク
+function DR_renderFinal(i, winner, pA, pB){
+  const t = i/(FINAL_DUR*FPS), eI=Math.min(1,t*2.5);
+  const wc=winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
+  DR_bg(t);
+
+  const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
+  if(fi){
+    const zT=Math.min(1,t/.55);
+    const zE=DR_easeOutBounce(zT); // バウンスで着地感
+    const sc=.5+.58*zE;
+    const wY0=-CH*.1+(CH*.44+CH*.1)*zE; // 上から降りてくる
+    // 着地後の上下ジャンプ（0.7秒周期）
+    const jp=Math.max(0,t-.55);
+    const jumpY=jp>0?Math.sin(jp*Math.PI*2.2)*CH*.028:0;
+    // 横シェイク（低周波）
+    const shX=zT>=1?Math.sin(t*Math.PI*3.5)*CW*.012:0;
+
+    ctx.save();
+    ctx.shadowColor=wc; ctx.shadowBlur=CW*.06*(0.4+zE*.6);
+    DR_char(fi, CW*.5+shX, wY0+jumpY, sc, .82, 1);
+    ctx.restore();
+    applyColorGrade(winner);
+  } else {
+    const bob=Math.sin(t*Math.PI*5)*CH*.02;
+    DR_char(S.imgA, CW*.5, CH*.35+bob, .9, .38, 1);
+    DR_char(S.imgB, CW*.5, CH*.65-bob, .9, .38, 1);
+  }
+
+  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
+  const pulse=1+.04*Math.sin(t*Math.PI*9);
+  ctx.globalAlpha=eI;
+  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.1,CW*.145*pulse,wc,wc);
+  ctx.globalAlpha=1;
+  if(t>.3){ ctx.globalAlpha=Math.min(1,(t-.3)*3); centerText([`${pA}  —  ${pB}`],.9,CW*.1,wc,'#334'); ctx.globalAlpha=1; }
+  if(i<22){ ctx.fillStyle=`rgba(255,255,255,${Math.max(0,(22-i)/22*.7)})`; ctx.fillRect(0,0,CW,CH); }
+  drawScanlines(); drawVignette(.55); drawFlash(i,18);
 }
 
 // ═══════════════════════════════════════════════
 // DISPATCHER — S.style に応じて分岐
 // ═══════════════════════════════════════════════
 function renderIntro(i,cat,ci){
-  if(S.style==='aura')   return A_renderIntro(i,cat,ci);
-  if(S.style==='blade')  return BL_renderIntro(i,cat,ci);
+  if(S.style==='striker') return ST_renderIntro(i,cat,ci);
+  if(S.style==='drop')    return DR_renderIntro(i,cat,ci);
+  
+  
   
   return B_renderIntro(i,cat,ci);
 }
 function renderCut(i,winner,pA,pB){
-  if(S.style==='aura')   return A_renderCut(i,winner,pA,pB);
-  if(S.style==='blade')  return BL_renderCut(i,winner,pA,pB);
+  if(S.style==='striker') return ST_renderCut(i,winner,pA,pB);
+  if(S.style==='drop')    return DR_renderCut(i,winner,pA,pB);
+  
+  
   
   return B_renderCut(i,winner,pA,pB);
 }
 function renderFinal(i,winner,pA,pB){
-  if(S.style==='aura')   return A_renderFinal(i,winner,pA,pB);
-  if(S.style==='blade')  return BL_renderFinal(i,winner,pA,pB);
+  if(S.style==='striker') return ST_renderFinal(i,winner,pA,pB);
+  if(S.style==='drop')    return DR_renderFinal(i,winner,pA,pB);
+  
+  
   
   return B_renderFinal(i,winner,pA,pB);
 }
