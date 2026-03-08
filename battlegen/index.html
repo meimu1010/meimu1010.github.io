@@ -160,9 +160,21 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
   </div>
 </div>
 
-<!-- STEP 2: GEMINI -->
+<!-- STEP 2: STYLE -->
 <div class="step" data-step="02">
-  <div class="step-title"><span class="num">2</span> GEMINI AI ANALYSIS</div>
+  <div class="step-title"><span class="num">2</span> VISUAL STYLE</div>
+  <div class="style-grid" style="grid-template-columns:1fr">
+    <div class="style-card sel" data-style="battle" onclick="selectStyle(this)">
+      <span class="style-icon">⚡</span>
+      <div class="style-name">BATTLE</div>
+      <div class="style-desc">グリッチ・パーティクル・カラーグレード</div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3: GEMINI -->
+<div class="step" data-step="03">
+  <div class="step-title"><span class="num">3</span> GEMINI AI ANALYSIS</div>
   <div class="gemini-box">
     <h3>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
@@ -186,9 +198,9 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
   </div>
 </div>
 
-<!-- STEP 3: CATEGORIES -->
-<div class="step" data-step="03">
-  <div class="step-title"><span class="num">3</span> CATEGORY RESULTS <span style="font-size:.8rem;color:#3a6a8a;font-family:Rajdhani;margin-left:6px">（手動調整も可）</span></div>
+<!-- STEP 4: CATEGORIES -->
+<div class="step" data-step="04">
+  <div class="step-title"><span class="num">4</span> CATEGORY RESULTS <span style="font-size:.8rem;color:#3a6a8a;font-family:Rajdhani;margin-left:6px">（手動調整も可）</span></div>
   <div class="cat-grid" id="catGrid"></div>
   <div class="score-display">
     <span class="score-a" id="scoreA">A: 0</span>
@@ -197,9 +209,9 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
   </div>
 </div>
 
-<!-- STEP 4: BGM -->
-<div class="step" data-step="04">
-  <div class="step-title"><span class="num">4</span> BGM</div>
+<!-- STEP 5: BGM -->
+<div class="step" data-step="05">
+  <div class="step-title"><span class="num">5</span> BGM</div>
   <div class="bgm-row">
     <span class="file-info ok" id="bgmInfo" style="font-size:.9rem">⏳ bgm.mp3 を自動読み込み中...</span>
   </div>
@@ -221,16 +233,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       <div class="style-name">BATTLE</div>
       <div class="style-desc">グリッチ・パーティクル背景・カラーグレード</div>
     </div>
-    <div class="style-card" data-style="striker" onclick="selectStyle(this)">
-      <span class="style-icon">🚀</span>
-      <div class="style-name">STRIKER</div>
-      <div class="style-desc">左右スライドイン・勝者突進・敗者吹っ飛び</div>
-    </div>
-    <div class="style-card" data-style="drop" onclick="selectStyle(this)">
-      <span class="style-icon">⬇️</span>
-      <div class="style-name">DROP</div>
-      <div class="style-desc">上下から落下登場・勝者シェイクズーム</div>
-    </div>
+
   </div>
 </div>
 
@@ -595,11 +598,14 @@ const CAT_JA = {
 function drawCatLabel(cat, yR, enPx, enColor, enGlow){
   const ja = CAT_JA[cat] || '';
   const cx = CW/2;
-  const enY = CH*yR;
-  // 日本語：英語より少し上、サイズは英語の約38%
-  const jaPx = Math.round(enPx * 0.38);
-  const jaY  = enY - enPx * 0.62;
-  // 日本語テキスト（細めフォント・やや透過）
+  const jaPx = Math.round(enPx * 0.36);
+  // 日本語＋英語を縦に並べる。2行分の総高さを計算して中心に配置
+  const gap   = enPx * 0.18;           // 日本語と英語の間隔
+  const totalH = jaPx + gap + enPx;    // 全体の高さ
+  const blockTop = CH*yR - totalH/2;   // ブロック上端
+  const jaY  = blockTop + jaPx;        // 日本語ベースライン
+  const enY  = blockTop + jaPx + gap + enPx; // 英語ベースライン
+  // 日本語
   ctx.save();
   ctx.font = `500 ${jaPx}px "Noto Sans JP", "Hiragino Kaku Gothic Pro", sans-serif`;
   ctx.textAlign = 'center';
@@ -609,7 +615,7 @@ function drawCatLabel(cat, yR, enPx, enColor, enGlow){
   ctx.shadowBlur = 8;
   ctx.fillText(ja, cx, jaY);
   ctx.restore();
-  // 英語テキスト（通常glowText）
+  // 英語
   const px = fitPx(cat.toUpperCase(), CW*.88, enPx);
   glowText(cat.toUpperCase(), cx, enY, px, enColor, enGlow);
 }
@@ -733,509 +739,21 @@ function B_renderFinal(i,winner,pA,pB){
 }
 
 // ═══════════════════════════════════════════════
-// STYLE: STRIKER
-// 左右スライドイン→衝突→勝者が前に突進→敗者吹き飛び
-// キャラの動きで魅せるTikTokバトル
-// ═══════════════════════════════════════════════
-
-// easing関数
-function ST_easeOutCubic(t){ return 1-(1-t)**3; }
-function ST_easeOutBack(t){ const c=1.70158; return 1+(c+1)*(t-1)**3+c*(t-1)**2; }
-function ST_easeOutBounce(t){
-  if(t<1/2.75) return 7.5625*t*t;
-  if(t<2/2.75){ t-=1.5/2.75; return 7.5625*t*t+.75; }
-  if(t<2.5/2.75){ t-=2.25/2.75; return 7.5625*t*t+.9375; }
-  t-=2.625/2.75; return 7.5625*t*t+.984375;
-}
-
-// キャラ描画（中心座標 + スケール）
-function ST_char(img, cx, cy, sc, hR, alpha, glowColor){
-  if(!img) return;
-  const th=CH*hR, tw=img.width*(th/img.height);
-  ctx.save();
-  ctx.globalAlpha = alpha??1;
-  if(glowColor){ ctx.shadowColor=glowColor; ctx.shadowBlur=CW*.05; }
-  ctx.drawImage(img, cx-tw*sc/2, cy-th*sc/2, tw*sc, th*sc);
-  ctx.restore();
-}
-
-// 暗い背景（TikTokバトル定番）
-function ST_bg(t){
-  ctx.fillStyle='#070910'; ctx.fillRect(0,0,CW,CH);
-  // うっすら斜めライン
-  ctx.save(); ctx.globalAlpha=.03;
-  for(let k=0;k<10;k++){
-    const x=(k/10+t*.04%1)*CW*1.4-CW*.2;
-    ctx.strokeStyle='#4488ff'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x-CW*.3,CH); ctx.stroke();
-  }
-  ctx.restore();
-}
-
-// 地面衝撃ライン（スライドイン着地後）
-function ST_dustLines(cx, cy, alpha, side){
-  ctx.save(); ctx.globalAlpha=alpha;
-  ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=1.5;
-  for(let k=0;k<6;k++){
-    const len=CW*(.06+k*.025);
-    const y=cy+( k%2===0?-1:1)*CH*.015*k;
-    const dir=side==='L'?-1:1;
-    ctx.beginPath();
-    ctx.moveTo(cx, y);
-    ctx.lineTo(cx+dir*len, y);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-// VS バッジ（STRIKER版）
-function ST_vsRing(t, alpha){
-  const cx=CW/2, cy=CH*.5;
-  const pulse=.5+.5*Math.sin(t*Math.PI*8);
-  ctx.save(); ctx.globalAlpha=alpha;
-  ctx.fillStyle='rgba(6,8,18,.95)';
-  ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle=`rgba(255,210,50,${.6+pulse*.3})`; ctx.lineWidth=2.5;
-  ctx.shadowColor='#ffcc00'; ctx.shadowBlur=16;
-  ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2); ctx.stroke();
-  ctx.restore();
-  glowText('VS',cx,cy+CW*.022,CW*.054,'#ffdd44','#cc8800',20);
-}
-
-// ── INTRO ──
-// A: 左外 → 右 (CW*.24) へ高速スライドイン→オーバーシュート→制動
-// B: 右外 → 左 (CW*.76) へ高速スライドイン→オーバーシュート→制動
-// 着地後にそれぞれ細かくシェイク
-function ST_renderIntro(i, cat, ci){
-  const t = i/(INTRO_DUR*FPS);
-  ST_bg(t);
-
-  // スライドフェーズ(0→0.55): easeOutBack でオーバーシュート感
-  const sT = Math.min(1, t/0.55);
-  const sE = ST_easeOutBack(sT);
-  // 着地後シェイク(0.55→1.0)
-  const settled = Math.max(0,(t-0.55)/0.45);
-  const shakeAmp = (1-settled)*5.5;
-  const shakeA = sT>=1 ? Math.sin(i*1.7)*shakeAmp : 0;
-  const shakeB = sT>=1 ? Math.sin(i*1.9+1)*shakeAmp : 0;
-
-  const ayTarget=CH*.26, byTarget=CH*.74;
-  const axPos = -CW*.35 + (CW*.26+CW*.35)*sE;    // 左外→CW*.26
-  const bxPos =  CW*1.35 - (CW*1.35-CW*.74)*sE; // 右外→CW*.74
-
-  ST_char(S.imgA, axPos+shakeA, ayTarget, 1, .38, .95);
-  ST_char(S.imgB, bxPos+shakeB, byTarget, 1, .38, .95);
-
-  // 着地後の足元ダスト
-  if(sT>.9 && settled<.5){
-    const da=(1-settled*2)*.7;
-    ST_dustLines(CW*.26-CW*.04, ayTarget+CH*.18, da, 'L');
-    ST_dustLines(CW*.74+CW*.04, byTarget+CH*.18, da, 'R');
-  }
-
-  // VS（スライド完了後にズームイン登場）
-  const vsT=Math.min(1,Math.max(0,(t-.5)/.35));
-  if(vsT>0){
-    const vsE=ST_easeOutBack(vsT);
-    const cx=CW/2,cy=CH*.5;
-    ctx.save(); ctx.globalAlpha=vsT;
-    ctx.translate(cx,cy); ctx.scale(vsE,vsE); ctx.translate(-cx,-cy);
-    ST_vsRing(t,1);
-    ctx.restore();
-  }
-
-  // カテゴリ名（下からスライドアップ）
-  const cT=Math.min(1,t/.5);
-  const cE=ST_easeOutBack(cT);
-  ctx.save();
-  ctx.translate(0,(1-cE)*CH*.12); ctx.globalAlpha=cT;
-  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(0,CH*.465,CW,CH*.085);
-  drawCatLabel(cat,.5,CW*.11,'#00e5ff','#006688');
-  ctx.restore();
-
-  drawProgNum(ci); drawScanlines(); drawVignette(.5);
-  applyChromatic(Math.max(0,6*(1-t*3.5)));
-}
-
-// ── CUT ──
-// 勝利: 勝者が現在位置から中央へ突進ズーム (1.0→1.3倍) + 着地シェイク
-//       敗者は反対方向へ吹き飛び退場 (位置 + フェードアウト)
-// DRAW: 両キャラが内側に少し寄ってヘッドバンプ → 跳ね返る
-function ST_renderCut(i, winner, pA, pB){
-  const t = i/(CUT_DUR*FPS);
-  ST_bg(t);
-
-  if(winner==='Draw'){
-    // 内側に寄る→跳ね返り
-    const mT=Math.min(1,t*2.5);
-    const mE=ST_easeOutCubic(mT);
-    const bT=Math.max(0,t*2.5-1);
-    const bE=ST_easeOutBounce(Math.min(1,bT));
-    const ax=CW*.26+mE*CW*.1 - bE*CW*.08;
-    const bx=CW*.74-mE*CW*.1 + bE*CW*.08;
-    ST_char(S.imgA, ax, CH*.38, 1+mE*.04, .36, 1);
-    ST_char(S.imgB, bx, CH*.62, 1+mE*.04, .36, 1);
-    // 衝突フラッシュ
-    if(mT>.92&&mT<1){ const fa=(mT-.92)/.08; ctx.fillStyle=`rgba(255,255,255,${fa*.35})`; ctx.fillRect(0,0,CW,CH); }
-    centerText(['DRAW'],.5,CW*.13,COLOR_D,'#555');
-
-  } else {
-    const wImg  = winner==='A'?S.imgA:S.imgB;
-    const lImg  = winner==='A'?S.imgB:S.imgA;
-    const wc    = winner==='A'?COLOR_A:COLOR_B;
-    const wxSrc = winner==='A'?CW*.26:CW*.74; // 勝者スタート位置
-    const wxDst = CW*.5;                       // 勝者ゴール位置（中央）
-    const lxSrc = winner==='A'?CW*.74:CW*.26; // 敗者スタート位置
-    const lxBlowDir = winner==='A'?1:-1;       // 敗者吹き飛び方向
-
-    // フェーズ1(0→0.4): 勝者が中央に突進
-    const rushT = Math.min(1, t/0.4);
-    const rushE = ST_easeOutCubic(rushT);
-    const wX = wxSrc + (wxDst-wxSrc)*rushE;
-    const wY = winner==='A'?CH*.26:CH*.74;
-    const wSc = 1 + rushE*.28; // 近づくにつれ大きく
-
-    // フェーズ2(0.4→1.0): 着地後シェイク
-    const shT = Math.max(0,(t-.4)/.6);
-    const shAmp = (1-shT)*9*(rushT>=1?1:0);
-    const shX = Math.sin(i*2.1)*shAmp;
-    const shY = Math.cos(i*1.7)*shAmp*.5;
-
-    // 敗者: フェーズ1で吹き飛び始める
-    const lX = lxSrc + lxBlowDir*rushE*CW*.55;
-    const lY = winner==='A'?CH*.74:CH*.26;
-    const lAlpha = Math.max(0, 1-rushE*1.3);
-    const lTilt = lxBlowDir*rushE*25; // 回転っぽく見せる（ctx.rotate）
-
-    // 敗者を先に描画（奥にいる感）
-    if(lImg&&lAlpha>0){
-      const th=CH*.32, tw=lImg.width*(th/lImg.height);
-      ctx.save();
-      ctx.globalAlpha=lAlpha*.8;
-      ctx.translate(lX, lY);
-      ctx.rotate(lTilt*Math.PI/180);
-      ctx.drawImage(lImg,-tw/2,-th/2,tw,th);
-      ctx.restore();
-    }
-
-    // 勝者
-    ctx.save();
-    ctx.shadowColor=wc; ctx.shadowBlur=CW*.04*(rushE+.3);
-    ST_char(wImg, wX+shX, wY+shY, wSc, .7, 1);
-    ctx.restore();
-
-    applyColorGrade(winner);
-
-    const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
-    // 名前: 突進完了後にeaseOutBackでスタンプ
-    if(t>.38){
-      const nT=Math.min(1,(t-.38)/.28);
-      const nE=ST_easeOutBack(nT);
-      ctx.save();
-      ctx.translate(CW*.5,CH*.88); ctx.scale(nE,nE); ctx.translate(-CW*.5,-CH*.88);
-      centerText([wn],.88,CW*.068,wc,wc);
-      ctx.restore();
-    }
-    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#aaa');
-    centerText([`${pA}  —  ${pB}`],.1,CW*.13,sc2,sc2);
-
-    // 開幕白フラッシュ
-    if(i<6){ ctx.fillStyle=`rgba(255,255,255,${(6-i)/6*.6})`; ctx.fillRect(0,0,CW,CH); }
-  }
-
-  drawScoreBar(pA,pB); drawScanlines(); drawVignette(.5); drawFlash(i,6);
-}
-
-// ── FINAL ──
-// 勝者キャラが左右にゆったりパンしながら画面いっぱいにズーム
-// 定期的に左右シェイクで「魅せ」ポーズ感
-function ST_renderFinal(i, winner, pA, pB){
-  const t = i/(FINAL_DUR*FPS), eI=Math.min(1,t*2.5);
-  const wc=winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
-  ST_bg(t);
-
-  const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
-  if(fi){
-    // ズームイン（0→0.6で完了）
-    const zT=Math.min(1,t/.6);
-    const zE=ST_easeOutCubic(zT);
-    const sc=.55+.55*zE;
-    // ズーム完了後: 左右にゆったりパン（カメラワーク感）
-    const panX=zE>=1?Math.sin(t*Math.PI*.8)*CW*.04:0;
-    // 定期シェイク（1秒周期の短い揺れ）
-    const shPhase=(t-.6)%1;
-    const shAmp=zE>=1&&shPhase<.18 ? Math.sin(shPhase/0.18*Math.PI)*CW*.018 : 0;
-
-    ctx.save();
-    ctx.shadowColor=wc; ctx.shadowBlur=CW*.06*(0.4+zE*.6);
-    ST_char(fi, CW*.5+panX+shAmp, CH*.44, sc, .82, 1);
-    ctx.restore();
-    applyColorGrade(winner);
-  } else {
-    // Draw: 両キャラが向き合い左右に揺れる
-    const bob=Math.sin(t*Math.PI*4)*CW*.022;
-    ST_char(S.imgA, CW*.5-CW*.18+bob, CH*.35, .9, .38, 1);
-    ST_char(S.imgB, CW*.5+CW*.18-bob, CH*.65, .9, .38, 1);
-  }
-
-  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
-  const pulse=1+.04*Math.sin(t*Math.PI*9);
-  ctx.globalAlpha=eI;
-  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.1,CW*.145*pulse,wc,wc);
-  ctx.globalAlpha=1;
-  if(t>.3){ ctx.globalAlpha=Math.min(1,(t-.3)*3); centerText([`${pA}  —  ${pB}`],.9,CW*.1,wc,'#334'); ctx.globalAlpha=1; }
-  if(i<22){ ctx.fillStyle=`rgba(255,255,255,${Math.max(0,(22-i)/22*.7)})`; ctx.fillRect(0,0,CW,CH); }
-  drawScanlines(); drawVignette(.55); drawFlash(i,18);
-}
-
-// ═══════════════════════════════════════════════
-// STYLE: DROP
-// 上下から落下登場→着地バウンス→勝者シェイクズームイン
-// ═══════════════════════════════════════════════
-
-function DR_easeOutQuart(t){ return 1-(1-t)**4; }
-function DR_easeOutBack(t){ const c=1.70158; return 1+(c+1)*(t-1)**3+c*(t-1)**2; }
-function DR_easeOutBounce(t){
-  if(t<1/2.75) return 7.5625*t*t;
-  if(t<2/2.75){ t-=1.5/2.75; return 7.5625*t*t+.75; }
-  if(t<2.5/2.75){ t-=2.25/2.75; return 7.5625*t*t+.9375; }
-  t-=2.625/2.75; return 7.5625*t*t+.984375;
-}
-
-function DR_char(img, cx, cy, sc, hR, alpha, glow){
-  if(!img) return;
-  const th=CH*hR, tw=img.width*(th/img.height);
-  ctx.save();
-  ctx.globalAlpha=alpha??1;
-  if(glow){ ctx.shadowColor=glow; ctx.shadowBlur=CW*.05; }
-  ctx.drawImage(img, cx-tw*sc/2, cy-th*sc/2, tw*sc, th*sc);
-  ctx.restore();
-}
-
-function DR_bg(t){
-  const g=ctx.createLinearGradient(0,0,0,CH);
-  g.addColorStop(0,'#050508'); g.addColorStop(.5,'#090912'); g.addColorStop(1,'#040407');
-  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
-  // 横グリッドライン（TikTok定番）
-  for(let k=0;k<12;k++){
-    const y=CH*k/12;
-    ctx.fillStyle=`rgba(255,255,255,${.012+.005*Math.sin(t*2+k)})`; ctx.fillRect(0,y,CW,1);
-  }
-}
-
-// 着地衝撃波
-function DR_landRing(cx, cy, progress, color){
-  if(progress<=0||progress>=1) return;
-  ctx.save();
-  ctx.globalAlpha=(1-progress)*.65;
-  ctx.strokeStyle=color; ctx.lineWidth=3*(1-progress);
-  ctx.shadowColor=color; ctx.shadowBlur=14;
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, CW*.22*progress, CH*.022*progress, 0,0,Math.PI*2);
-  ctx.stroke();
-  ctx.restore();
-}
-
-// ── INTRO ──
-// A: 上から落下バウンス → 上半分に着地
-// B: 下から上昇バウンス → 下半分に着地
-// 着地後に強シェイク → 収まる
-function DR_renderIntro(i, cat, ci){
-  const t = i/(INTRO_DUR*FPS);
-  DR_bg(t);
-
-  // 落下(0→0.6)
-  const dT = Math.min(1, t/.6);
-  const dE  = DR_easeOutBounce(dT);
-  const ayTarget=CH*.26, byTarget=CH*.74;
-
-  // A: 上外(-CH*.25) → ayTarget
-  const ay = -CH*.25 + (ayTarget+CH*.25)*dE;
-  // B: 下外(CH*1.25) → byTarget
-  const by2 = CH*1.25 - (CH*1.25-byTarget)*dE;
-
-  // 着地後シェイク(0.6→1.0)
-  const shT = Math.max(0,(t-.6)/.4);
-  const shAmp = (1-shT)*8;
-  const shA = dT>=1 ? Math.sin(i*2.3)*shAmp : 0;
-  const shB = dT>=1 ? Math.sin(i*2.1+1)*shAmp : 0;
-
-  DR_char(S.imgA, CW*.5+shA, ay, 1, .38, .95);
-  DR_char(S.imgB, CW*.5+shB, by2, 1, .38, .95);
-
-  // 着地衝撃リング
-  if(dT>.7&&dT<.98){
-    const rp=(dT-.7)/.28;
-    DR_landRing(CW*.5, ayTarget+CH*.18, rp, '#ffffff');
-    DR_landRing(CW*.5, byTarget-CH*.18, rp, '#ffffff');
-  }
-
-  // VS（落下完了後にポップイン）
-  const vsT=Math.min(1,Math.max(0,(t-.55)/.3));
-  if(vsT>0){
-    const vsE=DR_easeOutBack(vsT);
-    const cx=CW/2,cy=CH*.5;
-    ctx.save(); ctx.globalAlpha=vsT;
-    ctx.translate(cx,cy); ctx.scale(vsE,vsE); ctx.translate(-cx,-cy);
-    ctx.fillStyle='rgba(6,6,16,.95)';
-    ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle=`rgba(255,210,50,${vsT})`; ctx.lineWidth=2.5;
-    ctx.shadowColor='#ffcc00'; ctx.shadowBlur=16;
-    ctx.beginPath(); ctx.arc(cx,cy,CW*.068,0,Math.PI*2); ctx.stroke();
-    ctx.restore();
-    glowText('VS',cx,cy+CW*.022,CW*.054,'#ffdd44','#cc8800',20);
-  }
-
-  // カテゴリ名（右からスライドイン）
-  const cT=Math.min(1,t/.5);
-  const cE=DR_easeOutBack(cT);
-  ctx.save();
-  ctx.translate((1-cE)*CW*.25,0); ctx.globalAlpha=cT;
-  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(0,CH*.465,CW,CH*.085);
-  drawCatLabel(cat,.5,CW*.11,'#ff9900','#994400');
-  ctx.restore();
-
-  drawProgNum(ci); drawScanlines(); drawVignette(.5);
-  applyChromatic(Math.max(0,6*(1-t*3.5)));
-}
-
-// ── CUT ──
-// 勝利: 勝者が上(or下)から強くスライドダウン→画面中央でシェイク→ズーム
-//       敗者は反対方向に吹き飛んで消える（Yが上下に離脱）
-// DRAW: 両キャラが内側に向かってバウンス
-function DR_renderCut(i, winner, pA, pB){
-  const t = i/(CUT_DUR*FPS);
-  DR_bg(t);
-
-  if(winner==='Draw'){
-    const mT=Math.min(1,t*2.8);
-    const mE=DR_easeOutBounce(mT);
-    // 上から寄り・下から寄り
-    const ay=CH*.26+mE*CH*.1;
-    const by2=CH*.74-mE*CH*.1;
-    DR_char(S.imgA, CW*.5, ay, 1+mE*.05, .36, 1);
-    DR_char(S.imgB, CW*.5, by2, 1+mE*.05, .36, 1);
-    centerText(['DRAW'],.5,CW*.13,COLOR_D,'#555');
-  } else {
-    const wImg = winner==='A'?S.imgA:S.imgB;
-    const lImg = winner==='A'?S.imgB:S.imgA;
-    const wc   = winner==='A'?COLOR_A:COLOR_B;
-    const wySrc= winner==='A'?CH*.26:CH*.74; // 勝者スタート Y
-    const wyDst= CH*.44;                      // ゴール Y（中央）
-    const lyBlowDir = winner==='A'?1:-1;       // 敗者吹き飛び方向（Y）
-
-    // フェーズ1(0→0.38): 勝者が中央Yに向かって突進
-    const rushT=Math.min(1,t/.38);
-    const rushE=DR_easeOutQuart(rushT);
-    const wY=wySrc+(wyDst-wySrc)*rushE;
-    const wSc=1+rushE*.3;
-
-    // フェーズ2(0.38→1.0): 着地後シェイク→収まる
-    const shT=Math.max(0,(t-.38)/.62);
-    const shAmp=(1-Math.min(1,shT*1.5))*11*(rushT>=1?1:0);
-    const shX=Math.sin(i*2.5)*shAmp;
-    const shY2=Math.cos(i*1.9)*shAmp*.4;
-
-    // 敗者: Y方向に吹き飛び
-    const lySrc=winner==='A'?CH*.74:CH*.26;
-    const lY=lySrc+lyBlowDir*rushE*CH*.6;
-    const lAlpha=Math.max(0,1-rushE*1.4);
-
-    // 敗者
-    if(lImg&&lAlpha>0) DR_char(lImg, CW*.5, lY, .7-rushE*.15, .3, lAlpha*.8);
-
-    // 勝者
-    ctx.save();
-    ctx.shadowColor=wc; ctx.shadowBlur=CW*.045*(rushE+.3);
-    DR_char(wImg, CW*.5+shX, wY+shY2, wSc, .72, 1);
-    ctx.restore();
-
-    // 着地衝撃リング（突進完了時）
-    if(rushT>.85&&rushT<1){
-      const rp=(rushT-.85)/.15;
-      DR_landRing(CW*.5, wyDst+CH*.2, rp, wc);
-    }
-
-    applyColorGrade(winner);
-
-    const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
-    if(t>.36){
-      const nT=Math.min(1,(t-.36)/.28);
-      const nE=DR_easeOutBack(nT);
-      ctx.save();
-      ctx.translate(CW*.5,CH*.88); ctx.scale(nE,nE); ctx.translate(-CW*.5,-CH*.88);
-      centerText([wn],.88,CW*.068,wc,wc);
-      ctx.restore();
-    }
-    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#aaa');
-    centerText([`${pA}  —  ${pB}`],.1,CW*.13,sc2,sc2);
-    if(i<6){ ctx.fillStyle=`rgba(255,255,255,${(6-i)/6*.6})`; ctx.fillRect(0,0,CW,CH); }
-  }
-  drawScoreBar(pA,pB); drawScanlines(); drawVignette(.5); drawFlash(i,6);
-}
-
-// ── FINAL ──
-// 勝者が上から降りてきてズームイン → 上下に微ジャンプ → 左右シェイク
-function DR_renderFinal(i, winner, pA, pB){
-  const t = i/(FINAL_DUR*FPS), eI=Math.min(1,t*2.5);
-  const wc=winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
-  DR_bg(t);
-
-  const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
-  if(fi){
-    const zT=Math.min(1,t/.55);
-    const zE=DR_easeOutBounce(zT); // バウンスで着地感
-    const sc=.5+.58*zE;
-    const wY0=-CH*.1+(CH*.44+CH*.1)*zE; // 上から降りてくる
-    // 着地後の上下ジャンプ（0.7秒周期）
-    const jp=Math.max(0,t-.55);
-    const jumpY=jp>0?Math.sin(jp*Math.PI*2.2)*CH*.028:0;
-    // 横シェイク（低周波）
-    const shX=zT>=1?Math.sin(t*Math.PI*3.5)*CW*.012:0;
-
-    ctx.save();
-    ctx.shadowColor=wc; ctx.shadowBlur=CW*.06*(0.4+zE*.6);
-    DR_char(fi, CW*.5+shX, wY0+jumpY, sc, .82, 1);
-    ctx.restore();
-    applyColorGrade(winner);
-  } else {
-    const bob=Math.sin(t*Math.PI*5)*CH*.02;
-    DR_char(S.imgA, CW*.5, CH*.35+bob, .9, .38, 1);
-    DR_char(S.imgB, CW*.5, CH*.65-bob, .9, .38, 1);
-  }
-
-  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
-  const pulse=1+.04*Math.sin(t*Math.PI*9);
-  ctx.globalAlpha=eI;
-  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.1,CW*.145*pulse,wc,wc);
-  ctx.globalAlpha=1;
-  if(t>.3){ ctx.globalAlpha=Math.min(1,(t-.3)*3); centerText([`${pA}  —  ${pB}`],.9,CW*.1,wc,'#334'); ctx.globalAlpha=1; }
-  if(i<22){ ctx.fillStyle=`rgba(255,255,255,${Math.max(0,(22-i)/22*.7)})`; ctx.fillRect(0,0,CW,CH); }
-  drawScanlines(); drawVignette(.55); drawFlash(i,18);
-}
-
-// ═══════════════════════════════════════════════
 // DISPATCHER — S.style に応じて分岐
 // ═══════════════════════════════════════════════
 function renderIntro(i,cat,ci){
-  if(S.style==='striker') return ST_renderIntro(i,cat,ci);
-  if(S.style==='drop')    return DR_renderIntro(i,cat,ci);
   
   
   
   return B_renderIntro(i,cat,ci);
 }
 function renderCut(i,winner,pA,pB){
-  if(S.style==='striker') return ST_renderCut(i,winner,pA,pB);
-  if(S.style==='drop')    return DR_renderCut(i,winner,pA,pB);
   
   
   
   return B_renderCut(i,winner,pA,pB);
 }
 function renderFinal(i,winner,pA,pB){
-  if(S.style==='striker') return ST_renderFinal(i,winner,pA,pB);
-  if(S.style==='drop')    return DR_renderFinal(i,winner,pA,pB);
   
   
   
