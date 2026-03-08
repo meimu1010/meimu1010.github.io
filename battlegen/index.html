@@ -221,15 +221,15 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       <div class="style-name">BATTLE</div>
       <div class="style-desc">グリッチ・パーティクル背景・カラーグレード</div>
     </div>
-    <div class="style-card" data-style="fire" onclick="selectStyle(this)">
-      <span class="style-icon">🔥</span>
-      <div class="style-name">FIRE</div>
-      <div class="style-desc">炎エフェクト・衝撃波・TikTokバトル系</div>
+    <div class="style-card" data-style="aura" onclick="selectStyle(this)">
+      <span class="style-icon">🔮</span>
+      <div class="style-name">AURA</div>
+      <div class="style-desc">闘気オーラ・稲妻・紫金エネルギーバースト</div>
     </div>
-    <div class="style-card" data-style="cinema" onclick="selectStyle(this)">
-      <span class="style-icon">🎬</span>
-      <div class="style-name">CINEMA</div>
-      <div class="style-desc">映画風レターボックス・白黒フラッシュ</div>
+    <div class="style-card" data-style="blade" onclick="selectStyle(this)">
+      <span class="style-icon">⚔️</span>
+      <div class="style-name">BLADE</div>
+      <div class="style-desc">斬撃・速度線・刀傷・アニメ戦闘系</div>
     </div>
   </div>
 </div>
@@ -687,477 +687,561 @@ function B_renderFinal(i,winner,pA,pB){
 }
 
 // ═══════════════════════════════════════════════
-// STYLE: FIRE — TikTokバトル系 炎・衝撃波・爆発
+// STYLE: AURA — 闘気オーラ・稲妻・紫金エネルギー
+// コンセプト: DB/鬼滅風アニメ戦闘。紫×金の圧倒的オーラ。
 // ═══════════════════════════════════════════════
 
-// 擬似乱数（シード付き）
-function F_rand(seed){ return ((Math.sin(seed*127.1+31.4)*43758.5453)%1+1)%1; }
+// シード乱数
+function A_rnd(s){ return((Math.sin(s*127.1+31.4)*43758.5453)%1+1)%1; }
 
-// 炎パーティクル描画（キャラの足元から上昇）
-function F_drawFire(cx, charTopY, intensity, tSeed){
+// ── 稲妻 ──
+function A_lightning(x1,y1,x2,y2,seed,width,color,branches){
   ctx.save();
-  for(let k=0;k<28;k++){
-    const r1=F_rand(k*7+tSeed*0.3);
-    const r2=F_rand(k*13+tSeed*0.5);
-    const r3=F_rand(k*19+tSeed*0.7);
-    const life = (r1+tSeed*0.8*(0.5+r2*.5)) % 1; // 0→1 で上昇
-    const x  = cx + (r2-.5)*CW*.38*(1-life*.5);
-    const y  = charTopY - life*CH*.55;
-    const sz = (1-life)*CW*.045*(0.3+r3*.7)*intensity;
+  ctx.strokeStyle=color; ctx.lineWidth=width;
+  ctx.shadowColor=color; ctx.shadowBlur=width*8;
+  const pts=[[x1,y1]];
+  const segs=10;
+  for(let i=1;i<segs;i++){
+    const r=i/segs;
+    const mx=x1+(x2-x1)*r, my=y1+(y2-y1)*r;
+    const perp=(A_rnd(seed+i*7.3)-.5)*CW*.14*(1-r*.6);
+    pts.push([mx+perp,my]);
+  }
+  pts.push([x2,y2]);
+  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+  pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+  ctx.stroke();
+  // 白コア
+  ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=width*.35; ctx.shadowBlur=width*3;
+  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+  pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));
+  ctx.stroke();
+  // 枝
+  if(branches>0){
+    for(let b=0;b<3;b++){
+      const idx=2+Math.floor(A_rnd(seed+b*31)*6);
+      if(!pts[idx]) continue;
+      const bx=pts[idx][0]+( A_rnd(seed+b*17)-.5)*CW*.2;
+      const by=pts[idx][1]+A_rnd(seed+b*23)*CH*.12;
+      A_lightning(pts[idx][0],pts[idx][1],bx,by,seed+b*100,width*.5,color,0);
+    }
+  }
+  ctx.restore();
+}
+
+// ── オーラパーティクル群 ──
+function A_aura(cx,cy,radius,intensity,t,hue){
+  ctx.save();
+  for(let k=0;k<40;k++){
+    const angle=A_rnd(k*7)*Math.PI*2;
+    const life= (A_rnd(k*13)+t*.6*(0.4+A_rnd(k*19)*.6))%1;
+    const r=radius*(0.4+life*.8)*(0.85+A_rnd(k*3)*.3);
+    const px=cx+Math.cos(angle+life)*r;
+    const py=cy+Math.sin(angle*2+life*.5)*r*.4; // 縦方向に圧縮→炎柱っぽく
+    const sz=CW*.022*(1-life)*(0.5+A_rnd(k*11)*.5)*intensity;
     if(sz<1) continue;
-    const hue = 20 - life*20 + r1*25;   // 赤→オレンジ→黄
-    const alpha = (1-life)*(0.55+r2*.3)*intensity;
-    // コアグロー
-    ctx.shadowColor=`hsl(${hue},100%,60%)`;
-    ctx.shadowBlur=sz*2.5;
-    const grad=ctx.createRadialGradient(x,y,0,x,y,sz);
-    grad.addColorStop(0,`hsla(${hue+20},100%,85%,${alpha})`);
-    grad.addColorStop(.5,`hsla(${hue},100%,55%,${alpha*.7})`);
-    grad.addColorStop(1,`hsla(${hue-10},100%,30%,0)`);
-    ctx.fillStyle=grad;
-    ctx.beginPath(); ctx.arc(x,y,sz,0,Math.PI*2); ctx.fill();
+    const h=hue+A_rnd(k*7)*40-20;
+    const a=(1-life)*(0.5+A_rnd(k*29)*.4)*intensity;
+    const g=ctx.createRadialGradient(px,py,0,px,py,sz);
+    g.addColorStop(0,`hsla(${h},100%,88%,${a})`);
+    g.addColorStop(.5,`hsla(${h-20},100%,60%,${a*.6})`);
+    g.addColorStop(1,`hsla(${h-40},80%,30%,0)`);
+    ctx.fillStyle=g; ctx.shadowColor=`hsl(${h},100%,70%)`; ctx.shadowBlur=sz*3;
+    ctx.beginPath(); ctx.arc(px,py,sz,0,Math.PI*2); ctx.fill();
   }
   ctx.restore();
 }
 
-// 衝撃波リング（爆発時）
-function F_shockwave(cx, cy, progress, color){
-  if(progress<=0||progress>=1) return;
-  const r = CW * 0.55 * progress;
-  const alpha = (1-progress)*0.7;
-  ctx.save();
-  ctx.strokeStyle=color; ctx.lineWidth=CW*.018*(1-progress);
-  ctx.globalAlpha=alpha;
-  ctx.shadowColor=color; ctx.shadowBlur=CW*.03;
-  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
-  // 2nd ring
-  if(progress>.15){
-    const r2=CW*0.55*(progress-.15);
-    ctx.globalAlpha=(1-(progress-.15))*0.4;
-    ctx.lineWidth=CW*.01*(1-(progress-.15));
-    ctx.beginPath(); ctx.arc(cx,cy,r2,0,Math.PI*2); ctx.stroke();
-  }
-  ctx.restore();
-}
-
-// エネルギーライン（横断）
-function F_energyLines(t, colorA, colorB){
-  ctx.save();
-  for(let k=0;k<6;k++){
-    const phase=(t*3.5+k*.17)%1;
-    if(phase>.7) continue;
-    const y=CH*(0.1+k*.14+Math.sin(t*2+k)*.03);
-    const a=Math.sin(phase*Math.PI)*0.55;
-    const isA=k%2===0;
-    const grad=ctx.createLinearGradient(0,y,CW,y);
-    grad.addColorStop(0,'rgba(0,0,0,0)');
-    grad.addColorStop(phase*.8, isA?colorA:colorB);
-    grad.addColorStop(Math.min(1,phase*.8+.1),'rgba(255,255,255,0.9)');
-    grad.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.strokeStyle=grad; ctx.lineWidth=1.5+k*.3;
-    ctx.globalAlpha=a;
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW,y); ctx.stroke();
-  }
-  ctx.restore();
-}
-
-function F_drawBg(t, wc1, wc2){
-  // 背景グラデ（暗い赤〜黒）
+// ── 背景 ──
+function A_drawBg(t, hue=280){
   const g=ctx.createLinearGradient(0,0,0,CH);
-  g.addColorStop(0,'#0e0404'); g.addColorStop(.5,'#120808'); g.addColorStop(1,'#060202');
+  g.addColorStop(0,'#06020e'); g.addColorStop(.5,'#0b0518'); g.addColorStop(1,'#04010a');
   ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
-  // 対角スラッシュライン（TikTok感）
-  ctx.save(); ctx.globalAlpha=.04;
-  for(let k=0;k<12;k++){
-    const x=((k/12+t*.04)%1)*CW*2-CW*.5;
-    ctx.strokeStyle='#ff4400'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(x,-100); ctx.lineTo(x+CW*.4,CH+100); ctx.stroke();
+  // 極光カーテン（縦グラデ）
+  for(let k=0;k<5;k++){
+    const x=CW*(0.1+k*.2)+Math.sin(t*.7+k)*CW*.06;
+    const w=CW*(0.06+A_rnd(k*7)*.06);
+    const a=0.06+0.04*Math.sin(t*1.3+k);
+    const lg=ctx.createLinearGradient(0,0,0,CH);
+    lg.addColorStop(0,`hsla(${hue+k*15},100%,55%,0)`);
+    lg.addColorStop(.35,`hsla(${hue+k*15},100%,55%,${a})`);
+    lg.addColorStop(.65,`hsla(${hue+k*10},100%,45%,${a*.7})`);
+    lg.addColorStop(1,`hsla(${hue+k*10},100%,35%,0)`);
+    ctx.fillStyle=lg; ctx.fillRect(x-w/2,0,w,CH);
+  }
+  // 星屑
+  ctx.save();
+  for(let k=0;k<60;k++){
+    const sx=A_rnd(k*31)*CW, sy=A_rnd(k*17)*CH;
+    const sa=(0.3+A_rnd(k*53)*.7)*(0.5+0.5*Math.sin(t*3+k));
+    ctx.fillStyle=`rgba(255,255,255,${sa*0.4})`; ctx.beginPath();
+    ctx.arc(sx,sy,A_rnd(k*7)*.8+.3,0,Math.PI*2); ctx.fill();
   }
   ctx.restore();
-  // 中央からの放射光
-  const cx=CW/2, cy=CH*.45;
-  const rg=ctx.createRadialGradient(cx,cy,0,cx,cy,CW*.6);
-  rg.addColorStop(0,`rgba(255,80,0,0.08)`);
-  rg.addColorStop(.5,`rgba(255,40,0,0.04)`);
-  rg.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=rg; ctx.fillRect(0,0,CW,CH);
-  // エネルギーライン
-  if(wc1&&wc2) F_energyLines(t, wc1, wc2);
 }
 
-function F_drawSplitBg(t){
+// ── 分割背景（INTRO用）──
+function A_drawSplitBg(t){
   if(S.imgA&&S.imgB){
-    // 上半分：A側カラー、下半分：B側カラー
-    const gA=ctx.createLinearGradient(0,0,0,CH/2);
-    gA.addColorStop(0,'rgba(255,40,10,.22)'); gA.addColorStop(1,'rgba(0,0,0,0)');
-    const gB=ctx.createLinearGradient(0,CH/2,0,CH);
-    gB.addColorStop(0,'rgba(0,0,0,0)'); gB.addColorStop(1,'rgba(30,100,255,.22)');
-    ctx.globalAlpha=.45; ctx.drawImage(S.imgA,0,0,CW,CH/2);
+    ctx.globalAlpha=.32; ctx.drawImage(S.imgA,0,0,CW,CH/2);
     ctx.drawImage(S.imgB,0,CH/2,CW,CH/2); ctx.globalAlpha=1;
-    ctx.fillStyle='rgba(8,2,2,.7)'; ctx.fillRect(0,0,CW,CH);
-    ctx.fillStyle=gA; ctx.fillRect(0,0,CW,CH/2);
-    ctx.fillStyle=gB; ctx.fillRect(0,CH/2,CW,CH/2);
-  } else { F_drawBg(t, null, null); }
-  // 中央の炎ライン
+    ctx.fillStyle='rgba(4,1,12,.72)'; ctx.fillRect(0,0,CW,CH);
+  }
+  // 中央の金色オーラライン
   const gl=ctx.createLinearGradient(0,0,CW,0);
-  gl.addColorStop(0,'rgba(255,60,0,0)');
-  gl.addColorStop(.35,'rgba(255,140,0,.85)');
-  gl.addColorStop(.5,'rgba(255,220,60,1)');
-  gl.addColorStop(.65,'rgba(255,140,0,.85)');
-  gl.addColorStop(1,'rgba(255,60,0,0)');
-  ctx.strokeStyle=gl; ctx.lineWidth=3;
-  ctx.shadowColor='#ff8800'; ctx.shadowBlur=18;
-  ctx.beginPath(); ctx.moveTo(0,CH/2); ctx.lineTo(CW,CH/2); ctx.stroke();
+  gl.addColorStop(0,'rgba(180,120,0,0)');
+  gl.addColorStop(.3,'rgba(255,200,0,.9)');
+  gl.addColorStop(.5,'rgba(255,240,120,1)');
+  gl.addColorStop(.7,'rgba(255,200,0,.9)');
+  gl.addColorStop(1,'rgba(180,120,0,0)');
+  for(let d=-1;d<=1;d++){
+    ctx.strokeStyle=gl; ctx.lineWidth= d===0?3:1;
+    ctx.shadowColor='#ffcc00'; ctx.shadowBlur= d===0?22:8;
+    ctx.beginPath(); ctx.moveTo(0,CH/2+d*4); ctx.lineTo(CW,CH/2+d*4); ctx.stroke();
+  }
   ctx.shadowBlur=0;
 }
 
-function F_drawVS(t){
-  const cx=CW/2, cy=CH*.5;
-  // パルスリング
-  const pulse=.5+.5*Math.sin(t*Math.PI*6);
+// ── VSバッジ ──
+function A_drawVS(t){
+  const cx=CW/2,cy=CH*.5;
+  const pulse=.5+.5*Math.sin(t*Math.PI*7);
+  // オーラリング
+  for(let r=0;r<3;r++){
+    const rad=CW*(.065+r*.022+pulse*.008);
+    ctx.save();
+    ctx.strokeStyle=`hsla(${280+r*20},100%,${60+r*10}%,${.5-r*.12})`;
+    ctx.lineWidth=2.5-r*.6; ctx.shadowColor='#aa44ff'; ctx.shadowBlur=18;
+    ctx.beginPath(); ctx.arc(cx,cy,rad,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
   ctx.save();
-  ctx.shadowColor='#ff6600'; ctx.shadowBlur=CW*.06*pulse;
-  ctx.strokeStyle=`rgba(255,${100+pulse*80},0,${0.6+pulse*.3})`; ctx.lineWidth=2+pulse*1.5;
-  ctx.beginPath(); ctx.arc(cx,cy,CW*.06,0,Math.PI*2); ctx.stroke();
-  ctx.fillStyle=`rgba(20,5,0,0.92)`; ctx.beginPath(); ctx.arc(cx,cy,CW*.058,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(8,2,20,.96)';
+  ctx.beginPath(); ctx.arc(cx,cy,CW*.062,0,Math.PI*2); ctx.fill();
   ctx.restore();
-  glowText('VS',cx,cy+CW*.02,CW*.052,'#ffcc00','#ff6600',24);
+  glowText('VS',cx,cy+CW*.02,CW*.052,'#ffdd44','#cc8800',20);
+  // 稲妻を VS から放射
+  if(Math.sin(t*13)>.6){
+    const angle=A_rnd(Math.floor(t*30))*Math.PI*2;
+    A_lightning(cx,cy,cx+Math.cos(angle)*CW*.22,cy+Math.sin(angle)*CH*.12,
+      Math.floor(t*30),1.5,'rgba(180,100,255,0.9)',0);
+  }
 }
 
 // ── INTRO ──
-function F_renderIntro(i,cat,ci){
-  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**3;
-  const shake=(1-ease)*3.5;
-  F_drawBg(t,'rgba(255,60,0,0.6)','rgba(40,120,255,0.6)');
-  F_drawSplitBg(t);
-  // キャラ（ズームイン＋シェイク）
-  const sc=1+.05*(1-ease);
-  drawCharImg(S.imgA,.22,sc,(Math.random()-.5)*shake*2,(Math.random()-.5)*shake,  .37);
-  drawCharImg(S.imgB,.78,sc,(Math.random()-.5)*shake*2,(Math.random()-.5)*shake,.37);
-  // 足元炎（ease後半から）
+function A_renderIntro(i,cat,ci){
+  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**3, shake=(1-ease)*4;
+  A_drawBg(t);
+  A_drawSplitBg(t);
+  // キャラ
+  drawCharImg(S.imgA,.22,1+.04*(1-ease),(Math.random()-.5)*shake,(Math.random()-.5)*shake*.5,.38);
+  drawCharImg(S.imgB,.78,1+.04*(1-ease),(Math.random()-.5)*shake,(Math.random()-.5)*shake*.5,.38);
+  // キャラ周囲のオーラ
   if(ease>.3){
     const fi=(ease-.3)/.7;
-    F_drawFire(CW/2, CH*.38, fi*.8, t*20);
-    F_drawFire(CW/2, CH*.84, fi*.8, t*20+50);
+    A_aura(CW/2,CH*.22,CW*.18,fi*.7,t*1.2,280);
+    A_aura(CW/2,CH*.78,CW*.18,fi*.7,t*1.2+5,260);
   }
-  F_drawVS(t);
-  // カテゴリ名：下からスライドアップ
-  ctx.save(); ctx.translate(0,(1-ease)*CH*.07); ctx.globalAlpha=ease;
-  centerText([cat.toUpperCase()],.5,CW*.115,'#ffcc00','#ff4400');
+  A_drawVS(t);
+  // カテゴリ名（下からスライドアップ）
+  ctx.save(); ctx.translate(0,(1-ease)*CH*.08); ctx.globalAlpha=ease;
+  centerText([cat.toUpperCase()],.5,CW*.115,'#ffdd44','#cc8800');
   ctx.restore();
-  drawProgNum(ci); drawScanlines(); drawVignette(.5);
+  // 稲妻（intro後半）
+  if(ease>.6 && Math.sin(t*17)>.4){
+    A_lightning(0,CH*.5*A_rnd(Math.floor(t*15)),CW,CH*.5+A_rnd(Math.floor(t*15)+1)*CH*.3,
+      Math.floor(t*15),2,'rgba(160,80,255,0.6)',2);
+  }
+  drawProgNum(ci); drawVignette(.52);
+  applyChromatic(Math.max(0,7*(1-t*3)));
+}
+
+// ── CUT ──
+function A_renderCut(i,winner,pA,pB){
+  const t=i/(CUT_DUR*FPS);
+  const wHue=winner==='A'?15:(winner==='B'?220:280);
+  const wc =winner==='A'?COLOR_A:(winner==='B'?COLOR_B:'#cc88ff');
+  A_drawBg(t, wHue);
+
+  if(winner==='Draw'){
+    drawCharImg(S.imgA,.28,1+.04*t,0,0,.38);
+    drawCharImg(S.imgB,.72,1+.04*t,0,0,.38);
+    A_aura(CW*.3,CH*.28,CW*.15,.6,t*1.5,280);
+    A_aura(CW*.7,CH*.72,CW*.15,.6,t*1.5+3,260);
+    centerText(['DRAW'],.5,CW*.13,'#cc88ff','#884488');
+  } else {
+    const img=winner==='A'?S.imgA:S.imgB;
+    const zE=1-(1-Math.min(1,t*2.2))**3; // キャラズームイン
+    if(img){
+      ctx.save();
+      ctx.shadowColor=`hsl(${wHue},100%,65%)`; ctx.shadowBlur=CW*.07*(0.5+zE*.5);
+      drawCharImg(img,.45,1+.22*zE,0,0,.78); ctx.restore();
+    }
+    // 勝者キャラ全体を包む大オーラ
+    A_aura(CW/2,CH*.45,CW*.32,(0.4+zE*.8),t*1.8,wHue);
+    // 稲妻（複数）
+    const lCount=Math.floor(2+t*3);
+    for(let L=0;L<lCount;L++){
+      if(A_rnd(Math.floor(t*20)+L*7)>.35) continue;
+      const sx=A_rnd(L*31+Math.floor(t*12))*CW;
+      const ex=A_rnd(L*17+Math.floor(t*12)+1)*CW;
+      A_lightning(sx,-20,ex,CH+20, L*100+Math.floor(t*20),
+        1.8+L*.4, `hsla(${wHue+L*20},100%,70%,0.85)`, L<2?1:0);
+    }
+    applyColorGrade(winner);
+    const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
+    // 名前：スタンプ（ドン！）
+    const nSc=t<.12?1+(1-t/.12)*.5:1;
+    ctx.save(); ctx.translate(CW*.5,CH*.88); ctx.scale(nSc,nSc); ctx.translate(-CW*.5,-CH*.88);
+    centerText([wn],.88,CW*.07,wc,wc); ctx.restore();
+    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#cc88ff');
+    centerText([`${pA}  —  ${pB}`],.1,CW*.13,sc2,sc2);
+    // 開幕紫フラッシュ
+    if(i<8){ ctx.fillStyle=`hsla(${wHue},80%,30%,${(8-i)/8*.5})`; ctx.fillRect(0,0,CW,CH); }
+  }
+  drawScoreBar(pA,pB); drawVignette(.5); drawFlash(i,6);
+}
+
+// ── FINAL ──
+function A_renderFinal(i,winner,pA,pB){
+  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*2);
+  const wHue=winner==='A'?15:(winner==='B'?220:280);
+  const wc =winner==='A'?COLOR_A:(winner==='B'?COLOR_B:'#cc88ff');
+  A_drawBg(t, wHue);
+  const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
+  if(fi){
+    ctx.save();
+    ctx.shadowColor=`hsl(${wHue},100%,65%)`; ctx.shadowBlur=CW*.09*(1+Math.sin(t*Math.PI*4)*.3);
+    drawCharImg(fi,.45,1+.28*t,0,0,.84); ctx.restore();
+  } else {
+    drawCharImg(S.imgA,.27,1+.06*t,0,0,.4);
+    drawCharImg(S.imgB,.73,1+.06*t,0,0,.4);
+  }
+  // 全身を包む巨大オーラ（時間で拡大）
+  const auraR=CW*(.28+t*.22);
+  A_aura(CW/2,CH*.45,auraR,(0.6+t*.6),t*2,wHue);
+  A_aura(CW/2,CH*.45,auraR*.55,(0.5+t*.5),t*2+3,wHue+40);
+  // 定期的な稲妻爆発
+  const lPhase=(t*2.2)%1;
+  if(lPhase<.45){
+    const lp=lPhase/.45;
+    for(let L=0;L<5;L++){
+      if(A_rnd(L*13+Math.floor(t*30))>.5) continue;
+      const angle=A_rnd(L*7+Math.floor(t*20))*Math.PI*2;
+      const len=CW*(.3+A_rnd(L*11)*.4);
+      A_lightning(CW/2,CH*.45,
+        CW/2+Math.cos(angle)*len, CH*.45+Math.sin(angle)*len*.5,
+        L*50+Math.floor(t*25), 2.5*(1-lp*.5),
+        `hsla(${wHue+L*25},100%,75%,${0.9-lp*.3})`, 1);
+    }
+  }
+  applyColorGrade(winner==='Draw'?null:winner);
+  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
+  const pulse=1+.045*Math.sin(t*Math.PI*9);
+  ctx.globalAlpha=eI;
+  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.1,CW*.145*pulse,wc,'#aa44ff');
+  ctx.globalAlpha=1;
+  if(t>.28){
+    ctx.globalAlpha=Math.min(1,(t-.28)*3);
+    centerText([`${pA}  —  ${pB}`],.9,CW*.105,wc,'#884488');
+    ctx.globalAlpha=1;
+  }
+  // 開幕紫爆発フラッシュ
+  if(i<20){ ctx.fillStyle=`hsla(${wHue},70%,25%,${Math.max(0,(20-i)/20*.65)})`; ctx.fillRect(0,0,CW,CH); }
+  drawVignette(.55); drawFlash(i,18);
+}
+
+// ═══════════════════════════════════════════════
+// STYLE: BLADE — 斬撃・速度線・刀傷・アニメ戦闘
+// コンセプト: 紫×金の刀剣。斬撃が走り、速度線が爆発する。
+// ═══════════════════════════════════════════════
+
+function BL_rnd(s){ return((Math.sin(s*311.7+491.3)*39842.1167)%1+1)%1; }
+
+// ── 速度線（放射状・横断） ──
+function BL_speedLines(cx,cy,count,len,width,color,t,seed){
+  ctx.save(); ctx.strokeStyle=color; ctx.shadowColor=color; ctx.shadowBlur=width*6;
+  for(let k=0;k<count;k++){
+    const angle=BL_rnd(k*7+seed)*Math.PI*2;
+    const r0=BL_rnd(k*13+seed)*len*.25;
+    const r1=r0+len*(0.4+BL_rnd(k*19+seed)*.6);
+    const a=0.4+BL_rnd(k*23+seed)*.5;
+    ctx.globalAlpha=a; ctx.lineWidth=width*(0.5+BL_rnd(k*31+seed)*.5);
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(angle)*r0, cy+Math.sin(angle)*r0);
+    ctx.lineTo(cx+Math.cos(angle)*r1, cy+Math.sin(angle)*r1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ── 斬撃ライン ──
+function BL_slash(x1,y1,x2,y2,width,color,alpha){
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  // メイン斬撃
+  const grad=ctx.createLinearGradient(x1,y1,x2,y2);
+  grad.addColorStop(0,'rgba(255,255,255,0)');
+  grad.addColorStop(.35,color);
+  grad.addColorStop(.65,color);
+  grad.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.strokeStyle=grad; ctx.lineWidth=width;
+  ctx.shadowColor=color; ctx.shadowBlur=width*5;
+  ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  // 白コア
+  ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=width*.25; ctx.shadowBlur=width*2;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.restore();
+}
+
+// ── 斬撃複数 ──
+function BL_slashBurst(cx,cy,t,baseColor,seed,count){
+  for(let k=0;k<count;k++){
+    const phase=(t+BL_rnd(k*7+seed)*.5)%1;
+    if(phase>.55) continue;
+    const fade=1-phase/.55;
+    const angle=-Math.PI*.35+BL_rnd(k*13+seed)*Math.PI*.7;
+    const len=CW*(0.3+BL_rnd(k*19+seed)*.45);
+    const px=cx+(BL_rnd(k*23+seed)-.5)*CW*.3;
+    const py=cy+(BL_rnd(k*29+seed)-.5)*CH*.25;
+    BL_slash(px-Math.cos(angle)*len/2, py-Math.sin(angle)*len/2,
+             px+Math.cos(angle)*len/2, py+Math.sin(angle)*len/2,
+             3+k*.8, baseColor, fade*.85);
+  }
+}
+
+// ── 衝撃波エフェクト ──
+function BL_impact(cx,cy,progress,color1,color2){
+  if(progress<=0||progress>=1) return;
+  // リング
+  for(let r=0;r<3;r++){
+    const rp=Math.max(0,progress-r*.12);
+    if(rp<=0) continue;
+    const radius=CW*.5*rp;
+    const a=(1-rp)*(0.7-r*.15);
+    ctx.save(); ctx.globalAlpha=a;
+    ctx.strokeStyle=r%2===0?color1:color2;
+    ctx.lineWidth=CW*.016*(1-rp); ctx.shadowColor=color1; ctx.shadowBlur=20;
+    ctx.beginPath(); ctx.arc(cx,cy,radius,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ── 背景 ──
+function BL_drawBg(t, hue=280){
+  const g=ctx.createLinearGradient(0,0,0,CH);
+  g.addColorStop(0,'#08040e'); g.addColorStop(.5,'#0e071a'); g.addColorStop(1,'#050210');
+  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
+  // 斜め速度線（背景）
+  ctx.save(); ctx.globalAlpha=.04;
+  for(let k=0;k<18;k++){
+    const phase=((k/18)+(t*.07))%1;
+    const x=phase*CW*1.5-CW*.25;
+    ctx.strokeStyle=`hsl(${hue},80%,60%)`; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x-CW*.28,CH); ctx.stroke();
+  }
+  ctx.restore();
+  // 中央グロー
+  const rg=ctx.createRadialGradient(CW/2,CH*.45,0,CW/2,CH*.45,CW*.5);
+  rg.addColorStop(0,`hsla(${hue},80%,25%,0.12)`);
+  rg.addColorStop(.6,`hsla(${hue},60%,15%,0.06)`);
+  rg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=rg; ctx.fillRect(0,0,CW,CH);
+}
+
+// ── 分割背景 ──
+function BL_drawSplitBg(t){
+  if(S.imgA&&S.imgB){
+    ctx.globalAlpha=.35; ctx.drawImage(S.imgA,0,0,CW,CH/2);
+    ctx.drawImage(S.imgB,0,CH/2,CW,CH/2); ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(6,3,14,.72)'; ctx.fillRect(0,0,CW,CH);
+  }
+  // 中央の金刀光
+  const gl=ctx.createLinearGradient(0,0,CW,0);
+  gl.addColorStop(0,'rgba(120,80,0,0)');
+  gl.addColorStop(.25,'rgba(220,160,0,.8)');
+  gl.addColorStop(.5,'rgba(255,220,80,1)');
+  gl.addColorStop(.75,'rgba(220,160,0,.8)');
+  gl.addColorStop(1,'rgba(120,80,0,0)');
+  // 斜め斬撃ライン
+  const yt=CH/2, yb=CH/2;
+  BL_slash(0,yt-8,CW,yb+8,4,'rgba(200,150,0,0.9)',1);
+  BL_slash(0,yt+3,CW,yb-3,2,'rgba(255,220,100,0.6)',1);
+}
+
+// ── VSバッジ ──
+function BL_drawVS(t){
+  const cx=CW/2, cy=CH*.5;
+  const pulse=.5+.5*Math.sin(t*Math.PI*8);
+  // 六角形フレーム
+  ctx.save();
+  ctx.strokeStyle=`rgba(200,160,0,${0.6+pulse*.3})`; ctx.lineWidth=2.5;
+  ctx.shadowColor='#cc9900'; ctx.shadowBlur=16;
+  ctx.beginPath();
+  for(let v=0;v<6;v++){
+    const a=v/6*Math.PI*2-Math.PI/6, r=CW*.065;
+    v===0?ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+  }
+  ctx.closePath(); ctx.stroke();
+  ctx.fillStyle='rgba(8,4,18,.95)'; ctx.fill();
+  ctx.restore();
+  glowText('VS',cx,cy+CW*.02,CW*.052,'#ffdd44','#cc8800',22);
+  // パルス斬撃
+  if(pulse>.8){
+    BL_slash(cx-CW*.08,cy-CH*.04,cx+CW*.08,cy+CH*.04,3,'rgba(255,200,0,0.9)',pulse*.8);
+    BL_slash(cx+CW*.08,cy-CH*.04,cx-CW*.08,cy+CH*.04,3,'rgba(180,100,255,0.9)',pulse*.8);
+  }
+}
+
+// ── INTRO ──
+function BL_renderIntro(i,cat,ci){
+  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**3, shake=(1-ease)*5;
+  BL_drawBg(t);
+  BL_drawSplitBg(t);
+  // 背景速度線（intro用爆発）
+  if(ease>.25){
+    const sp=(ease-.25)/.75;
+    BL_speedLines(CW/2,CH*.22,20,CW*.35,1.2,'rgba(200,160,50,0.5)',t,1);
+    BL_speedLines(CW/2,CH*.78,20,CW*.35,1.2,'rgba(180,100,255,0.5)',t,50);
+  }
+  // キャラ
+  drawCharImg(S.imgA,.22,1+.05*(1-ease),(Math.random()-.5)*shake,(Math.random()-.5)*shake*.6,.38);
+  drawCharImg(S.imgB,.78,1+.05*(1-ease),(Math.random()-.5)*shake,(Math.random()-.5)*shake*.6,.38);
+  BL_drawVS(t);
+  // カテゴリ名（左からスライド）
+  ctx.save(); ctx.translate((1-ease)*-CW*.15,0); ctx.globalAlpha=ease;
+  // 背景バー
+  ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,CH*.46,CW,CH*.085);
+  centerText([cat.toUpperCase()],.5,CW*.115,'#ffdd44','#cc8800');
+  ctx.restore();
+  // 斬撃エフェクト（後半）
+  if(ease>.5){
+    BL_slashBurst(CW/2,CH*.5,t*2.5,'rgba(200,160,0,0.8)',1,3);
+  }
+  drawProgNum(ci); drawVignette(.52);
   applyChromatic(Math.max(0,6*(1-t*3)));
 }
 
 // ── CUT ──
-function F_renderCut(i,winner,pA,pB){
+function BL_renderCut(i,winner,pA,pB){
   const t=i/(CUT_DUR*FPS);
-  const wc =winner==='A'?COLOR_A:(winner==='B'?COLOR_B:'#ffaa00');
-  const wc2=winner==='A'?'rgba(255,60,0,0.6)':(winner==='B'?'rgba(40,120,255,0.6)':'rgba(200,200,0,0.5)');
-  F_drawBg(t, wc2, wc2);
+  const wHue=winner==='A'?15:(winner==='B'?220:280);
+  const wc =winner==='A'?COLOR_A:(winner==='B'?COLOR_B:'#cc88ff');
+  const slashColor=winner==='A'?'rgba(255,80,30,0.9)':(winner==='B'?'rgba(50,130,255,0.9)':'rgba(180,120,255,0.9)');
+  BL_drawBg(t, wHue);
 
   if(winner==='Draw'){
-    drawCharImg(S.imgA,.28,1+.04*t,(Math.random()-.5)*4,(Math.random()-.5)*4,.37);
-    drawCharImg(S.imgB,.72,1+.04*t,(Math.random()-.5)*4,(Math.random()-.5)*4,.37);
-    F_drawFire(CW*.3, CH*.45, .5, t*20);
-    F_drawFire(CW*.7, CH*.45, .5, t*20+30);
-    centerText(['DRAW'],.5,CW*.13,'#ffcc00','#ff8800');
-  }else{
+    drawCharImg(S.imgA,.28,1+.04*t,0,0,.38);
+    drawCharImg(S.imgB,.72,1+.04*t,0,0,.38);
+    BL_speedLines(CW*.3,CH*.28,16,CW*.25,1,'rgba(180,120,255,0.4)',t,1);
+    BL_speedLines(CW*.7,CH*.72,16,CW*.25,1,'rgba(180,120,255,0.4)',t,30);
+    BL_slashBurst(CW/2,CH*.5,t*3,'rgba(150,100,200,0.7)',5,4);
+    centerText(['DRAW'],.5,CW*.13,'#cc88ff','#884488');
+  } else {
     const img=winner==='A'?S.imgA:S.imgB;
-    const wHue=winner==='A'?10:220;
-    // キャラ：勢いよく前進
-    const zEase=1-(1-Math.min(1,t*2))**3;
+    const zE=1-(1-Math.min(1,t*2))**3;
     if(img){
       ctx.save();
-      ctx.shadowColor=`hsl(${wHue},100%,60%)`; ctx.shadowBlur=CW*.06*(0.5+zEase*.5);
-      drawCharImg(img,.45,1+.2*zEase,0,0,.75); ctx.restore();
+      ctx.shadowColor=`hsl(${wHue},100%,65%)`; ctx.shadowBlur=CW*.07*(0.4+zE*.6);
+      drawCharImg(img,.45,1+.24*zE,0,0,.78); ctx.restore();
     }
-    // 足元から炎が燃え上がる
-    F_drawFire(CW/2, CH*.75, 0.5+zEase*.7, t*25);
-    // 衝撃波（CUT開幕）
-    F_shockwave(CW/2, CH*.45, t*1.4, wc);
+    // 爆発的速度線
+    BL_speedLines(CW/2,CH*.45,30,CW*.5,2.5,`hsla(${wHue},100%,65%,0.7)`,t,Math.floor(t*15));
+    // 斬撃爆発
+    BL_slashBurst(CW/2,CH*.45,t*3.5,slashColor,Math.floor(t*20),6);
+    // 衝撃波
+    BL_impact(CW/2,CH*.45,t*1.3,`hsl(${wHue},100%,65%)`,`rgba(255,220,0,0.8)`);
     applyColorGrade(winner);
-    // エネルギーライン（勝者カラー）
-    F_energyLines(t, wc2, 'rgba(255,255,255,0.4)');
     const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
-    // 名前：スタンプ＋グロー
-    const nameScale = t<.15 ? 1+(1-t/.15)*.4 : 1;
-    ctx.save(); ctx.translate(CW/2,CH*.87); ctx.scale(nameScale,nameScale); ctx.translate(-CW/2,-CH*.87);
-    centerText([wn],.87,CW*.068,wc,wc); ctx.restore();
-    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ffcc00');
+    // 名前スタンプ
+    const nSc=t<.12?1+(1-t/.12)*.55:1;
+    ctx.save(); ctx.translate(CW*.5,CH*.87); ctx.scale(nSc,nSc); ctx.translate(-CW*.5,-CH*.87);
+    centerText([wn],.87,CW*.07,wc,wc); ctx.restore();
+    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#cc88ff');
     centerText([`${pA}  —  ${pB}`],.1,CW*.13,sc2,sc2);
-    // 開幕フラッシュ（勝者カラー）
-    if(i<7){
-      const fa=(7-i)/7;
-      ctx.fillStyle=winner==='A'?`rgba(255,60,0,${fa*.45})`:`rgba(40,100,255,${fa*.45})`;
-      ctx.fillRect(0,0,CW,CH);
+    // 開幕フラッシュ
+    if(i<8){ ctx.fillStyle=`hsla(${wHue},70%,30%,${(8-i)/8*.55})`; ctx.fillRect(0,0,CW,CH); }
+    // 横断斬撃ライン（勝利演出）
+    if(t>.3){
+      const lp=Math.min(1,(t-.3)/.4);
+      BL_slash(-CW*.1,CH*.42,CW*1.1,CH*.5,5,`hsla(${wHue},100%,70%,${lp*.7})`,1);
+      BL_slash(-CW*.1,CH*.55,CW*1.1,CH*.47,3,'rgba(255,220,80,0.5)',lp);
     }
   }
-  drawScoreBar(pA,pB); drawScanlines(); drawVignette(.5); drawFlash(i,6);
+  drawScoreBar(pA,pB); drawVignette(.5); drawFlash(i,6);
 }
 
 // ── FINAL ──
-function F_renderFinal(i,winner,pA,pB){
-  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*2.5);
-  const wHue=winner==='A'?10:(winner==='B'?220:40);
-  const wc =winner==='A'?COLOR_A:(winner==='B'?COLOR_B:'#ffcc00');
-  const wc2=winner==='A'?'rgba(255,60,0,0.7)':(winner==='B'?'rgba(40,120,255,0.7)':'rgba(255,180,0,0.6)');
-  F_drawBg(t, wc2, 'rgba(255,200,0,0.3)');
+function BL_renderFinal(i,winner,pA,pB){
+  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*2.2);
+  const wHue=winner==='A'?15:(winner==='B'?220:280);
+  const wc =winner==='A'?COLOR_A:(winner==='B'?COLOR_B:'#cc88ff');
+  const slashColor=winner==='A'?'rgba(255,80,30,0.9)':(winner==='B'?'rgba(50,130,255,0.9)':'rgba(180,120,255,0.9)');
+  BL_drawBg(t, wHue);
   const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
   if(fi){
     ctx.save();
-    ctx.shadowColor=`hsl(${wHue},100%,60%)`;
-    ctx.shadowBlur=CW*.08*(1+Math.sin(t*Math.PI*3)*.3);
-    drawCharImg(fi,.45,1+.3*t,0,0,.82); ctx.restore();
-  }else{
-    drawCharImg(S.imgA,.27,1+.06*t,0,0,.38);
-    drawCharImg(S.imgB,.73,1+.06*t,0,0,.38);
+    ctx.shadowColor=`hsl(${wHue},100%,65%)`; ctx.shadowBlur=CW*.09*(1+Math.sin(t*Math.PI*5)*.3);
+    drawCharImg(fi,.45,1+.3*t,0,0,.84); ctx.restore();
+  } else {
+    drawCharImg(S.imgA,.27,1+.06*t,0,0,.4);
+    drawCharImg(S.imgB,.73,1+.06*t,0,0,.4);
   }
-  // 大炎（時間と共に勢い増）
-  const fireIntensity=0.4+t*0.8;
-  F_drawFire(CW/2, CH*.78, fireIntensity, t*30);
-  F_drawFire(CW*.25, CH*.78, fireIntensity*.6, t*30+20);
-  F_drawFire(CW*.75, CH*.78, fireIntensity*.6, t*30+40);
-  // 連続衝撃波パルス
+  // 爆発的速度線（拡大）
+  const speedInt=0.5+t*0.8;
+  BL_speedLines(CW/2,CH*.45,38,CW*(0.4+t*.3),3,`hsla(${wHue},100%,65%,${speedInt*.7})`,t,Math.floor(t*10));
+  BL_speedLines(CW/2,CH*.45,18,CW*(0.35+t*.25),1.5,'rgba(255,220,80,0.5)',t+.5,80);
+  // 連続斬撃バースト（周期）
+  const slashPhase=(t*1.8)%1;
+  if(slashPhase<.5){
+    BL_slashBurst(CW/2,CH*.45,slashPhase*2,slashColor,Math.floor(t*20),8);
+  }
+  // 周期的衝撃波
   for(let w=0;w<3;w++){
-    const tp=(t-.1*w)%0.6;
-    if(tp>0) F_shockwave(CW/2, CH*.45, tp/0.6, wc);
+    const wp=(t*1.5+w*.33)%1;
+    BL_impact(CW/2,CH*.45,wp,`hsl(${wHue},100%,65%)`,'rgba(255,220,0,0.7)');
   }
   applyColorGrade(winner==='Draw'?null:winner);
-  F_energyLines(t, wc2, 'rgba(255,200,0,0.5)');
   const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
+  const pulse=1+.04*Math.sin(t*Math.PI*10);
   ctx.globalAlpha=eI;
-  // WINNER テキスト（パルス）
-  const pulse=1+.04*Math.sin(t*Math.PI*8);
-  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.1,CW*.14*pulse,wc,'#ff4400');
+  centerText(wn?['WINNER',wn.toUpperCase()]:['DRAW'],.1,CW*.145*pulse,wc,'#cc8800');
   ctx.globalAlpha=1;
-  if(t>.25){
-    ctx.globalAlpha=Math.min(1,(t-.25)*3);
-    centerText([`${pA}  —  ${pB}`],.9,CW*.1,wc,'#ff4400');
+  if(t>.28){
+    ctx.globalAlpha=Math.min(1,(t-.28)*3);
+    centerText([`${pA}  —  ${pB}`],.9,CW*.105,wc,'#884488');
     ctx.globalAlpha=1;
   }
-  // 開幕爆発フラッシュ
-  if(i<22){ ctx.fillStyle=`rgba(255,100,0,${Math.max(0,(22-i)/22*.7)})`; ctx.fillRect(0,0,CW,CH); }
-  drawScanlines(); drawVignette(.55); drawFlash(i,18);
-}
-
-// ═══════════════════════════════════════════════
-// STYLE: CINEMA
-// 映画レターボックス・モノクロ・タイポ強調
-// ═══════════════════════════════════════════════
-const LB=0.10; // レターボックス高さ比
-function C_letterbox(){
-  const h=CH*LB; ctx.fillStyle='#000';
-  ctx.fillRect(0,0,CW,h); ctx.fillRect(0,CH-h,CW,h);
-}
-function C_drawBg(t, wHue=-1){
-  ctx.fillStyle='#06060a'; ctx.fillRect(0,0,CW,CH);
-  // 背景光柱：赤・青 or 勝者カラー
-  const hA = wHue>=0 ? wHue : 0;
-  const hB = wHue>=0 ? wHue : 220;
-  const cols = [[CW*.22,hA],[CW*.5,0],[CW*.78,hB]];
-  cols.forEach(([x,h],k)=>{
-    const a=.055+.025*Math.sin(t*1.5+k);
-    const lg=ctx.createLinearGradient(0,0,0,CH);
-    lg.addColorStop(0,`hsla(${h},80%,55%,0)`);
-    lg.addColorStop(.35,`hsla(${h},80%,55%,${a})`);
-    lg.addColorStop(.65,`hsla(${h},80%,55%,${a})`);
-    lg.addColorStop(1,`hsla(${h},80%,55%,0)`);
-    ctx.fillStyle=lg;
-    const w=CW*(0.05+0.02*Math.sin(t*.8+k));
-    ctx.fillRect(x-w/2,0,w,CH);
-  });
-  // フィルムグレイン（多め）
-  ctx.save(); ctx.globalAlpha=.028+Math.random()*.022;
-  for(let k=0;k<180;k++){
-    const gx=Math.random()*CW, gy=Math.random()*CH;
-    ctx.fillStyle=Math.random()>.4?'#fff':'#666';
-    ctx.fillRect(gx,gy,Math.random()<.1?2:1,Math.random()<.1?2:1);
+  // 定期的に大斬撃が画面を横断
+  if(Math.sin(t*Math.PI*3)>.7){
+    const sp=Math.sin(t*Math.PI*3);
+    BL_slash(-CW*.2,CH*.3,CW*1.2,CH*.65,8,`hsla(${wHue},100%,75%,${(sp-.7)/.3*.6})`,1);
+    BL_slash(-CW*.2,CH*.6,CW*1.2,CH*.35,5,'rgba(255,220,80,0.5)',1);
   }
-  ctx.restore();
-  // 水平スクラッチライン（ランダム）
-  if(Math.random()>.82){
-    ctx.save(); ctx.globalAlpha=.08+Math.random()*.08;
-    ctx.strokeStyle='#fff'; ctx.lineWidth=.5+Math.random();
-    const ys=Math.random()*CH;
-    ctx.beginPath(); ctx.moveTo(0,ys); ctx.lineTo(CW,ys); ctx.stroke();
-    ctx.restore();
-  }
-}
-// 左から伸びる下線
-function C_drawUnderline(progress, y, color){
-  ctx.save();
-  ctx.strokeStyle=color; ctx.lineWidth=2;
-  ctx.shadowColor=color; ctx.shadowBlur=8;
-  ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW*progress,y); ctx.stroke();
-  ctx.restore();
-}
-// スタンプエフェクト（巨大テキストをドン！）
-function C_stampText(text, yR, px, color, scaleT){
-  const sc = scaleT<.15 ? (1+(1-scaleT/.15)*0.6) : 1; // 最初は大きく縮む
-  const alpha = scaleT<.05 ? scaleT/.05 : 1;
-  const cx=CW/2, cy=CH*yR;
-  ctx.save();
-  ctx.translate(cx,cy); ctx.scale(sc,sc); ctx.translate(-cx,-cy);
-  ctx.globalAlpha=alpha;
-  ctx.font=`${px}px "Bebas Neue"`; ctx.textAlign='center';
-  ctx.shadowColor=color; ctx.shadowBlur=40;
-  ctx.strokeStyle='#000'; ctx.lineWidth=px*.2;
-  ctx.strokeText(text,cx,cy);
-  ctx.fillStyle=color; ctx.fillText(text,cx,cy);
-  // ノイズライン（スタンプ感）
-  if(scaleT<.12){
-    ctx.globalAlpha=(.12-scaleT)/.12*.6;
-    ctx.strokeStyle=color; ctx.lineWidth=3;
-    for(let k=0;k<6;k++){
-      const ry=cy-px*.5+Math.random()*px;
-      ctx.beginPath(); ctx.moveTo(cx-CW*.3,ry); ctx.lineTo(cx+CW*.3,ry); ctx.stroke();
-    }
-  }
-  ctx.restore();
-}
-function C_applyBW(amount){
-  const id=ctx.getImageData(0,0,CW,CH), d=id.data;
-  for(let i=0;i<d.length;i+=4){
-    const gray=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
-    d[i]  =cl(d[i]  *(1-amount)+gray*amount);
-    d[i+1]=cl(d[i+1]*(1-amount)+gray*amount);
-    d[i+2]=cl(d[i+2]*(1-amount)+gray*amount);
-    // 強コントラスト
-    d[i]  =cl((d[i]  -128)*1.3+128);
-    d[i+1]=cl((d[i+1]-128)*1.3+128);
-    d[i+2]=cl((d[i+2]-128)*1.3+128);
-  }
-  ctx.putImageData(id,0,0);
-}
-function C_divider(){
-  ctx.save(); ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1;
-  ctx.setLineDash([CW*.025,CW*.012]);
-  ctx.beginPath(); ctx.moveTo(0,CH/2); ctx.lineTo(CW,CH/2); ctx.stroke();
-  ctx.setLineDash([]); ctx.restore();
-}
-function C_renderIntro(i,cat,ci){
-  const t=i/(INTRO_DUR*FPS), ease=1-(1-t)**3;
-  C_drawBg(t);
-  // キャラ（上下ズームイン）
-  const charScale = 1 + (1-ease)*0.12;
-  if(S.imgA){ ctx.save(); ctx.globalAlpha=.5+ease*.45; drawCharImg(S.imgA,.28,charScale,0,0,.36); ctx.restore(); }
-  if(S.imgB){ ctx.save(); ctx.globalAlpha=.5+ease*.45; drawCharImg(S.imgB,.72,charScale,0,0,.36); ctx.restore(); }
-  C_applyBW(0.72);
-  // カテゴリ名：上からドロップイン
-  const dropY = -(1-ease)*CH*.12;
-  ctx.save();
-  ctx.translate(0, dropY); ctx.globalAlpha=ease;
-  centerText([cat.toUpperCase()],.5,CW*.11,'#ffffff','#cccccc');
-  ctx.restore();
-  // カテゴリ名の下線が左から伸びる
-  const lineY = CH*.5 + CW*.11*.6;
-  C_drawUnderline(ease, lineY, '#ffffff');
-  // ラウンド表示（右上、英字スタイル）
-  ctx.save();
-  ctx.font=`600 ${CW*.02}px Rajdhani`; ctx.textAlign='right';
-  ctx.fillStyle=`rgba(180,180,180,${ease*.8})`;
-  ctx.letterSpacing='0.15em';
-  ctx.fillText(`${ci+1}  /  ${CATEGORIES.length}`, CW*.96, CH*LB+CH*.042);
-  ctx.restore();
-  C_letterbox(); drawVignette(.6);
-}
-function C_renderCut(i,winner,pA,pB){
-  const t=i/(CUT_DUR*FPS);
-  const wHue=winner==='A'?0:(winner==='B'?220:-1);
-  C_drawBg(t, wHue>=0?wHue:-1);
-  if(winner==='Draw'){
-    if(S.imgA){ ctx.save(); ctx.globalAlpha=.65; drawCharImg(S.imgA,.28,1,0,0,.38); ctx.restore(); }
-    if(S.imgB){ ctx.save(); ctx.globalAlpha=.65; drawCharImg(S.imgB,.72,1,0,0,.38); ctx.restore(); }
-    C_applyBW(0.88);
-    centerText(['DRAW'],.5,CW*.13,'#cccccc','#777777');
-  }else{
-    const img=winner==='A'?S.imgA:S.imgB;
-    // キャラ：弾けるようにズームイン
-    const zoomEase = t<.3 ? 1+(.3-t)/.3*0.35 : 1+t*.1;
-    if(img){ ctx.save(); ctx.globalAlpha=.92; drawCharImg(img,.45,zoomEase,0,0,.75); ctx.restore(); }
-    // 勝者カラー残し・他モノクロ
-    C_applyBW(0.58);
-    const wc=winner==='A'?'#ff6644':'#4488ff';
-    const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
-    // 勝者名：スタンプ演出（ドン！）
-    C_stampText(wn, .85, CW*.075, wc, t);
-    // スコア（下線付き）
-    const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
-    C_stampText(`${pA} — ${pB}`, .1, CW*.1, sc2, t);
-    // 勝者の色カラーフラッシュ
-    if(i<6){
-      const flashA=(6-i)/6*.5;
-      ctx.fillStyle=winner==='A'?`rgba(255,80,40,${flashA})`:`rgba(40,100,255,${flashA})`;
-      ctx.fillRect(0,0,CW,CH);
-    }
-  }
-  drawScoreBar(pA,pB); C_letterbox(); drawVignette(.68);
-}
-function C_renderFinal(i,winner,pA,pB){
-  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*1.6);
-  const wHue=winner==='A'?0:(winner==='B'?220:-1);
-  C_drawBg(t, wHue);
-  const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
-  // キャラ：ゆっくり前進ズーム
-  if(fi){ ctx.save(); ctx.globalAlpha=.88; drawCharImg(fi,.44,1+.25*t,0,0,.82); ctx.restore(); }
-  else{ drawCharImg(S.imgA,.26,1+.08*t,0,0,.4); drawCharImg(S.imgB,.74,1+.08*t,0,0,.4); }
-  // 勝者カラーを少し残す
-  C_applyBW(0.45);
-  const wc=winner==='A'?'#ff6644':(winner==='B'?'#4488ff':'#bbbbbb');
-  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
-  // WINNER文字：スタンプ
-  ctx.globalAlpha=eI;
-  C_stampText(wn?'WINNER':'DRAW', .1, CW*.09, '#ffffff', t);
-  // 勝者名：巨大スタンプ
-  if(wn){
-    const nameT=Math.max(0,t-.08);
-    C_stampText(wn.toUpperCase(), .2, CW*.155, wc, nameT);
-  }
-  ctx.globalAlpha=1;
-  // スコア（徐々にフェードイン + 下線）
-  if(t>.25){
-    const sa=Math.min(1,(t-.25)*3);
-    ctx.globalAlpha=sa;
-    centerText([`${pA}  —  ${pB}`],.9,CW*.095,'#cccccc','#666666');
-    C_drawUnderline(sa, CH*.93, '#666666');
-    ctx.globalAlpha=1;
-  }
-  // 光柱爆発（開幕 + 中盤パルス）
-  if(t<.15||Math.sin(t*Math.PI*4)>.85){
-    const bA = t<.15 ? (0.15-t)/0.15 : (Math.sin(t*Math.PI*4)-.85)/.15;
-    ctx.save(); ctx.globalAlpha=bA*.35;
-    ctx.fillStyle=wHue>=0?`hsl(${wHue},100%,70%)`:'#ffffff';
-    ctx.fillRect(0,0,CW,CH); ctx.restore();
-  }
-  // THE END（後半）
-  if(t>.6){
-    ctx.save();
-    ctx.font=`600 ${CW*.022}px Rajdhani`; ctx.textAlign='center';
-    ctx.fillStyle=`rgba(160,160,160,${Math.min(1,(t-.6)*3)})`;
-    ctx.fillText('— THE END —', CW*.5, CH*(1-LB)-.04*CH);
-    ctx.restore();
-  }
-  C_letterbox(); drawVignette(.7);
-  if(i<22){ ctx.fillStyle=`rgba(255,255,255,${Math.max(0,(22-i)/22*.85)})`; ctx.fillRect(0,0,CW,CH); }
+  if(i<22){ ctx.fillStyle=`hsla(${wHue},70%,25%,${Math.max(0,(22-i)/22*.65)})`; ctx.fillRect(0,0,CW,CH); }
+  drawVignette(.55); drawFlash(i,18);
 }
 
 // ═══════════════════════════════════════════════
 // DISPATCHER — S.style に応じて分岐
 // ═══════════════════════════════════════════════
 function renderIntro(i,cat,ci){
-  if(S.style==='fire')   return F_renderIntro(i,cat,ci);
-  if(S.style==='cinema') return C_renderIntro(i,cat,ci);
+  if(S.style==='aura')   return A_renderIntro(i,cat,ci);
+  if(S.style==='blade')  return BL_renderIntro(i,cat,ci);
+  
   return B_renderIntro(i,cat,ci);
 }
 function renderCut(i,winner,pA,pB){
-  if(S.style==='fire')   return F_renderCut(i,winner,pA,pB);
-  if(S.style==='cinema') return C_renderCut(i,winner,pA,pB);
+  if(S.style==='aura')   return A_renderCut(i,winner,pA,pB);
+  if(S.style==='blade')  return BL_renderCut(i,winner,pA,pB);
+  
   return B_renderCut(i,winner,pA,pB);
 }
 function renderFinal(i,winner,pA,pB){
-  if(S.style==='fire')   return F_renderFinal(i,winner,pA,pB);
-  if(S.style==='cinema') return C_renderFinal(i,winner,pA,pB);
+  if(S.style==='aura')   return A_renderFinal(i,winner,pA,pB);
+  if(S.style==='blade')  return BL_renderFinal(i,winner,pA,pB);
+  
   return B_renderFinal(i,winner,pA,pB);
 }
 
