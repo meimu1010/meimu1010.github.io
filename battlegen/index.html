@@ -592,7 +592,7 @@ function drawCatLabel(cat, yR, enPx, enColor, enGlow){
   const cx = CW/2;
   const jaPx = Math.round(enPx * 0.36);
   // 日本語＋英語を縦に並べる。2行分の総高さを計算して中心に配置
-  const gap   = enPx * 0.18;           // 日本語と英語の間隔
+  const gap   = enPx * 0.32;           // 日本語と英語の間隔
   const totalH = jaPx + gap + enPx;    // 全体の高さ
   const blockTop = CH*yR - totalH/2;   // ブロック上端
   const jaY  = blockTop + jaPx;        // 日本語ベースライン
@@ -1009,23 +1009,32 @@ function V2_renderCut(i, winner, pA, pB){
 }
 
 // ── FINAL ──
-// 勝者演出: 3フェーズ
-//   Phase1(0→0.4): 上下分割のまま勝者がズームイン
-//   Phase2(0.4→0.7): 分割線が消えて勝者がフルスクリーンに拡大
-//   Phase3(0.7→1.0): 左右にゆったりパン＋呼吸＋定期的ゴールドフラッシュ
+// 勝者のみをフルスクリーンで映す
+// グリッチ・カラーフリンジ・シェイク・スキャンラインで演出
 function V2_renderFinal(i, winner, pA, pB){
-  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*2.2);
+  const t=i/(FINAL_DUR*FPS), eI=Math.min(1,t*3);
   const wc=winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
   const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
+  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
 
-  // Draw時
+  // ── 背景: 勝者画像をぼかして全面に敷く ──
+  ctx.fillStyle='#06060b'; ctx.fillRect(0,0,CW,CH);
+  if(fi){
+    ctx.save(); ctx.globalAlpha=.38;
+    const bs=CW/fi.width*1.08, biw=fi.width*bs, bih=fi.height*bs;
+    ctx.drawImage(fi,(CW-biw)/2,(CH-bih)/2,biw,bih);
+    ctx.restore();
+    ctx.fillStyle='rgba(4,4,10,.72)'; ctx.fillRect(0,0,CW,CH);
+  }
+
+  // DRAW時
   if(!fi){
     V2_splitBg(null);
     ctx.save(); ctx.beginPath(); ctx.rect(0,0,CW,CH/2); ctx.clip();
-    V2_char(S.imgA, CW*.5, CH*.25, .9+.1*t, .58, 1);
+    V2_char(S.imgA, CW*.5, CH*.25, .9+.08*t, .58, 1);
     ctx.restore();
     ctx.save(); ctx.beginPath(); ctx.rect(0,CH/2,CW,CH/2); ctx.clip();
-    V2_char(S.imgB, CW*.5, CH*.75, .9+.1*t, .58, 1);
+    V2_char(S.imgB, CW*.5, CH*.75, .9+.08*t, .58, 1);
     ctx.restore();
     ctx.globalAlpha=eI;
     centerText(['DRAW'],.5,CW*.14,COLOR_D,'#888');
@@ -1034,101 +1043,113 @@ function V2_renderFinal(i, winner, pA, pB){
     return;
   }
 
-  // Phase1: 分割背景 + 勝者ズームイン
-  const p1End=0.4, p2End=0.72;
-  if(t<=p1End){
-    V2_splitBg(winner);
-    const p1=V2_easeOut(t/p1End);
-    const wCY=winner==='A'?CH*.25:CH*.75;
-    const lCY=winner==='A'?CH*.75:CH*.25;
-    const lImg=winner==='A'?S.imgB:S.imgA;
-    // 敗者フェードアウト
-    const lA=Math.max(0,1-p1*2);
-    if(lA>0){ ctx.save(); ctx.globalAlpha=lA; V2_char(lImg,CW*.5,lCY,.9,.52,1); ctx.restore(); }
-    // 勝者ズーム
-    ctx.save();
-    ctx.shadowColor='#ffd700'; ctx.shadowBlur=CW*.05*(p1*.5+.2);
-    V2_char(fi, CW*.5, wCY, 1+.3*p1, .6, 1);
-    ctx.restore();
+  // ── エフェクト計算 ──
+  // 開幕シェイク (0〜1.5秒で収束)
+  const shDecay = Math.max(0, 1-t*1.4);
+  const shAmp   = shDecay * CW*.018;
+  const shX = Math.sin(i*2.7)*shAmp;
+  const shY = Math.cos(i*1.9)*shAmp*.5;
 
-  // Phase2: 勝者がフルスクリーンに展開
-  } else if(t<=p2End){
-    const p2=V2_easeOut((t-p1End)/(p2End-p1End));
-    const wCY=winner==='A'?CH*.25:CH*.75;
-    // 背景: 分割BGを徐々にフェードアウトして単色に
-    V2_splitBg(winner);
-    ctx.fillStyle=`rgba(7,7,12,${p2*.85})`; ctx.fillRect(0,0,CW,CH);
-    const fromSc=1.3, toSc=1.0;
-    const sc=fromSc+(toSc-fromSc)*p2;
-    const fromY=wCY, toY=CH*.44;
-    const cy2=fromY+(toY-fromY)*p2;
-    ctx.save();
-    ctx.shadowColor='#ffd700'; ctx.shadowBlur=CW*.07*(1+p2*.5);
-    V2_char(fi, CW*.5, cy2, sc, .76+p2*.1, 1);
-    ctx.restore();
-    applyColorGrade(winner);
+  // ゆったり呼吸パン (シェイク収束後)
+  const panAmt = Math.max(0, t*1.4-1);
+  const panX = Math.sin(t*Math.PI*.6)*CW*.025*Math.min(1,panAmt);
 
-  // Phase3: フルスクリーン固定＋演出
-  } else {
-    const p3=V2_easeOut((t-p2End)/(1-p2End));
-    // 勝者背景（フル）
-    if(fi){
-      ctx.fillStyle='#07070c'; ctx.fillRect(0,0,CW,CH);
-      ctx.save(); ctx.globalAlpha=.4;
-      const s2=CW/fi.width*1.05, iw=fi.width*s2, ih=fi.height*s2;
-      ctx.drawImage(fi,(CW-iw)/2,(CH-ih)/2,iw,ih);
-      ctx.restore();
-      ctx.fillStyle='rgba(4,4,10,.65)'; ctx.fillRect(0,0,CW,CH);
-    }
-    const sc=1.0+.18*p3;
-    // ゆったり左右パン
-    const panX=Math.sin(t*Math.PI*.65)*CW*.028;
-    // 呼吸
-    const breathe=Math.sin(t*Math.PI*3.2)*.014;
-    ctx.save();
-    ctx.shadowColor='#ffd700'; ctx.shadowBlur=CW*.08*(1+breathe*4+Math.sin(t*Math.PI*5)*.1);
-    V2_char(fi, CW*.5+panX, CH*.44, sc+breathe, .86, 1);
-    ctx.restore();
-    applyColorGrade(winner);
+  // スケール: 開幕1.06→ゆっくり1.12まで
+  const sc = 1.06 + V2_easeOut(Math.min(1,t*.5))*.1;
 
-    // ゴールド縁枠（パルス）
-    const fa=.35*(1+Math.sin(t*Math.PI*5)*.3);
-    const th2=CH*.86*(sc+breathe), tw2=fi.width*(th2/fi.height);
-    ctx.save(); ctx.globalAlpha=fa;
-    ctx.strokeStyle='#ffd700'; ctx.lineWidth=3.5;
-    ctx.shadowColor='#ffcc00'; ctx.shadowBlur=28;
-    ctx.beginPath(); ctx.roundRect(CW*.5+panX-tw2/2, CH*.44-th2/2, tw2, th2, 10); ctx.stroke();
-    ctx.restore();
+  // ── グリッチ（開幕と定期的に） ──
+  const glitchOn = t<.4 || (Math.sin(t*Math.PI*7.3)>.82);
+  const glitchAmt = glitchOn ? (t<.4?(1-t/.4)*CW*.018 : CW*.009) : 0;
 
-    // 定期ゴールドフラッシュ（1.2秒周期）
-    const flashP=(t-p2End)%1.2;
-    if(flashP<.15){
-      ctx.fillStyle=`rgba(255,200,0,${(1-flashP/.15)*.12})`; ctx.fillRect(0,0,CW,CH);
-    }
+  // カラーフリンジ（RGBずれ）
+  if(glitchAmt>1){
+    // R チャンネル: +shiftX
+    ctx.save(); ctx.globalAlpha=.85; ctx.globalCompositeOperation='source-over';
+    const shift=glitchAmt*(Math.random()>.5?1:-1);
+    // 簡易フリンジ: 同画像を薄く赤・青でずらして重ねる
+    ctx.save(); ctx.globalAlpha=.22;
+    ctx.shadowColor='rgba(255,0,0,0)';
+    const ts=sc, txw=fi.width*(CH*.86*ts/fi.height);
+    ctx.drawImage(fi, CW*.5+panX+shX+shift-txw/2, CH*.44+shY-CH*.86*ts/2, txw, CH*.86*ts);
+    ctx.restore();
+    ctx.save(); ctx.globalAlpha=.22;
+    ctx.drawImage(fi, CW*.5+panX+shX-shift-txw/2, CH*.44+shY-CH*.86*ts/2, txw, CH*.86*ts);
+    ctx.restore();
+    ctx.restore();
   }
 
-  // WINNER テキスト
-  const pulse=1+.04*Math.sin(t*Math.PI*9);
+  // ── 水平グリッチスライス ──
+  if(glitchAmt>0.5 && Math.random()>.55){
+    ctx.save();
+    const slices=3+Math.floor(Math.random()*3);
+    for(let s=0;s<slices;s++){
+      const sy=Math.random()*CH, sh2=CH*(.01+Math.random()*.025);
+      const sx2=(Math.random()-.5)*CW*.04;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0,sy,CW,sh2); ctx.clip();
+      const tsw=fi.width*(CH*.86*sc/fi.height);
+      ctx.globalAlpha=.7;
+      ctx.drawImage(fi, CW*.5+panX+shX+sx2-tsw/2, CH*.44+shY-CH*.86*sc/2, tsw, CH*.86*sc);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // ── メインキャラ描画 ──
+  ctx.save();
+  ctx.shadowColor='#ffd700';
+  ctx.shadowBlur=CW*.055*(1+Math.sin(t*Math.PI*4)*.18);
+  V2_char(fi, CW*.5+panX+shX, CH*.44+shY, sc, .86, 1);
+  ctx.restore();
+
+  applyColorGrade(winner);
+
+  // ── ゴールド縁枠（パルス） ──
+  const faPulse=.28+.12*Math.sin(t*Math.PI*5);
+  const fw=fi.width*(CH*.86*sc/fi.height);
+  ctx.save(); ctx.globalAlpha=faPulse;
+  ctx.strokeStyle='#ffd700'; ctx.lineWidth=3;
+  ctx.shadowColor='#ffcc00'; ctx.shadowBlur=22;
+  ctx.beginPath();
+  ctx.roundRect(CW*.5+panX+shX-fw/2, CH*.44+shY-CH*.86*sc/2, fw, CH*.86*sc, 6);
+  ctx.stroke();
+  ctx.restore();
+
+  // ── スキャンライン ──
+  drawScanlines();
+
+  // ── 定期的ホワイトフラッシュ（グリッチ感） ──
+  const fp=(t%.9);
+  if(fp<.06 && t>.5){
+    ctx.fillStyle=`rgba(255,255,255,${(1-fp/.06)*.1})`; ctx.fillRect(0,0,CW,CH);
+  }
+
+  // ── WINNER テキスト ──
+  // 重ならないようY座標を明確に分離
+  // WINNER: 上端から CH*0.07
+  // 名前  : CH*0.14
+  // スコア: CH*0.21
+  // scoreBanner: 下端
+  const pulse=1+.035*Math.sin(t*Math.PI*9);
   ctx.globalAlpha=eI;
-  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
-  glowText(wn?'WINNER':'DRAW', CW*.5, CH*.1, CW*.13*pulse, '#ffd700','#cc8800', 28);
-  if(wn && t>.1){
-    const na=Math.min(1,(t-.1)/.22);
+  glowText('WINNER', CW*.5, CH*.078, CW*.12*pulse, '#ffd700','#cc8800', 26);
+  if(wn){
+    const na=Math.min(1,t*4);
     ctx.globalAlpha=eI*na;
-    glowText(wn.toUpperCase(), CW*.5, CH*.18, CW*.09*pulse, wc, wc, 20);
+    glowText(wn.toUpperCase(), CW*.5, CH*.155, CW*.085*pulse, wc, wc, 18);
   }
   ctx.globalAlpha=1;
 
-  if(t>.3){
-    ctx.globalAlpha=Math.min(1,(t-.3)*3);
-    centerText([`${pA}  —  ${pB}`],.91,CW*.1,wc,'#996600');
+  if(t>.2){
+    const sa=Math.min(1,(t-.2)*4);
+    ctx.globalAlpha=sa;
+    centerText([`${pA}  —  ${pB}`], .23, CW*.09, wc, '#996600');
     ctx.globalAlpha=1;
   }
 
-  if(i<22){ ctx.fillStyle=`rgba(255,200,0,${Math.max(0,(22-i)/22*.5)})`; ctx.fillRect(0,0,CW,CH); }
-  V2_scoreBanner(pA,pB); drawVignette(.55); drawFlash(i,18);
+  if(i<18){ ctx.fillStyle=`rgba(255,200,0,${Math.max(0,(18-i)/18*.55)})`; ctx.fillRect(0,0,CW,CH); }
+  V2_scoreBanner(pA,pB); drawVignette(.58); drawFlash(i,20);
 }
-
 // ═══════════════════════════════════════════════
 // DISPATCHER — S.style に応じて分岐
 // ═══════════════════════════════════════════════
