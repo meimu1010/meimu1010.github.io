@@ -992,17 +992,17 @@ function V2_renderCut(i, winner, pA, pB){
 
   applyColorGrade(winner);
 
-  // 勝者名プレート（バウンス）
+  // 勝者名プレート（中央にバウンス登場）
   if(t>.38){
     const nT=Math.min(1,(t-.38)/.28), nE=V2_easeBack(nT);
-    const nameY=winner==='A'?CH*.9:CH*.12;
+    const nameY=CH*.5;
     ctx.save(); ctx.translate(CW*.5,nameY); ctx.scale(nE,nE); ctx.translate(-CW*.5,-nameY);
     V2_namePlate((winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase(), CW*.5, nameY, wc);
     ctx.restore();
   }
 
   const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
-  centerText([`${pA}  —  ${pB}`], wHalf==='top'?.87:.13, CW*.12, sc2, sc2);
+  centerText([`${pA}  —  ${pB}`], .1, CW*.12, sc2, sc2);
 
   if(i<7){ ctx.fillStyle=`rgba(255,220,0,${(7-i)/7*.32})`; ctx.fillRect(0,0,CW,CH); }
   V2_scoreBanner(pA,pB); drawVignette(.5); drawFlash(i,6);
@@ -1043,85 +1043,114 @@ function V2_renderFinal(i, winner, pA, pB){
     return;
   }
 
-  // ── エフェクト計算 ──
-  // 開幕シェイク (0〜1.5秒で収束)
-  const shDecay = Math.max(0, 1-t*1.4);
-  const shAmp   = shDecay * CW*.018;
-  const shX = Math.sin(i*2.7)*shAmp;
-  const shY = Math.cos(i*1.9)*shAmp*.5;
+  // ── フレーム固定擬似乱数（freeze/glitch中に毎フレーム値が変わらないよう安定化） ──
+  const R = (seed) => { let x=Math.sin(seed*127.1+i*31.7)*43758.5453; return x-Math.floor(x); };
 
-  // ゆったり呼吸パン (シェイク収束後)
-  const panAmt = Math.max(0, t*1.4-1);
-  const panX = Math.sin(t*Math.PI*.6)*CW*.025*Math.min(1,panAmt);
+  // ── グリッチ発火タイミング（iベースで決定的） ──
+  // 開幕強グリッチ (0〜1.5s) + 周期的グリッチバースト
+  const tSec = t * (FINAL_DUR);           // 実秒数
+  const baseGlitch  = t < .5 ? (1-t/.5)*CW*.038 : 0;
+  // 1.2秒周期でバーストグリッチ（0.1秒間）
+  const burstPhase  = (tSec % 1.2);
+  const burstActive = burstPhase < 0.12 && t > 0.4;
+  const burstAmt    = burstActive ? CW*.034*(1-burstPhase/0.12) : 0;
+  // 細かいランダムグリッチ（フレーム単位でON/OFF）
+  const microActive = R(7)>.62 && t>.3;
+  const microAmt    = microActive ? CW*.016 : 0;
+  const glitchAmt   = baseGlitch + burstAmt + microAmt;
 
-  // スケール: 開幕1.06→ゆっくり1.12まで
-  const sc = 1.06 + V2_easeOut(Math.min(1,t*.5))*.1;
+  // ── freeze演出: burstの直前3フレームで画面が「固まる」 ──
+  // 0.1s=3f(30fps)/6f(60fps) の間、シェイクとスライスを最大化
+  const freezeWind  = 0.08;
+  const isFrozen    = t>.4 && burstPhase > (1.2-freezeWind) || burstActive;
 
-  // ── グリッチ（開幕と定期的に） ──
-  const glitchOn = t<.4 || (Math.sin(t*Math.PI*7.3)>.82);
-  const glitchAmt = glitchOn ? (t<.4?(1-t/.4)*CW*.018 : CW*.009) : 0;
+  // ── シェイク ──
+  const shDecay = Math.max(0, 1-t*1.1);
+  const shBase  = shDecay * CW*.028;
+  const shExtra = isFrozen ? CW*.018*(R(13)*.8+.6) : 0;
+  const shX = Math.sin(i*3.1+R(3))*(shBase+shExtra);
+  const shY = Math.cos(i*2.3+R(5))*(shBase+shExtra)*.4;
 
-  // カラーフリンジ（RGBずれ）
+  // ゆったりパン（シェイク収束後）
+  const panX = Math.sin(t*Math.PI*.55)*CW*.022*Math.min(1,Math.max(0,t*1.1-1));
+
+  // スケール
+  const sc = 1.06 + V2_easeOut(Math.min(1,t*.45))*.1;
+  const charW = fi.width*(CH*.86*sc/fi.height);
+  const cx0=CW*.5+panX+shX, cy0=CH*.44+shY;
+
+  // ── カラーフリンジ（R/Gずれ） ──
   if(glitchAmt>1){
-    // R チャンネル: +shiftX
-    ctx.save(); ctx.globalAlpha=.85; ctx.globalCompositeOperation='source-over';
-    const shift=glitchAmt*(Math.random()>.5?1:-1);
-    // 簡易フリンジ: 同画像を薄く赤・青でずらして重ねる
-    ctx.save(); ctx.globalAlpha=.22;
-    ctx.shadowColor='rgba(255,0,0,0)';
-    const ts=sc, txw=fi.width*(CH*.86*ts/fi.height);
-    ctx.drawImage(fi, CW*.5+panX+shX+shift-txw/2, CH*.44+shY-CH*.86*ts/2, txw, CH*.86*ts);
+    const shift = glitchAmt*(R(11)>.5?1.4:-1.4);
+    ctx.save(); ctx.globalAlpha=.3;
+    ctx.drawImage(fi, cx0+shift-charW/2, cy0-CH*.86*sc/2, charW, CH*.86*sc);
     ctx.restore();
-    ctx.save(); ctx.globalAlpha=.22;
-    ctx.drawImage(fi, CW*.5+panX+shX-shift-txw/2, CH*.44+shY-CH*.86*ts/2, txw, CH*.86*ts);
-    ctx.restore();
+    ctx.save(); ctx.globalAlpha=.3;
+    ctx.drawImage(fi, cx0-shift*1.2-charW/2, cy0-CH*.86*sc/2, charW, CH*.86*sc);
     ctx.restore();
   }
 
   // ── 水平グリッチスライス ──
-  if(glitchAmt>0.5 && Math.random()>.55){
-    ctx.save();
-    const slices=3+Math.floor(Math.random()*3);
-    for(let s=0;s<slices;s++){
-      const sy=Math.random()*CH, sh2=CH*(.01+Math.random()*.025);
-      const sx2=(Math.random()-.5)*CW*.04;
+  if(glitchAmt>0.6){
+    const nSlice = isFrozen ? 7+Math.floor(R(17)*6) : 2+Math.floor(R(19)*4);
+    for(let s=0;s<nSlice;s++){
+      const sy   = R(s*7+1)*CH;
+      const sh2  = CH*(.006+R(s*7+2)*(isFrozen?.06:.028));
+      const sx2  = (R(s*7+3)-.5)*CW*(isFrozen?.1:.048);
       ctx.save();
       ctx.beginPath(); ctx.rect(0,sy,CW,sh2); ctx.clip();
-      const tsw=fi.width*(CH*.86*sc/fi.height);
-      ctx.globalAlpha=.7;
-      ctx.drawImage(fi, CW*.5+panX+shX+sx2-tsw/2, CH*.44+shY-CH*.86*sc/2, tsw, CH*.86*sc);
+      ctx.globalAlpha = isFrozen ? .85+R(s)*0.1 : .6+R(s)*.2;
+      ctx.drawImage(fi, cx0+sx2-charW/2, cy0-CH*.86*sc/2, charW, CH*.86*sc);
       ctx.restore();
     }
-    ctx.restore();
+  }
+
+  // ── freeze時のブロックノイズ ──
+  if(isFrozen){
+    const nBlock = 4+Math.floor(R(23)*6);
+    for(let b=0;b<nBlock;b++){
+      const bx=R(b*5+1)*CW, by=R(b*5+2)*CH;
+      const bw2=CW*(.03+R(b*5+3)*.09), bh2=CH*(.008+R(b*5+4)*.045);
+      ctx.save(); ctx.globalAlpha=.3+R(b*5+5)*.45;
+      ctx.fillStyle=R(b)>.5?'rgba(255,255,255,1)':'rgba(0,0,0,1)';
+      ctx.fillRect(bx,by,bw2,bh2);
+      ctx.restore();
+    }
   }
 
   // ── メインキャラ描画 ──
   ctx.save();
   ctx.shadowColor='#ffd700';
-  ctx.shadowBlur=CW*.055*(1+Math.sin(t*Math.PI*4)*.18);
-  V2_char(fi, CW*.5+panX+shX, CH*.44+shY, sc, .86, 1);
+  ctx.shadowBlur=CW*.055*(1+Math.sin(t*Math.PI*4)*.2);
+  V2_char(fi, cx0, cy0, sc, .86, 1);
   ctx.restore();
 
   applyColorGrade(winner);
 
-  // ── ゴールド縁枠（パルス） ──
-  const faPulse=.28+.12*Math.sin(t*Math.PI*5);
-  const fw=fi.width*(CH*.86*sc/fi.height);
+  // ── ゴールド縁枠（パルス、freeze時に激しく点滅） ──
+  const faPulse = isFrozen
+    ? (R(29)>.4?.72:.18)
+    : .28+.12*Math.sin(t*Math.PI*5);
   ctx.save(); ctx.globalAlpha=faPulse;
-  ctx.strokeStyle='#ffd700'; ctx.lineWidth=3;
-  ctx.shadowColor='#ffcc00'; ctx.shadowBlur=22;
+  ctx.strokeStyle='#ffd700'; ctx.lineWidth=3.5;
+  ctx.shadowColor='#ffcc00'; ctx.shadowBlur=isFrozen?42:22;
   ctx.beginPath();
-  ctx.roundRect(CW*.5+panX+shX-fw/2, CH*.44+shY-CH*.86*sc/2, fw, CH*.86*sc, 6);
+  ctx.roundRect(cx0-charW/2, cy0-CH*.86*sc/2, charW, CH*.86*sc, 6);
   ctx.stroke();
   ctx.restore();
 
   // ── スキャンライン ──
   drawScanlines();
 
-  // ── 定期的ホワイトフラッシュ（グリッチ感） ──
-  const fp=(t%.9);
-  if(fp<.06 && t>.5){
-    ctx.fillStyle=`rgba(255,255,255,${(1-fp/.06)*.1})`; ctx.fillRect(0,0,CW,CH);
+  // ── グリッチフラッシュ ──
+  if(glitchAmt>CW*.015){
+    const fa = isFrozen ? .28 : (glitchAmt-CW*.015)/(CW*.025)*.18;
+    ctx.fillStyle=`rgba(255,255,255,${fa})`; ctx.fillRect(0,0,CW,CH);
+  }
+  // 定期フラッシュ（freeze明け）
+  const fp2=(t%.9);
+  if(fp2<.05 && t>.5){
+    ctx.fillStyle=`rgba(255,220,0,${(1-fp2/.05)*.14})`; ctx.fillRect(0,0,CW,CH);
   }
 
   // ── WINNER テキスト ──
