@@ -313,7 +313,10 @@ const CATEGORIES = [
   "Defence","Endurance","Experience","Stamina","Agility","Skill"
 ];
 // タイミング定数はUIから動的取得
-function getDur(){ return { INTRO:+document.getElementById('durIntro').value, CUT:+document.getElementById('durCut').value, FINAL:+document.getElementById('durFinal').value, BLACK:+document.getElementById('durBlack').value }; }
+function getDur(){
+  const v=(id,def)=>{ const el=document.getElementById(id); const n=parseFloat(el?el.value:def); return isNaN(n)?def:n; };
+  return { INTRO:v('durIntro',0.8), CUT:v('durCut',1.2), FINAL:v('durFinal',9.1), BLACK:v('durBlack',0.5) };
+}
 const COLOR_A='#ff3c2a', COLOR_B='#2a8fff', COLOR_D='#aaaaaa';
 
 // ═══════════════════════════════════════════════
@@ -527,7 +530,7 @@ function updateEstTime(){
 // ═══════════════════════════════════════════════
 let CW,CH,FPS,canvas,ctx;
 let INTRO_DUR=0.8,CUT_DUR=1.2,FINAL_DUR=9.1,BLACK_DUR=0.5;
-function syncDurGlobals(){ const d=getDur(); INTRO_DUR=d.INTRO; CUT_DUR=d.CUT; FINAL_DUR=d.FINAL; BLACK_DUR=d.BLACK; }
+function syncDurGlobals(){ const d=getDur(); INTRO_DUR=d.INTRO; CUT_DUR=d.CUT; FINAL_DUR=d.FINAL; BLACK_DUR=d.BLACK; console.log('[DUR]',INTRO_DUR,CUT_DUR,FINAL_DUR,BLACK_DUR); }
 function initCanvas(){
   const res=document.getElementById('cfgRes').value.split('x');
   CW=+res[0]; CH=+res[1];
@@ -619,23 +622,25 @@ const CAT_JA = {
 };
 // カテゴリ名を英語大文字 + 上に小さく日本語で描画
 function drawCatLabel(cat, yR, enPx, enColor, enGlow){
-  const ja = CAT_JA[cat] || '';
-  const cx = CW/2;
-  const jaPx = Math.round(enPx * 0.36);
-  // 日本語＋英語を縦に並べる。2行分の総高さを計算して中心に配置
-  const gap   = enPx * 0.10;           // 日本語と英語の間隔
-  const totalH = jaPx + gap + enPx;    // 全体の高さ
-  const blockTop = CH*yR - totalH/2;   // ブロック上端
-  const jaY  = blockTop + jaPx;        // 日本語ベースライン
-  const enY  = blockTop + jaPx + gap + enPx; // 英語ベースライン
+  const ja  = CAT_JA[cat] || '';
+  const cx  = CW/2;
+  const jaPx = Math.round(enPx * 0.34);
+  // capHeight ≈ 0.72em（視覚的な文字高さ）でブロック中心を合わせる
+  const jaCapH = jaPx * 0.72;
+  const enCapH = enPx * 0.72;
+  const gap    = jaPx * 0.16;
+  const totalVisH = jaCapH + gap + enCapH;
+  const midY  = CH * yR;
+  const jaY   = midY - totalVisH/2 + jaCapH;
+  const enY   = jaY + gap + enCapH;
   // 日本語
   ctx.save();
-  ctx.font = `500 ${jaPx}px "Noto Sans JP", "Hiragino Kaku Gothic Pro", sans-serif`;
+  ctx.font = `600 ${jaPx}px "Noto Sans JP","Hiragino Kaku Gothic Pro",sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillStyle = enColor;
-  ctx.globalAlpha = 0.72;
+  ctx.globalAlpha = 0.80;
   ctx.shadowColor = enGlow || enColor;
-  ctx.shadowBlur = 8;
+  ctx.shadowBlur = 7;
   ctx.fillText(ja, cx, jaY);
   ctx.restore();
   // 英語
@@ -1040,187 +1045,159 @@ function V2_renderCut(i, winner, pA, pB){
 }
 
 // ── FINAL ──
-// 勝者フルスクリーン演出
-// 開幕フラッシュ → グリッチ嵐 → ドラマチックズームパン
 function V2_renderFinal(i, winner, pA, pB){
-  const t=i/(FINAL_DUR*FPS);
-  const wc=winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
-  const fi=winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
-  const wn=winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
+  const t  = i / (FINAL_DUR * FPS);
+  const wc = winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
+  const fi = winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
+  const wn = winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
+  const R  = (seed) => { const x=Math.sin(seed*127.1+i*31.7)*43758.5453; return x-Math.floor(x); };
 
-  // ── DRAW時 ──
+  // DRAW時
   if(!fi){
     V2_splitBg(null);
     ctx.save(); ctx.beginPath(); ctx.rect(0,0,CW,CH/2); ctx.clip();
-    V2_char(S.imgA, CW*.5, CH*.25, .9+.08*t, .58, 1);
-    ctx.restore();
+    V2_char(S.imgA,CW*.5,CH*.25,.9+.06*t,.58,1); ctx.restore();
     ctx.save(); ctx.beginPath(); ctx.rect(0,CH/2,CW,CH/2); ctx.clip();
-    V2_char(S.imgB, CW*.5, CH*.75, .9+.08*t, .58, 1);
-    ctx.restore();
-    ctx.globalAlpha=Math.min(1,t*3);
-    centerText(['DRAW'],.5,CW*.14,COLOR_D,'#888');
-    ctx.globalAlpha=1;
-    V2_scoreBanner(pA,pB); drawVignette(.55); drawFlash(i,18);
-    return;
+    V2_char(S.imgB,CW*.5,CH*.75,.9+.06*t,.58,1); ctx.restore();
+    const eI2=Math.min(1,t*3);
+    ctx.globalAlpha=eI2; centerText(['DRAW'],.5,CW*.14,COLOR_D,'#888'); ctx.globalAlpha=1;
+    V2_scoreBanner(pA,pB); drawVignette(.55); drawFlash(i,18); return;
   }
 
-  // ── タイムライン定義 ──
-  //  0.00〜0.12: 開幕フラッシュ (白→暗転)
-  //  0.12〜0.40: 爆発登場 (ズームイン + 強グリッチ)
-  //  0.40〜0.65: グリッチバースト期 (定期的にグリッチ爆発)
-  //  0.65〜1.00: クールダウン (ゆったりパン + 呼吸)
-  const tTotal = FINAL_DUR;
+  // ── タイムライン ──
+  // [0.00→0.12] 暗闇から浮上＋開幕フラッシュ
+  // [0.12→0.26] 第1グリッチバースト
+  // [0.26→0.48] 落ち着きパン＋オーラ
+  // [0.48→0.62] 第2グリッチバースト
+  // [0.62→0.80] ゆったりパン＋呼吸
+  // [0.80→0.94] 第3バースト（最強）
+  // [0.94→1.00] 余韻
 
-  // 擬似乱数 (フレームiベース → 毎フレーム安定)
-  const R = (s) => { let x=Math.sin(s*127.1+i*31.7+3.14)*43758.5453; return x-Math.floor(x); };
-
-  // ── Phase計算 ──
-  const PH1=0.12, PH2=0.40, PH3=0.65;
-  let sc=1, cx0=CW*.5, cy0=CH*.44, charAlpha=1;
-  let glitchAmt=0, shX=0, shY=0;
-
-  if(t < PH1){
-    // 開幕フラッシュ: 真っ白から徐々にキャラが現れる
-    const p=t/PH1;
-    sc=0.85+V2_easeOut(p)*.25;
-    charAlpha=V2_easeOut(p);
-    glitchAmt=CW*.05*(1-p);
-
-  } else if(t < PH2){
-    // 爆発登場: スケールオーバーシュート + 強グリッチ
-    const p=(t-PH1)/(PH2-PH1);
-    const pE=V2_easeBack(Math.min(1,p*1.4));
-    sc=1.1+pE*.18;
-    const shDecay=Math.max(0,1-p*1.5);
-    const shAmp=shDecay*CW*.032;
-    shX=Math.sin(i*3.7)*shAmp; shY=Math.cos(i*2.9)*shAmp*.4;
-    // 開幕グリッチは徐々に減衰
-    glitchAmt=CW*.04*(1-p)*(R(1)*.5+.6);
-
-  } else if(t < PH3){
-    // グリッチバースト期: 0.9秒周期でバースト
-    const p=(t-PH2)/(PH3-PH2);
-    sc=1.14+Math.sin(t*Math.PI*2.5)*.012;
-    const burstPhase=(t*tTotal)%0.9;
-    const isBurst=burstPhase<0.14;
-    glitchAmt=isBurst ? CW*.038*(1-burstPhase/0.14) : (R(3)>.72?CW*.012:0);
-    // shAmpはshX/shY計算済みのため不要（下で直接計算）
-    shX=Math.sin(i*4.1)*(isBurst?CW*.016:0);
-    shY=Math.cos(i*3.3)*(isBurst?CW*.008:0);
-    // パン: バースト後に少し揺れる
-    const panPhase=(t*tTotal)%1.4;
-    cx0=CW*.5+Math.sin(panPhase*Math.PI)*CW*.018;
-
-  } else {
-    // クールダウン: ゆったりパン + 呼吸 + 弱グリッチ
-    const p=(t-PH3)/(1-PH3);
-    sc=1.12+V2_easeOut(p)*.06;
-    const breathe=Math.sin(t*Math.PI*3.5)*.014;
-    sc+=breathe;
-    cx0=CW*.5+Math.sin(t*Math.PI*.7)*CW*.026;
-    cy0=CH*.44+Math.sin(t*Math.PI*.5)*CH*.012;
-    // 微グリッチ (散発)
-    glitchAmt=R(7)>.82?CW*.01:0;
+  const bursts=[
+    [0.12,0.26,1.05],
+    [0.48,0.62,0.90],
+    [0.80,0.94,1.50],
+  ];
+  let glitchAmt=0;
+  for(const [bs,be,bi] of bursts){
+    if(t>=bs&&t<=be){
+      const bt=(t-bs)/(be-bs);
+      glitchAmt=Math.max(glitchAmt, bi*Math.sin(bt*Math.PI)*CW*.048);
+    }
   }
+  if(t<.12) glitchAmt=Math.max(glitchAmt,(1-t/.12)*CW*.06);
+  if(R(7)>.72&&t>.1) glitchAmt=Math.max(glitchAmt,CW*.009);
+  const inBurst=bursts.some(([bs,be])=>t>=bs&&t<=be)||t<.12;
 
-  const charW=fi.width*(CH*.86*sc/fi.height);
+  // ── 背景 ──
+  ctx.fillStyle='#04030a'; ctx.fillRect(0,0,CW,CH);
+  ctx.save(); ctx.globalAlpha=Math.min(.48,t*.95);
+  const bs2=CW/fi.width*1.1, biw=fi.width*bs2, bih=fi.height*bs2;
+  ctx.drawImage(fi,(CW-biw)/2,(CH-bih)/2,biw,bih); ctx.restore();
+  ctx.fillStyle=`rgba(4,3,10,${Math.max(.60,.82-t*.28)})`; ctx.fillRect(0,0,CW,CH);
 
-  // ── 背景: 勝者画像をぼかして全面 ──
-  ctx.fillStyle='#06060b'; ctx.fillRect(0,0,CW,CH);
-  ctx.save(); ctx.globalAlpha=.35;
-  const bs=CW/fi.width*1.1, biw=fi.width*bs, bih=fi.height*bs;
-  ctx.drawImage(fi,(CW-biw)/2,(CH-bih)/2,biw,bih);
-  ctx.restore();
-  ctx.fillStyle='rgba(3,3,10,.74)'; ctx.fillRect(0,0,CW,CH);
+  // ── モーション ──
+  const shAmp=glitchAmt*.52+(t<.14?CW*.024*(1-t/.14):0);
+  const shX=Math.sin(i*3.3+R(3)*.8)*shAmp;
+  const shY=Math.cos(i*2.1+R(5)*.8)*shAmp*.36;
+  const panFade=inBurst?0:1;
+  const panX=Math.sin(Math.max(0,t-.28)*Math.PI*.55)*CW*.028*panFade;
+  const enterSc=t<.12?.70+V2_easeOut(t/.12)*.36:1.06+V2_easeOut(Math.min(1,(t-.12)/.5))*.08;
+  const breathe=t>.3?Math.sin(t*Math.PI*3.6)*.013:0;
+  const sc=enterSc+breathe;
+  const charH=CH*.86, charW2=fi.width*(charH*sc/fi.height);
+  const cx0=CW*.5+panX+shX, cy0=CH*.44+shY;
 
   // ── カラーフリンジ ──
-  if(glitchAmt>CW*.006){
-    const shift=glitchAmt*(R(11)>.5?1.5:-1.5);
-    ctx.save(); ctx.globalAlpha=.32;
-    ctx.drawImage(fi,cx0+shX+shift-charW/2,cy0+shY-CH*.86*sc/2,charW,CH*.86*sc);
-    ctx.restore();
-    ctx.save(); ctx.globalAlpha=.32;
-    ctx.drawImage(fi,cx0+shX-shift*1.3-charW/2,cy0+shY-CH*.86*sc/2,charW,CH*.86*sc);
-    ctx.restore();
+  if(glitchAmt>CW*.007){
+    const shift=glitchAmt*(R(11)>.5?1.6:-1.6);
+    ctx.save(); ctx.globalAlpha=.30;
+    ctx.drawImage(fi,cx0+shift-charW2/2,cy0-charH*sc/2,charW2,charH*sc); ctx.restore();
+    ctx.save(); ctx.globalAlpha=.30;
+    ctx.drawImage(fi,cx0-shift*1.1-charW2/2,cy0-charH*sc/2,charW2,charH*sc); ctx.restore();
   }
 
   // ── 水平グリッチスライス ──
-  if(glitchAmt>CW*.008){
-    const isBurst=t>=PH2&&t<PH3&&((t*tTotal)%0.9)<0.14;
-    const nSlice=isBurst?8+Math.floor(R(17)*7):2+Math.floor(R(19)*3);
-    for(let s=0;s<nSlice;s++){
-      const sy=R(s*7+1)*CH;
-      const sh2=CH*(.005+R(s*7+2)*(isBurst?.07:.025));
-      const sx2=(R(s*7+3)-.5)*CW*(isBurst?.11:.04);
-      ctx.save();
-      ctx.beginPath(); ctx.rect(0,sy,CW,sh2); ctx.clip();
-      ctx.globalAlpha=isBurst?.9:.6;
-      ctx.drawImage(fi,cx0+shX+sx2-charW/2,cy0+shY-CH*.86*sc/2,charW,CH*.86*sc);
+  if(glitchAmt>CW*.004){
+    const nSl=inBurst?6+Math.floor(R(17)*9):1+Math.floor(R(17)*3);
+    for(let s=0;s<nSl;s++){
+      const sy=R(s*7+1)*CH, sh3=CH*(.004+R(s*7+2)*(inBurst?.075:.02));
+      const sx2=(R(s*7+3)-.5)*CW*(inBurst?.13:.038);
+      ctx.save(); ctx.beginPath(); ctx.rect(0,sy,CW,sh3); ctx.clip();
+      ctx.globalAlpha=inBurst?.90:.52;
+      ctx.drawImage(fi,cx0+sx2-charW2/2,cy0-charH*sc/2,charW2,charH*sc);
       ctx.restore();
-    }
-    // ブロックノイズ (バースト時)
-    if(isBurst){
-      const nb=3+Math.floor(R(23)*5);
-      for(let b=0;b<nb;b++){
-        ctx.save(); ctx.globalAlpha=.25+R(b*5+5)*.4;
-        ctx.fillStyle=R(b)>.5?'rgba(255,255,255,1)':'rgba(0,0,0,1)';
-        ctx.fillRect(R(b*5+1)*CW,R(b*5+2)*CH,CW*(.03+R(b*5+3)*.08),CH*(.006+R(b*5+4)*.04));
-        ctx.restore();
-      }
     }
   }
 
-  // ── メインキャラ描画 ──
+  // ── ブロックノイズ（バースト強時） ──
+  if(inBurst&&glitchAmt>CW*.018){
+    const nB=3+Math.floor(R(23)*7);
+    for(let b=0;b<nB;b++){
+      ctx.save(); ctx.globalAlpha=.25+R(b*5+5)*.42;
+      ctx.fillStyle=R(b)>.5?'rgba(255,255,255,1)':'rgba(0,0,0,1)';
+      ctx.fillRect(R(b*5+1)*CW, R(b*5+2)*CH, CW*(.02+R(b*5+3)*.11), CH*(.005+R(b*5+4)*.055));
+      ctx.restore();
+    }
+  }
+
+  // ── メインキャラ ──
+  const charAlpha=t<.10?V2_easeOut(t/.10):1;
   ctx.save();
   ctx.shadowColor='#ffd700';
-  ctx.shadowBlur=CW*.06*(1+Math.sin(t*Math.PI*4)*.2+(glitchAmt>CW*.01?.5:0));
-  V2_char(fi, cx0+shX, cy0+shY, sc, .86, charAlpha);
+  ctx.shadowBlur=CW*.05*(1+(inBurst?1.3:0)+Math.sin(t*Math.PI*5)*.14);
+  V2_char(fi,cx0,cy0,sc,.86,charAlpha);
   ctx.restore();
 
   applyColorGrade(winner);
 
-  // ── ゴールド縁枠 ──
-  const isBurstNow=t>=PH2&&t<PH3&&((t*tTotal)%0.9)<0.14;
-  const faPulse=isBurstNow?(R(29)>.45?.75:.2):.24+.1*Math.sin(t*Math.PI*5);
-  ctx.save(); ctx.globalAlpha=faPulse*Math.min(1,(t-PH1)*8);
-  ctx.strokeStyle='#ffd700'; ctx.lineWidth=3.5;
-  ctx.shadowColor='#ffcc00'; ctx.shadowBlur=isBurstNow?44:20;
-  ctx.beginPath(); ctx.roundRect(cx0+shX-charW/2,cy0+shY-CH*.86*sc/2,charW,CH*.86*sc,6); ctx.stroke();
+  // ── ゴールドオーラ縁枠 ──
+  const auraA=inBurst?(R(29)>.38?.78:.12):.20+.1*Math.sin(t*Math.PI*6)+t*.06;
+  ctx.save(); ctx.globalAlpha=Math.min(.82,auraA);
+  ctx.strokeStyle='#ffd700'; ctx.lineWidth=3+inBurst*1.8;
+  ctx.shadowColor='#ffcc00'; ctx.shadowBlur=inBurst?48:22;
+  ctx.beginPath(); ctx.roundRect(cx0-charW2/2,cy0-charH*sc/2,charW2,charH*sc,6); ctx.stroke();
   ctx.restore();
 
-  // ── スキャンライン ──
+  // ── ヴィジュアルエフェクト ──
   drawScanlines();
-
-  // ── フラッシュ ──
-  if(t<PH1){
-    // 開幕白フラッシュ
-    ctx.fillStyle=`rgba(255,255,255,${(1-t/PH1)*.95})`; ctx.fillRect(0,0,CW,CH);
-  } else if(glitchAmt>CW*.015){
-    ctx.fillStyle=`rgba(255,255,255,${(glitchAmt-CW*.015)/(CW*.03)*.22})`; ctx.fillRect(0,0,CW,CH);
+  if(glitchAmt>CW*.011){
+    const fa=Math.min(.48,(glitchAmt-CW*.011)/(CW*.038));
+    ctx.fillStyle=`rgba(255,255,255,${fa})`; ctx.fillRect(0,0,CW,CH);
   }
-  // バースト後ゴールドフラッシュ
-  if(t>=PH2&&t<PH3){
-    const bp=(t*tTotal)%0.9;
-    if(bp>.14&&bp<.22){ ctx.fillStyle=`rgba(255,200,0,${(1-(bp-.14)/.08)*.18})`; ctx.fillRect(0,0,CW,CH); }
+  // バースト開始ホワイトアウト
+  for(const [bs3,be3] of bursts){
+    if(t>=bs3&&t<bs3+.04){
+      ctx.fillStyle=`rgba(255,255,255,${(1-(t-bs3)/.04)*.72})`; ctx.fillRect(0,0,CW,CH); break;
+    }
   }
 
-  // ── WINNER テキスト ──
-  const eI=Math.min(1,Math.max(0,(t-PH1)*5));
-  const pulse=1+.04*Math.sin(t*Math.PI*9);
+  // ── WINNERテキスト ──
+  const eI=Math.min(1,t*6);
+  const pulse=1+.04*Math.sin(t*Math.PI*10);
+  const txShX=inBurst?(R(41)-.5)*glitchAmt*.38:0;
   ctx.globalAlpha=eI;
-  glowText('WINNER', CW*.5, CH*.076, CW*.12*pulse, '#ffd700','#cc8800', 28);
-  if(wn){
-    ctx.globalAlpha=eI*Math.min(1,(t-PH1)*6);
-    glowText(wn.toUpperCase(), CW*.5, CH*.152, CW*.085*pulse, wc, wc, 18);
+  glowText('WINNER',CW*.5+txShX,CH*.075,CW*.112*pulse,'#ffd700','#cc8800',26);
+
+  if(wn&&t>.12){
+    const nT=Math.min(1,(t-.12)/.14);
+    const nE=V2_easeBack(nT);
+    ctx.globalAlpha=eI*Math.min(1,nT*4);
+    ctx.save();
+    ctx.translate(CW*.5+txShX,CH*.152); ctx.scale(nE,nE); ctx.translate(-CW*.5-txShX,-CH*.152);
+    glowText(wn.toUpperCase(),CW*.5+txShX,CH*.152,CW*.08*pulse,wc,wc,18);
+    ctx.restore();
   }
   ctx.globalAlpha=1;
-  if(t>.3){
-    ctx.globalAlpha=Math.min(1,(t-.3)*4);
-    centerText([`${pA}  —  ${pB}`],.23,CW*.09,wc,'#996600');
+
+  if(t>.38){
+    ctx.globalAlpha=Math.min(1,(t-.38)*4);
+    centerText([`${pA}  —  ${pB}`],.90,CW*.086,wc,'#906000');
     ctx.globalAlpha=1;
   }
 
-  V2_scoreBanner(pA,pB); drawVignette(.58); drawFlash(i,20);
+  if(i<22){ ctx.fillStyle=`rgba(255,200,0,${Math.max(0,(22-i)/22*.65)})`; ctx.fillRect(0,0,CW,CH); }
+  V2_scoreBanner(pA,pB); drawVignette(.62); drawFlash(i,22);
 }
 // ═══════════════════════════════════════════════
 // DISPATCHER — S.style に応じて分岐
@@ -1262,12 +1239,32 @@ function initProgressUI(total){
   });
   setProgress(0,total,'準備中...',null);
 }
-function setProgress(done,total,label,cat){
+let _genStartTime=0;
+function setProgress(done,total,label,cat,startTime){
   const pct=done/total*100;
   document.getElementById('progFill').style.width=pct+'%';
   document.getElementById('progPct').textContent=pct.toFixed(1)+'%';
   document.getElementById('progLabel').textContent=label;
-  document.getElementById('progDetail').textContent=`フレーム ${done} / ${total}`;
+  // ETA: 進行バーの速さから残り時間を推定
+  let detail=`フレーム ${done} / ${total}`;
+  const t0=startTime||_genStartTime;
+  if(t0&&done>10&&done<total){
+    const elapsed=(performance.now()-t0)/1000;
+    const eta=Math.round(elapsed/done*(total-done));
+    detail+=eta>60?` — 残り約${Math.floor(eta/60)}分${eta%60}秒`
+                  :` — 残り約${eta}秒`;
+  }
+  // 残り時間と完了推定時刻
+  if(t0&&done>10&&done<total){
+    const elapsed2=(performance.now()-t0)/1000;
+    const totalEst=elapsed2/done*total;
+    const finAt=new Date(Date.now()+(totalEst-elapsed2)*1000);
+    const hh=finAt.getHours().toString().padStart(2,'0');
+    const mm=finAt.getMinutes().toString().padStart(2,'0');
+    const ss=finAt.getSeconds().toString().padStart(2,'0');
+    detail+=` | 完了予定 ${hh}:${mm}:${ss}`;
+  }
+  document.getElementById('progDetail').textContent=detail;
   if(cat&&chips[cat]){
     Object.values(chips).forEach(c=>c.classList.remove('active'));
     chips[cat].classList.add('active');
@@ -1281,11 +1278,10 @@ function setFfmpegMsg(msg){ document.getElementById('progFfmpeg').textContent=ms
 // ═══════════════════════════════════════════════
 async function startGenerate(){
   if(!validate()) return;
-  syncDurGlobals(); initCanvas();
+  syncDurGlobals(); initCanvas(); _genStartTime=performance.now();
   S.nameA=document.getElementById('nameA').value.trim()||'Character A';
   S.nameB=document.getElementById('nameB').value.trim()||'Character B';
 
-  const {INTRO:INTRO_DUR,CUT:CUT_DUR,FINAL:FINAL_DUR,BLACK:BLACK_DUR}=getDur();
   const NI=Math.round(INTRO_DUR*FPS), NC=Math.round(CUT_DUR*FPS);
   const NF=Math.round(FINAL_DUR*FPS), NB=Math.round(BLACK_DUR*FPS);
   const TOTAL=CATEGORIES.length*(NI+NC)+NB+NF;
@@ -1373,7 +1369,6 @@ async function startGenerate(){
     rec.start(100);
     const audioStart=recAudioCtx.currentTime;
     let lastDrawnIdx=-1, skippedTotal=0, rafId;
-    const recStartWall=performance.now();
     const result=await new Promise(resolveLoop=>{
       const loop=()=>{
         const elapsed=recAudioCtx.currentTime-audioStart;
@@ -1383,16 +1378,7 @@ async function startGenerate(){
           lastDrawnIdx=targetIdx;
           ctx.drawImage(bitmaps[targetIdx],0,0);
           videoTrack.requestFrame();
-          // 完了推定時間を進行バーから計算
-          const pct=(targetIdx+1)/TOTAL;
-          const wallMs=performance.now()-recStartWall;
-          let etaStr='';
-          if(pct>0.01 && pct<1){
-            const etaSec=Math.round(wallMs/pct/1000*(1-pct));
-            etaStr = etaSec>60?` — 残り約${Math.floor(etaSec/60)}分${etaSec%60}秒`
-                              :` — 残り約${etaSec}秒`;
-          }
-          setProgress(targetIdx+1,TOTAL,(attempt>0?'再録画中...':'録画中...')+etaStr,null);
+          setProgress(targetIdx+1,TOTAL,attempt>0?'再録画中...':'録画中...',null);
         }
         if(lastDrawnIdx>=bitmaps.length-1){ resolveLoop({skippedTotal}); return; }
         rafId=requestAnimationFrame(loop);
