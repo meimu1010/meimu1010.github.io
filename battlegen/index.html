@@ -1382,7 +1382,7 @@ async function startGenerate(){
     const dest=recAudioCtx.createMediaStreamDestination();
     if(bgmAudioBuf){
       const src=recAudioCtx.createBufferSource();
-      src.buffer=bgmAudioBuf; src.loop=true; src.connect(dest); src.start(0);
+      src.buffer=bgmAudioBuf; src.loop=true; src.playbackRate.value=getSpeed(); src.connect(dest); src.start(0);
     }else{
       const osc=recAudioCtx.createOscillator();
       const g=recAudioCtx.createGain(); g.gain.value=0;
