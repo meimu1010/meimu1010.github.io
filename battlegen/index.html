@@ -98,7 +98,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .prog-pct{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--yellow)}
 .prog-bar-bg{height:7px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-bottom:9px}
 .prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--yellow));border-radius:4px;width:0%;transition:width .08s linear;box-shadow:0 0 9px rgba(0,255,255,.5)}
-.prog-detail{font-size:.82rem;color:#3a6a8a;letter-spacing:.04em}
+.prog-detail{font-size:.82rem;color:#7ab0c8;letter-spacing:.04em}
 .phase-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
 .adv-details summary::-webkit-details-marker{display:none}
 .adv-details summary::before{content:"▶ ";font-size:.7rem;transition:transform .2s}
@@ -258,7 +258,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 
   <!-- 上級者設定 -->
   <details class="adv-details" style="margin-top:14px">
-    <summary style="cursor:pointer;font-size:.8rem;color:#3a6a8a;letter-spacing:.06em;user-select:none">⚙ ADVANCED — タイミング設定</summary>
+    <summary style="cursor:pointer;font-size:.8rem;color:#3a6a8a;letter-spacing:.06em;user-select:none">⚙ 上級者設定</summary>
     <div class="adv-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-top:10px">
       <label class="adv-label">INTRO (秒)
         <input type="number" id="durIntro" class="adv-inp" value="0.8" min="0.3" max="3" step="0.1" oninput="updateEstTime()">
@@ -273,8 +273,9 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
         <input type="number" id="durBlack" class="adv-inp" value="0.5" min="0" max="2" step="0.1" oninput="updateEstTime()">
       </label>
     </div>
-    <div style="font-size:.74rem;color:#2a4a6a;margin-top:7px;line-height:1.5">
-      変更すると推定時間も更新されます。デフォルト: 0.8 / 1.2 / 9.1 / 0.5
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;gap:8px">
+      <span id="durConfirm" style="font-size:.72rem;color:#4a8a6a;flex:1">（GENERATEで適用されます）</span>
+      <button onclick="resetDur()" style="font-size:.72rem;padding:4px 10px;background:rgba(0,0,0,.4);border:1px solid #2a4a6a;border-radius:4px;color:#5a8aaa;cursor:pointer;white-space:nowrap">↺ デフォルトに戻す</button>
     </div>
   </details>
 </div>
@@ -313,6 +314,15 @@ const CATEGORIES = [
   "Defence","Endurance","Experience","Stamina","Agility","Skill"
 ];
 // タイミング定数はUIから動的取得
+function resetDur(){
+  document.getElementById('durIntro').value=0.8;
+  document.getElementById('durCut').value=1.2;
+  document.getElementById('durFinal').value=9.1;
+  document.getElementById('durBlack').value=0.5;
+  updateEstTime();
+  const el=document.getElementById('durConfirm');
+  if(el) el.textContent='デフォルト値に戻しました';
+}
 function getDur(){
   const v=(id,def)=>{ const el=document.getElementById(id); const n=parseFloat(el?el.value:def); return isNaN(n)?def:n; };
   return { INTRO:v('durIntro',0.8), CUT:v('durCut',1.2), FINAL:v('durFinal',9.1), BLACK:v('durBlack',0.5) };
@@ -510,9 +520,9 @@ function selectStyle(el){
 // ═══════════════════════════════════════════════
 function updateEstTime(){
   const fps = +document.getElementById('cfgFps').value;
-  const {INTRO:INTRO_DUR,CUT:CUT_DUR,FINAL:FINAL_DUR,BLACK:BLACK_DUR}=getDur();
-  const NI=Math.round(INTRO_DUR*fps), NC=Math.round(CUT_DUR*fps);
-  const NF=Math.round(FINAL_DUR*fps), NB=Math.round(BLACK_DUR*fps);
+  const _d=getDur();
+  const NI=Math.round(_d.INTRO*fps), NC=Math.round(_d.CUT*fps);
+  const NF=Math.round(_d.FINAL*fps), NB=Math.round(_d.BLACK*fps);
   const totalFrames = CATEGORIES.length*(NI+NC)+NB+NF;
   // 実測ベース係数：30fps≈2.5ms/frame生成、60fps≈4ms/frame
   // +リアルタイム録画時間(= 動画尺) + バッファ5秒
@@ -530,7 +540,14 @@ function updateEstTime(){
 // ═══════════════════════════════════════════════
 let CW,CH,FPS,canvas,ctx;
 let INTRO_DUR=0.8,CUT_DUR=1.2,FINAL_DUR=9.1,BLACK_DUR=0.5;
-function syncDurGlobals(){ const d=getDur(); INTRO_DUR=d.INTRO; CUT_DUR=d.CUT; FINAL_DUR=d.FINAL; BLACK_DUR=d.BLACK; console.log('[DUR]',INTRO_DUR,CUT_DUR,FINAL_DUR,BLACK_DUR); }
+function syncDurGlobals(){
+  const d=getDur();
+  INTRO_DUR=d.INTRO; CUT_DUR=d.CUT; FINAL_DUR=d.FINAL; BLACK_DUR=d.BLACK;
+  console.log('[DUR] INTRO='+INTRO_DUR+' CUT='+CUT_DUR+' FINAL='+FINAL_DUR+' BLACK='+BLACK_DUR);
+  // UIにも反映確認用
+  const el=document.getElementById('durConfirm');
+  if(el) el.textContent='適用済: '+INTRO_DUR+'s / '+CUT_DUR+'s / '+FINAL_DUR+'s / '+BLACK_DUR+'s';
+}
 function initCanvas(){
   const res=document.getElementById('cfgRes').value.split('x');
   CW=+res[0]; CH=+res[1];
@@ -722,7 +739,7 @@ function B_renderIntro(i,cat,ci){
   drawCharImg(S.imgB,.78,scale,(Math.random()-.5)*shake*2,(Math.random()-.5)*shake*2,.37);
   B_drawVS();
   ctx.save(); ctx.translate(0,-(1-ease)*CH*.058);
-  drawCatLabel(cat,.5,CW*.115,'#00ffff','#009999');
+  drawCatLabel(cat,.5,CW*.09,'#00ffff','#009999');
   ctx.restore();
   drawProgNum(ci); drawScanlines(); drawVignette(.5);
   applyChromatic(Math.max(0,8*(1-t*3)));
@@ -869,7 +886,7 @@ function V2_vsRing(t){
 
 // カテゴリ横バナー（上下分割の中央に重ねる）
 function V2_catBanner(cat, ease){
-  const bh=CH*.11, by=CH*.445;
+  const bh=CH*.11, by=CH*.43;
   ctx.save();
   ctx.translate(-(1-ease)*CW, 0);
   ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(0,by,CW,bh);
@@ -879,7 +896,7 @@ function V2_catBanner(cat, ease){
   ctx.beginPath(); ctx.moveTo(0,by+bh);  ctx.lineTo(CW,by+bh);  ctx.stroke();
   ctx.restore();
   ctx.save(); ctx.translate((1-ease)*-CW*.1,0); ctx.globalAlpha=ease;
-  drawCatLabel(cat,.5,CW*.108,'#ffd700','#cc8800');
+  drawCatLabel(cat,.5,CW*.086,'#ffd700','#cc8800');
   ctx.restore();
 }
 
@@ -1242,6 +1259,7 @@ function initProgressUI(total){
 let _genStartTime=0;
 function setProgress(done,total,label,cat,startTime){
   const pct=done/total*100;
+  // DOM更新はwidth・%・labelは毎回、detailは8フレームに1回だけ（ガクガク防止）
   document.getElementById('progFill').style.width=pct+'%';
   document.getElementById('progPct').textContent=pct.toFixed(1)+'%';
   document.getElementById('progLabel').textContent=label;
@@ -1264,7 +1282,7 @@ function setProgress(done,total,label,cat,startTime){
     const ss=finAt.getSeconds().toString().padStart(2,'0');
     detail+=` | 完了予定 ${hh}:${mm}:${ss}`;
   }
-  document.getElementById('progDetail').textContent=detail;
+  if(done%8===0||done===total||done===0) document.getElementById('progDetail').textContent=detail;
   if(cat&&chips[cat]){
     Object.values(chips).forEach(c=>c.classList.remove('active'));
     chips[cat].classList.add('active');
