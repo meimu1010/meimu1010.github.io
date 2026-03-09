@@ -264,13 +264,6 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
         <option value="1.25">1.25× 速め</option>
       </select>
     </label>
-    <label style="grid-column:1/-1;display:flex;align-items:center;gap:10px;cursor:pointer">
-      <input type="checkbox" id="cfgFastGen" style="width:16px;height:16px;accent-color:var(--cyan);cursor:pointer">
-      <span style="display:flex;flex-direction:column;gap:2px">
-        <span style="color:#c8d8e8;font-size:.92rem;font-weight:600;text-transform:none;letter-spacing:0">⚡ 高速生成モード</span>
-        <span style="color:#3a6a8a;font-size:.74rem;text-transform:none;letter-spacing:0">transferToImageBitmap を使用（品質を維持したまま生成を高速化）</span>
-      </span>
-    </label>
   </div>
   <div class="est-time-box" id="estTimeBox">
     ⏱ 推定生成時間：<span id="estTimeVal">—</span>
@@ -1330,61 +1323,37 @@ async function startGenerate(){
   // ─ PHASE 1: 全フレームをImageBitmapとしてRAMに収集 ─
   setFfmpegMsg('📸 フレームを生成中...');
   const yld=()=>new Promise(r=>setTimeout(r,0));
-
-  // 高速生成モード: transferToImageBitmap はGPUコピー不要で高速
-  // ただし OffscreenCanvas が必要。非対応ブラウザは自動でフォールバック
-  const fastMode = document.getElementById('cfgFastGen')?.checked
-    && typeof OffscreenCanvas !== 'undefined'
-    && typeof OffscreenCanvas.prototype.transferToImageBitmap === 'function';
-
-  let fastOC=null, fastCtx=null;
-  if(fastMode){
-    try{
-      fastOC=new OffscreenCanvas(CW,CH);
-      fastCtx=fastOC.getContext('2d');
-      setFfmpegMsg('📸 フレームを生成中（高速モード）...');
-    }catch(e){ fastOC=null; }
-  }
-
-  // フレームをキャプチャ（高速モード: OffscreenCanvas経由）
-  const captureFrame=fastOC
-    ? ()=>{ fastCtx.drawImage(canvas,0,0); return fastOC.transferToImageBitmap(); }
-    : ()=>createImageBitmap(canvas);
-
-  // yield間隔（高速モードは描画待ちを減らす）
-  const YLD_INTERVAL=fastOC?24:12;
-
   const bitmaps=[]; let fc=0, pA=0, pB=0;
 
   for(let ci=0;ci<CATEGORIES.length;ci++){
     const cat=CATEGORIES[ci], winner=S.results[cat];
     for(let i=0;i<NI;i++){
       renderIntro(i,cat,ci);
-      bitmaps.push(await captureFrame());
+      bitmaps.push(await createImageBitmap(canvas));
       fc++; setProgress(fc,TOTAL,`INTRO [${cat}]`,cat);
-      if(fc%YLD_INTERVAL===0) await yld();
+      if(fc%12===0) await yld();
     }
     if(winner==='A') pA++; else if(winner==='B') pB++;
     for(let i=0;i<NC;i++){
       renderCut(i,winner,pA,pB);
-      bitmaps.push(await captureFrame());
+      bitmaps.push(await createImageBitmap(canvas));
       fc++; setProgress(fc,TOTAL,`CUT [${winner}]`,cat);
-      if(fc%YLD_INTERVAL===0) await yld();
+      if(fc%12===0) await yld();
     }
     markChipDone(cat);
   }
   ctx.fillStyle='#000'; ctx.fillRect(0,0,CW,CH);
   for(let i=0;i<NB;i++){
-    bitmaps.push(await captureFrame());
+    bitmaps.push(await createImageBitmap(canvas));
     fc++; setProgress(fc,TOTAL,'BLACK OUT','FINAL');
-    if(fc%YLD_INTERVAL===0) await yld();
+    if(fc%12===0) await yld();
   }
   const fw=pA>pB?'A':(pB>pA?'B':'Draw');
   for(let i=0;i<NF;i++){
     renderFinal(i,fw,pA,pB);
-    bitmaps.push(await captureFrame());
+    bitmaps.push(await createImageBitmap(canvas));
     fc++; setProgress(fc,TOTAL,'FINAL','FINAL');
-    if(fc%YLD_INTERVAL===0) await yld();
+    if(fc%12===0) await yld();
   }
   markChipDone('FINAL');
 
