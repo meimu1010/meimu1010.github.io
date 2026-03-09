@@ -100,9 +100,6 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--yellow));border-radius:4px;width:0%;transition:width .08s linear;box-shadow:0 0 9px rgba(0,255,255,.5)}
 .prog-detail{font-size:.82rem;color:#7ab0c8;letter-spacing:.04em}
 .phase-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
-.adv-details summary::-webkit-details-marker{display:none}
-.adv-details summary::before{content:"▶ ";font-size:.7rem;transition:transform .2s}
-.adv-details[open] summary::before{content:"▼ "}
 .adv-label{font-size:.8rem;color:#5a7a9a;display:flex;flex-direction:column;gap:4px}
 .adv-inp{background:rgba(0,0,0,.4);border:1px solid #1a3a5a;border-radius:5px;color:#cce;padding:5px 8px;font-size:.85rem;width:100%;outline:none}
 .adv-inp:focus{border-color:var(--cyan)}
@@ -192,24 +189,6 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
     </div>
   </div>
 
-  <!-- プレビュー -->
-  <div class="preview-section" id="stylePreviewSection" style="display:none">
-    <div class="preview-label">🖼 プレビュー（自動更新）</div>
-    <div class="preview-grid">
-      <div class="preview-card">
-        <img id="prevIntro" alt="INTRO preview" style="display:none">
-        <canvas id="prevIntroCanvas" style="display:none"></canvas>
-        <div class="preview-tag">INTRO</div>
-        <div class="preview-spinner" id="prevIntroSpinner">画像を選択してください</div>
-      </div>
-      <div class="preview-card">
-        <img id="prevCut" alt="CUT preview" style="display:none">
-        <canvas id="prevCutCanvas" style="display:none"></canvas>
-        <div class="preview-tag">CUT（勝者）</div>
-        <div class="preview-spinner" id="prevCutSpinner">画像を選択してください</div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- STEP 3: GEMINI -->
@@ -285,31 +264,22 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
     <span style="color:#3a5a7a;font-size:.78rem;margin-left:6px">（フレーム生成 + リアルタイム録画）</span>
   </div>
 
-  <!-- 上級者設定 -->
-  <details class="adv-details" style="margin-top:14px">
-    <summary style="cursor:pointer;font-size:.8rem;color:#3a6a8a;letter-spacing:.06em;user-select:none">⚙ 上級者設定</summary>
-    <div class="adv-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-top:10px">
-      <label class="adv-label">INTRO (秒)
-        <input type="number" id="durIntro" class="adv-inp" value="0.8" min="0.3" max="3" step="0.1" oninput="updateEstTime()">
-      </label>
-      <label class="adv-label">CUT (秒)
-        <input type="number" id="durCut" class="adv-inp" value="1.2" min="0.5" max="4" step="0.1" oninput="updateEstTime()">
-      </label>
-      <label class="adv-label">FINAL (秒)
-        <input type="number" id="durFinal" class="adv-inp" value="9.1" min="3" max="30" step="0.5" oninput="updateEstTime()">
-      </label>
-      <label class="adv-label">BLACK (秒)
-        <input type="number" id="durBlack" class="adv-inp" value="0.5" min="0" max="2" step="0.1" oninput="updateEstTime()">
-      </label>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;gap:8px">
-      <span id="durConfirm" style="font-size:.72rem;color:#4a8a6a;flex:1">（GENERATEで適用されます）</span>
-      <button onclick="resetDur()" style="font-size:.72rem;padding:4px 10px;background:rgba(0,0,0,.4);border:1px solid #2a4a6a;border-radius:4px;color:#5a8aaa;cursor:pointer;white-space:nowrap">↺ デフォルトに戻す</button>
-    </div>
-  </details>
 </div>
 
 <div class="error-msg" id="errorMsg"></div>
+<button class="prev-btn" id="prevBtn" onclick="onClickPreview()" style="width:100%;padding:12px;background:rgba(0,255,255,.08);border:1.5px solid var(--cyan);border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.18em;color:var(--cyan);cursor:pointer;margin-bottom:10px;transition:background .2s">🖼 PREVIEW</button>
+<div id="quickPreviewWrap" style="display:none;margin-bottom:14px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div style="position:relative">
+      <img id="qpIntro" style="width:100%;border-radius:8px;border:1px solid var(--border);display:block" alt="INTRO">
+      <span style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,.75);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:.65rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.1em;padding:2px 7px;border-radius:3px">INTRO</span>
+    </div>
+    <div style="position:relative">
+      <img id="qpCut" style="width:100%;border-radius:8px;border:1px solid var(--border);display:block" alt="CUT">
+      <span style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,.75);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:.65rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.1em;padding:2px 7px;border-radius:3px">CUT（勝者）</span>
+    </div>
+  </div>
+</div>
 <button class="gen-btn" id="genBtn" onclick="startGenerate()">⚡ GENERATE VIDEO</button>
 
 <!-- PROGRESS -->
@@ -880,18 +850,21 @@ function V2_splitBg(wSide){
 // ゴールド名前プレート
 function V2_namePlate(name, cx, cy, color){
   if(!name) return;
+  const fPx = CW*.034;
   ctx.save();
-  ctx.font=`bold ${CW*.034}px Rajdhani,sans-serif`;
+  ctx.font=`bold ${fPx}px Rajdhani,sans-serif`;
   ctx.textAlign='center';
   const tw=ctx.measureText(name).width;
-  const pw=tw+CW*.07, ph=CH*.042, px=cx-pw/2, py=cy-ph*.78;
-  ctx.fillStyle='rgba(0,0,0,.78)';
+  const pw=tw+CW*.07, ph=Math.max(CH*.042,fPx*1.5);
+  const px=cx-pw/2, py=cy-ph/2;          // 枠：cyを垂直中心に
+  const textY=cy+fPx*.36;                 // テキスト：cap-heightを考慮して中央揃え
+  ctx.fillStyle='rgba(0,0,0,.80)';
   ctx.beginPath(); ctx.roundRect(px,py,pw,ph,5); ctx.fill();
   ctx.strokeStyle=color; ctx.lineWidth=1.5;
   ctx.shadowColor=color; ctx.shadowBlur=10;
   ctx.beginPath(); ctx.roundRect(px,py,pw,ph,5); ctx.stroke();
   ctx.fillStyle=color; ctx.shadowBlur=12;
-  ctx.fillText(name, cx, cy);
+  ctx.fillText(name, cx, textY);
   ctx.restore();
 }
 
@@ -916,7 +889,7 @@ function V2_vsRing(t){
 
 // カテゴリ横バナー（上下分割の中央に重ねる）
 function V2_catBanner(cat, ease){
-  const bh=CH*.11, by=CH*.43;
+  const bh=CH*.11, by=CH/2-CH*.055;  // バナーをゴールドライン中心に配置
   ctx.save();
   ctx.translate(-(1-ease)*CW, 0);
   ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(0,by,CW,bh);
@@ -1472,10 +1445,30 @@ async function startGenerate(){
 let _prevPending = false;
 function triggerStylePreview(){
   if(!S.imgA || !S.imgB){ return; }
-  document.getElementById('stylePreviewSection').style.display='block';
+  // stylePreviewSection removed
   if(_prevPending) return;
   _prevPending=true;
   setTimeout(()=>{ _prevPending=false; renderStylePreview(); },80);
+}
+function onClickPreview(){
+  if(!S.imgA||!S.imgB){ showErr('両方のキャラクター画像をアップロードしてください'); return; }
+  hideErr();
+  // GENERATEボタン上のプレビューエリアに表示
+  const wrap=document.getElementById('quickPreviewWrap');
+  wrap.style.display='block';
+  // renderStylePreview と同じロジックで生成
+  syncDurGlobals(); initCanvas();
+  const PW=270, PH=480;
+  const cvs=document.createElement('canvas');
+  cvs.width=PW; cvs.height=PH;
+  const pc=cvs.getContext('2d',{willReadFrequently:true});
+  const _CW=CW,_CH=CH,_FPS=FPS,_ctx=ctx,_canvas=canvas;
+  CW=PW; CH=PH; FPS=30; canvas=cvs; ctx=pc;
+  try{ renderIntro(Math.round(INTRO_DUR*FPS*0.65)|0,'Strength',0); }catch(e){}
+  document.getElementById('qpIntro').src=cvs.toDataURL('image/jpeg',0.90);
+  try{ renderCut(Math.round(CUT_DUR*FPS*0.72)|0,'A',7,3); }catch(e){}
+  document.getElementById('qpCut').src=cvs.toDataURL('image/jpeg',0.90);
+  CW=_CW; CH=_CH; FPS=_FPS; ctx=_ctx; canvas=_canvas;
 }
 function renderStylePreview(){
   if(!S.imgA || !S.imgB) return;
@@ -1508,15 +1501,13 @@ function renderStylePreview(){
   CW=_CW; CH=_CH; FPS=_FPS; ctx=_ctx; canvas=_canvas;
 
   // 表示
-  const iIntro=document.getElementById('prevIntro');
-  const iCut  =document.getElementById('prevCut');
-  const spIntro=document.getElementById('prevIntroSpinner');
-  const spCut  =document.getElementById('prevCutSpinner');
-
-  iIntro.onload=()=>{ iIntro.style.display='block'; spIntro.classList.add('hidden'); };
-  iIntro.src=introUrl;
-  iCut.onload=()=>{ iCut.style.display='block'; spCut.classList.add('hidden'); };
-  iCut.src=cutUrl;
+  // STEP2プレビュー削除済み - 代わりにGENERATEボタン上のプレビューを更新
+  const qpI=document.getElementById('qpIntro');
+  const qpC=document.getElementById('qpCut');
+  if(qpI) qpI.src=introUrl;
+  if(qpC) qpC.src=cutUrl;
+  const wrap=document.getElementById('quickPreviewWrap');
+  if(wrap) wrap.style.display='block';
 }
 // ═══════════════════════════════════════════════
 // INIT
