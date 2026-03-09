@@ -119,6 +119,16 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .error-msg{background:rgba(255,60,42,.1);border:1px solid var(--red);color:var(--red);border-radius:8px;padding:11px 16px;margin-top:11px;font-size:.88rem;display:none}
 .error-msg.visible{display:block}
 #mainCanvas{display:none}
+/* ── STYLE PREVIEW ── */
+.preview-section{margin-top:14px}
+.preview-label{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:#3a6a8a;margin-bottom:8px}
+.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.preview-card{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative}
+.preview-card canvas,.preview-card img{width:100%;display:block;border-radius:7px}
+.preview-tag{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.75);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:.65rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.1em;padding:2px 7px;border-radius:3px}
+.preview-spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-size:.75rem;color:#4a7a9a;letter-spacing:.06em}
+.preview-spinner.hidden{display:none}
+
 @media(max-width:600px){
   .char-grid{grid-template-columns:1fr}
   .vs-badge{font-size:1.3rem}
@@ -179,6 +189,25 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       <span class="style-icon">👑</span>
       <div class="style-name">BATTLE V2</div>
       <div class="style-desc">左右分割・キャラ大・ダーク＆ゴールド</div>
+    </div>
+  </div>
+
+  <!-- プレビュー -->
+  <div class="preview-section" id="stylePreviewSection" style="display:none">
+    <div class="preview-label">🖼 プレビュー（自動更新）</div>
+    <div class="preview-grid">
+      <div class="preview-card">
+        <img id="prevIntro" alt="INTRO preview" style="display:none">
+        <canvas id="prevIntroCanvas" style="display:none"></canvas>
+        <div class="preview-tag">INTRO</div>
+        <div class="preview-spinner" id="prevIntroSpinner">画像を選択してください</div>
+      </div>
+      <div class="preview-card">
+        <img id="prevCut" alt="CUT preview" style="display:none">
+        <canvas id="prevCutCanvas" style="display:none"></canvas>
+        <div class="preview-tag">CUT（勝者）</div>
+        <div class="preview-spinner" id="prevCutSpinner">画像を選択してください</div>
+      </div>
     </div>
   </div>
 </div>
@@ -367,7 +396,7 @@ function loadCharImg(side, input){
     setTimeout(()=>{ nameInput.style.borderColor=''; nameInput.style.background=''; }, 1300);
   }
   S['name'+side] = nameInput.value.trim();
-  updatePrompt(); updateScore();
+  updatePrompt(); updateScore(); triggerStylePreview();
 }
 
 // ═══════════════════════════════════════════════
@@ -376,7 +405,7 @@ function loadCharImg(side, input){
 function onNameChange(){
   S.nameA = document.getElementById('nameA').value.trim();
   S.nameB = document.getElementById('nameB').value.trim();
-  updatePrompt(); updateScore();
+  updatePrompt(); updateScore(); triggerStylePreview();
 }
 function updatePrompt(){
   const a=S.nameA||'キャラA', b=S.nameB||'キャラB';
@@ -513,6 +542,7 @@ function selectStyle(el){
   document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('sel'));
   el.classList.add('sel');
   S.style = el.dataset.style;
+  triggerStylePreview();
 }
 
 // ═══════════════════════════════════════════════
@@ -1435,6 +1465,59 @@ async function startGenerate(){
   document.getElementById('progFill').style.width='100%';
 }
 
+
+// ═══════════════════════════════════════════════
+// STYLE PREVIEW
+// ═══════════════════════════════════════════════
+let _prevPending = false;
+function triggerStylePreview(){
+  if(!S.imgA || !S.imgB){ return; }
+  document.getElementById('stylePreviewSection').style.display='block';
+  if(_prevPending) return;
+  _prevPending=true;
+  setTimeout(()=>{ _prevPending=false; renderStylePreview(); },80);
+}
+function renderStylePreview(){
+  if(!S.imgA || !S.imgB) return;
+  // オフスクリーンサイズ (270x480 = 540x960の半分)
+  const PW=270, PH=480;
+  const cvs=document.createElement('canvas');
+  cvs.width=PW; cvs.height=PH;
+  const pc=cvs.getContext('2d',{willReadFrequently:true});
+
+  // 本番CW/CH/FPS/ctx を一時上書き
+  const _CW=CW,_CH=CH,_FPS=FPS,_ctx=ctx,_canvas=canvas;
+  CW=PW; CH=PH; FPS=30; canvas=cvs; ctx=pc;
+
+  const cat='Strength'; // 代表カテゴリ
+  const ci=0;
+
+  // ── INTRO プレビュー ──
+  try{
+    renderIntro(Math.round(INTRO_DUR*FPS*0.65)|0, cat, ci);
+  }catch(e){ console.warn('prevIntro err',e); }
+  const introUrl = cvs.toDataURL('image/jpeg',0.88);
+
+  // ── CUT プレビュー: 勝者=A で name表示 ──
+  try{
+    renderCut(Math.round(CUT_DUR*FPS*0.72)|0,'A',7,3);
+  }catch(e){ console.warn('prevCut err',e); }
+  const cutUrl = cvs.toDataURL('image/jpeg',0.88);
+
+  // 本番値を戻す
+  CW=_CW; CH=_CH; FPS=_FPS; ctx=_ctx; canvas=_canvas;
+
+  // 表示
+  const iIntro=document.getElementById('prevIntro');
+  const iCut  =document.getElementById('prevCut');
+  const spIntro=document.getElementById('prevIntroSpinner');
+  const spCut  =document.getElementById('prevCutSpinner');
+
+  iIntro.onload=()=>{ iIntro.style.display='block'; spIntro.classList.add('hidden'); };
+  iIntro.src=introUrl;
+  iCut.onload=()=>{ iCut.style.display='block'; spCut.classList.add('hidden'); };
+  iCut.src=cutUrl;
+}
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
