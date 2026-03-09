@@ -258,6 +258,12 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
         <option value="540x960">540 × 960</option>
       </select>
     </label>
+    <label style="grid-column:1/-1">再生速度
+      <select id="cfgSpeed" onchange="updateEstTime()" style="max-width:220px">
+        <option value="1.0" selected>1× 通常</option>
+        <option value="1.25">1.25× 速め（フレーム数削減）</option>
+      </select>
+    </label>
   </div>
   <div class="est-time-box" id="estTimeBox">
     ⏱ 推定生成時間：<span id="estTimeVal">—</span>
@@ -359,7 +365,7 @@ function loadCharImg(side, input){
   img.src=url;
   const nameInput = document.getElementById('name'+side);
   const detected = extractNameFromFilename(file.name);
-  if(detected && !nameInput.value.trim()){
+  if(detected){
     nameInput.value = detected;
     nameInput.style.borderColor = side==='A' ? 'var(--red)' : 'var(--blue)';
     nameInput.style.background  = side==='A' ? 'rgba(255,60,42,.14)' : 'rgba(42,143,255,.14)';
@@ -518,17 +524,21 @@ function selectStyle(el){
 // ═══════════════════════════════════════════════
 // STEP 6 — 推定生成時間
 // ═══════════════════════════════════════════════
+function getSpeed(){
+  const el=document.getElementById('cfgSpeed');
+  return el ? parseFloat(el.value) : 1.0;
+}
 function updateEstTime(){
   const fps = +document.getElementById('cfgFps').value;
+  const spd = getSpeed();
   const _d=getDur();
-  const NI=Math.round(_d.INTRO*fps), NC=Math.round(_d.CUT*fps);
-  const NF=Math.round(_d.FINAL*fps), NB=Math.round(_d.BLACK*fps);
+  // 1.25倍速時はタイミング定数を1/spd倍に短縮 → フレーム数が減る
+  const NI=Math.round(_d.INTRO/spd*fps), NC=Math.round(_d.CUT/spd*fps);
+  const NF=Math.round(_d.FINAL/spd*fps), NB=Math.round(_d.BLACK/spd*fps);
   const totalFrames = CATEGORIES.length*(NI+NC)+NB+NF;
-  // 実測ベース係数：30fps≈2.5ms/frame生成、60fps≈4ms/frame
-  // +リアルタイム録画時間(= 動画尺) + バッファ5秒
   const msPerFrame = fps===60 ? 4.0 : 2.5;
   const genSec = totalFrames * msPerFrame / 1000;
-  const recSec = totalFrames / fps; // リアルタイム録画
+  const recSec = totalFrames / fps;
   const total = Math.round(genSec + recSec + 5);
   const m = Math.floor(total/60), s = total%60;
   document.getElementById('estTimeVal').textContent =
@@ -542,11 +552,10 @@ let CW,CH,FPS,canvas,ctx;
 let INTRO_DUR=0.8,CUT_DUR=1.2,FINAL_DUR=9.1,BLACK_DUR=0.5;
 function syncDurGlobals(){
   const d=getDur();
-  INTRO_DUR=d.INTRO; CUT_DUR=d.CUT; FINAL_DUR=d.FINAL; BLACK_DUR=d.BLACK;
-  console.log('[DUR] INTRO='+INTRO_DUR+' CUT='+CUT_DUR+' FINAL='+FINAL_DUR+' BLACK='+BLACK_DUR);
-  // UIにも反映確認用
-  const el=document.getElementById('durConfirm');
-  if(el) el.textContent='適用済: '+INTRO_DUR+'s / '+CUT_DUR+'s / '+FINAL_DUR+'s / '+BLACK_DUR+'s';
+  const spd=getSpeed();
+  // 速度倍率分だけタイミングを短縮
+  INTRO_DUR=d.INTRO/spd; CUT_DUR=d.CUT/spd; FINAL_DUR=d.FINAL/spd; BLACK_DUR=d.BLACK/spd;
+  console.log('[DUR] SPEED='+spd+' INTRO='+INTRO_DUR+' CUT='+CUT_DUR+' FINAL='+FINAL_DUR+' BLACK='+BLACK_DUR);
 }
 function initCanvas(){
   const res=document.getElementById('cfgRes').value.split('x');
@@ -1429,7 +1438,7 @@ async function startGenerate(){
   const url=URL.createObjectURL(finalBlob);
   document.getElementById('preview-video').src=url;
   const dlBtn=document.getElementById('dlBtn');
-  dlBtn.href=url; dlBtn.download=`${S.nameA}VS${S.nameB}.webm`;
+  dlBtn.href=url; const spdLabel=getSpeed()===1.0?'':('_x'+getSpeed()); dlBtn.download=`${S.nameA}VS${S.nameB}${spdLabel}.webm`;
   dlBtn.textContent='⬇ 動画をダウンロード (.webm)';
   document.getElementById('output-wrap').classList.add('visible');
   document.getElementById('genBtn').disabled=false;
