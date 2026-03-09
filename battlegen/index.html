@@ -645,7 +645,7 @@ function drawCatLabel(cat, yR, enPx, enColor, enGlow){
   // capHeight ≈ 0.72em（視覚的な文字高さ）でブロック中心を合わせる
   const jaCapH = jaPx * 0.72;
   const enCapH = enPx * 0.72;
-  const gap    = jaPx * 0.16;
+  const gap    = jaPx * 0.55;
   const totalVisH = jaCapH + gap + enCapH;
   const midY  = CH * yR;
   const jaY   = midY - totalVisH/2 + jaCapH;
@@ -1507,7 +1507,7 @@ function renderStylePreview(){
   if(qpI) qpI.src=introUrl;
   if(qpC) qpC.src=cutUrl;
   const wrap=document.getElementById('quickPreviewWrap');
-  if(wrap) wrap.style.display='block';
+  // 自動更新時はwrapを開かない（ボタン押下時のみ表示）
 }
 // ═══════════════════════════════════════════════
 // INIT
