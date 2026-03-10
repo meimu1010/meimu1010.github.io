@@ -177,12 +177,12 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 <div class="step" data-step="02">
   <div class="step-title"><span class="num">2</span> VISUAL STYLE</div>
   <div class="style-grid" style="grid-template-columns:1fr">
-    <div class="style-card sel" data-style="battle" onclick="selectStyle(this)">
+    <div class="style-card" data-style="battle" onclick="selectStyle(this)">
       <span class="style-icon">⚡</span>
       <div class="style-name">BATTLE</div>
       <div class="style-desc">グリッチ・パーティクル・カラーグレード</div>
     </div>
-    <div class="style-card" data-style="battlev2" onclick="selectStyle(this)">
+    <div class="style-card sel" data-style="battlev2" onclick="selectStyle(this)">
       <span class="style-icon">👑</span>
       <div class="style-name">BATTLE V2</div>
       <div class="style-desc">上下分割・キャラ大・ダーク＆ゴールド</div>
@@ -249,8 +249,9 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
   <div class="settings-grid">
     <label>FPS
       <select id="cfgFps" onchange="updateEstTime()">
-        <option value="30" selected>30 fps</option>
-        <option value="60">60 fps</option>
+        <option value="30">30 fps</option>
+        <option value="60" selected>60 fps</option>
+        <option value="120">120 fps</option>
       </select>
     </label>
     <label>解像度
@@ -260,8 +261,8 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
     </label>
     <label style="grid-column:1/-1">再生速度
       <select id="cfgSpeed" onchange="updateEstTime()" style="max-width:220px">
-        <option value="1.0" selected>1× 通常</option>
-        <option value="1.25">1.25× 速め</option>
+        <option value="1.0">1× 通常</option>
+        <option value="1.25" selected>1.25× 速め</option>
       </select>
     </label>
   </div>
@@ -341,7 +342,7 @@ const S = {
   imgA:null, imgB:null,
   nameA:'', nameB:'',
   bgmFile:null,
-  style:'battle',
+  style:'battlev2',
   results: Object.fromEntries(CATEGORIES.map(c=>[c,'Draw']))
 };
 
@@ -536,7 +537,7 @@ function updateEstTime(){
   const NI=Math.round(_d.INTRO/spd*fps), NC=Math.round(_d.CUT/spd*fps);
   const NF=Math.round(_d.FINAL/spd*fps), NB=Math.round(_d.BLACK/spd*fps);
   const totalFrames = CATEGORIES.length*(NI+NC)+NB+NF;
-  const msPerFrame = fps===60 ? 4.0 : 2.5;
+  const msPerFrame = fps===120 ? 6.0 : fps===60 ? 4.0 : 2.5;
   const genSec = totalFrames * msPerFrame / 1000;
   const recSec = totalFrames / fps;
   const total = Math.round(genSec + recSec + 5);
