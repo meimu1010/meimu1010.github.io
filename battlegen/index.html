@@ -251,7 +251,6 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       <select id="cfgFps" onchange="updateEstTime()">
         <option value="30">30 fps</option>
         <option value="60" selected>60 fps</option>
-        <option value="120">120 fps</option>
       </select>
     </label>
     <label>解像度
@@ -537,7 +536,7 @@ function updateEstTime(){
   const NI=Math.round(_d.INTRO/spd*fps), NC=Math.round(_d.CUT/spd*fps);
   const NF=Math.round(_d.FINAL/spd*fps), NB=Math.round(_d.BLACK/spd*fps);
   const totalFrames = CATEGORIES.length*(NI+NC)+NB+NF;
-  const msPerFrame = fps===120 ? 6.0 : fps===60 ? 4.0 : 2.5;
+  const msPerFrame = fps===60 ? 4.0 : 2.5;
   const genSec = totalFrames * msPerFrame / 1000;
   const recSec = totalFrames / fps;
   const total = Math.round(genSec + recSec + 5);
