@@ -1151,8 +1151,13 @@ function showChapterTitle(num, title, cb) {
 // ─────────────────────────────────────────────────
 //  DIALOGUE ENGINE
 // ─────────────────────────────────────────────────
+// スクリプトスタック方式:
+//   scriptStack = [{script, index}, ...] のスタック
+//   最上位が現在実行中。サブ配列が終わったらpopして続きを再開。
+//   セーブ/ロードはベース(index=0)のscriptNameとbaseIndexのみ保存。
 let script = [];
 let scriptIndex = 0;
+let scriptStack = [];   // {script, index} の積みスタック（サブ分岐用）
 let waitingChoice = false;
 let skipMode = false;
 
@@ -1191,13 +1196,18 @@ function showChoices(choices) {
       setTimeout(() => {
         const ns = typeof c.next === 'function' ? c.next() : c.next;
         if (ns === null || ns === undefined) {
+          // choiceノード自身を飛ばして次へ
           runNext();
         } else if (Array.isArray(ns)) {
-          // choiceノード自身(scriptIndex)を飛ばして挿入
-          scriptIndex++;
-          script.splice(scriptIndex, 0, ...ns);
+          // サブスクリプトをスタックにプッシュ。
+          // 現在位置(choiceノード)を +1 して再開ポイントとして保存
+          scriptStack.push({ script: script, index: scriptIndex + 1 });
+          script = ns;
+          scriptIndex = 0;
           runScript();
         } else {
+          // 完全に別ルートへ切り替え（BAD END等）
+          scriptStack = [];
           script = ns;
           for (const [k, v] of Object.entries(SCRIPT_MAP)) {
             if (v === ns) { currentScriptName = k; break; }
@@ -1232,7 +1242,13 @@ function showEnding(type, title, body) {
 //  SCRIPT RUNNER
 // ─────────────────────────────────────────────────
 function runScript() {
-  if (scriptIndex >= script.length) return;
+  // スクリプト終端に達したらスタックをpopして親スクリプトの続きへ
+  while (scriptIndex >= script.length) {
+    if (scriptStack.length === 0) return;
+    const parent = scriptStack.pop();
+    script = parent.script;
+    scriptIndex = parent.index;
+  }
   const node = script[scriptIndex];
 
   switch(node.type) {
@@ -1299,9 +1315,18 @@ function initSaveSystem() {
 }
 
 function saveGame(slot) {
+  // サブスクリプト実行中はベース（スタック最下位）の情報を保存する
+  const baseScript = scriptStack.length > 0 ? scriptStack[0] : { script: script, index: scriptIndex };
+  let baseName = currentScriptName;
+  // スタックが積まれている場合、ベーススクリプトのscriptNameを逆引き
+  if (scriptStack.length > 0) {
+    for (const [k, v] of Object.entries(SCRIPT_MAP)) {
+      if (v === scriptStack[0].script) { baseName = k; break; }
+    }
+  }
   const chapterText = document.getElementById('chapter-indicator').textContent;
   const dialogueText = document.getElementById('dialogue-text').textContent.slice(0, 28);
-  saveData[slot] = { scriptName: currentScriptName, index: scriptIndex,
+  saveData[slot] = { scriptName: baseName, index: baseScript.index,
     chapter: chapterText, preview: dialogueText || '…',
     date: new Date().toLocaleString('ja-JP', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) };
   try { localStorage.setItem('mahoiku_saves', JSON.stringify(saveData)); } catch(e) {}
@@ -1314,8 +1339,14 @@ function loadGame(slot) {
   if (!d) { showNotification('セーブデータがありません'); return; }
   const target = SCRIPT_MAP[d.scriptName];
   if (!target) { showNotification('セーブデータが壊れています'); return; }
+  // スタックをクリアしてベーススクリプトから再開
+  scriptStack = [];
   script = target; currentScriptName = d.scriptName; scriptIndex = d.index;
-  hideAllChars(); closeSavePanel(); runScript();
+  hideAllChars(); closeSavePanel();
+  // タイトル画面が表示されていれば非表示にする
+  const ts = document.getElementById('title-screen');
+  if (ts && ts.style.display !== 'none') hideTitleScreen();
+  runScript();
   showNotification('ロードしました');
 }
 
@@ -1445,6 +1476,7 @@ function openChapterSelect() {
       hideTitleScreen();
       initSaveSystem();
       backlogEntries.length = 0;
+      scriptStack = [];
       script = SCRIPT_MAP[ch.script];
       currentScriptName = ch.script;
       scriptIndex = ch.index !== null ? ch.index : 0;
@@ -1479,6 +1511,7 @@ function startHaruhi() {
   hideTitleScreen();
   initSaveSystem();
   backlogEntries.length = 0;
+  scriptStack = [];
   script = ROUTE_HARUHI;
   currentScriptName = 'ROUTE_HARUHI';
   scriptIndex = 0;
@@ -1491,6 +1524,7 @@ function startMadoka() {
   hideTitleScreen();
   initSaveSystem();
   backlogEntries.length = 0;
+  scriptStack = [];
   script = ROUTE_MADOKA;
   currentScriptName = 'ROUTE_MADOKA';
   scriptIndex = 0;
@@ -1503,6 +1537,7 @@ function startUtena() {
   hideTitleScreen();
   initSaveSystem();
   backlogEntries.length = 0;
+  scriptStack = [];
   script = ROUTE_UTENA;
   currentScriptName = 'ROUTE_UTENA';
   scriptIndex = 0;
@@ -1515,6 +1550,7 @@ function startKeiichi() {
   hideTitleScreen();
   initSaveSystem();
   backlogEntries.length = 0;
+  scriptStack = [];
   script = ROUTE_KEIICHI;
   currentScriptName = 'ROUTE_KEIICHI';
   scriptIndex = 0;
