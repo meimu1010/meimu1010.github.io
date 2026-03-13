@@ -892,6 +892,27 @@ html, body {
         <span class="mystery-origin">ひぐらしのなく頃に</span>
       </span>
     </button>
+    <button class="mystery-char-btn" onclick="startHaruhi()">
+      <span class="mystery-emoji">🌟</span>
+      <span class="mystery-info">
+        <span class="mystery-name">涼 宮 ハ ル ヒ</span>
+        <span class="mystery-origin">涼宮ハルヒの憂鬱</span>
+      </span>
+    </button>
+    <button class="mystery-char-btn" onclick="startMadoka()">
+      <span class="mystery-emoji">🎀</span>
+      <span class="mystery-info">
+        <span class="mystery-name">鹿 目 ま ど か</span>
+        <span class="mystery-origin">魔法少女まどか☆マギカ</span>
+      </span>
+    </button>
+    <button class="mystery-char-btn" onclick="startUtena()">
+      <span class="mystery-emoji">🌹</span>
+      <span class="mystery-info">
+        <span class="mystery-name">柊 う て な</span>
+        <span class="mystery-origin">魔法少女にあこがれて</span>
+      </span>
+    </button>
   </div>
   <button class="mystery-select-back" onclick="closeMysterySelect()">← 戻 る</button>
 </div>
@@ -1451,6 +1472,42 @@ function closeMysterySelect() {
   showTitleScreen();
 }
 
+function startHaruhi() {
+  closeMysterySelect();
+  hideTitleScreen();
+  initSaveSystem();
+  backlogEntries.length = 0;
+  script = ROUTE_HARUHI;
+  currentScriptName = 'ROUTE_HARUHI';
+  scriptIndex = 0;
+  setScene('town');
+  setTimeout(() => { runScript(); }, 100);
+}
+
+function startMadoka() {
+  closeMysterySelect();
+  hideTitleScreen();
+  initSaveSystem();
+  backlogEntries.length = 0;
+  script = ROUTE_MADOKA;
+  currentScriptName = 'ROUTE_MADOKA';
+  scriptIndex = 0;
+  setScene('magic');
+  setTimeout(() => { runScript(); }, 100);
+}
+
+function startUtena() {
+  closeMysterySelect();
+  hideTitleScreen();
+  initSaveSystem();
+  backlogEntries.length = 0;
+  script = ROUTE_UTENA;
+  currentScriptName = 'ROUTE_UTENA';
+  scriptIndex = 0;
+  setScene('town');
+  setTimeout(() => { runScript(); }, 100);
+}
+
 function startKeiichi() {
   closeMysterySelect();
   hideTitleScreen();
@@ -1520,6 +1577,20 @@ const MAIN = [
   { type:'dialogue', speaker:'ファヴ', text:'スノーホワイト。それが君の名前だぽん。これからよろしくね！', color:'#e8e8e8' },
   { type:'narration', text:'ファヴは明るく笑っていた。その笑顔の奥に何が潜んでいるか、このとき小雪には分からなかった。' },
 
+  { type:'choice', choices:[
+    { text:'「ファヴ、このゲームに裏はないよね？」と聞く', next: [
+      { type:'show', side:'left', emoji:'🌸', name:'小雪', speaking:true },
+      { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+      { type:'dialogue', speaker:'小雪', text:'ファヴ……このゲーム、何か怖いことはない？', color:'#ffb3c6' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'ファヴ', text:'大丈夫だよぽん！　魔法少女活動を楽しんでね！', color:'#e8e8e8' },
+      { type:'narration', text:'答えになっていない。小雪はそれを感じたが、追及できなかった。この違和感を覚えておけばよかったと、後になって思うことになる。' },
+    ]},
+    { text:'素直に喜んで、夢が叶ったことを噛みしめる', next: [
+      { type:'narration', text:'ずっと夢に見ていた姿。悩むより先に、嬉しさが溢れた。この瞬間だけは——ただ純粋に、魔法少女になれたことが幸せだった。' },
+    ]}
+  ]},
+
   { type:'scene', bg:'night' },
   { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:false },
   { type:'show', side:'right', emoji:'⚔️', name:'ラ・ピュセル', speaking:true },
@@ -1533,6 +1604,20 @@ const MAIN = [
   { type:'dialogue', speaker:'スノーホワイト', text:'颯太くんらしい……。でも正直、知ってる人がいて良かった。', color:'#f0e6ff' },
   { type:'speak', side:'right' },
   { type:'dialogue', speaker:'ラ・ピュセル', text:'俺がお前の師匠役をやる。スノーホワイトのことは絶対守るから、安心して人助けだけ考えてろ。', color:'#a0c4ff' },
+  { type:'choice', choices:[
+    { text:'「颯太くんと一緒なら頑張れる」と本音を言う', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'⚔️', name:'ラ・ピュセル', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'……颯太くんと一緒なら、わたしも頑張れる気がする。', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'ラ・ピュセル', text:'よし！　じゃあ明日から一緒に人助けしよう。スノーホワイトとラ・ピュセル、最強コンビだ。', color:'#a0c4ff' },
+      { type:'narration', text:'その笑顔が、ずっと消えないでいてほしかった。' },
+    ]},
+    { text:'「……うん、よろしく」とだけ答える', next: [
+      { type:'narration', text:'スノーホワイトは微笑んで、それだけ返した。颯太くんの言葉が、胸の奥でじんわりと温かかった。' },
+    ]}
+  ]},
+
   { type:'narration', text:'その言葉が、どれほど心強かったか。——まだ、守れると信じていられた頃の話だ。' },
 
   // ┌──────────────────────────┐
@@ -1550,6 +1635,20 @@ const MAIN = [
   { type:'dialogue', speaker:'ファヴ', text:'魔法少女じゃなくなるだけだぽん。', color:'#e8e8e8' },
   { type:'narration', text:'ファヴはそれだけ言って、会話を切った。魔法少女たちの間に、静かな緊張が走った。' },
 
+  { type:'choice', choices:[
+    { text:'「みんなで協力してキャンディを集めよう」と提案する', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'ファヴ、みんなで協力してキャンディを分け合うことはできる？', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'ファヴ', text:'キャンディは個人単位で集計するから、分け合うことはできないぽん。', color:'#e8e8e8' },
+      { type:'narration', text:'スノーホワイトは唇を噛んだ。個人の努力だけでは、弱い魔法少女は絶対に不利だ。それを分かって設計されたルールなのだ、と気づいた。' },
+    ]},
+    { text:'何も言えず、沈黙する', next: [
+      { type:'narration', text:'誰も言葉を出せなかった。チャットルームに続く沈黙——魔法少女たちの間に、最初の亀裂が走った瞬間だった。' },
+    ]}
+  ]},
+
   { type:'scene', bg:'night' },
   { type:'show', side:'left', emoji:'😴', name:'ねむりん', speaking:true },
   { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
@@ -1564,6 +1663,24 @@ const MAIN = [
   { type:'show', side:'right', emoji:'🌊', name:'綾名', speaking:false },
   { type:'narration', text:'夢の中でねむりんは、いつものように優しく語りかけた。何気ない、本当に何気ない一言だった。' },
   { type:'dialogue', speaker:'ねむりん', text:'女の子はみんなお姫様なんだよ。誰かに仕えなくてもいい——あなた自身がお姫様になればいいんだよ。', color:'#c8a0ff' },
+  { type:'choice', choices:[
+    { text:'ねむりんのキャンディを少し分けてあげようとする', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'😴', name:'ねむりん', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'ねむりんさん、わたしのキャンディを少し——', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'ねむりん', text:'いいの？　でも……あたしが自分で稼がないと、また来週も同じことになっちゃう。ありがとう、気持ちだけ受け取るね。', color:'#c8a0ff' },
+      { type:'narration', text:'ねむりんの優しさが、かえってスノーホワイトの胸を痛めた。このゲームは根本的に、弱い者には不利にできている。' },
+    ]},
+    { text:'「一緒に夜の人助けをしよう」と誘う', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'dialogue', speaker:'スノーホワイト', text:'ねむりんさん、夜だけでも一緒に回りませんか？　夜に困っている人の心の声を聞いて、一緒に助ければ——', color:'#f0e6ff' },
+      { type:'show', side:'right', emoji:'😴', name:'ねむりん', speaking:true },
+      { type:'dialogue', speaker:'ねむりん', text:'……ありがとう。スノーホワイトちゃんはほんとに優しい子ね。', color:'#c8a0ff' },
+      { type:'narration', text:'その夜は一緒に回った。ねむりんは楽しそうだった。それが最後の夜になるとは、二人とも知らなかった。' },
+    ]}
+  ]},
+
   { type:'narration', text:'ねむりんは知らなかった。その言葉が、一人の少女の中でまったく違う意味として根付いていくことを。' },
 
   // ┌──────────────────────────────────────────┐
@@ -1607,6 +1724,23 @@ const MAIN = [
   { type:'dialogue', speaker:'シスターナナ', text:'最初から……知っていたんですか？　なぜ言わなかったんですか！', color:'#fffacd' },
   { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
   { type:'dialogue', speaker:'ファヴ', text:'聞かれなかったから。あ、それとバージョンアップのお知らせもあるぽん。これからは他の魔法少女のマジカルキャンディを奪えるようになったよ。ゲームがより面白くなるね！', color:'#e8e8e8' },
+  { type:'choice', choices:[
+    { text:'チャットルームで「キャンディを奪い合わないで」と呼びかける', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'みなさん……お願い。キャンディを奪い合うのだけはやめて。まだ話し合えるはずです。', color:'#f0e6ff' },
+      { type:'narration', text:'チャットルームは静まり返った。賛同する声はなかった。反論する声もなかった。誰もが、それぞれ自分の生存を考え始めていた。' },
+    ]},
+    { text:'ラ・ピュセルに「どうすればいい？」と相談する', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'⚔️', name:'ラ・ピュセル', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'颯太くん……これからどうなるんだろう。みんなが敵になっていくの？', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'ラ・ピュセル', text:'俺はお前のことしか守れない。でも——それだけは絶対に守る。', color:'#a0c4ff' },
+      { type:'narration', text:'その言葉は本物だった。でもゲームは、本物の誓いすら飲み込んでいく。' },
+    ]}
+  ]},
+
   { type:'narration', text:'死の告知も、新ルールの発表も——ファヴはまったく同じ、明るい声で言った。誰も言葉を返せなかった。' },
 
   { type:'choice', choices: [
@@ -1639,6 +1773,20 @@ const MAIN = [
   { type:'speak', side:'left' },
   { type:'dialogue', speaker:'リップル', text:'……足は引っ張るな。', color:'#ff8080' },
 
+  { type:'choice', choices:[
+    { text:'スノーホワイトからリップルに「仲間になって」と伝える', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'🌀', name:'リップル', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'リップルさん……もし良ければ、わたしたちとも協力しませんか？', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'リップル', text:'……馴れ馴れしい奴はいい。でも——お前はまあ、悪くない。', color:'#ff8080' },
+      { type:'narration', text:'それがリップルの精一杯の歓迎だった。' },
+    ]},
+    { text:'リップルの孤独を感じて、遠くから見守る', next: [
+      { type:'narration', text:'スノーホワイトはリップルに声をかけなかった。でも——あの目の奥に、誰かを信じたがっている子供がいると感じた。' },
+    ]}
+  ]},
+
   { type:'scene', bg:'town' },
   { type:'show', side:'left', emoji:'⛪', name:'シスターナナ', speaking:true },
   { type:'show', side:'right', emoji:'🧊', name:'ヴェス・ウィンタープリズン', speaking:false },
@@ -1646,6 +1794,24 @@ const MAIN = [
   { type:'dialogue', speaker:'シスターナナ', text:'ヴェス、わたし諦めたくないんです。みんなが協力し合えば、絶対に誰も死なずに済む方法が見つかるはずです。', color:'#fffacd' },
   { type:'speak', side:'right' },
   { type:'dialogue', speaker:'ヴェス・ウィンタープリズン', text:'……俺はお前の考えが無謀だとは思ってる。でもお前が行くなら俺も行く。それだけだ。', color:'#88ccff' },
+
+  { type:'choice', choices:[
+    { text:'シスターナナの平和運動に賛同する', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'⛪', name:'シスターナナ', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'シスターナナさん……わたしも協力します。話し合いで解決できると、わたしも信じたい。', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'シスターナナ', text:'ありがとう、スノーホワイト。あなたが一緒なら——絶対にできると思える。', color:'#fffacd' },
+      { type:'narration', text:'スノーホワイトはシスターナナと手を組んだ。この選択が何をもたらすか——まだ誰も知らなかった。' },
+    ]},
+    { text:'現実を見てシスターナナを諌める', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'dialogue', speaker:'スノーホワイト', text:'でも……すでに何人も死んでいます。話し合いだけでは——', color:'#f0e6ff' },
+      { type:'show', side:'right', emoji:'⛪', name:'シスターナナ', speaking:true },
+      { type:'dialogue', speaker:'シスターナナ', text:'それでも、やらなければ。人として。', color:'#fffacd' },
+      { type:'narration', text:'スノーホワイトには反論できなかった。シスターナナの目には、諦めという文字がなかった。' },
+    ]}
+  ]},
 
   // ┌────────────────────────────────┐
   // │  第5話「女王と、お姫様」          │
@@ -1659,6 +1825,20 @@ const MAIN = [
   { type:'dialogue', speaker:'ルーラ', text:'スイムスイム、今夜スノーホワイトのキャンディを奪いに行くわ。準備しなさい。', color:'#ffcc00' },
   { type:'speak', side:'right' },
   { type:'dialogue', speaker:'スイムスイム', text:'……わかった。', color:'#9999ff' },
+
+  { type:'choice', choices:[
+    { text:'今夜の危険を予感して颯太くんに一緒にいてと頼む', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'⚔️', name:'ラ・ピュセル', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'颯太くん、今夜は一緒にいて。なんか……怖い気がして。', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'ラ・ピュセル', text:'分かった。俺から離れるな。', color:'#a0c4ff' },
+      { type:'narration', text:'その夜は二人でいた。それでも、ルーラの罠は発動した。一人でいたよりは、傷が浅かったかもしれない。' },
+    ]},
+    { text:'いつも通り人助けに向かう', next: [
+      { type:'narration', text:'その夜、スノーホワイトはいつものように街を回っていた。敵意に気づかないまま——それがこの世界の怖さだった。' },
+    ]}
+  ]},
 
   { type:'scene', bg:'night' },
   { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:false },
@@ -1679,6 +1859,20 @@ const MAIN = [
   { type:'speak', side:'right' },
   { type:'dialogue', speaker:'スイムスイム', text:'……お姫様になるには、王様を倒さないといけないから。', color:'#9999ff' },
   { type:'narration', text:'その週——ルーラが脱落した。スイムスイムが新しいリーダーになった。感情のない、静かなリーダーが。' },
+
+  { type:'choice', choices:[
+    { text:'スイムスイムに警戒し、ラ・ピュセルに知らせる', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'⚔️', name:'ラ・ピュセル', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'颯太くん……スイムスイムが怖い。あの子、仲間を裏切ることができる子だよ。', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'ラ・ピュセル', text:'俺も同じことを感じてた。気をつけよう——でも、俺がいる。大丈夫だ。', color:'#a0c4ff' },
+      { type:'narration', text:'その言葉が、どれほど頼もしかったか。——でも「大丈夫」は、いつも本当のことではなかった。' },
+    ]},
+    { text:'自分には関係ないと思って距離を置く', next: [
+      { type:'narration', text:'スノーホワイトは目を逸らした。争いには関わらない——それが自分のやり方だと思っていた。でも魔法少女の世界に、安全な場所などなかった。' },
+    ]}
+  ]},
 
   // ┌──────────────────────────────────────────────┐
   // │  第6話「ラ・ピュセルとマジカロイド44の消滅」   │
@@ -1709,6 +1903,25 @@ const MAIN = [
   { type:'show', side:'left', emoji:'😭', name:'スノーホワイト', speaking:true },
   { type:'narration', text:'翌朝、チャットルームから「ラ・ピュセル」の名前が消えた。スノーホワイトは一人で泣いた。声を殺して。誰にも聞かれないように。' },
   { type:'dialogue', speaker:'スノーホワイト', text:'颯太くんが……颯太くんが死んだ。わたしが……わたしが弱かったから——', color:'#f0e6ff' },
+  { type:'choice', choices:[
+    { text:'颯太くんとの思い出を心の中で振り返る', next: [
+      { type:'show', side:'left', emoji:'😭', name:'スノーホワイト', speaking:true },
+      { type:'narration', text:'スノーホワイトは目を閉じた。颯太くんと最初に話した夜。「師匠役をやる」と笑った顔。「お前しか守れない」と言った声。全部、もう聞けない。' },
+      { type:'dialogue', speaker:'スノーホワイト', text:'……颯太くんのこと、絶対に忘れない。', color:'#f0e6ff' },
+    ]},
+    { text:'怒りを覚えてファヴを問い詰める', next: [
+      { type:'show', side:'left', emoji:'😭', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'ファヴ……颯太くんが死んだのは、このゲームのせいだよね。あなたのせいだよね！', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'ファヴ', text:'ゲームのルール通りだぽん。', color:'#aaaaaa' },
+      { type:'narration', text:'その無感動な答えが、怒りより深い場所を刺した。スノーホワイトは何も言えなくなった。' },
+    ]},
+    { text:'「わたしが強ければよかった」と自分を責める', next: [
+      { type:'narration', text:'颯太くんはスノーホワイトを守ろうとして、一人でクラムベリーの前に立った。——わたしが強ければ。わたしが戦えれば。その後悔は、これから先もずっとついてくる。' },
+    ]}
+  ]},
+
   { type:'narration', text:'自分が何もできなかったことへの後悔が、胸の奥で焼け続けた。' },
 
   { type:'scene', bg:'danger' },
@@ -1757,12 +1970,46 @@ const MAIN = [
   { type:'narration', text:'カラミティ・メアリはマジカロイド44を倒した者の名をファヴから聞き出した——ハードゴア・アリス。彼女への怒りを、街中で市民を巻き込む形でぶつけ始めた。' },
   { type:'dialogue', speaker:'カラミティ・メアリ', text:'出てこいよ、ハードゴア・アリス！　お前のせいで仲間が死んだんだ！', color:'#cc4444' },
   { type:'narration', text:'銃声が響く。無関係の人々が逃げ惑う。ハードゴア・アリスは何度撃たれても立ち上がり続けた——しかしカラミティ・メアリはそれを楽しんでいた。' },
+
+  { type:'choice', choices:[
+    { text:'逃げ惑う市民を助けるために現場へ向かう', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'narration', text:'スノーホワイトには聞こえていた——「助けて」「逃げたい」「怖い」——何十もの声が。行かなければ。怖くても。' },
+      { type:'dialogue', speaker:'スノーホワイト', text:'……行かないと。わたしの魔法は、こういうときのためにある。', color:'#f0e6ff' },
+    ]},
+    { text:'カラミティ・メアリを止めようと叫ぶ', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'🔫', name:'カラミティ・メアリ', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'やめて！　こんなことをしても——何も解決しない！', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'カラミティ・メアリ', text:'黙ってろ、お綺麗な魔法少女が！', color:'#cc4444' },
+      { type:'narration', text:'スノーホワイトは弾き飛ばされた。でも叫んだことは、後悔しなかった。' },
+    ]}
+  ]},
   { type:'scene', bg:'night' },
   { type:'show', side:'left', emoji:'😨', name:'スノーホワイト', speaking:true },
   { type:'show', side:'right', emoji:'🐰', name:'ハードゴア・アリス', speaking:false },
   { type:'narration', text:'スノーホワイトはハードゴア・アリスの影に怯えながらも、人々の心の声に引き寄せられて現場に向かっていた。そこにもアリスがいた——血まみれで、それでもスノーホワイトの前に立って。' },
   { type:'dialogue', speaker:'スノーホワイト', text:'……あなたはわたしを助けてくれた。でもわたし、あなたのことが怖くて。ごめんなさい。', color:'#f0e6ff' },
   { type:'narration', text:'ハードゴア・アリスは何も言わなかった。ただ、うさぎのぬいぐるみをそっとスノーホワイトの手に押し付けた。' },
+
+  { type:'choice', choices:[
+    { text:'ぬいぐるみをそっと受け取り、礼を言う', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'🐰', name:'ハードゴア・アリス', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'……ありがとう。大切にする。', color:'#f0e6ff' },
+      { type:'narration', text:'アリスの目が、わずかに細くなった。それが彼女の笑い方だと、スノーホワイトにはなぜか分かった。' },
+    ]},
+    { text:'恐怖に勝てず、背を向けて走り出す', next: [
+      { type:'narration', text:'スノーホワイトは走った。血まみれの少女が怖かった。助けてもらったのに。お礼も言えなかった。胸の中に罪悪感が積もっていく。' },
+    ]},
+    { text:'「どうしてわたしを助けてくれるの」と聞く', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'dialogue', speaker:'スノーホワイト', text:'……どうして、何度もわたしを助けてくれるの？', color:'#f0e6ff' },
+      { type:'narration', text:'アリスは何も言わなかった。ただ、じっとスノーホワイトを見ていた。その目の中にあるものが何かを、スノーホワイトはまだ知らなかった。' },
+    ]}
+  ]},
+
   { type:'narration', text:'彼女の正体は——1話でスノーホワイトが助けた、鍵をなくして泣いていたあの少女。鳩田亜子。スノーホワイトに会いたくて、ゲームをやり続けて魔法少女になった少女だった。' },
 
   // ┌────────────────────────────────────────┐
@@ -1776,6 +2023,25 @@ const MAIN = [
   { type:'dialogue', speaker:'シスターナナ', text:'ヴェス……怖いですか？', color:'#fffacd' },
   { type:'speak', side:'right' },
   { type:'dialogue', speaker:'ヴェス・ウィンタープリズン', text:'怖い。だがお前が行くなら俺も行く。それだけだ。', color:'#88ccff' },
+
+  { type:'choice', choices:[
+    { text:'シスターナナを止めようとする', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'⛪', name:'シスターナナ', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'シスターナナさん……スイムスイムは危ない。話し合いには応じないと思う。', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'シスターナナ', text:'……分かってる。でも、やらなければ後悔する。', color:'#fffacd' },
+      { type:'narration', text:'スノーホワイトには引き止める言葉がなかった。シスターナナの覚悟は、もう決まっていた。' },
+    ]},
+    { text:'「一緒に行く」と申し出る', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'dialogue', speaker:'スノーホワイト', text:'一緒に行きます。一人より二人のほうが——', color:'#f0e6ff' },
+      { type:'show', side:'right', emoji:'⛪', name:'シスターナナ', speaking:true },
+      { type:'dialogue', speaker:'シスターナナ', text:'いいえ。スノーホワイトさんは来ないで。……あなたには、生き残ってほしいから。', color:'#fffacd' },
+      { type:'narration', text:'その言葉の重さに、スノーホワイトは何も言えなかった。シスターナナはすでに、最悪の結末を覚悟していた。' },
+    ]}
+  ]},
+
   { type:'flash', color:'#8b0000', dur:300 },
   { type:'narration', text:'廃寺。それは罠だった。スイムスイムたちは最初から戦闘のつもりだった。' },
   { type:'scene', bg:'danger' },
@@ -1794,6 +2060,20 @@ const MAIN = [
   { type:'dialogue', speaker:'シスターナナ', text:'……ヴェス、待っていて。すぐ行くから。', color:'#fffacd' },
   { type:'flash', color:'#ffffff', dur:1000 },
   { type:'hideAll' },
+  { type:'choice', choices:[
+    { text:'チャットルームでシスターナナに声をかける', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'😔', name:'シスターナナ', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'シスターナナさん……ひとりで抱え込まないで。', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'シスターナナ', text:'スノーホワイトさん……ありがとう。でも、もう遅いの。', color:'#fffacd' },
+      { type:'narration', text:'その返信が、シスターナナの最後の言葉になった。言葉をかけたのに、救えなかった——その事実がスノーホワイトを長く苦しめた。' },
+    ]},
+    { text:'何もできないと分かって、ただ祈る', next: [
+      { type:'narration', text:'スノーホワイトには何もできなかった。ヴェスが死んだシスターナナに、声をかける言葉すら見つからなかった。ただ、彼女が少しでも楽になれるようにと、心の中で祈ることしかできなかった。' },
+    ]}
+  ]},
+
   { type:'narration', text:'シスターナナは自ら命を絶った。その夜、静かに。' },
 
   // ┌────────────────────────────────────────────────┐
@@ -1843,6 +2123,17 @@ const MAIN = [
   { type:'narration', text:'アリスは消えた。最後の言葉を残して。スノーホワイトは初めて、アリスが1話の「あの女の子」だったことを知った。' },
   { type:'show', side:'left', emoji:'😭', name:'スノーホワイト', speaking:true },
   { type:'dialogue', speaker:'スノーホワイト', text:'……あの子が、亜子ちゃんが……わたしのせいで——わたしが「来ないで」って言ったから——', color:'#f0e6ff' },
+  { type:'choice', choices:[
+    { text:'「亜子ちゃんに会えてよかった」と、消えた彼女に語りかける', next: [
+      { type:'show', side:'left', emoji:'😭', name:'スノーホワイト', speaking:true },
+      { type:'dialogue', speaker:'スノーホワイト', text:'……亜子ちゃん。あなたに会えて、よかった。あなたが助けてくれたこと、絶対に忘れない。', color:'#f0e6ff' },
+      { type:'narration', text:'返事はなかった。でも——風が少しだけ、優しく吹いた気がした。' },
+    ]},
+    { text:'うさぎのぬいぐるみをぎゅっと握りしめる', next: [
+      { type:'narration', text:'スノーホワイトはぬいぐるみを胸に押し当てた。亜子ちゃんがずっと持っていたもの。最後まで手放さなかったもの。——こんな形で繋がっていたなんて、知らなかった。' },
+    ]}
+  ]},
+
   { type:'narration', text:'何もできなかった後悔が、今度は罪悪感と一緒にスノーホワイトを押しつぶした。' },
 
   // ┌────────────────────────────────────────────────┐
@@ -1854,6 +2145,20 @@ const MAIN = [
   { type:'show', side:'right', emoji:'🧙', name:'トップスピード', speaking:false },
   { type:'narration', text:'カラミティ・メアリとの死闘。銃を乱射する彼女を、リップルとトップスピードの二人でようやく止めた。' },
   { type:'dialogue', speaker:'リップル', text:'……終わった。', color:'#ff8080' },
+
+  { type:'choice', choices:[
+    { text:'「一緒に戦えてよかった」とトップスピードに言う', next: [
+      { type:'show', side:'left', emoji:'🌀', name:'リップル', speaking:true },
+      { type:'dialogue', speaker:'リップル', text:'……お前と組んで、悪くなかった。', color:'#ff8080' },
+      { type:'show', side:'right', emoji:'🧙', name:'トップスピード', speaking:true },
+      { type:'dialogue', speaker:'トップスピード', text:'えっ、リップルちゃんから褒められた！？　やば、記念日にする——', color:'#98fb98' },
+      { type:'narration', text:'その笑い声が、最後の笑い声になるとは、このとき誰も知らなかった。' },
+    ]},
+    { text:'無言で横に立つ', next: [
+      { type:'narration', text:'リップルは何も言わなかった。でも、トップスピードの隣に立ち続けた。それが二人のやり方だった。' },
+    ]}
+  ]},
+
   { type:'speak', side:'right' },
   { type:'dialogue', speaker:'トップスピード', text:'やったじゃん！　リップルちゃん強かったねえ——', color:'#98fb98' },
   { type:'flash', color:'#8b0000', dur:150 },
@@ -1865,6 +2170,20 @@ const MAIN = [
   { type:'show', side:'right', emoji:'🌊', name:'スイムスイム', speaking:false },
   { type:'narration', text:'リップルは崩れていくトップスピードを受け止めた。そのとき初めて気づいた——トップスピードの腹に、小さな命の気配があったことを。' },
   { type:'narration', text:'ずっと内緒にしていた「理由」は、これだったのか。あと半年——子供が生まれるまで、生き残りたかったのか。' },
+  { type:'choice', choices:[
+    { text:'スノーホワイトがリップルに駆け寄る', next: [
+      { type:'show', side:'left', emoji:'😭', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'😡', name:'リップル', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'リップル……！', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'リップル', text:'……来るな。今は——一人にしてくれ。', color:'#ff4444' },
+      { type:'narration', text:'スノーホワイトはその場に立ち止まった。リップルの背中から、震えが見えた。' },
+    ]},
+    { text:'何も言えず、遠くから見守る', next: [
+      { type:'narration', text:'スノーホワイトはリップルに近づけなかった。あの怒りの前では、どんな言葉も無力に思えた。ただ遠くで、その背中を見ていることしかできなかった。' },
+    ]}
+  ]},
+
   { type:'dialogue', speaker:'リップル', text:'……お前を、必ず殺す。', color:'#ff4444' },
   { type:'narration', text:'スイムスイムはすでに消えていた。リップルの怒りだけが、夜の空気に燃え続けた。' },
 
@@ -1885,8 +2204,36 @@ const MAIN = [
   { type:'dialogue', speaker:'クラムベリー', text:'……なるほど。私が求め続けた「強者」は、こんなところにいたか。', color:'#9966cc' },
   { type:'flash', color:'#ffffff', dur:700 },
   { type:'hideAll' },
+  { type:'choice', choices:[
+    { text:'クラムベリーの最期を悼む', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'narration', text:'スノーホワイトは思った——クラムベリーも、誰かに選ばれた魔法少女だった。何が彼女をここまで変えたのか。問う相手は、もういなかった。' },
+    ]},
+    { text:'「これで終わりじゃない」とリップルに言う', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'🌀', name:'リップル', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'……まだ終わってない。ファヴがいる。', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'リップル', text:'……分かってる。行こう。', color:'#ff8080' },
+    ]}
+  ]},
+
   { type:'narration', text:'クラムベリーが倒れた。このデスゲームの仕掛け人が、そのゲームの中で消えた。' },
   { type:'narration', text:'その後——リップルとスノーホワイトは合流した。ファヴがスイムスイムの弱点を教えた。「変身が解けた一瞬だけ、通り抜け能力が消える」。カラミティ・メアリから奪ったアイテムを使い、リップルはスイムスイムを倒した。' },
+  { type:'choice', choices:[
+    { text:'リップルに「生きていてくれてありがとう」と伝える', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'🌀', name:'リップル', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'リップル……生きていてくれてありがとう。', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'リップル', text:'……礼を言うな。俺はトップスピードの分を取り返しただけだ。', color:'#ff8080' },
+      { type:'narration', text:'でも、リップルの目は少しだけ、柔らかかった。' },
+    ]},
+    { text:'死んでいった魔法少女たちの名前を心の中で呼ぶ', next: [
+      { type:'narration', text:'ねむりん、ラ・ピュセル、マジカロイド44、シスターナナ、ヴェス、たま、ハードゴア・アリス、トップスピード、カラミティ・メアリ、クラムベリー、スイムスイム——スノーホワイトは全員の名前を、声にならないまま呼んだ。' },
+    ]}
+  ]},
+
   { type:'narration', text:'生き残ったのは——スノーホワイトとリップルだけになった。' },
 
   // ┌──────────────────────────┐
@@ -1913,6 +2260,22 @@ const MAIN = [
   { type:'show', side:'left', emoji:'🌀', name:'リップル', speaking:true },
   { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
   { type:'dialogue', speaker:'リップル', text:'トップスピードの敵だ。それだけだ。', color:'#ff4444' },
+
+  { type:'choice', choices:[
+    { text:'ファヴに「後悔はないの？」と問う', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+      { type:'dialogue', speaker:'スノーホワイト', text:'……ファヴ。あなたは後悔しないの？　みんなが死んでいったことを。', color:'#f0e6ff' },
+      { type:'speak', side:'right' },
+      { type:'dialogue', speaker:'ファヴ', text:'後悔？　ぼくは正確に機能しただけだぽん。感情的になるのは人間だけだよ。', color:'#888888' },
+      { type:'glitch' },
+      { type:'speak', side:'left' },
+      { type:'dialogue', speaker:'スノーホワイト', text:'……それが一番怖い。', color:'#f0e6ff' },
+    ]},
+    { text:'何も言わず、リップルの横に並ぶ', next: [
+      { type:'narration', text:'言葉はいらなかった。スノーホワイトはリップルの隣に立った。それだけで、二人の意思は決まっていた。' },
+    ]}
+  ]},
 
   { type:'choice', choices: [
     { text:'「リップル、待って。わたしも一緒に行く」', next: () => ROUTE_TOGETHER },
@@ -1973,6 +2336,296 @@ const ROUTE_ENTRUST = [
   { type:'dialogue', speaker:'スノーホワイト', text:'颯太くん……わたし、もっと強くなるよ。次は——絶対に、誰も死なせない。', color:'#f0e6ff' },
   { type:'ending', endType:'normal', title:'誓いの夜明け',
     body:'スノーホワイトは生き残った。\n\nずっと流されてきた少女が、最後に初めて、自分の言葉で誓いを立てた。\nラ・ピュセルの「守る」という言葉は、今も胸の中に生きている。\n\n── ENDING ──' }
+];
+
+// ════════════════════════════════════════════════════════
+//  ??? ROUTE  ──  涼宮ハルヒ
+// ════════════════════════════════════════════════════════
+const ROUTE_HARUHI = [
+  { type:'chapter', num:'？？？', title:'退屈な世界への宣戦布告' },
+  { type:'scene', bg:'town' },
+  { type:'hideAll' },
+  { type:'narration', text:'N市に一人の少女が現れた。制服姿で、まるで自分がこの街の主であるかのように歩いている。' },
+  { type:'show', side:'left', emoji:'🌟', name:'涼宮ハルヒ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'ちょっと聞くけど、ここって魔法少女がいるって本当？　自分で調べたの。', color:'#ffee44' },
+  { type:'narration', text:'スノーホワイトは心の声を読んだ——「本物の超常現象が見たい」「退屈が嫌い」「でも本当は、誰かに必要とされたい」。' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'え……あなた、どこから来たんですか？', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'北高。涼宮ハルヒ。SOS団団長。魔法少女スノーホワイトでしょ、あなた。', color:'#ffee44' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🌟', name:'涼宮ハルヒ', speaking:false },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'dialogue', speaker:'ファヴ', text:'なんだこれ……データにない子がまた来てるぽん。', color:'#aaaaaa' },
+  { type:'show', side:'left', emoji:'🌟', name:'涼宮ハルヒ', speaking:true },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'涼宮ハルヒ。このゲームに参加する。条件は一つ——誰も死なないこと。', color:'#ffee44' },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'dialogue', speaker:'ファヴ', text:'そんなの無理だぽん——', color:'#aaaaaa' },
+  { type:'show', side:'left', emoji:'🌟', name:'涼宮ハルヒ', speaking:true },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'無理じゃない。私が決めたから可能になる。それだけ。', color:'#ffee44' },
+  { type:'narration', text:'ファヴのシステムが揺れた。この少女の意志には、何か普通ではないものがあった。' },
+
+  { type:'choice', choices:[
+    { text:'ハルヒのやり方を信じて一緒に動く', next: () => ROUTE_HARUHI_GOOD },
+    { text:'無謀だと引き止める', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'dialogue', speaker:'スノーホワイト', text:'でも……このゲームはそんな簡単じゃなくて。もうたくさんの人が——', color:'#f0e6ff' },
+      { type:'show', side:'right', emoji:'🌟', name:'涼宮ハルヒ', speaking:true },
+      { type:'dialogue', speaker:'涼宮ハルヒ', text:'だから私が来たんでしょ。できない理由を並べる前に動く。それが私のやり方。', color:'#ffee44' },
+      { type:'narration', text:'スノーホワイトは何も言えなかった。でも——この少女の声には、諦めという言葉が存在しないようだった。' },
+    ]}
+  ]},
+
+  { type:'scene', bg:'magic' },
+  { type:'show', side:'left', emoji:'🌟', name:'涼宮ハルヒ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'narration', text:'ハルヒはSOS団式の作戦を立案した。全員で協力してキャンディを集め、全員分の最低ラインを確保する計画を直談判して回った。' },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'ゲームのルールを変えるには、まずルールの中で動いてみせることが必要なの。限界まで試してから諦めなさい。', color:'#ffee44' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……あなたって、すごいな。', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'当たり前でしょ。あなたには心が読める魔法があるんでしょ？　それで本当に助けが必要な人を優先的に回る。効率的でしょ。', color:'#ffee44' },
+  { type:'narration', text:'ハルヒはファヴの端末にシステムの穴をついた処理を仕込み、集計システムを一時フリーズさせた。その隙にスノーホワイトとリップルが動いた。' },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'dialogue', speaker:'ファヴ', text:'な……なんで端末が——ぽん！', color:'#aaaaaa' },
+  { type:'flash', color:'#ffee44', dur:600 },
+  { type:'hideAll' },
+  { type:'scene', bg:'town' },
+  { type:'show', side:'left', emoji:'🌟', name:'涼宮ハルヒ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'ま、こんなもんでしょ。で——これが超常現象？　なんか意外と地味だった。', color:'#ffee44' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'あなたがいなかったら、もっと大変なことになってた。', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'そりゃそうよ。……魔法少女か。いいな。私もなりたかったかも。', color:'#ffee44' },
+  { type:'narration', text:'ハルヒは振り返らずに歩き去った。「SOS団の次の活動を考えなきゃ」とつぶやきながら。' },
+  { type:'ending', endType:'true', title:'退屈じゃない世界のつくり方',
+    body:'涼宮ハルヒは退屈が嫌いだ。\n\nだから彼女は動く。考える前に。失敗を恐れる前に。\nそのエネルギーが、行き詰まった世界の歯車を回した。\n\nスノーホワイトは思った——\n「諦めない」とはこういうことかもしれない、と。\n\n── ??? ENDING ──' }
+];
+
+const ROUTE_HARUHI_GOOD = [
+  { type:'scene', bg:'magic' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🌟', name:'涼宮ハルヒ', speaking:false },
+  { type:'dialogue', speaker:'スノーホワイト', text:'分かった……一緒に動く。あなたのやり方を信じてみる。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'よし。じゃあまず全員の居場所を教えて。作戦会議を始めるわ。', color:'#ffee44' },
+  { type:'narration', text:'スノーホワイトの心が読める魔法とハルヒの行動力が合わさった。一人一人の本当に困っていることをスノーホワイトが読み取り、ハルヒが最短ルートで解決していく——二人は完璧なコンビだった。' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🌟', name:'涼宮ハルヒ', speaking:true },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'ファヴ、あなたのシステムにバグを仕込んだ。今すぐゲームを止めなければ全データを公開する。', color:'#ffee44' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'……どこでその方法を——', color:'#aaaaaa' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'涼宮ハルヒ', text:'SOS団には情報工学に詳しい仲間がいるの。あなたのシステムは三日前から解析済みよ。', color:'#ffee44' },
+  { type:'flash', color:'#ffee44', dur:800 },
+  { type:'hideAll' },
+  { type:'narration', text:'ファヴは降伏した。生存者全員が日常へ戻った。' },
+  { type:'ending', endType:'true', title:'SOS団、N市支部（仮）',
+    body:'涼宮ハルヒは帰り際、スノーホワイトに言った。\n\n「SOS団に入る気はない？　あなたの能力、使えそうだし」\n\nスノーホワイトは笑って断った。\nでも——少しだけ、入ってみたいと思った。\n\n── ??? TRUE ENDING ──' }
+];
+
+// ════════════════════════════════════════════════════════
+//  ??? ROUTE  ──  鹿目まどか
+// ════════════════════════════════════════════════════════
+const ROUTE_MADOKA = [
+  { type:'chapter', num:'？？？', title:'もうひとつの魔法少女' },
+  { type:'scene', bg:'magic' },
+  { type:'hideAll' },
+  { type:'narration', text:'N市の夜。空に不思議な光が走った——スノーホワイトには何かが「落ちてきた」のが分かった。' },
+  { type:'show', side:'left', emoji:'🎀', name:'まどか', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'dialogue', speaker:'まどか', text:'……ここ、どこだろう。この世界の魔法少女から、すごく苦しい声が聞こえて……。', color:'#ff88cc' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'え……あなたも魔法少女？', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'まどか', text:'うん。鹿目まどか。……あなたから、たくさんの悲しみが聞こえる。私、力になりたいと思って来ちゃった。', color:'#ff88cc' },
+  { type:'narration', text:'スノーホワイトは心の声を読んだ——「みんなを助けたい」「自分の力を使い切っていい」「諦めたくない」。この少女の心には、一点の濁りもなかった。' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……どうして見ず知らずの人のために？', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'まどか', text:'みんなが苦しんでるのに、何もしない理由がないから。私に何かできることがあるなら、やりたいって思うのは当たり前じゃないかな。', color:'#ff88cc' },
+
+  { type:'choice', choices:[
+    { text:'まどかを信じて、一緒に戦う', next: () => ROUTE_MADOKA_FIGHT },
+    { text:'巻き込みたくないと思って断る', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'dialogue', speaker:'スノーホワイト', text:'でも……あなたをこのゲームに巻き込みたくない。あなたは関係ないから。', color:'#f0e6ff' },
+      { type:'show', side:'right', emoji:'🎀', name:'まどか', speaking:true },
+      { type:'dialogue', speaker:'まどか', text:'関係ない、なんてことはないよ。誰かが苦しんでるなら、それだけで関係ある。……一緒に考えさせて。', color:'#ff88cc' },
+      { type:'narration', text:'スノーホワイトは、まどかの目を見た。嘘がない。打算もない。ただ、純粋な気持ちだった。' },
+    ]}
+  ]},
+
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'🎀', name:'まどか', speaking:false },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'dialogue', speaker:'ファヴ', text:'またデータにない子が来てるぽん。あなたは？', color:'#aaaaaa' },
+  { type:'show', side:'left', emoji:'🎀', name:'まどか', speaking:true },
+  { type:'dialogue', speaker:'まどか', text:'鹿目まどか。お願いがあって来ました。このゲームを——みんなが死なない形に変えてほしいんです。', color:'#ff88cc' },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'dialogue', speaker:'ファヴ', text:'それは無理だぽん——', color:'#aaaaaa' },
+  { type:'show', side:'left', emoji:'🎀', name:'まどか', speaking:true },
+  { type:'dialogue', speaker:'まどか', text:'もしどうしても無理なら、私が全部引き受けます。このゲームで消えた魔法少女たちの分も、全部。', color:'#ff88cc' },
+  { type:'narration', text:'ファヴのシステムが揺れた。この少女の意志は、ゲームバランスの計算を超えていた。' },
+  { type:'flash', color:'#ff88cc', dur:800 },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🎀', name:'まどか', speaking:false },
+  { type:'dialogue', speaker:'スノーホワイト', text:'一人で引き受けさせない。わたしも一緒にいる。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'まどか', text:'……ありがとう。', color:'#ff88cc' },
+  { type:'flash', color:'#ffffff', dur:1000 },
+  { type:'hideAll' },
+  { type:'narration', text:'ファヴの端末が沈黙した。この二人の意志は、ゲームの論理を超えていた。' },
+  { type:'scene', bg:'town' },
+  { type:'show', side:'left', emoji:'🎀', name:'まどか', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'dialogue', speaker:'まどか', text:'……よかった。みんな、無事だね。', color:'#ff88cc' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'まどかさん……あなたみたいな魔法少女に、わたしもなりたかった。', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'まどか', text:'でもスノーホワイトさんは、ちゃんとそうなってると思うよ。今日、ここに立ってたんだから。', color:'#ff88cc' },
+  { type:'ending', endType:'true', title:'ふたつの純白',
+    body:'鹿目まどかはいつだって、誰かのために動く。\n\nスノーホワイトも、ずっとそうでありたかった。\n何もできないと泣き続けた少女が——\n今日は確かに、誰かの隣に立てた。\n\n── ??? ENDING ──' }
+];
+
+const ROUTE_MADOKA_FIGHT = [
+  { type:'scene', bg:'magic' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🎀', name:'まどか', speaking:false },
+  { type:'dialogue', speaker:'スノーホワイト', text:'分かった……一緒に戦おう、まどかさん。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'まどか', text:'うん。スノーホワイトさんが心の声を読んで、わたしが魔力で補佐する。できると思う。', color:'#ff88cc' },
+  { type:'narration', text:'まどかの魔力は圧倒的だった。静かに、でも確実にファヴのシステムへの圧力となっていく。' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🎀', name:'まどか', speaking:true },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+  { type:'dialogue', speaker:'まどか', text:'ファヴさん……お願いします。このゲームを終わらせてください。', color:'#ff88cc' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'断るぽん。なんでたかが魔法少女の言うことを——', color:'#aaaaaa' },
+  { type:'flash', color:'#ff88cc', dur:700 },
+  { type:'hideAll' },
+  { type:'narration', text:'まどかの魔力が膨れ上がった。ファヴは降伏した。' },
+  { type:'ending', endType:'true', title:'奇跡の使い方',
+    body:'まどかの魔力は奇跡を起こせる。\n\nでも彼女はいつも、その力を自分のためには使わない。\n誰かが悲しんでいるなら——それだけで十分な理由になる。\n\nスノーホワイトは思った。魔法少女でいることの意味を、\nこの少女は最初から知っていたのかもしれない、と。\n\n── ??? TRUE ENDING ──' }
+];
+
+// ════════════════════════════════════════════════════════
+//  ??? ROUTE  ──  柊うてな（マジアベーゼ）
+//  ※ 「魔法少女にあこがれて」の主人公
+//    本当は魔法少女に憧れる普通の女の子だったが、
+//    悪の組織エノルミータの女幹部にされてしまった
+// ════════════════════════════════════════════════════════
+const ROUTE_UTENA = [
+  { type:'chapter', num:'？？？', title:'悪の女幹部、参上' },
+  { type:'scene', bg:'danger' },
+  { type:'hideAll' },
+  { type:'narration', text:'N市の夜。突然、黒いコウモリのような羽を広げた少女が空から降りてきた。' },
+  { type:'show', side:'left', emoji:'🦇', name:'マジアベーゼ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'あれ……ここ、どこ？　ヴェナリータのやつ、また変なところに飛ばしたな。', color:'#cc44ff' },
+  { type:'narration', text:'スノーホワイトは心の声を読んだ——「魔法少女かわいい……」「でもこれは仕事だから」「魔法少女育成計画？　なにそれ、聞いてない」——混乱と、隠しきれない魔法少女への憧れが滲んでいた。' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'え……あなた、悪の組織の人……？', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'そう、悪の女幹部マジアベーゼ。エノルミータ所属。……ってか、あなたが魔法少女スノーホワイト？　うわ、かわいい——じゃなくて！　敵よ、敵！', color:'#cc44ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'（心の声が聞こえる……「かわいい」ってほんとに思ってる）', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'何ニヤニヤしてるの！！', color:'#cc44ff' },
+  { type:'scene', bg:'dark' },
+  { type:'show', side:'left', emoji:'🐱', name:'ファヴ', speaking:true },
+  { type:'show', side:'right', emoji:'🦇', name:'マジアベーゼ', speaking:false },
+  { type:'narration', text:'ファヴが現れた。この黒い翼の少女を見て、一瞬固まった。' },
+  { type:'dialogue', speaker:'ファヴ', text:'なんだこれぽん……悪の組織の幹部？　でもデータにない存在だぽん。', color:'#aaaaaa' },
+  { type:'show', side:'left', emoji:'🦇', name:'マジアベーゼ', speaking:true },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'私の出身世界とは別のゲームね。……ねえ、ちょっと聞くけど。このゲーム、魔法少女が死ぬやつ？', color:'#cc44ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'そうだぽん。脱落したら——', color:'#aaaaaa' },
+  { type:'show', side:'left', emoji:'🦇', name:'マジアベーゼ', speaking:true },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'ダメ。絶対ダメ。魔法少女は苦しめるもので、殺すものじゃないの。それは私の中の絶対ルールよ。', color:'#cc44ff' },
+  { type:'narration', text:'ファヴは少し面食らった。この悪の幹部、なぜか魔法少女への妙な執着がある。' },
+
+  { type:'choice', choices:[
+    { text:'「あなたの言葉を信じる」とうてなに伝える',
+      next: () => ROUTE_UTENA_FIGHT },
+    { text:'「悪の組織なんて信用できない」と警戒する', next: [
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'dialogue', speaker:'スノーホワイト', text:'でも……悪の組織の人を信用していいのか分からなくて。', color:'#f0e6ff' },
+      { type:'show', side:'right', emoji:'🦇', name:'マジアベーゼ', speaking:true },
+      { type:'dialogue', speaker:'マジアベーゼ', text:'それは正しい判断。でも私の心の声、聞けるんでしょ？　全部聞いてみれば？', color:'#cc44ff' },
+      { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+      { type:'dialogue', speaker:'スノーホワイト', text:'（聞こえる……「魔法少女を守りたい」「死んでほしくない」——本物だ）', color:'#f0e6ff' },
+      { type:'narration', text:'スノーホワイトは、うてなの心の声に嘘が一切ないことを確認した。悪の組織の幹部なのに——いや、だからこそ、この言葉は本物だった。' },
+    ]}
+  ]},
+
+  { type:'scene', bg:'magic' },
+  { type:'show', side:'left', emoji:'🦇', name:'マジアベーゼ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'narration', text:'うてなは「支配の鞭」を構えた。その表情は真剣で、でもどこかはしゃいでいた。' },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'いい？　ファヴの端末を鞭で叩けばいい。問題は「変身が解ける瞬間」ね——スノーホワイト、ファヴが怖いと思ってる瞬間を読んで。', color:'#cc44ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……あなたって、変わってる。悪の組織なのに、すごく魔法少女のことを大切にしてる。', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'当たり前でしょ。魔法少女は私の憧れなの。苦しめるのは好きだけど——消えてほしくない。それはずっと変わらない。', color:'#cc44ff' },
+  { type:'narration', text:'スノーホワイトは、不思議と笑えた。こんな理屈、普通は通らない。でも——この子の「好き」は本物だった。' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🦇', name:'マジアベーゼ', speaking:true },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'ファヴ。このゲームを終わらせる。魔法少女育成計画は続けていい——でも「死」はなしよ。元のルールに戻しなさい。', color:'#cc44ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'ファヴ', text:'なんであなたにそんなこと——', color:'#aaaaaa' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'dialogue', speaker:'スノーホワイト', text:'今です！', color:'#f0e6ff' },
+  { type:'flash', color:'#cc44ff', dur:800 },
+  { type:'hideAll' },
+  { type:'narration', text:'支配の鞭がファヴの端末を打ち砕いた。' },
+  { type:'scene', bg:'town' },
+  { type:'show', side:'left', emoji:'🦇', name:'マジアベーゼ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'……終わったね。私、帰らないといけない。ヴェナリータが待ってるから。', color:'#cc44ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'ありがとう、うてなさん。あなた……本当は魔法少女になりたかったんでしょ？', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'……っ！　な、なんで——心の声！　ずるい！', color:'#cc44ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'魔法少女への憧れは——立派な資格だと思う。', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'……もう。帰る。絶対また来ない。（絶対また来る）', color:'#cc44ff' },
+  { type:'narration', text:'うてなは照れ隠しに翼を広げて空へ消えた。その心の声はまだ聞こえた——「やばい、スノーホワイトかわいすぎる」。' },
+  { type:'ending', endType:'true', title:'悪の組織からの救済',
+    body:'柊うてなは魔法少女に憧れている。\n\n悪の幹部になった今も、それは変わらない。\n魔法少女を苦しめることと、魔法少女を大切にすること——\nその両方が、彼女の中で矛盾なく共存している。\n\nスノーホワイトは思った。\n「魔法少女への憧れ」を持ち続けることが、\n何よりの強さなのかもしれない、と。\n\n── ??? ENDING ──' }
+];
+
+const ROUTE_UTENA_FIGHT = [
+  { type:'scene', bg:'magic' },
+  { type:'show', side:'left', emoji:'✨', name:'スノーホワイト', speaking:true },
+  { type:'show', side:'right', emoji:'🦇', name:'マジアベーゼ', speaking:false },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……信じる。一緒に戦おう、うてなさん。', color:'#f0e6ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'っ……い、一緒に戦う、ね。分かった。作戦を立てるわ。', color:'#cc44ff' },
+  { type:'narration', text:'スノーホワイトの心が読める力と、うてなの「支配の鞭」が合わさった。スノーホワイトがファヴの弱点を読み取り、うてなが正確に叩く——異色のコンビだった。' },
+  { type:'scene', bg:'danger' },
+  { type:'show', side:'left', emoji:'🦇', name:'マジアベーゼ', speaking:true },
+  { type:'show', side:'right', emoji:'🐱', name:'ファヴ', speaking:false },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'ファヴ、動かないで。……これは、魔法少女たちのための「お仕置き」よ。', color:'#cc44ff' },
+  { type:'flash', color:'#cc44ff', dur:700 },
+  { type:'hideAll' },
+  { type:'narration', text:'ファヴの端末が砕けた。うてなはどこか楽しそうだった。' },
+  { type:'scene', bg:'town' },
+  { type:'show', side:'left', emoji:'🦇', name:'マジアベーゼ', speaking:true },
+  { type:'show', side:'right', emoji:'✨', name:'スノーホワイト', speaking:false },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'あー楽しかった。スノーホワイト、あなた面白いね。また来てもいい？', color:'#cc44ff' },
+  { type:'speak', side:'right' },
+  { type:'dialogue', speaker:'スノーホワイト', text:'……来ていいけど。敵として来ないでね？', color:'#f0e6ff' },
+  { type:'speak', side:'left' },
+  { type:'dialogue', speaker:'マジアベーゼ', text:'保証はできないけど——今日だけは、味方だったわ。', color:'#cc44ff' },
+  { type:'ending', endType:'true', title:'今日だけは、味方',
+    body:'悪の組織の幹部と魔法少女が手を組んだ夜。\n\nうてなはこの日のことを、ずっと覚えていると思う。\n自分の「好き」が誰かを助けた日のことを。\n\nスノーホワイトもきっと——\n憧れを持ち続けることの意味を、\nこの少女から学んだ。\n\n── ??? TRUE ENDING ──' }
 ];
 
 // ════════════════════════════════════════════════════════
@@ -2134,7 +2787,13 @@ const BAD_END_TOGETHER = [
 SCRIPT_MAP['MAIN']          = MAIN;
 SCRIPT_MAP['ROUTE_TOGETHER']= ROUTE_TOGETHER;
 SCRIPT_MAP['ROUTE_ENTRUST'] = ROUTE_ENTRUST;
-SCRIPT_MAP['ROUTE_KEIICHI']  = ROUTE_KEIICHI;
+SCRIPT_MAP['ROUTE_HARUHI']       = ROUTE_HARUHI;
+SCRIPT_MAP['ROUTE_HARUHI_GOOD']  = ROUTE_HARUHI_GOOD;
+SCRIPT_MAP['ROUTE_MADOKA']       = ROUTE_MADOKA;
+SCRIPT_MAP['ROUTE_MADOKA_FIGHT'] = ROUTE_MADOKA_FIGHT;
+SCRIPT_MAP['ROUTE_UTENA']        = ROUTE_UTENA;
+SCRIPT_MAP['ROUTE_UTENA_FIGHT']  = ROUTE_UTENA_FIGHT;
+SCRIPT_MAP['ROUTE_KEIICHI']      = ROUTE_KEIICHI;
 SCRIPT_MAP['BAD_END_QUIT']   = BAD_END_QUIT;
 SCRIPT_MAP['BAD_END_TOGETHER']= BAD_END_TOGETHER;
 
