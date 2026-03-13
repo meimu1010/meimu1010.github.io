@@ -1193,6 +1193,8 @@ function showChoices(choices) {
         if (ns === null || ns === undefined) {
           runNext();
         } else if (Array.isArray(ns)) {
+          // choiceノード自身(scriptIndex)を飛ばして挿入
+          scriptIndex++;
           script.splice(scriptIndex, 0, ...ns);
           runScript();
         } else {
