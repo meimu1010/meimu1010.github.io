@@ -805,6 +805,7 @@ html, body {
   <button class="ui-btn active" onclick="openSavePanel('save')">SAVE</button>
   <button class="ui-btn active" onclick="openSavePanel('load')">LOAD</button>
   <button class="ui-btn active" id="btn-log" onclick="openBacklog()">LOG</button>
+  <button class="ui-btn active" id="btn-mute" onclick="toggleMute()">🎵 BGM</button>
 </div>
 
 <!-- SAVE PANEL -->
@@ -1030,9 +1031,565 @@ const SCENES = {
   void:    '#020006',
 };
 
+
+// ═══════════════════════════════════════════════════════════════
+//  BGM ENGINE  ── WebAudio API によるプロシージャル音楽生成
+//  シーンごとに異なる楽曲を自動生成・ループ再生
+// ═══════════════════════════════════════════════════════════════
+
+let audioCtx = null;
+let bgmNodes = [];       // 現在再生中のノード群
+let bgmGain = null;      // マスターゲイン
+let bgmMuted = false;
+let currentBgmKey = '';
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    bgmGain = audioCtx.createGain();
+    bgmGain.gain.value = 0.22;
+    bgmGain.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function stopBgm(fadeMs = 800) {
+  if (!bgmGain) return;
+  const ctx = getAudioCtx();
+  const now = ctx.currentTime;
+  bgmGain.gain.setValueAtTime(bgmGain.gain.value, now);
+  bgmGain.gain.linearRampToValueAtTime(0, now + fadeMs / 1000);
+  setTimeout(() => {
+    bgmNodes.forEach(n => { try { n.stop(); } catch(e){} });
+    bgmNodes = [];
+    bgmGain.gain.value = bgmMuted ? 0 : 0.22;
+  }, fadeMs + 50);
+}
+
+function playBgm(key) {
+  if (key === currentBgmKey) return;
+  currentBgmKey = key;
+  stopBgm(600);
+  if (bgmMuted) return;
+  setTimeout(() => {
+    if (currentBgmKey !== key) return;
+    const fn = BGM_COMPOSERS[key] || BGM_COMPOSERS['town'];
+    fn();
+  }, 650);
+}
+
+function toggleMute() {
+  bgmMuted = !bgmMuted;
+  const btn = document.getElementById('btn-mute');
+  if (bgmMuted) {
+    if (bgmGain) bgmGain.gain.value = 0;
+    btn.textContent = '🔇 BGM';
+    btn.style.color = 'var(--text-sub)';
+  } else {
+    if (bgmGain) bgmGain.gain.value = 0.22;
+    btn.textContent = '🎵 BGM';
+    btn.style.color = '';
+    // 現在のシーンのBGMを再開
+    const saved = currentBgmKey;
+    currentBgmKey = '';
+    playBgm(saved);
+  }
+}
+
+// ── ユーティリティ ──────────────────────────────────
+function mkOsc(ctx, type, freq, gain, out) {
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  g.gain.value = gain;
+  osc.connect(g);
+  g.connect(out);
+  osc.start();
+  bgmNodes.push(osc);
+  return { osc, gain: g };
+}
+
+function mkLFO(ctx, freq, depth, target) {
+  const lfo = ctx.createOscillator();
+  const lg = ctx.createGain();
+  lfo.frequency.value = freq;
+  lg.gain.value = depth;
+  lfo.connect(lg);
+  lg.connect(target);
+  lfo.start();
+  bgmNodes.push(lfo);
+}
+
+function mkReverb(ctx, duration = 2.5, decay = 2.0) {
+  const conv = ctx.createConvolver();
+  const rate = ctx.sampleRate;
+  const len = rate * duration;
+  const buf = ctx.createBuffer(2, len, rate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+  }
+  conv.buffer = buf;
+  return conv;
+}
+
+function mkDelay(ctx, delayTime = 0.3, feedback = 0.35) {
+  const delay = ctx.createDelay(2.0);
+  const fb = ctx.createGain();
+  delay.delayTime.value = delayTime;
+  fb.gain.value = feedback;
+  delay.connect(fb);
+  fb.connect(delay);
+  return delay;
+}
+
+// ── 音符スケジューラ ────────────────────────────────
+// メロディーをシーケンシャルに鳴らす関数
+function scheduleNotes(ctx, notes, out, waveType, volume, startTime, loopCb) {
+  // notes: [{freq, dur, vel=1.0}]
+  let t = startTime;
+  notes.forEach(note => {
+    if (note.freq > 0) {
+      const osc = ctx.createOscillator();
+      const env = ctx.createGain();
+      osc.type = waveType;
+      osc.frequency.value = note.freq;
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(volume * (note.vel || 0.8), t + 0.02);
+      env.gain.exponentialRampToValueAtTime(volume * (note.vel || 0.8) * 0.6, t + note.dur * 0.7);
+      env.gain.linearRampToValueAtTime(0.0001, t + note.dur * 0.95);
+      osc.connect(env);
+      env.connect(out);
+      osc.start(t);
+      osc.stop(t + note.dur);
+      bgmNodes.push(osc);
+    }
+    t += note.dur;
+  });
+  const totalDur = notes.reduce((s, n) => s + n.dur, 0);
+  if (loopCb) {
+    const remaining = (t - ctx.currentTime) * 1000;
+    const tid = setTimeout(() => loopCb(ctx.currentTime), Math.max(0, remaining - 80));
+    bgmNodes.push({ stop: () => clearTimeout(tid) });
+  }
+  return t;
+}
+
+// ── 音階定数 ────────────────────────────────────────
+const N = {
+  C3:130.81, D3:146.83, E3:164.81, F3:174.61, G3:196.00, A3:220.00, Bb3:233.08, B3:246.94,
+  C4:261.63, D4:293.66, Eb4:311.13, E4:329.63, F4:349.23, Gb4:369.99, G4:392.00, Ab4:415.30, A4:440.00, Bb4:466.16, B4:493.88,
+  C5:523.25, D5:587.33, Eb5:622.25, E5:659.25, F5:698.46, G5:783.99, A5:880.00,
+  C6:1046.50, R:0
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  BGM楽曲定義
+// ═══════════════════════════════════════════════════════════════
+
+const BGM_COMPOSERS = {
+
+  // ── タイトル画面：夢幻的なアンビエントピアノ ──────
+  title() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 4.0, 1.8);
+    rev.connect(bgmGain);
+    const dry = ctx.createGain(); dry.gain.value = 0.6; dry.connect(bgmGain);
+    const wet = ctx.createGain(); wet.gain.value = 0.4; wet.connect(bgmGain);
+    rev.connect(wet);
+
+    // 低音ドローン
+    mkOsc(ctx, 'sine', N.C3, 0.08, bgmGain);
+    mkOsc(ctx, 'sine', N.G3, 0.05, bgmGain);
+    mkLFO(ctx, 0.07, 2, ctx.createGain()); // 揺らぎ
+
+    // 上昇するアルペジオ（Cmaj7 → Am7 → Fmaj7 → G7）
+    const chords = [
+      [N.C4, N.E4, N.G4, N.B4],
+      [N.A3, N.C4, N.E4, N.G4],
+      [N.F3, N.A3, N.C4, N.E4],
+      [N.G3, N.B3, N.D4, N.F4],
+    ];
+    const noteDur = 0.45;
+    function loopArp(startT) {
+      if (currentBgmKey !== 'title') return;
+      let t = startT;
+      chords.forEach(chord => {
+        chord.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const env = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+          env.gain.setValueAtTime(0, t + i * noteDur);
+          env.gain.linearRampToValueAtTime(0.12, t + i * noteDur + 0.05);
+          env.gain.exponentialRampToValueAtTime(0.0001, t + i * noteDur + noteDur * 3);
+          osc.connect(env); env.connect(rev); env.connect(dry);
+          osc.start(t + i * noteDur);
+          osc.stop(t + i * noteDur + noteDur * 3.5);
+          bgmNodes.push(osc);
+        });
+        t += chord.length * noteDur;
+      });
+      const loopDur = chords.reduce((s, c) => s + c.length * noteDur, 0);
+      const tid = setTimeout(() => loopArp(ctx.currentTime + 0.05), (loopDur - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopArp(ctx.currentTime + 0.3);
+  },
+
+  // ── 街/日常：穏やかな魔法少女テーマ ──────────────
+  town() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 2.0, 1.5); rev.connect(bgmGain);
+    const dry = ctx.createGain(); dry.gain.value = 0.7; dry.connect(bgmGain);
+
+    // ベースライン
+    const bassNotes = [
+      {freq:N.C3, dur:0.5}, {freq:N.R, dur:0.5},
+      {freq:N.A3, dur:0.5}, {freq:N.R, dur:0.5},
+      {freq:N.F3, dur:0.5}, {freq:N.R, dur:0.5},
+      {freq:N.G3, dur:0.5}, {freq:N.R, dur:0.5},
+    ];
+    function loopBass(t) {
+      if (currentBgmKey !== 'town') return;
+      const nextT = scheduleNotes(ctx, bassNotes, bgmGain, 'sine', 0.15, t);
+      const tid = setTimeout(() => loopBass(nextT - 0.05), (nextT - ctx.currentTime - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopBass(ctx.currentTime + 0.1);
+
+    // メロディー（魔法少女らしい跳躍メロ）
+    const melody = [
+      {freq:N.E5, dur:0.4}, {freq:N.D5, dur:0.2}, {freq:N.C5, dur:0.4},
+      {freq:N.E5, dur:0.3}, {freq:N.G5, dur:0.5}, {freq:N.R,  dur:0.2},
+      {freq:N.A5, dur:0.4}, {freq:N.G5, dur:0.2}, {freq:N.E5, dur:0.4},
+      {freq:N.D5, dur:0.6}, {freq:N.R,  dur:0.2},
+      {freq:N.F5, dur:0.4}, {freq:N.E5, dur:0.2}, {freq:N.D5, dur:0.4},
+      {freq:N.C5, dur:0.8}, {freq:N.R,  dur:0.4},
+    ];
+    function loopMelody(t) {
+      if (currentBgmKey !== 'town') return;
+      const nextT = scheduleNotes(ctx, melody, rev, 'triangle', 0.18, t);
+      const tid = setTimeout(() => loopMelody(nextT - 0.05), (nextT - ctx.currentTime - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopMelody(ctx.currentTime + 0.15);
+  },
+
+  // ── 夜/神秘：静謐なアンビエント ──────────────────
+  night() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 3.5, 2.0); rev.connect(bgmGain);
+
+    mkOsc(ctx, 'sine', N.A3, 0.07, bgmGain);
+    mkOsc(ctx, 'sine', N.E4, 0.04, bgmGain);
+    mkLFO(ctx, 0.12, 3, (() => { const g = ctx.createGain(); g.connect(bgmGain); return g.gain; })());
+
+    const pads = [N.A4, N.C5, N.E5, N.G5, N.B4];
+    function loopPad(t) {
+      if (currentBgmKey !== 'night') return;
+      const freq = pads[Math.floor(Math.random() * pads.length)];
+      const osc = ctx.createOscillator();
+      const env = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(0.1, t + 1.2);
+      env.gain.linearRampToValueAtTime(0, t + 4.0);
+      osc.connect(env); env.connect(rev);
+      osc.start(t); osc.stop(t + 4.5);
+      bgmNodes.push(osc);
+      const tid = setTimeout(() => loopPad(ctx.currentTime + Math.random() * 1.5 + 1.0), 1500);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopPad(ctx.currentTime + 0.2);
+  },
+
+  // ── 魔法：華やかで神秘的 ──────────────────────────
+  magic() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 3.0, 1.8); rev.connect(bgmGain);
+    const dly = mkDelay(ctx, 0.375, 0.3); dly.connect(bgmGain);
+
+    mkOsc(ctx, 'sine', N.C3, 0.06, bgmGain);
+
+    const glitchNotes = [
+      {freq:N.C5,  dur:0.25}, {freq:N.E5,  dur:0.25}, {freq:N.G5,  dur:0.25}, {freq:N.C6,  dur:0.5},
+      {freq:N.B4,  dur:0.25}, {freq:N.G5,  dur:0.25}, {freq:N.E5,  dur:0.25}, {freq:N.C5,  dur:0.5},
+      {freq:N.A4,  dur:0.25}, {freq:N.C5,  dur:0.25}, {freq:N.E5,  dur:0.25}, {freq:N.A5,  dur:0.5},
+      {freq:N.G4,  dur:0.25}, {freq:N.B4,  dur:0.25}, {freq:N.D5,  dur:0.25}, {freq:N.G5,  dur:0.75},
+    ];
+    function loopMagic(t) {
+      if (currentBgmKey !== 'magic') return;
+      const nextT = scheduleNotes(ctx, glitchNotes, rev, 'triangle', 0.14, t);
+      scheduleNotes(ctx, glitchNotes, dly, 'sine', 0.08, t + 0.05);
+      const tid = setTimeout(() => loopMagic(nextT - 0.05), (nextT - ctx.currentTime - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopMagic(ctx.currentTime + 0.1);
+  },
+
+  // ── 危険/戦闘：緊迫感のある不協和 ──────────────────
+  danger() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 1.5, 3.0); rev.connect(bgmGain);
+
+    // 不安定なドローン（増四度）
+    mkOsc(ctx, 'sawtooth', N.A3,  0.04, bgmGain);
+    mkOsc(ctx, 'sawtooth', N.Eb4, 0.03, bgmGain);
+    mkLFO(ctx, 0.8, 4, (() => { const osc = ctx.createOscillator(); osc.frequency.value = N.A3; osc.start(); bgmNodes.push(osc); return osc.frequency; })());
+
+    // 打撃パルス
+    const pulseFreqs = [N.A3, N.G3, N.Ab3, N.A3, N.Bb3, N.A3, N.G3, N.Ab3];
+    function loopPulse(t) {
+      if (currentBgmKey !== 'danger') return;
+      pulseFreqs.forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        const env = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = f;
+        env.gain.setValueAtTime(0.08, t + i * 0.22);
+        env.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.22 + 0.18);
+        osc.connect(env); env.connect(bgmGain); env.connect(rev);
+        osc.start(t + i * 0.22);
+        osc.stop(t + i * 0.22 + 0.2);
+        bgmNodes.push(osc);
+      });
+      const loopLen = pulseFreqs.length * 0.22;
+      const tid = setTimeout(() => loopPulse(ctx.currentTime + 0.05), (loopLen - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopPulse(ctx.currentTime + 0.1);
+
+    // 高音の不安メロ
+    const tensionMel = [
+      {freq:N.A4, dur:0.3}, {freq:N.Bb4, dur:0.15}, {freq:N.A4, dur:0.3},
+      {freq:N.Ab4, dur:0.45}, {freq:N.R, dur:0.3},
+      {freq:N.G4, dur:0.3}, {freq:N.Ab4, dur:0.15}, {freq:N.G4, dur:0.3},
+      {freq:N.Gb4, dur:0.6}, {freq:N.R, dur:0.45},
+    ];
+    function loopTension(t) {
+      if (currentBgmKey !== 'danger') return;
+      const nextT = scheduleNotes(ctx, tensionMel, rev, 'sawtooth', 0.06, t);
+      const tid = setTimeout(() => loopTension(nextT - 0.05), (nextT - ctx.currentTime - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopTension(ctx.currentTime + 0.2);
+  },
+
+  // ── 暗闇/絶望：重く沈んだアンビエント ──────────────
+  dark() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 5.0, 2.5); rev.connect(bgmGain);
+
+    mkOsc(ctx, 'sine', N.A3 * 0.5, 0.09, bgmGain); // 低い A2
+    mkOsc(ctx, 'sine', N.E3, 0.04, bgmGain);
+    mkLFO(ctx, 0.05, 2, bgmGain.gain);
+
+    // ゆっくり沈むコード
+    const darkChords = [[N.A3, N.C4, N.Eb4], [N.G3, N.Bb3, N.D4], [N.F3, N.Ab3, N.C4], [N.E3, N.G3, N.B3]];
+    function loopDark(t) {
+      if (currentBgmKey !== 'dark') return;
+      const chord = darkChords[Math.floor(t * 10 % darkChords.length)];
+      chord.forEach(freq => {
+        const osc = ctx.createOscillator();
+        const env = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        env.gain.setValueAtTime(0, t);
+        env.gain.linearRampToValueAtTime(0.06, t + 2.0);
+        env.gain.linearRampToValueAtTime(0, t + 7.0);
+        osc.connect(env); env.connect(rev);
+        osc.start(t); osc.stop(t + 7.5);
+        bgmNodes.push(osc);
+      });
+      const tid = setTimeout(() => loopDark(ctx.currentTime + 5.5), 5500);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopDark(ctx.currentTime + 0.2);
+  },
+
+  // ── 森/クラムベリー戦：不気味な弦 ───────────────────
+  forest() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 3.0, 2.0); rev.connect(bgmGain);
+
+    mkOsc(ctx, 'sine', N.D3, 0.06, bgmGain);
+    mkOsc(ctx, 'sine', N.A3, 0.04, bgmGain);
+
+    const eerieNotes = [
+      {freq:N.D4, dur:0.6}, {freq:N.F4, dur:0.4}, {freq:N.A4, dur:0.4}, {freq:N.C5, dur:0.8},
+      {freq:N.B4, dur:0.4}, {freq:N.Ab4, dur:0.4}, {freq:N.F4, dur:0.6}, {freq:N.R, dur:0.4},
+      {freq:N.Eb4, dur:0.6}, {freq:N.G4, dur:0.4}, {freq:N.Bb4, dur:0.4}, {freq:N.D5, dur:0.8},
+      {freq:N.C5, dur:0.4}, {freq:N.A4, dur:0.4}, {freq:N.G4, dur:0.8}, {freq:N.R, dur:0.8},
+    ];
+    function loopForest(t) {
+      if (currentBgmKey !== 'forest') return;
+      const nextT = scheduleNotes(ctx, eerieNotes, rev, 'sawtooth', 0.09, t);
+      const tid = setTimeout(() => loopForest(nextT - 0.05), (nextT - ctx.currentTime - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopForest(ctx.currentTime + 0.1);
+  },
+
+  // ── 神聖/まどか場面：崇高で静寂 ─────────────────────
+  sacred() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 6.0, 1.5); rev.connect(bgmGain);
+
+    mkOsc(ctx, 'sine', N.C3, 0.05, bgmGain);
+
+    const sacredMel = [
+      {freq:N.C5,  dur:0.8}, {freq:N.E5,  dur:0.6}, {freq:N.G5,  dur:0.6}, {freq:N.C6,  dur:1.2},
+      {freq:N.B4,  dur:0.6}, {freq:N.G5,  dur:0.4}, {freq:N.A5,  dur:0.8}, {freq:N.R,   dur:0.6},
+      {freq:N.A4,  dur:0.8}, {freq:N.C5,  dur:0.6}, {freq:N.E5,  dur:0.6}, {freq:N.A5,  dur:1.4},
+      {freq:N.G5,  dur:0.6}, {freq:N.E5,  dur:0.4}, {freq:N.C5,  dur:1.0}, {freq:N.R,   dur:0.8},
+    ];
+    function loopSacred(t) {
+      if (currentBgmKey !== 'sacred') return;
+      const nextT = scheduleNotes(ctx, sacredMel, rev, 'sine', 0.16, t);
+      const tid = setTimeout(() => loopSacred(nextT - 0.05), (nextT - ctx.currentTime - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopSacred(ctx.currentTime + 0.2);
+  },
+
+  // ── ???/ヴォイド：異世界の虚空 ───────────────────────
+  void() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 8.0, 1.2); rev.connect(bgmGain);
+
+    // 倍音が歪んだドローン
+    [N.C3 * 0.5, N.Eb3, N.Gb3, N.A3].forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      g.gain.value = [0.07, 0.05, 0.04, 0.03][i];
+      mkLFO(ctx, 0.03 + i * 0.01, 1.5, osc.frequency);
+      osc.connect(g); g.connect(rev);
+      osc.start();
+      bgmNodes.push(osc);
+    });
+
+    // 不規則な音符
+    const voidNotes = [N.Eb5, N.Gb5, N.A5, N.C6, N.Bb4, N.Gb4, N.Eb4, N.R];
+    function loopVoid(t) {
+      if (currentBgmKey !== 'void') return;
+      const freq = voidNotes[Math.floor(Math.random() * voidNotes.length)];
+      if (freq > 0) {
+        const osc = ctx.createOscillator();
+        const env = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        env.gain.setValueAtTime(0, t);
+        env.gain.linearRampToValueAtTime(0.08, t + 0.3);
+        env.gain.exponentialRampToValueAtTime(0.0001, t + 2.5);
+        osc.connect(env); env.connect(rev);
+        osc.start(t); osc.stop(t + 3.0);
+        bgmNodes.push(osc);
+      }
+      const interval = Math.random() * 2000 + 800;
+      const tid = setTimeout(() => loopVoid(ctx.currentTime), interval);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopVoid(ctx.currentTime + 0.3);
+  },
+
+  // ── エンディング（TRUE）：感動的な解放 ──────────────
+  ending_true() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 4.0, 1.5); rev.connect(bgmGain);
+    const dry = ctx.createGain(); dry.gain.value = 0.5; dry.connect(bgmGain);
+
+    mkOsc(ctx, 'sine', N.C3, 0.05, bgmGain);
+    mkOsc(ctx, 'sine', N.G3, 0.03, bgmGain);
+
+    const trueMel = [
+      {freq:N.C5,  dur:0.5, vel:0.9}, {freq:N.E5,  dur:0.4, vel:0.8}, {freq:N.G5,  dur:0.4, vel:0.8},
+      {freq:N.C6,  dur:0.8, vel:1.0}, {freq:N.R,   dur:0.3},
+      {freq:N.B4,  dur:0.4, vel:0.8}, {freq:N.G5,  dur:0.4, vel:0.8}, {freq:N.E5,  dur:0.5, vel:0.9},
+      {freq:N.A5,  dur:0.8, vel:0.9}, {freq:N.R,   dur:0.3},
+      {freq:N.A4,  dur:0.4, vel:0.7}, {freq:N.C5,  dur:0.3, vel:0.7}, {freq:N.E5,  dur:0.4, vel:0.8},
+      {freq:N.G5,  dur:0.4, vel:0.8}, {freq:N.A5,  dur:1.0, vel:1.0}, {freq:N.R,   dur:0.4},
+      {freq:N.G5,  dur:0.4, vel:0.8}, {freq:N.E5,  dur:0.4, vel:0.8}, {freq:N.C5,  dur:0.6, vel:0.9},
+      {freq:N.G4,  dur:0.5, vel:0.7}, {freq:N.C5,  dur:1.2, vel:0.9}, {freq:N.R,   dur:0.6},
+    ];
+    function loopTrue(t) {
+      if (!currentBgmKey.startsWith('ending')) return;
+      const nextT = scheduleNotes(ctx, trueMel, rev, 'triangle', 0.2, t);
+      scheduleNotes(ctx, trueMel.map(n => ({...n, freq: n.freq ? n.freq * 0.5 : 0, vel: (n.vel||0.8) * 0.6})), dry, 'sine', 0.15, t + 0.02);
+      const tid = setTimeout(() => loopTrue(nextT - 0.05), (nextT - ctx.currentTime - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopTrue(ctx.currentTime + 0.3);
+  },
+
+  // ── エンディング（BAD）：悲壮な鐘 ───────────────────
+  ending_bad() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 6.0, 2.5); rev.connect(bgmGain);
+
+    mkOsc(ctx, 'sine', N.A3 * 0.5, 0.07, bgmGain);
+
+    const badNotes = [
+      {freq:N.A4, dur:1.0}, {freq:N.R, dur:0.5},
+      {freq:N.G4, dur:0.8}, {freq:N.R, dur:0.5},
+      {freq:N.F4, dur:1.2}, {freq:N.R, dur:0.8},
+      {freq:N.E4, dur:1.6}, {freq:N.R, dur:1.2},
+    ];
+    function loopBad(t) {
+      if (!currentBgmKey.startsWith('ending')) return;
+      const nextT = scheduleNotes(ctx, badNotes, rev, 'sine', 0.18, t);
+      const tid = setTimeout(() => loopBad(nextT - 0.05), (nextT - ctx.currentTime - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopBad(ctx.currentTime + 0.3);
+  },
+
+  // ── エンディング（NORMAL）：静かな余韻 ──────────────
+  ending_normal() {
+    const ctx = getAudioCtx();
+    const rev = mkReverb(ctx, 3.5, 1.8); rev.connect(bgmGain);
+    const normNotes = [
+      {freq:N.E5, dur:0.6}, {freq:N.D5, dur:0.5}, {freq:N.C5, dur:0.8}, {freq:N.R, dur:0.6},
+      {freq:N.D5, dur:0.5}, {freq:N.E5, dur:0.4}, {freq:N.G5, dur:1.0}, {freq:N.R, dur:0.8},
+    ];
+    function loopNorm(t) {
+      if (!currentBgmKey.startsWith('ending')) return;
+      const nextT = scheduleNotes(ctx, normNotes, rev, 'triangle', 0.16, t);
+      const tid = setTimeout(() => loopNorm(nextT - 0.05), (nextT - ctx.currentTime - 0.1) * 1000);
+      bgmNodes.push({ stop: () => clearTimeout(tid) });
+    }
+    loopNorm(ctx.currentTime + 0.2);
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  シーン → BGM マッピング
+// ═══════════════════════════════════════════════════════════════
+const SCENE_BGM = {
+  title:  'title',
+  town:   'town',
+  night:  'night',
+  magic:  'magic',
+  danger: 'danger',
+  dark:   'dark',
+  forest: 'forest',
+  sacred: 'sacred',
+  void:   'void',
+};
+
 function setScene(key) {
   const bg = document.getElementById('scene-bg');
   bg.style.background = SCENES[key] || SCENES.night;
+  // BGM切り替え
+  const bgmKey = SCENE_BGM[key] || 'night';
+  playBgm(bgmKey);
 }
 
 // ─────────────────────────────────────────────────
@@ -1234,6 +1791,11 @@ function showEnding(type, title, body) {
   titleEl.textContent = title;
   titleEl.className = `ending-title ${type}`;
   bodyEl.textContent = body;
+
+  // エンディングBGM
+  const bgmKey = type === 'true' ? 'ending_true' : type === 'bad' ? 'ending_bad' : 'ending_normal';
+  currentBgmKey = '';
+  playBgm(bgmKey);
 
   setTimeout(() => { es.classList.add('visible'); }, 300);
 }
@@ -1572,6 +2134,7 @@ function showTitleScreen() {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => { ts.style.opacity = '1'; });
   });
+  playBgm('title');
 }
 
 // ─────────────────────────────────────────────────
@@ -3040,6 +3603,24 @@ function restartGame() {
 document.addEventListener('keydown', e => {
   if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') advance();
 });
+
+// タイトル画面表示時にBGM開始（初回クリックで AudioContext を起動）
+document.addEventListener('click', function startTitleBgm() {
+  if (currentBgmKey === '') {
+    playBgm('title');
+  }
+  document.removeEventListener('click', startTitleBgm);
+}, { once: false });
+
+// タイトル画面そのものへのクリックでもBGM開始
+(function() {
+  const ts = document.getElementById('title-screen');
+  if (ts) {
+    ts.addEventListener('click', () => {
+      if (currentBgmKey === '') playBgm('title');
+    });
+  }
+})();
 </script>
 </body>
 </html>
