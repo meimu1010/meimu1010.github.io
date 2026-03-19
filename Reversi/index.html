@@ -520,6 +520,39 @@
 
   .divider { width: 100%; max-width: 400px; border: none; border-top: 1px solid var(--border); }
 
+  .name-input-wrap {
+    width: 100%;
+    max-width: 360px;
+    position: relative;
+  }
+  .name-input-wrap label {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+  .name-input-wrap input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--neon-green);
+    font-family: 'Zen Dots', sans-serif;
+    font-size: 1.1rem;
+    padding: 0.7rem 1rem;
+    letter-spacing: 0.08em;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-align: center;
+  }
+  .name-input-wrap input:focus {
+    border-color: var(--neon-green);
+    box-shadow: var(--glow-green);
+  }
+  .name-input-wrap input::placeholder { color: var(--text-dim); font-size: 0.85rem; }
+
   .badge-row { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
   .info-badge {
     font-size: 0.7rem;
@@ -540,6 +573,10 @@
     <button class="btn btn-green" onclick="showSoloSetup()">🖥 ローカル対戦（1台）</button>
     <button class="btn btn-pink" onclick="showHostRoom()">📡 部屋を作る（ホスト）</button>
     <button class="btn btn-blue" onclick="showJoinRoom()">🎮 部屋に入る（ゲスト）</button>
+  </div>
+  <div class="name-input-wrap">
+    <label>👤 あなたの名前</label>
+    <input type="text" id="playerNameInput" placeholder="プレイヤー名を入力" maxlength="12" value="プレイヤー">
   </div>
   <div class="badge-row">
     <span class="info-badge">⚡ ランダムルーレット</span>
@@ -663,6 +700,9 @@ let spinning=false;
 let rouletteAngle=0, rouletteTarget=0, rouletteAnimId=null;
 let pendingRoulette=false;
 let soloPlayerColor=BLACK;
+let playerName='プレイヤー';
+
+function getPlayerName(){ return document.getElementById('playerNameInput')?.value.trim()||'プレイヤー'; }
 
 // Roulette events
 const EVENTS=[
@@ -711,8 +751,10 @@ function pickColor(c){
 function startSoloGame(){
   isSolo=true; isOnline=false;
   myColor=soloPlayerColor;
-  document.getElementById('p1Label').textContent='あなた（黒）';
-  document.getElementById('p2Label').textContent='あなた（白）';
+  playerName=getPlayerName();
+  const n=playerName||'プレイヤー';
+  document.getElementById('p1Label').textContent=n+'（黒）';
+  document.getElementById('p2Label').textContent=n+'（白）';
   startGame();
 }
 
@@ -764,10 +806,11 @@ function initPeer(){
     document.getElementById('hostStatus').textContent='接続完了！ゲームを開始します...';
     setTimeout(()=>{
       myColor=BLACK;
-      document.getElementById('p1Label').textContent='あなた（黒）';
+      playerName=getPlayerName();
+      document.getElementById('p1Label').textContent=playerName+'（黒）';
       document.getElementById('p2Label').textContent='相手（白）';
       startGame();
-      conn.send({type:'start', seed: nextRouletteAt});
+      conn.send({type:'start', seed: nextRouletteAt, hostName: playerName});
     },800);
   });
 
@@ -821,10 +864,15 @@ function sendNet(obj){
 function handleNetMessage(data){
   if(data.type==='start'){
     myColor=WHITE;
-    document.getElementById('p1Label').textContent='相手（黒）';
-    document.getElementById('p2Label').textContent='あなた（白）';
+    playerName=getPlayerName();
+    document.getElementById('p1Label').textContent=(data.hostName||'相手')+'（黒）';
+    document.getElementById('p2Label').textContent=playerName+'（白）';
     nextRouletteAt=data.seed;
+    // send our name back to host
+    sendNet({type:'guestName', name: playerName});
     startGame(true); // guest, seed already set
+  } else if(data.type==='guestName'){
+    document.getElementById('p2Label').textContent=(data.name||'相手')+'（白）';
   } else if(data.type==='move'){
     if(!gameActive) return;
     applyMove(data.row, data.col, data.turn);
