@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Discord用 OGP -->
     <meta property="og:title" content="魔法少女育成計画 〜キャンディー争奪戦〜">
     <meta property="og:description" content="最下位は消される！魔法少女として生き残るため、ライバルとキャンディーを奪い合え。君の魔法で勝利をつかめ！">
     <meta property="og:image" content="https://i.imgur.com/UsYk5Jo.png">
@@ -15,229 +14,306 @@
             --black: #0d0609;
             --blood-red: #8a0303;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             background-color: var(--black);
             color: var(--pastel-pink);
-            font-family: 'MS Mincho', 'Hiragino Mincho ProN', serif;
-            margin: 0;
+            font-family: 'MS Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
             user-select: none;
+            overflow: hidden;
         }
 
         #game-container {
-            width: 1000px;
-            height: 600px;
+            width: min(1000px, 100vw);
+            height: min(620px, 100vh);
             background: linear-gradient(180deg, #1a0b12 0%, #000000 100%);
             border: 2px solid var(--deep-pink);
-            box-shadow: 0 0 30px rgba(255, 20, 147, 0.3);
+            box-shadow: 0 0 40px rgba(255,20,147,0.35), inset 0 0 60px rgba(0,0,0,0.5);
             position: relative;
             display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
         .scanlines {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 255, 0, 0.06));
+            background:
+                linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.18) 50%),
+                linear-gradient(90deg, rgba(255,0,0,0.04), rgba(0,255,0,0.015), rgba(0,255,0,0.04));
             background-size: 100% 4px, 3px 100%;
             pointer-events: none;
             z-index: 100;
         }
 
+        /* ======== レイアウト ======== */
+        #game-body { flex: 1; display: flex; overflow: hidden; }
+
         #game-main {
             flex: 1;
             display: flex;
             flex-direction: column;
-            position: relative;
-            border-right: 1px solid var(--deep-pink);
+            border-right: 1px solid rgba(255,20,147,0.4);
+            min-width: 0;
         }
 
+        /* ======== ステータスバー ======== */
         #status-bar {
             display: flex;
             justify-content: space-between;
-            padding: 10px 20px;
-            background: rgba(255, 20, 147, 0.15);
-            border-bottom: 1px solid var(--deep-pink);
-            font-size: 1.1rem;
-            z-index: 10;
+            align-items: center;
+            padding: 8px 18px;
+            background: rgba(255,20,147,0.12);
+            border-bottom: 1px solid rgba(255,20,147,0.4);
+            font-size: 1rem;
+            flex-shrink: 0;
         }
 
-        #ranking-panel {
-            width: 250px;
-            background: rgba(13, 6, 9, 0.8);
-            padding: 15px;
+        /* ======== チートUI ======== */
+        #cheat-ui {
+            display: none;
+            padding: 5px 12px;
+            background: rgba(100,0,0,0.4);
+            border-bottom: 1px solid #cc0000;
+            align-items: center;
+            gap: 10px;
+            color: #ff6666;
+            font-size: 0.8rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        #cheat-ui.active { display: flex; }
+        .cheat-input {
+            width: 70px; background: #000; color: #0f0;
+            border: 1px solid #cc0000; padding: 2px 5px; font-family: monospace;
+        }
+        .cheat-btn {
+            background: #300; border: 1px solid #cc0000; color: #f88;
+            padding: 2px 8px; cursor: pointer; font-family: inherit; font-size: 0.8rem;
+        }
+        .cheat-btn:hover { background: #600; }
+        .cheat-btn.kill-on { background: #600; color: #fff; border-color: #f00; }
+
+        /* ======== メインビュー ======== */
+        #main-view {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            z-index: 10;
+            justify-content: flex-end;
+            padding: 16px;
+            overflow: hidden;
+            gap: 10px;
         }
 
-        .ranking-title { text-align: center; border-bottom: 1px solid var(--pastel-pink); margin-bottom: 10px; color: var(--deep-pink); font-weight: bold; }
-        .ranking-item { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.85rem;}
-        .ranking-item.player { color: #fff; text-shadow: 0 0 5px var(--deep-pink); font-weight: bold; }
-
-        #main-view { flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; }
         #message-window {
-            background: rgba(255, 209, 220, 0.1);
-            border: 1px solid var(--deep-pink);
-            padding: 20px;
-            min-height: 100px;
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            z-index: 10;
+            background: rgba(255,209,220,0.07);
+            border: 1px solid rgba(255,20,147,0.5);
+            padding: 16px 18px;
+            min-height: 90px;
+            font-size: 1.1rem;
+            line-height: 1.75;
+            flex-shrink: 0;
         }
 
-        /* 通常の選択肢（1列で大きく表示） */
-        #choices-container { 
+        /* ======== 選択肢 ======== */
+        #choices-container {
             display: flex;
             flex-direction: column;
-            gap: 8px; 
-            z-index: 10; 
-            max-height: 300px;
+            gap: 6px;
             overflow-y: auto;
+            max-height: 250px;
         }
-
-        /* 殺害ターゲット選択時（JavaScriptでこのクラスを付与する） */
         #choices-container.murder-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
+            gap: 5px;
+            max-height: none;
         }
 
         .choice-btn {
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0,0,0,0.6);
             color: var(--pastel-pink);
-            border: 1px solid var(--pastel-pink);
-            padding: 12px;
+            border: 1px solid rgba(255,209,220,0.35);
+            padding: 10px 14px;
             cursor: pointer;
             text-align: left;
-            transition: all 0.2s;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            font-family: inherit;
+            font-size: 0.95rem;
+            line-height: 1.4;
         }
-
-        /* ターゲット選択ボタン専用のスタイル */
+        .choice-btn:hover:not(:disabled) {
+            background: var(--deep-pink);
+            border-color: #fff;
+            color: #fff;
+        }
+        .choice-btn:disabled { opacity: 0.35; cursor: not-allowed; }
         .target-btn {
             padding: 8px 4px !important;
             font-size: 0.75rem !important;
             text-align: center !important;
+            line-height: 1.3 !important;
         }
-        .choice-btn:hover { background: var(--deep-pink); color: #fff; }
 
+        /* ======== スピードバー ======== */
+        #speed-ctrl {
+            padding: 5px 18px;
+            background: rgba(0,0,0,0.4);
+            font-size: 0.8rem;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border-top: 1px solid #222;
+            flex-shrink: 0;
+        }
+        .vol-slider {
+            width: 70px; height: 4px; accent-color: var(--deep-pink); cursor: pointer; vertical-align: middle;
+        }
+
+        /* ======== ランキングパネル ======== */
+        #ranking-panel {
+            width: 220px;
+            background: rgba(13,6,9,0.85);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .ranking-title {
+            text-align: center;
+            border-bottom: 1px solid rgba(255,209,220,0.3);
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            color: var(--deep-pink);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+            padding: 2px 0;
+        }
+        .ranking-item.player {
+            color: #fff;
+            text-shadow: 0 0 6px var(--deep-pink);
+            font-weight: bold;
+        }
+        .ranking-item.last-place { color: #ff4444; animation: blink-red 1s infinite; }
+        @keyframes blink-red { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        /* ======== セットアップ ======== */
         #setup-screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--black);
+            background: linear-gradient(180deg, #150610 0%, #000 100%);
             z-index: 200;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px;
-            box-sizing: border-box;
+            padding: 30px 40px;
+            overflow-y: auto;
         }
-        .setup-group { margin-bottom: 20px; text-align: center; width: 100%; }
-        .char-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 10px; max-height: 200px; overflow-y: auto; padding: 10px; border: 1px solid #333; }
-        .setup-btn { background: #000; border: 1px solid var(--pastel-pink); color: var(--pastel-pink); padding: 5px; cursor: pointer; font-size: 0.8rem; }
-        .setup-btn.active { background: var(--deep-pink); color: white; border-color: white; }
-        .start-btn { padding: 15px 40px; font-size: 1.5rem; background: var(--deep-pink); color: white; border: none; cursor: pointer; margin-top: 20px; }
-
-        #cheat-ui {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: -2px;
-            width: calc(100% + 4px);
-            background: #1a0b12;
-            border: 2px solid var(--deep-pink);
-            border-top: none;
-            padding: 10px;
-            box-sizing: border-box;
-            z-index: 999;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: #ff0000;
-            font-weight: bold;
+        #setup-screen h1 {
+            color: var(--deep-pink); font-size: 1.5rem; margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(255,20,147,0.6); text-align: center;
         }
-
-        .cheat-input {
-            width: 80px;
-            background: #000;
-            color: #0f0;
-            border: 1px solid #ff0000;
-            padding: 3px;
-            font-family: monospace;
+        .setup-group { margin-bottom: 16px; text-align: center; width: 100%; }
+        .setup-group p { margin-bottom: 8px; font-size: 0.9rem; }
+        .char-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;
+            margin-top: 8px; max-height: 180px; overflow-y: auto;
+            padding: 8px; border: 1px solid #333;
         }
-
-        #game-container {
-            overflow: visible !important;
-            margin-bottom: 60px;
+        .setup-btn {
+            background: #000; border: 1px solid rgba(255,209,220,0.4); color: var(--pastel-pink);
+            padding: 5px 8px; cursor: pointer; font-size: 0.78rem; font-family: inherit; transition: background 0.15s;
         }
-
-        #speed-ctrl {
-            padding: 5px 20px;
-            background: rgba(0,0,0,0.5);
-            font-size: 0.8rem;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            border-top: 1px solid #333;
+        .setup-btn:hover { background: rgba(255,20,147,0.3); }
+        .setup-btn.active { background: var(--deep-pink); color: #fff; border-color: #fff; }
+        .difficulty-btn { padding: 6px 12px; font-size: 0.85rem; margin: 0 4px; }
+        .start-btn {
+            padding: 14px 45px; font-size: 1.4rem; background: var(--deep-pink); color: #fff;
+            border: none; cursor: pointer; margin-top: 16px; font-family: inherit;
+            text-shadow: 0 0 8px rgba(255,255,255,0.5); transition: box-shadow 0.2s;
         }
+        .start-btn:hover { box-shadow: 0 0 20px rgba(255,20,147,0.8); }
 
+        /* ======== ファヴポップアップ ======== */
         #fav-popup {
-            position: absolute;
-            top: 50%; left: 40%;
+            position: absolute; top: 50%; left: 40%;
             transform: translate(-50%, -50%);
-            width: 50%;
-            background: rgba(0, 0, 0, 0.95);
-            border: 3px dashed var(--pastel-pink);
-            padding: 20px;
-            text-align: center;
-            display: none;
-            z-index: 150;
+            width: 52%; background: rgba(5,0,8,0.97);
+            border: 2px dashed var(--pastel-pink);
+            padding: 22px 24px; text-align: center;
+            display: none; z-index: 150; line-height: 1.75; font-size: 1rem;
         }
+        #fav-popup .fav-icon { font-size: 2rem; margin-bottom: 8px; }
+        #fav-popup button {
+            margin-top: 14px; background: transparent;
+            border: 1px solid var(--pastel-pink); color: var(--pastel-pink);
+            padding: 6px 20px; cursor: pointer; font-family: inherit;
+        }
+        #fav-popup button:hover { background: var(--pastel-pink); color: #000; }
 
+        /* ======== エンド画面 ======== */
+        #end-screen {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.93); z-index: 180;
+            flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 30px;
+        }
+        #end-screen.visible { display: flex; }
+        #end-title { font-size: 3rem; margin-bottom: 16px; }
+        #end-body  { font-size: 1.05rem; line-height: 1.9; max-width: 600px; }
+        .restart-btn {
+            background: transparent; color: #fff; border: 1px solid #fff;
+            padding: 10px 24px; cursor: pointer; font-family: inherit;
+            margin-top: 20px; font-size: 1rem;
+        }
+        .restart-btn:hover { background: #fff; color: #000; }
+
+        /* ======== アニメーション ======== */
         @keyframes flashRed {
-            0% { box-shadow: inset 0 0 0px var(--blood-red); }
-            50% { box-shadow: inset 0 0 100px var(--blood-red); background-color: rgba(138, 3, 3, 0.4); }
-            100% { box-shadow: inset 0 0 0px var(--blood-red); }
+            0%   { box-shadow: inset 0 0 0 var(--blood-red); }
+            50%  { box-shadow: inset 0 0 80px var(--blood-red); background-color: rgba(138,3,3,0.35); }
+            100% { box-shadow: inset 0 0 0 var(--blood-red); }
         }
         .flash-red-anim { animation: flashRed 0.3s 3; }
-        .glitch-anim { animation: glitch 0.2s linear infinite; color: red; }
-        @keyframes glitch { 0%, 100% { transform: translate(0); } 20% { transform: translate(-2px, 2px); } 40% { transform: translate(2px, -2px); } }
 
-        .restart-btn {
-            background: transparent; color: white; border: 1px solid white; padding: 10px 20px; cursor: pointer; font-family: inherit; margin-top: 20px;
+        @keyframes glitch {
+            0%,100% { transform:translate(0); filter:none; }
+            20%     { transform:translate(-2px,2px);  filter:hue-rotate(90deg); }
+            40%     { transform:translate(2px,-2px);  filter:hue-rotate(-90deg); }
         }
-        .restart-btn:hover { background: white; color: black; }
-
-        .vol-slider {
-            width: 80px;
-            height: 4px;
-            accent-color: var(--deep-pink);
-            cursor: pointer;
-            vertical-align: middle;
-        }
+        .glitch-anim { animation: glitch 0.2s linear infinite; }
     </style>
 </head>
 <body>
-
 <audio id="bgm-audio" src="bgm.mp3" loop></audio>
 
 <div id="game-container">
     <div class="scanlines"></div>
 
+    <!-- セットアップ -->
     <div id="setup-screen">
-        <h1 style="color:var(--deep-pink)">魔法少女育成計画 〜キャンディー争奪戦〜</h1>
+        <h1>魔法少女育成計画<br>〜キャンディー争奪戦〜</h1>
         <div class="setup-group">
-            <p>難易度（ライバルの強さ）を選択してぽん：</p>
-            <button class="setup-btn difficulty-btn" onclick="setDifficulty('easy', this)">イージー（激甘）</button>
-            <button class="setup-btn difficulty-btn active" onclick="setDifficulty('normal', this)">ノーマル</button>
-            <button class="setup-btn difficulty-btn" onclick="setDifficulty('hard', this)">ハード（絶望）</button>
-            <button class="setup-btn difficulty-btn" onclick="setDifficulty('veryhard', this)">ベリーハード（地獄）</button>
+            <p>難易度を選択してぽん：</p>
+            <button class="setup-btn difficulty-btn" onclick="setDifficulty('easy',this)">イージー（激甘）</button>
+            <button class="setup-btn difficulty-btn active" onclick="setDifficulty('normal',this)">ノーマル</button>
+            <button class="setup-btn difficulty-btn" onclick="setDifficulty('hard',this)">ハード（絶望）</button>
+            <button class="setup-btn difficulty-btn" onclick="setDifficulty('veryhard',this)">ベリーハード（地獄）</button>
         </div>
         <div class="setup-group">
             <p>操作する魔法少女を選んでぽん：</p>
@@ -245,561 +321,1303 @@
         </div>
         <button class="start-btn" onclick="startGame()">契約するぽん！</button>
     </div>
-    
-    <div id="game-main">
-        <div id="status-bar">
-            <div>🍬: <span id="candy-display">50</span></div>
-            <div>🧚: <span id="survivor-display">16</span>/16</div>
-            <div>⏱ 第<span id="week-display">1</span>週 <span id="day-display">月</span></div>
-        </div>
 
-        <div id="cheat-ui" style="display: none;">
-            <span style="color:red; font-weight:bold;">[CHEAT]</span>
-            🍬 <input type="number" id="cheat-candy" class="cheat-input" value="999">
-            <button class="setup-btn" onclick="applyCandyCheat()">変更</button>
-            <button id="kill-cheat-btn" class="setup-btn" onclick="toggleKillCheat()">殺害確定: OFF</button>
-        </div>
+    <!-- ゲーム本体 -->
+    <div id="status-bar">
+        <span>🍬 <strong id="candy-display">50</strong></span>
+        <span>🧚 生存: <strong id="survivor-display">16</strong>/16</span>
+        <span>⏱ 第<strong id="week-display">1</strong>週 <strong id="day-display">月</strong>曜</span>
+    </div>
 
-        <div id="main-view">
-            <div id="message-window">...</div>
-            <div id="choices-container"></div>
+    <div id="cheat-ui">
+        <span>[CHEAT]</span>
+        🍬<input type="number" id="cheat-candy" class="cheat-input" value="999">
+        <button class="cheat-btn" onclick="applyCandyCheat()">飴変更</button>
+        <button id="kill-cheat-btn" class="cheat-btn" onclick="toggleKillCheat()">殺害確定: OFF</button>
+    </div>
+
+    <div id="game-body">
+        <div id="game-main">
+            <div id="main-view">
+                <div id="message-window">…</div>
+                <div id="choices-container"></div>
+            </div>
+            <div id="speed-ctrl">
+                難易度: <span id="mode-display">NORMAL</span> |
+                <label><input type="checkbox" id="speed-toggle" onchange="toggleSpeed()"> 2倍速</label> |
+                <label><input type="checkbox" id="bgm-toggle" checked onchange="updateBGM()"> BGM</label>
+                <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.01" value="0.05" oninput="updateBGM()">
+            </div>
         </div>
-        <div id="speed-ctrl">
-            モード: <span id="mode-display">NORMAL</span> | 
-            <label><input type="checkbox" id="speed-toggle" onchange="toggleSpeed()"> 2倍速モード</label> | 
-            <label><input type="checkbox" id="bgm-toggle" checked onchange="updateBGM()"> BGM</label>
-            <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.01" value="0.05" oninput="updateBGM()">
+        <div id="ranking-panel">
+            <div class="ranking-title">🍬 キャンディー所持数</div>
+            <div id="ranking-list"></div>
         </div>
     </div>
-    <div id="ranking-panel">
-        <div class="ranking-title">キャンディー所持数</div>
-        <div id="ranking-list"></div>
-    </div>
+
+    <!-- ファヴポップアップ -->
     <div id="fav-popup">
-        <div style="font-size:2rem">🧚</div>
+        <div class="fav-icon">🧚</div>
         <div id="fav-message"></div>
-        <button onclick="closeFav()" style="margin-top:10px">分かったぽん</button>
+        <button onclick="closeFav()">分かったぽん</button>
+    </div>
+
+    <!-- エンド画面 -->
+    <div id="end-screen">
+        <div id="end-title"></div>
+        <div id="end-body"></div>
+        <button class="restart-btn" onclick="location.reload()">タイトルに戻る</button>
     </div>
 </div>
 
 <script>
-    let state = {
-        candies: 50,
-        week: 1,
-        dayIndex: 0,
-        survivors: 16,
-        playerName: "",
-        magicName: "",
-        isGameOver: false,
-        gameSpeed: 1,
-        difficulty: 'normal',
-        difficultyMults: { easy: 0.6, normal: 1.0, hard: 1.5, veryhard: 2.5 },
-        characterList: [
-            { name: "ハードゴア・アリス", magic: "『どんな怪我をしてもすぐに治るよ』" },
-            { name: "スノーホワイト", magic: "『困っている人の心の声が聞こえるよ』" },
-            { name: "リップル", magic: "『投げたものが必ず的に当たるよ』" },
-            { name: "ラ・ピュセル", magic: "『剣の大きさを自由に変えられるよ』" },
-            { name: "トップスピード", magic: "『猛スピードで空を飛ぶ魔法の箒を使うよ』" },
-            { name: "カラミティ・メアリ", magic: "『持っている武器をパワーアップさせるよ』" },
-            { name: "マジカルロイド44", magic: "『未来の便利な道具を毎日一つ出せるよ』" },
-            { name: "ユナエル", magic: "『好きな生き物に変身できるよ』" },
-            { name: "ミナエル", magic: "『好きな物（無機物）に変身できるよ』" },
-            { name: "たま", magic: "『色んなものに素早く穴を開けられるよ』" },
-            { name: "ねむりん", magic: "『他人の夢の中に入ることができるよ』" },
-            { name: "ルーラ", magic: "『目の前の相手にどんな命令でも聞かせられるよ』" },
-            { name: "スイムスイム", magic: "『どんなものにでも水みたいに潜り込めるよ』" },
-            { name: "森の音楽家クラムベリー", magic: "『音を自由自在に操ることができるよ』" },
-            { name: "シスター・ナナ", magic: "『好きな人の能力を飛躍的に高めるよ』" },
-            { name: "ヴェス・ウィンタープリズン", magic: "『何もないところに壁を作り出せるよ』" }
-        ],
-        npcScores: {},
-        cheatClickCount: 0,
-        cheatUnlocked: false,
-        forceMurder: false
-    };
+/* ============================================================
+   定数
+============================================================ */
+const DAYS         = ["月","火","水","木","金"];
+const DAYS_PER_WEEK = 5;
+const PLAYER_START  = 50;
+const NPC_START_MIN = 35;
+const NPC_START_MAX = 65;
+const MURDER_CHANCE = 0.12;
 
-    let npcList = [];
-    const days = ["月", "火", "水", "木", "金"];
+// 難易度別 NPC 1日獲得飴量 (min, max)
+const DIFF_NPC = {
+    easy:     [2,  8 ],
+    normal:   [4,  14],
+    hard:     [8,  22],
+    veryhard: [14, 35]
+};
 
-    function updateBGM() {
-        const audio = document.getElementById('bgm-audio');
-        const isEnabled = document.getElementById('bgm-toggle').checked;
-        const vol = document.getElementById('vol-slider').value;
-        audio.volume = vol;
-        if (isEnabled) {
-            if (audio.paused) audio.play().catch(() => {});
+/* ============================================================
+   キャラクターデータ
+============================================================ */
+const CHARACTER_LIST = [
+    { name:"ハードゴア・アリス",         magic:"どんな怪我をしてもすぐに治る" },
+    { name:"スノーホワイト",             magic:"困っている人の心の声が聞こえる" },
+    { name:"リップル",                   magic:"投げたものが必ず的に当たる" },
+    { name:"ラ・ピュセル",               magic:"剣の大きさを自由に変えられる" },
+    { name:"トップスピード",             magic:"猛スピードで空を飛ぶ魔法の箒を使う" },
+    { name:"カラミティ・メアリ",         magic:"持っている武器をパワーアップさせる" },
+    { name:"マジカルロイド44",           magic:"未来の便利な道具を毎日一つ出せる" },
+    { name:"ユナエル",                   magic:"好きな生き物に変身できる" },
+    { name:"ミナエル",                   magic:"好きな物（無機物）に変身できる" },
+    { name:"たま",                       magic:"色んなものに素早く穴を開けられる" },
+    { name:"ねむりん",                   magic:"他人の夢の中に入ることができる" },
+    { name:"ルーラ",                     magic:"目の前の相手にどんな命令でも聞かせられる" },
+    { name:"スイムスイム",               magic:"どんなものにでも水みたいに潜り込める" },
+    { name:"森の音楽家クラムベリー",     magic:"音を自由自在に操ることができる" },
+    { name:"シスター・ナナ",             magic:"好きな人の能力を飛躍的に高める" },
+    { name:"ヴェス・ウィンタープリズン", magic:"何もないところに壁を作り出せる" }
+];
+
+/* ============================================================
+   コモンイベント（原作アニメ雰囲気・全面再生成）
+============================================================ */
+const COMMON_EVENTS = [
+    {
+        text:"深夜の繁華街で酔い潰れた人が倒れている。このまま放置すれば命に関わるかもしれない。",
+        choices:[
+            {text:"魔法で介抱し、安全な場所へ運ぶ",    candy:18, msg:"翌朝その人が魔法少女の噂を広め、感謝の飴が集まった。"},
+            {text:"様子だけ確認して立ち去る",           candy:3,  msg:"見捨てたわけではないが、良心が少し痛む。"},
+            {text:"財布から飴を抜き取って去る",         candy:30, msg:"飴は手に入ったが、胸の奥に黒いものが溜まった気がした。"}
+        ]
+    },
+    {
+        text:"ファヴから緊急連絡が入った。「今夜だけ飴の獲得量が2倍になるぽん。理由は聞かないでほしいぽん」",
+        choices:[
+            {text:"不眠不休で街中を駆け回る",           candy:55, msg:"体はボロボロだが、収穫は抜群だった。"},
+            {text:"いつも通り普通に活動する",           candy:20, msg:"堅実さが身を守る。"},
+            {text:"罠だと判断して休息を取る",           candy:0,  msg:"翌日、活動した子が消耗しているのを見て正解だったと思った。"}
+        ]
+    },
+    {
+        text:"川が増水し、橋の上で子供が立ち往生している。増水は加速しており、猶予はない。",
+        choices:[
+            {text:"全力で救出に向かう",                 candy:35, msg:"英雄と称えられ、市民から飴が集まった。"},
+            {text:"魔法で足場を作り誘導する",           candy:22, msg:"スマートな解決。目立たず、しかし確実に。"},
+            {text:"遠くから見守るだけにする",           candy:0,  msg:"自己保身の選択。子供は別の誰かに救われた。"}
+        ]
+    },
+    {
+        text:"路地裏でライバルの魔法少女が怪我をして倒れている。放置すれば消耗する一方だ。",
+        choices:[
+            {text:"治療して助ける",                     candy:-15, msg:"恩義を売った。後で庇護に繋がるかもしれない。"},
+            {text:"何もせず立ち去る",                   candy:0,   msg:"非情の選択。生き残りの世界だから仕方ない…か？"},
+            {text:"倒れている間に飴を奪う",             candy:40,  msg:"彼女が回復した時の目が怖い。だが飴は得た。"}
+        ]
+    },
+    {
+        text:"謎の男が「魔法少女に関する極秘情報を売る」と囁いてきた。要求額は飴30個。",
+        choices:[
+            {text:"飴を払って情報を買う",               candy:-30, msg:"ファヴの計画の一端を知った。生存への意識が高まった。"},
+            {text:"力ずくで情報を聞き出す",             candy:10,  msg:"断片的な情報を得たが、男は口をつぐんだ。"},
+            {text:"相手にしない",                       candy:0,   msg:"罠だったかもしれない。関わらないのが吉だ。"}
+        ]
+    },
+    {
+        text:"魔法少女の正体を暴こうとする探偵が嗅ぎ回っている。このままでは身元が割れる。",
+        choices:[
+            {text:"魔法で記憶を操作する",               candy:20,  msg:"完璧に隠蔽した。探偵は何も覚えていない。"},
+            {text:"飴を渡して口止めする",               candy:-40, msg:"高い沈黙料だったが、平和は買えた。"},
+            {text:"素知らぬ顔で別の街へ移動する",       candy:-10, msg:"安全を買ったが、活動拠点を失った。"}
+        ]
+    },
+    {
+        text:"廃ビルに子供たちが肝試しで入り込んでいる。その場所には本物の怪異が巣くっている。",
+        choices:[
+            {text:"怪異を退治して子供を守る",           candy:40,  msg:"大立ち回りの末に勝利。街中で噂になった。"},
+            {text:"子供たちだけ逃がして退散する",       candy:10,  msg:"子供は助かった。怪異はまだ残っている。"},
+            {text:"怪異と取引して飴をもらう",           candy:25,  msg:"邪な取引。でも合理的ではある。"}
+        ]
+    },
+    {
+        text:"ファヴが現れ「今週の成績が振るわない子には特別な試練を課すぽん」と宣言した。",
+        choices:[
+            {text:"今すぐ必死で飴を集めに走る",         candy:45,  msg:"焦りが功を奏し、大量の飴を確保できた。"},
+            {text:"他の魔法少女から飴を横取りする",     candy:35,  msg:"汚い手だが、順位は上がった。"},
+            {text:"ファヴの言葉を無視して平静を保つ",   candy:8,   msg:"焦らないことが一番の武器だと信じる。"}
+        ]
+    },
+    {
+        text:"暴走した魔法が街の一角をキャンディーに変えてしまった。誰かの制御が乱れたようだ。",
+        choices:[
+            {text:"キャンディーを素早く回収する",       candy:50,  msg:"一番乗りで大量回収。ラッキー！"},
+            {text:"魔法を鎮めて街を修復する",           candy:-20, msg:"英雄的行動だが、飴より義務感を優先した。"},
+            {text:"様子を見て誰の魔法か探る",           candy:12,  msg:"情報を得たが、飴の回収は他者に先を越された。"}
+        ]
+    },
+    {
+        text:"老婆が「昔、魔法少女に命を救われた」と話しかけてきた。思い出話に付き合う余裕はあるか。",
+        choices:[
+            {text:"時間をかけて話を聞く",               candy:15,  msg:"老婆が大切にしていた飴を、全部くれた。"},
+            {text:"少しだけ聞いてその場を去る",         candy:5,   msg:"短い交流。それでも何かが残った。"},
+            {text:"忙しいと断って立ち去る",             candy:0,   msg:"時間を守った。それだけだ。"}
+        ]
+    },
+    {
+        text:"街の広場で魔法少女の「偽物」がショーをしながら飴を集めている。明らかに詐欺だ。",
+        choices:[
+            {text:"偽物を暴いて市民を守る",             candy:28,  msg:"正義の魔法少女として信頼を得た。"},
+            {text:"偽物を脅して分け前を要求する",       candy:20,  msg:"共犯者めいた関係になった。"},
+            {text:"乗っかって飴を一緒に集める",         candy:35,  msg:"後ろめたいが、飴の効率は最高だった。"}
+        ]
+    },
+    {
+        text:"魔法の力が暴走気味で、制御がうまくいかない。このまま使い続ければ危険かもしれない。",
+        choices:[
+            {text:"無理やり使い続ける",                 candy:30,  msg:"なんとか制御できたが、代償は大きい。"},
+            {text:"飴を消費して魔力を安定させる",       candy:-35, msg:"安全を最優先にした。正しい判断だ。"},
+            {text:"暴走を利用して荒事に挑む",           candy:55,  msg:"制御不能な力は両刃の剣だった。"}
+        ]
+    },
+    {
+        text:"ファヴから「協力してくれる子には特別ボーナスを出すぽん」とメッセージが来た。内容は不明。",
+        choices:[
+            {text:"詳細を聞いてから判断する",           candy:10,  msg:"内容は他の魔法少女を監視することだった。断った。"},
+            {text:"二つ返事で了承する",                 candy:40,  msg:"仲間を売るような仕事だったが、飴は確かにもらえた。"},
+            {text:"無視する",                           candy:0,   msg:"関わらないのが一番、そう信じている。"}
+        ]
+    },
+    {
+        text:"雨の夜、魔法少女のものらしき遺品が落ちていた。名前の刻まれた変身アイテムだ。",
+        choices:[
+            {text:"持ち主を探す",                       candy:-10, msg:"持ち主はすでに消去されていた。哀しみだけが残る。"},
+            {text:"魔力を吸収して飴に変換する",         candy:30,  msg:"冷淡な判断。でも生きるためには必要だ。"},
+            {text:"そっとしておく",                     candy:0,   msg:"触れない選択。彼女の最後の尊厳を守った。"}
+        ]
+    },
+    {
+        text:"突然の大雨で視界が悪い夜道。前方に人影が……魔法少女か、それとも別の何かか。",
+        choices:[
+            {text:"警戒しながら声をかける",             candy:20,  msg:"困った人間だった。感謝の飴をもらった。"},
+            {text:"遠回りして避ける",                   candy:0,   msg:"安全を優先。失ったものは何もない。"},
+            {text:"先制攻撃で制圧する",                 candy:15,  msg:"無実の人を攻撃してしまった。飴を取り上げて逃げた。"}
+        ]
+    },
+    {
+        text:"廃校の屋上から人が飛び降りようとしている。制服からして一般の学生のようだ。",
+        choices:[
+            {text:"全力で駆けつけて止める",             candy:25,  msg:"命を救った。街中に「天使のような魔法少女」の話が広まった。"},
+            {text:"魔法で遠くから安全に誘導する",       candy:15,  msg:"目立たず、しかし確実に命を繋いだ。"},
+            {text:"関わらないようにする",               candy:0,   msg:"自分の生存が最優先。そう割り切るしかない。"}
+        ]
+    },
+    {
+        text:"ランキング集計まで残り数時間。現在の順位は中間より少し下だ。焦りが募る。",
+        choices:[
+            {text:"危険を承知で夜間に大量活動する",     candy:50,  msg:"ギリギリ危険地帯を抜け出した。疲労は激しい。"},
+            {text:"小さな善行を地道に積み重ねる",       candy:22,  msg:"着実に飴を稼いだ。地道さが勝負を分ける。"},
+            {text:"他者の飴を奪いに行く",               candy:38,  msg:"強引な手段。ライバルから深く恨まれた。"}
+        ]
+    },
+    {
+        text:"病院の一室で、回復魔法を必要としている子供の親が懇願してきた。魔力の消耗は避けられない。",
+        choices:[
+            {text:"飴を使って回復魔法を施す",           candy:-25, msg:"子供は元気になった。家族の笑顔が胸に刺さる。"},
+            {text:"できる限りの範囲で助ける",           candy:-8,  msg:"完璧ではないが、確かに力になれた。"},
+            {text:"魔法の使用を断る",                   candy:0,   msg:"冷たく見えるが、自分の生存が最優先だ。"}
+        ]
+    },
+    {
+        text:"魔法少女同士の縄張り争いに巻き込まれた。どちらの陣営にも加担しなければ中立でいられる。",
+        choices:[
+            {text:"強い方に加担して共闘する",           candy:30,  msg:"勝ち馬に乗った。恩恵はあったが、恨みも買った。"},
+            {text:"中立を保ち、どちらにも関わらない",   candy:8,   msg:"波風を立てずに乗り切った。賢明な選択だ。"},
+            {text:"混乱に乗じて両陣営から飴を奪う",     candy:45,  msg:"大胆な作戦。成功したが、全員に狙われることになった。"}
+        ]
+    },
+    {
+        text:"ファヴが「この地区は今週から飴の出現率が下がるぽん。仕様変更だぽん」と告知した。",
+        choices:[
+            {text:"飴の多い地区へ移動する",             candy:20,  msg:"移動コストはかかったが、効率は上がった。"},
+            {text:"ファヴに文句を言う",                 candy:5,   msg:"「可愛くないぽん」とあしらわれたが、少し飴をくれた。"},
+            {text:"既存の飴を節約して凌ぐ",             candy:-5,  msg:"消費を抑えた分、手元の飴は守れた。"}
+        ]
+    },
+    {
+        text:"巨大な魔法生物が街に出現した。討伐すれば大量の飴が手に入るが、非常に危険だ。",
+        choices:[
+            {text:"単独で挑む",                         candy:65,  msg:"死闘の末に勝利。傷だらけだが飴は満載だ。"},
+            {text:"他の魔法少女に連携を呼びかける",     candy:35,  msg:"共闘で撃破。飴は山分けだが、信頼を得た。"},
+            {text:"見物に徹して漁夫の利を狙う",         candy:20,  msg:"美味しいところだけ頂いた。"}
+        ]
+    },
+    {
+        text:"街の子供から「魔法少女ってどんな仕事？」と無邪気に聞かれた。",
+        choices:[
+            {text:"夢のある話をしてあげる",             candy:12,  msg:"子供は目を輝かせ、持っていたお菓子をくれた。"},
+            {text:"現実の厳しさを教える",               candy:5,   msg:"子供はポカンとしていたが、少し飴をくれた。"},
+            {text:"魔法を披露して驚かせる",             candy:20,  msg:"子供が集まってきて、飴のお礼ラッシュが起きた。"}
+        ]
+    },
+    {
+        text:"魔法少女専用の闇市が開かれているという情報が入った。様々な道具や情報が取引されているらしい。",
+        choices:[
+            {text:"飴を使って有益な情報を買う",         candy:-45, msg:"ライバルの弱点を知った。知識は武器だ。"},
+            {text:"商品を力ずくで奪う",                 candy:50,  msg:"闇市全体を敵に回したが、戦利品は豊富だ。"},
+            {text:"冷やかしで見て回る",                 candy:8,   msg:"買いはしなかったが、使える情報を見聞きした。"}
+        ]
+    },
+    {
+        text:"深夜、魔力が枯渇した魔法少女が飴を恵んでくれと懇願してきた。",
+        choices:[
+            {text:"飴を分け与える",                     candy:-20, msg:"感謝の言葉。この世界で情けは武器になるかもしれない。"},
+            {text:"見返りとして情報を要求する",         candy:10,  msg:"取引成立。互いに得をした。"},
+            {text:"断って追い払う",                     candy:0,   msg:"自分の飴を守った。それが正解かどうかは分からない。"}
+        ]
+    },
+    {
+        text:"街の掲示板に「魔法少女目撃情報＋写真」が張り出されていた。写真の人物は自分に似ている。",
+        choices:[
+            {text:"すぐに魔法で処理する",               candy:18,  msg:"迅速な隠蔽。リスクを最小限に抑えた。"},
+            {text:"飴を使って徹底的に情報を消す",       candy:-30, msg:"完璧な隠蔽。もう誰にも気づかれない。"},
+            {text:"しらを切り通す",                     candy:5,   msg:"大胆な作戦。意外と信じてもらえた。"}
+        ]
+    },
+    {
+        text:"ファヴが「今週は特別ルール。最下位が二人消えるぽん」と宣言した。悪夢のような通知だ。",
+        choices:[
+            {text:"全力で飴を集めまくる",               candy:60,  msg:"死に物狂いの活動で、なんとか安全圏へ。"},
+            {text:"下位の魔法少女から飴を奪う",         candy:45,  msg:"弱者から奪う。これが魔法少女の現実だ。"},
+            {text:"情報を収集して冷静に対応する",       candy:25,  msg:"慌てず対処した。焦りは判断を狂わせる。"}
+        ]
+    },
+    {
+        text:"使い魔の猫が「本当のことを教えてあげる」と話しかけてきた。この世界の秘密を知っているという。",
+        choices:[
+            {text:"話を聞く",                           candy:-10, msg:"衝撃の事実を知った。飴を消費したが、覚悟が固まった。"},
+            {text:"信用せず追い払う",                   candy:5,   msg:"知らぬが仏、というものもある。"},
+            {text:"猫をファヴに売る",                   candy:35,  msg:"最低だ。でも飴はもらえた。"}
+        ]
+    },
+    {
+        text:"魔法少女の間で「協定を結ぼう」という動きがある。条件は飴の10%を共有プールに入れること。",
+        choices:[
+            {text:"協定に参加する",                     candy:-15, msg:"信頼が生まれた。共同体の守りは意外と頼もしい。"},
+            {text:"参加するふりをして裏切る",           candy:30,  msg:"プールの飴を全て奪った。全員の敵になった。"},
+            {text:"断る",                               candy:5,   msg:"単独行動を貫く。信頼はないが、縛りもない。"}
+        ]
+    },
+    {
+        text:"大型台風が街を直撃した。避難できていない人が多数いる。",
+        choices:[
+            {text:"魔法で嵐を和らげながら救助する",     candy:45,  msg:"超人的な活躍で英雄視された。飴も大量に集まった。"},
+            {text:"安全な場所で飴を集め続ける",         candy:20,  msg:"冷静な判断。自分の安全が最優先だ。"},
+            {text:"嵐の混乱に乗じて行動する",           candy:38,  msg:"誰も見ていない。この機会を無駄にしない。"}
+        ]
+    },
+    {
+        text:"ある魔法少女が「ファヴを倒す計画がある」と囁いてきた。参加するか？",
+        choices:[
+            {text:"計画に乗る",                         candy:-20, msg:"計画は失敗した。しかし仲間の絆が生まれた。"},
+            {text:"ファヴに密告する",                   candy:50,  msg:"ボーナス飴をもらった。仲間を売った罪悪感も一緒に。"},
+            {text:"関わらないと断る",                   candy:5,   msg:"危険な賭けには乗らない。賢い判断かもしれない。"}
+        ]
+    },
+    {
+        text:"街外れの廃工場で怪しい儀式が行われているらしい。魔法少女に関係している可能性がある。",
+        choices:[
+            {text:"潜入調査する",                       candy:30,  msg:"飴の生産工場だった。大量に持ち帰ることができた。"},
+            {text:"外から魔法で観察する",               candy:12,  msg:"危険は冒さなかったが、有益な情報を得た。"},
+            {text:"通報して遠ざかる",                   candy:5,   msg:"関わらないのが一番だ。"}
+        ]
+    },
+    {
+        text:"魔法少女としての活動で溜まった疲れが限界に達しそうだ。休むべきか、動き続けるべきか。",
+        choices:[
+            {text:"飴を使って回復する",                 candy:-20, msg:"完全回復。明日からまた全力で動ける。"},
+            {text:"無理をして活動を続ける",             candy:30,  msg:"疲労は蓄積する一方だが、飴は確保できた。"},
+            {text:"一日だけ完全に休む",                 candy:0,   msg:"体は楽になった。失ったものは何もない。"}
+        ]
+    },
+    {
+        text:"市場に「魔法少女専用の保険」を売る怪しい業者が現れた。飴20個で死亡保障付きだという。",
+        choices:[
+            {text:"加入する",                           candy:-20, msg:"詐欺だった。飴だけ取られた。ファヴが笑っていた。"},
+            {text:"業者を脅して飴を取り返す",           candy:20,  msg:"返金に成功。この街で詐欺は通じない。"},
+            {text:"相手にしない",                       candy:0,   msg:"賢明な判断。最初から罠だと分かっていた。"}
+        ]
+    },
+    {
+        text:"空から大量のキャンディーが降ってきた。明らかに異常な現象だ。ファヴは何も言わない。",
+        choices:[
+            {text:"全力で回収する",                     candy:60,  msg:"大収穫！理由は分からないが、飴は確かに存在する。"},
+            {text:"罠だと疑って少しだけ取る",           candy:20,  msg:"警戒は大切だ。少量でも確保できた。"},
+            {text:"一切触れずに観察する",               candy:0,   msg:"後から罠ではなかったと分かった。慎重すぎた。"}
+        ]
+    },
+    {
+        text:"魔法少女のランキングが一時的に公開された。ライバルたちの動向が見えた。",
+        choices:[
+            {text:"弱点を把握し、対策を立てる",         candy:15,  msg:"情報は命取りにも、命綱にもなる。"},
+            {text:"下位の子を追い詰める",               candy:35,  msg:"非情な戦略。でも生き残るためだ。"},
+            {text:"自分の活動に集中する",               candy:20,  msg:"他者を気にしない。それが一番の戦略かもしれない。"}
+        ]
+    },
+    {
+        text:"変身を維持したまま眠ってしまい、一般市民に目撃されてしまった。",
+        choices:[
+            {text:"魔法で目撃者の記憶を消す",           candy:15,  msg:"完璧に処理した。目撃された事実はもう存在しない。"},
+            {text:"ヒーローとして開き直る",             candy:30,  msg:"意外と歓迎された。飴も集まってきた。"},
+            {text:"飴を使って完全に隠蔽する",           candy:-35, msg:"費用は掛かったが、正体は完全に守られた。"}
+        ]
+    },
+    {
+        text:"山の奥に「飴の泉」があるという噂を耳にした。危険な道のりだが、価値はあるかもしれない。",
+        choices:[
+            {text:"探しに行く",                         candy:70,  msg:"本当にあった！大量の飴を持ち帰ることができた。"},
+            {text:"他の魔法少女を先に行かせる",         candy:10,  msg:"罠だった。犠牲になった子の分の飴が流れてきた。"},
+            {text:"噂を信じない",                       candy:0,   msg:"噂は噂。信じる者だけが踊る。"}
+        ]
+    },
+    {
+        text:"魔法少女として活動し始めた新入りが、右も左も分からず困っている。",
+        choices:[
+            {text:"丁寧に教えてあげる",                 candy:-10, msg:"新入りは感謝し、飴を分けてくれた。ライバルを育てたかもしれないが。"},
+            {text:"嘘の情報を教える",                   candy:20,  msg:"新入りを陥れた。後ろめたいが、脅威は減った。"},
+            {text:"無視する",                           candy:0,   msg:"自分のことで手一杯だ。"}
+        ]
+    },
+    {
+        text:"ある魔法少女が「消えた友達の飴を受け取ってほしい」と遺品を差し出してきた。",
+        choices:[
+            {text:"受け取る",                           candy:30,  msg:"亡き魔法少女の遺志を受け継いだ気持ちになった。"},
+            {text:"断る",                               candy:0,   msg:"関わらないことで、自分を守った。"},
+            {text:"受け取ったうえで情報を聞き出す",     candy:20,  msg:"飴と情報を両方得た。打算的だが有効だ。"}
+        ]
+    },
+    {
+        text:"ファヴから「今週のMVP魔法少女には特別賞を与えるぽん」とアナウンスが流れた。",
+        choices:[
+            {text:"一位を目指して全力を出す",           candy:55,  msg:"トップの活躍！賞品の飴は約束されたも同然だ。"},
+            {text:"目立たず二位狙いで堅実に動く",       candy:30,  msg:"手堅い戦略。一位争いには巻き込まれなかった。"},
+            {text:"ランキングより安全を優先する",       candy:12,  msg:"派手な行動は危険を呼ぶ。地味に生き残る。"}
+        ]
+    },
+    {
+        text:"魔法少女としての記録が一部消えていた。ファヴのシステムにバグが発生したようだ。",
+        choices:[
+            {text:"バグを利用して飴を不正に増やす",     candy:80,  msg:"大成功！しかしファヴに目を付けられたかもしれない。"},
+            {text:"バグを報告する",                     candy:20,  msg:"誠実な報告にファヴが珍しく感謝した。"},
+            {text:"バグを無視して普通に活動する",       candy:10,  msg:"関わらない選択。安全第一。"}
+        ]
+    },
+    {
+        text:"魔法少女を取材しようとするジャーナリストが現れた。映像は全国に流れるかもしれない。",
+        choices:[
+            {text:"取材を拒否して立ち去る",             candy:5,   msg:"素性は守られた。名声も失ったが。"},
+            {text:"魔法で撮影機材を壊す",               candy:20,  msg:"強引な方法だが、証拠は消えた。"},
+            {text:"インタビューに応じてファンを作る",   candy:35,  msg:"一躍有名に。ファンから飴が大量に届いた。"}
+        ]
+    },
+    {
+        text:"他の魔法少女が使い終わった魔法道具が廃棄されていた。まだ使えそうだ。",
+        choices:[
+            {text:"拾って活用する",                     candy:25,  msg:"古い道具だったが、飴を集めるのに役立った。"},
+            {text:"分解して魔力を飴に変換する",         candy:18,  msg:"素材として活用した。無駄を出さない主義だ。"},
+            {text:"持ち主を探す",                       candy:-5,  msg:"持ち主はすでにいなかった。哀しい現実だ。"}
+        ]
+    },
+    {
+        text:"街の神社で「魔法少女の守り神」を祀る神主が飴を奉納している。",
+        choices:[
+            {text:"一緒に祈る",                         candy:10,  msg:"神主が特別なお守りと飴をくれた。"},
+            {text:"奉納された飴を頂く",                 candy:25,  msg:"罰が当たりそうだが、飴は確かに手に入った。"},
+            {text:"神主に守りの魔法をかけてあげる",     candy:-10, msg:"深く感謝され、後日大量の飴が届いた。"}
+        ]
+    },
+    {
+        text:"夜空に不思議な光が走った。ファヴの意図か、それとも自然現象か。",
+        choices:[
+            {text:"光の源を追う",                       candy:28,  msg:"新たな飴のスポットを発見した。"},
+            {text:"警戒して隠れる",                     candy:5,   msg:"危険を避けた。生存優先の判断だ。"},
+            {text:"光を魔法で増幅させる",               candy:40,  msg:"大量の飴が降ってきた。予感は当たっていた。"}
+        ]
+    }
+];
+
+/* ============================================================
+   キャラクターイベント（全面再生成・candyのみ）
+============================================================ */
+const MG_EVENTS = [
+    // ── スノーホワイト ──
+    {
+        text:"【スノーホワイト】「……また誰かが悲しんでいる。聞こえる、声が」と呟き、街の方へ走り出そうとしている。",
+        choices:[
+            {text:"一緒についていく",                   candy:22,  msg:"二人で多くの人を救い、飴がたくさん集まった。"},
+            {text:"先回りして飴を独占する",             candy:35,  msg:"効率的に稼いだが、スノーホワイトに複雑な顔をされた。"},
+            {text:"遠くから見守る",                     candy:5,   msg:"彼女の純粋さに、何かを思い出した気がした。"}
+        ]
+    },
+    {
+        text:"【スノーホワイト】血の付いた武器を前に、震える手で立ち尽くしている。",
+        choices:[
+            {text:"優しく肩を叩く",                     candy:-10, msg:"「ありがとう……」少ない言葉だったが、確かな重みがあった。"},
+            {text:"「生きるためだ」と現実を諭す",       candy:15,  msg:"彼女の覚悟が少し固まった。飴を分けてくれた。"},
+            {text:"隙をついて飴を抜き取る",             candy:40,  msg:"最低の行為だ。後ろめたさが消えない。"}
+        ]
+    },
+    {
+        text:"【スノーホワイト】「みんなで話し合えば、きっと解決策が見つかるはず」と魔法少女たちへの集会を呼びかけている。",
+        choices:[
+            {text:"集会に参加する",                     candy:15,  msg:"少しだけ連帯の空気が生まれた。飴も交換できた。"},
+            {text:"参加するふりをして情報を盗む",       candy:25,  msg:"ライバルの動向を把握した。彼女の善意を利用した。"},
+            {text:"無視して独自行動を取る",             candy:18,  msg:"孤独だが、縛りもない。"}
+        ]
+    },
+    // ── リップル ──
+    {
+        text:"【リップル】一人で黙々と投擲訓練をしている。その眼は獲物を狙う獣のように鋭い。",
+        choices:[
+            {text:"的役を申し出る",                     candy:18,  msg:"ギリギリをかすめる的確さに肝が冷えた。飴をくれた。"},
+            {text:"差し入れに飴を渡す",                 candy:-25, msg:"「余計なことを」と言いつつ、少し表情が和らいだ。"},
+            {text:"気配を消して離れた場所から観察する", candy:10,  msg:"気づかれた。「ずっといたのか」と睨まれた。"}
+        ]
+    },
+    {
+        text:"【リップル】「あいつだけは……絶対に許さない」と呟きながら宿敵の情報を探している。",
+        choices:[
+            {text:"知っている情報を提供する",           candy:15,  msg:"感謝された。彼女の怒りは本物だった。"},
+            {text:"偽情報を流して混乱させる",           candy:45,  msg:"混乱に乗じて大量の飴を奪った。取り返しのつかないことをした。"},
+            {text:"復讐を思いとどまるよう説得する",     candy:-10, msg:"激しく拒絶されたが、少しだけ迷いが見えた。"}
+        ]
+    },
+    {
+        text:"【リップル】怪我の手当てに苦労している。不器用な手つきが、彼女の不慣れさを物語っている。",
+        choices:[
+            {text:"黙って手伝う",                       candy:5,   msg:"「……ありがとう」短い言葉。それで十分だった。"},
+            {text:"治癒の飴を使って治す",               candy:-20, msg:"一瞬、驚いた顔をした。それだけで報われた気がした。"},
+            {text:"弱みにつけ込んで飴を要求する",       candy:40,  msg:"くないが飛んできた。命からがら逃げながら飴は確保した。"}
+        ]
+    },
+    // ── ラ・ピュセル ──
+    {
+        text:"【ラ・ピュセル】夢中で巨大な剣を振り回している。「僕は強くなる。スノーホワイトを守るために」",
+        choices:[
+            {text:"修行に付き合う",                     candy:15,  msg:"騎士道を少し学んだ。飴も稼げた。"},
+            {text:"「竜騎士みたいでかっこいいね」と言う", candy:8, msg:"顔を真っ赤にして喜んだ。照れながら飴をくれた。"},
+            {text:"隙に乗じて飴を奪う",                 candy:35,  msg:"剣の横薙ぎが来た。飴は得たが命の保証はなかった。"}
+        ]
+    },
+    {
+        text:"【ラ・ピュセル】暴徒から街の人々を一人で守り続けている。その背中に騎士の誇りが見えた。",
+        choices:[
+            {text:"背中を預けて共に戦う",               candy:28,  msg:"見事な連携。「頼りになるな」と笑ってくれた。"},
+            {text:"守られている隙に飴を回収する",       candy:55,  msg:"大量の飴を得た。しかし彼女に軽蔑の目を向けられた。"},
+            {text:"安全な場所で待機する",               candy:5,   msg:"生き残るためには仕方ない。そう割り切った。"}
+        ]
+    },
+    {
+        text:"【ラ・ピュセル】「魔法少女って、本当に正義の味方なのかな」と珍しく弱音を吐いている。",
+        choices:[
+            {text:"「あなたは正義の味方だよ」と言う",   candy:10,  msg:"「そっか……ありがとう」笑顔と飴が返ってきた。"},
+            {text:"「正義なんて存在しない」と現実を教える", candy:15, msg:"悲しそうな顔をしたが、強くなった気がした。"},
+            {text:"自分の飴を分けて「これが全てだ」と言う", candy:-15, msg:"不思議そうに笑った。しばらく後、飴を倍にして返してくれた。"}
+        ]
+    },
+    // ── ハードゴア・アリス ──
+    {
+        text:"【ハードゴア・アリス】血まみれのまま路地に立っている。傷はすでに塞がっているが、目が虚ろだ。",
+        choices:[
+            {text:"声をかけて手当をする",               candy:-10, msg:"ぬいぐるみを抱いて、少しだけ笑った。"},
+            {text:"うさぎのぬいぐるみを差し出す",       candy:5,   msg:"瞳に光が戻った。その後こっそり飴を置いていってくれた。"},
+            {text:"不死身の力を利用して囮にする",       candy:45,  msg:"飴は稼げた。しかし彼女の目が忘れられない。"}
+        ]
+    },
+    {
+        text:"【ハードゴア・アリス】何かを探して無言で街を歩き続けている。その目は迷子の子供のようだ。",
+        choices:[
+            {text:"一緒に探してあげる",                 candy:8,   msg:"白い手袋を見つけた。彼女は泣きそうな顔で受け取った。"},
+            {text:"話しかけずに陰から見守る",           candy:5,   msg:"何も見つからなかったが、彼女はそれでも歩き続けた。"},
+            {text:"彼女が持つ飴を奪う",                 candy:30,  msg:"切っても切っても向かってくる姿に恐怖した。命からがら逃げた。"}
+        ]
+    },
+    {
+        text:"【ハードゴア・アリス】じっとあなたを見つめている。何かを伝えようとしているのかもしれない。",
+        choices:[
+            {text:"頭を撫でる",                         candy:5,   msg:"目を閉じて、満足そうにした。"},
+            {text:"飴を半分あげる",                     candy:-30, msg:"もらった飴を大切そうに抱えて、あなたを守り始めた。"},
+            {text:"怖くて逃げ出す",                     candy:0,   msg:"どこまでもついてきた。なぜか安心感があった。"}
+        ]
+    },
+    // ── トップスピード ──
+    {
+        text:"【トップスピード】魔法の箒で空を疾走している。その速さは人間業じゃない。",
+        choices:[
+            {text:"後ろに乗せてもらう",                 candy:22,  msg:"「生きてるー！？」という叫びの後、目的地に着いていた。"},
+            {text:"妊婦さんへの伝言を頼む",             candy:-20, msg:"「そりゃ最優先だろ！」快く引き受けてくれた。信頼が深まった。"},
+            {text:"スピード競争を挑む",                 candy:12,  msg:"完敗した。でも爽快感は最高だった。"}
+        ]
+    },
+    {
+        text:"【トップスピード】隠れ家で手料理を作っている。香ばしい匂いが路地裏に漂っている。",
+        choices:[
+            {text:"一緒に食べさせてもらう",             candy:5,   msg:"「腕によりをかけたぜ！」家庭的な味に癒された。飴ももらった。"},
+            {text:"食材を差し入れる",                   candy:-15, msg:"「気が利くね！」笑顔と大量の飴が返ってきた。"},
+            {text:"レシピを盗んで売る",                 candy:28,  msg:"怒った彼女に上空から落とされた。落ちながら飴を数えた。"}
+        ]
+    },
+    {
+        text:"【トップスピード】「あと半年……絶対に生き残ってみせる」と静かに呟いている。",
+        choices:[
+            {text:"何も言わず隣に座る",                 candy:0,   msg:"二人で黙って夕日を眺めた。それだけでよかった。"},
+            {text:"お守りを渡す",                       candy:-10, msg:"「意地でも死なないよ」と笑った。その笑顔が忘れられない。"},
+            {text:"弱みを記録して分析する",             candy:20,  msg:"冷たい自分が嫌になった。でも情報は手に入れた。"}
+        ]
+    },
+    // ── カラミティ・メアリ ──
+    {
+        text:"【カラミティ・メアリ】銃を磨きながら、こちらに向けてニヤリと笑った。「試し撃ちの相手になれや」",
+        choices:[
+            {text:"全力で逃げる",                       candy:18,  msg:"逃げ足の速さを褒めながら飴を投げてきた。"},
+            {text:"的になる（フリをする）",             candy:50,  msg:"命がけの演技。「度胸あるじゃないか」と飴を大量にくれた。"},
+            {text:"もっと強い銃を紹介する",             candy:-20, msg:"興味をそらすことに成功。難を逃れた。"}
+        ]
+    },
+    {
+        text:"【カラミティ・メアリ】酒を飲みながら暴れている。周囲の店が被害を受けている。",
+        choices:[
+            {text:"正面から止めに行く",                 candy:45,  msg:"激闘の末、沈静化させた。傷だらけだが飴は十分もらえた。"},
+            {text:"遠くから酔い覚ましの水をぶっかける", candy:20,  msg:"「誰だ！」怒鳴りながらも冷静になった。ひとまず解決。"},
+            {text:"飴を置いて静かに去る",               candy:-40, msg:"被害を最小限に抑えた。店主から深く感謝された。"}
+        ]
+    },
+    {
+        text:"【カラミティ・メアリ】「弱い奴が消えるのは当然だ。それがこのゲームのルールだろ」と言い放った。",
+        choices:[
+            {text:"「それでも救える命は救う」と反論する", candy:15, msg:"「ハッ、好きにしな」と笑いながら飴を投げてきた。"},
+            {text:"「その通りだ」と同意する",           candy:20,  msg:"「話が分かる奴だ」と信頼を得た。"},
+            {text:"黙って立ち去る",                     candy:8,   msg:"関わらないのが一番だ。"}
+        ]
+    },
+    // ── スイムスイム ──
+    {
+        text:"【スイムスイム】床下から無音でこちらに忍び寄ってきた。その動きに殺意はあるのか……？",
+        choices:[
+            {text:"即座に空中へ逃げる",                 candy:5,   msg:"「……逃げた」と呟く声が聞こえた。危機一髪だった。"},
+            {text:"床を魔法で固める",                   candy:20,  msg:"「……」無言のまま退いた。追ってこなかった。"},
+            {text:"飴を全て差し出す",                   candy:-70, msg:"見逃してもらった。全財産を失ったが、生きている。"}
+        ]
+    },
+    {
+        text:"【スイムスイム】ルーラの教えを一冊のノートに書き記している。内容は「王になる方法」だった。",
+        choices:[
+            {text:"「王の資質がある」と褒める",         candy:12,  msg:"静かに頷いた。信頼の欠片を得た気がした。"},
+            {text:"新しい本をプレゼントする",           candy:-10, msg:"熱心に読み始めた。その隙に飴を少し稼げた。"},
+            {text:"ノートを盗んで情報を得る",           candy:30,  msg:"彼女の計画を知った。背筋が凍った。"}
+        ]
+    },
+    {
+        text:"【スイムスイム】無表情のまま「あなたは強いですか？」と問いかけてきた。",
+        choices:[
+            {text:"「強くなろうとしている」と答える",   candy:10,  msg:"「……そうですか」と言い、飴を一つ置いていった。"},
+            {text:"「強いよ」と断言する",               candy:20,  msg:"「では証明してください」戦闘になったが、飴を得た。"},
+            {text:"「弱い」と正直に言う",               candy:5,   msg:"「正直ですね」その一言で立ち去った。"}
+        ]
+    },
+    // ── ルーラ ──
+    {
+        text:"【ルーラ】「跪きなさい、下僕よ」と命令魔法を発動させながら近づいてきた。",
+        choices:[
+            {text:"従うフリをして心の中で抗う",         candy:-25, msg:"臣下として一時的に庇護された。"},
+            {text:"全力で命令を跳ね返す",               candy:30,  msg:"「面白い」と笑った。対等と認められた。"},
+            {text:"背後から奇襲する",                   candy:50,  msg:"王位を簒奪し、飴を得た。ただし全員に狙われることになった。"}
+        ]
+    },
+    {
+        text:"【ルーラ】作戦会議を開いている。「私の計画に口出しは無用よ」と釘を刺してきた。",
+        choices:[
+            {text:"それでも意見を述べる",               candy:15,  msg:"「生意気ね」と言いつつ採用された。飴をくれた。"},
+            {text:"ひたすら称賛する",                   candy:-10, msg:"機嫌が良くなり、庇護してもらえた。"},
+            {text:"わざと会議を台無しにする",           candy:25,  msg:"怒りの魔法が飛んできた。かわしながら飴を奪った。"}
+        ]
+    },
+    {
+        text:"【ルーラ】「私のために飴を集めなさい。見返りは……考えておいてあげる」",
+        choices:[
+            {text:"条件を飲む",                         candy:-30, msg:"「よくできました」と飴を倍にして返してもらえた。"},
+            {text:"交渉して条件を引き上げる",           candy:10,  msg:"「度胸だけはあるのね」飴を少し上乗せしてもらった。"},
+            {text:"断る",                               candy:20,  msg:"「……後悔させるわ」威圧されたが、自由は守った。"}
+        ]
+    },
+    // ── たま ──
+    {
+        text:"【たま】うっかり穴を開けすぎて街が蜂の巣になってしまった。「ご、ごめんなさぁい……！」",
+        choices:[
+            {text:"一緒に修復を手伝う",                 candy:-15, msg:"「ありがとうございます……！」泣きながら感謝された。飴をくれた。"},
+            {text:"穴を罠として活用する",               candy:30,  msg:"ライバルが落ちた。申し訳ないが、飴は得た。"},
+            {text:"魔法で一気に修復する",               candy:-30, msg:"街は元通りに。たまから飴をたくさんもらった。"}
+        ]
+    },
+    {
+        text:"【たま】「わたしなんて……ただ穴を開けるだけで、何の役にも立てないです」と泣いている。",
+        choices:[
+            {text:"穴の魔法の有用性を話してあげる",     candy:5,   msg:"目を輝かせた。「そうだったんですね！」飴をくれた。"},
+            {text:"飴をあげて慰める",                   candy:-15, msg:"笑顔に戻ってくれた。それだけで十分だった。"},
+            {text:"さらに追い込む",                     candy:28,  msg:"パニックになった彼女の穴掘りに巻き込まれた。奇跡的に飴を得た。"}
+        ]
+    },
+    {
+        text:"【たま】ルーラの命令を受けて、あなたの足元に穴を開けようとしている。",
+        choices:[
+            {text:"「ルーラに指示されたの？」と優しく問う", candy:-10, msg:"泣きながら去った。命令を拒んだ彼女は後で叱られたそうだ。"},
+            {text:"穴に先に飛び込んで脱出する",         candy:15,  msg:"まさかの奇策でたまを驚かせた。飴を得た。"},
+            {text:"ルーラを倒すと脅す",                 candy:10,  msg:"震えて動けなくなった。その隙に逃げた。"}
+        ]
+    },
+    // ── ユナエル ──
+    {
+        text:"【ユナエル】あなたの姿に変身して、街で悪い噂を撒き散らしている。",
+        choices:[
+            {text:"偽物だと周囲に証明する",             candy:15,  msg:"「つまらないな〜」と逃げていった。信頼は守られた。"},
+            {text:"偽物を逆に利用して身代わりにする",   candy:32,  msg:"うまく活用した。ユナエルは複雑な顔をしていた。"},
+            {text:"「一緒にやろう」と持ちかける",       candy:20,  msg:"「面白いじゃん！」共謀して飴を稼いだ。"}
+        ]
+    },
+    {
+        text:"【ユナエル】コウモリに変身して街中を飛び回っている。何かを楽しそうに探している。",
+        choices:[
+            {text:"餌として虫を差し出す",               candy:-5,  msg:"「わーい！」と大喜び。お礼の飴をもらった。"},
+            {text:"コウモリを追いかけて遊ぶ",           candy:10,  msg:"「もっとやろー！」楽しい時間と飴を得た。"},
+            {text:"捕まえて交渉材料にする",             candy:25,  msg:"解放の代償に情報を得た。"}
+        ]
+    },
+    {
+        text:"【ユナエル】「ねえ、ちょっとお願いがあるんだけど〜」と近づいてきた。笑顔が怪しい。",
+        choices:[
+            {text:"話を聞く",                           candy:-20, msg:"「ミナエルと仲直りして」という依頼だった。飴を使ったが、姉妹の絆が戻った。"},
+            {text:"「飴を払え」と要求する",             candy:15,  msg:"「けちんぼ〜」と言いながら払ってくれた。"},
+            {text:"逃げる",                             candy:5,   msg:"「逃げないでよ〜！」という声を無視した。"}
+        ]
+    },
+    // ── ミナエル ──
+    {
+        text:"【ミナエル】看板に化けて路地裏に潜んでいる。「飴あげます 迷い込んだ人限定」と書いてある。",
+        choices:[
+            {text:"罠だと分かって通り過ぎる",           candy:5,   msg:"「ちっ、バレた」という声が聞こえた。"},
+            {text:"わざと迷い込んだフリをする",         candy:20,  msg:"「騙されてくれてありがとね」飴をくれた。本当に優しい罠だった。"},
+            {text:"看板を蹴飛ばす",                     candy:15,  msg:"「痛い！」と正体を現し、飴を落として逃げた。"}
+        ]
+    },
+    {
+        text:"【ミナエル】ナイフに変身してテーブルの上に置かれている。あなただけが気づいている。",
+        choices:[
+            {text:"こっそり別の場所に隠す",             candy:10,  msg:"ターゲットの攻撃が外れ、感謝されて飴をもらった。"},
+            {text:"「バレてるよ」と声をかける",         candy:-5,  msg:"「なんで分かったの！？」驚いた顔が面白かった。飴をくれた。"},
+            {text:"使ってターゲットを攻撃する",         candy:35,  msg:"「いたい！あたしを使わないで！」飴は得たが複雑な気分だ。"}
+        ]
+    },
+    {
+        text:"【ミナエル】死んだフリをして路地裏に倒れている。演技なのか本当なのか区別がつかない。",
+        choices:[
+            {text:"お供え物として飴を置く",             candy:-20, msg:"「いい人ね……」と小声で言われた。飴を後で倍返しされた。"},
+            {text:"本当に埋葬しようとする",             candy:15,  msg:"「ちょっと待って！」慌てて飛び起きて飴を置いて逃げた。"},
+            {text:"放置して通り過ぎる",                 candy:0,   msg:"後ろから「ありがとね〜」という声が聞こえた。"}
+        ]
+    },
+    // ── マジカルロイド44 ──
+    {
+        text:"【マジカルロイド44】「本日の新商品です。飴増殖機、いかがですか？」",
+        choices:[
+            {text:"飴50を払って購入する",               candy:-50, msg:"電源を入れた途端に爆発した。でも飴が散らばって少し回収できた。"},
+            {text:"「原理を教えろ」と迫る",             candy:20,  msg:"解説が長すぎて眠くなったが、仕組みだけ学んだ。"},
+            {text:"自分でスクラップにする",             candy:35,  msg:"パーツを売ったら良い値がついた。"}
+        ]
+    },
+    {
+        text:"【マジカルロイド44】バッテリー切れで停止している。再起動ボタンを押すか否か。",
+        choices:[
+            {text:"充電してあげる",                     candy:-10, msg:"「感謝します。お礼に」と言って飴を渡してくれた。"},
+            {text:"分解して中身を調べる",               candy:35,  msg:"高度な技術を解析した。売れば高い値がつく情報だった。"},
+            {text:"放置する",                           candy:5,   msg:"彼女は誰かに発見されて再起動していた。"}
+        ]
+    },
+    {
+        text:"【マジカルロイド44】「今日の発明品は感情解析装置です。あなたの本音を分析しましょうか？」",
+        choices:[
+            {text:"受け入れる",                         candy:10,  msg:"「あなたの本音：生き残りたい。正解率99.8%」飴をくれた。"},
+            {text:"断って立ち去る",                     candy:8,   msg:"「分析済みです」と背後から声がした。既に終わっていた。"},
+            {text:"装置を壊す",                         candy:20,  msg:"「なぜ！？」パーツが散乱した。材料として売れた。"}
+        ]
+    },
+    // ── シスター・ナナ ──
+    {
+        text:"【シスター・ナナ】「みんな、愛し合えばきっと大丈夫よ。戦わなくていいの」と訴えている。",
+        choices:[
+            {text:"共感して頷く",                       candy:10,  msg:"「分かってくれる人がいた」と涙を流した。飴をくれた。"},
+            {text:"「無理だ」と現実を告げる",           candy:15,  msg:"「……それでも信じたい」彼女の瞳が揺れた。"},
+            {text:"飴を寄付して活動を支援する",         candy:-40, msg:"「ありがとう！」絶大な信頼を得た。"}
+        ]
+    },
+    {
+        text:"【シスター・ナナ】ウィンタープリズンの死の知らせを受けて、崩れるように泣き崩れている。",
+        choices:[
+            {text:"静かに寄り添う",                     candy:-20, msg:"「離れないでいてくれてありがとう」最後の理性が繋がった。"},
+            {text:"「悲しんでいる暇はない」と叱咤する", candy:20,  msg:"怒りが悲しみを上回った。彼女は立ち上がった。飴をくれた。"},
+            {text:"遺品を飴と交換しようと提案する",     candy:50,  msg:"最低の行為だ。でも彼女は絶望して動かなくなった。危険が一つ減った。"}
+        ]
+    },
+    {
+        text:"【シスター・ナナ】「一緒に戦いましょう。魔法少女同士で争うべきではないわ」と手を差し伸べてきた。",
+        choices:[
+            {text:"手を取って同盟を結ぶ",               candy:-10, msg:"強力な後ろ盾を得た。信頼の絆が生まれた。"},
+            {text:"「考えておく」と曖昧に答える",       candy:8,   msg:"彼女は微笑んで去った。飴を少し置いていった。"},
+            {text:"同盟を装って情報を盗む",             candy:55,  msg:"彼女の計画を全て知った。同時に、自分が嫌になった。"}
+        ]
+    },
+    // ── ヴェス・ウィンタープリズン ──
+    {
+        text:"【ヴェス・ウィンタープリズン】無言で氷の壁を構築している。規則正しい動作に迷いはない。",
+        choices:[
+            {text:"壁の中で休ませてもらう",             candy:5,   msg:"完璧な防壁に守られた夜だった。"},
+            {text:"建設を手伝う",                       candy:15,  msg:"「助かった」短い礼。それが全てだった。飴もくれた。"},
+            {text:"「ここにナナがいる」と教える",       candy:-15, msg:"深い感謝と守護の誓いを得た。"}
+        ]
+    },
+    {
+        text:"【ヴェス・ウィンタープリズン】敵の猛攻を一人で食い止めながら「早く逃げろ」と怒鳴っている。",
+        choices:[
+            {text:"「一緒に戦う」と返す",               candy:22,  msg:"「……頼もしいな」共に戦い、飴を得た。"},
+            {text:"彼女を強化する魔法をかける",         candy:-10, msg:"「こんな使い方があったか」圧倒的な強さを発揮した。"},
+            {text:"素直に逃げる",                       candy:8,   msg:"彼女が時間を稼いでくれた。生きていることに感謝した。"}
+        ]
+    },
+    {
+        text:"【ヴェス・ウィンタープリズン】「魔法少女である前に、一人の人間だ」と静かに言い放った。",
+        choices:[
+            {text:"「同感だ」と答える",                 candy:12,  msg:"頷いて、飴を一つ渡してくれた。"},
+            {text:"「生き残るためなら何でもする」と言う", candy:20, msg:"「そうか」と短く答え、飴を多めにくれた。"},
+            {text:"黙って頭を下げる",                   candy:8,   msg:"「分かっているならいい」と去っていった。"}
+        ]
+    },
+    // ── 森の音楽家クラムベリー ──
+    {
+        text:"【クラムベリー】廃墟で演奏会を開いている。その旋律には、聴く者の魂を揺さぶる力があった。",
+        choices:[
+            {text:"聴き入る",                           candy:-30, msg:"音楽の罠にはまった。正気に戻ったとき、飴を大量に失っていた。"},
+            {text:"拍手と共に飴を捧げる",               candy:-35, msg:"「強い魂ね」と認められた。消されない保証を得た。"},
+            {text:"魔法で演奏を妨害する",               candy:40,  msg:"殺し合いになった。辛くも生き延び、飴を得た。"}
+        ]
+    },
+    {
+        text:"【クラムベリー】「強い魔法少女だけが価値を持つ。弱い者は消えるべきだ」と言い放ちながら近づいてきた。",
+        choices:[
+            {text:"全力で戦う",                         candy:55,  msg:"瀕死になりながらも認められた。「面白い」と飴を大量にくれた。"},
+            {text:"音楽の才能を見せる",                 candy:15,  msg:"戦闘への興味が音楽に移った。命拾いした。"},
+            {text:"他の魔法少女の居場所を教える",       candy:-20, msg:"仲間を売って命を繋いだ。矛先が逸れた。"}
+        ]
+    },
+    {
+        text:"【クラムベリー】「この試験の本当の目的を知りたい？」と試すような瞳で問いかけてきた。",
+        choices:[
+            {text:"「知りたい」と答える",               candy:-10, msg:"衝撃の事実を知った。飴は消えたが、覚悟が決まった。"},
+            {text:"「知らなくていい」と断る",           candy:8,   msg:"「そう」と興味を失った顔で去った。飴を少しくれた。"},
+            {text:"「ファヴを壊す方法を教えろ」と迫る", candy:35,  msg:"「面白い提案ね」と笑い、飴と共に情報をくれた。"}
+        ]
+    },
+    // ── ねむりん ──
+    {
+        text:"【ねむりん】雲の上で気持ちよさそうに昼寝している。誰かの夢から出てきたばかりのようだ。",
+        choices:[
+            {text:"隣で一緒に昼寝する",                 candy:5,   msg:"最高のリフレッシュ。穏やかな夢を見た。"},
+            {text:"耳元でラッパを吹く",                 candy:12,  msg:"驚いて飴をばら撒きながら落ちていった。拾った。"},
+            {text:"夢の中に入って情報を盗む",           candy:30,  msg:"秘密の情報を得た。彼女は何も知らない。"}
+        ]
+    },
+    {
+        text:"【ねむりん】「夢の中で、消えた子の笑顔を見たの。彼女は幸せそうだった」と教えてくれた。",
+        choices:[
+            {text:"「教えてくれてありがとう」と答える", candy:10,  msg:"「また夢で会えたら、あなたにも話すね」飴をくれた。"},
+            {text:"飴を食べさせて元気づける",           candy:-15, msg:"笑顔に戻った彼女が、後で倍の飴を返してくれた。"},
+            {text:"死者の情報を利用しようとする",       candy:20,  msg:"有益な情報を得た。しかし後味が悪い。"}
+        ]
+    },
+    {
+        text:"【ねむりん】「もうすぐ私の番かもしれない。でも後悔はないよ」と穏やかに微笑んでいる。",
+        choices:[
+            {text:"「まだ諦めるな」と励ます",           candy:-10, msg:"「そうだね、やれるだけやってみる」飴をくれた。"},
+            {text:"感謝の言葉を伝える",                 candy:5,   msg:"「ありがとう」その笑顔が、長く記憶に残った。"},
+            {text:"魔法を奪い取る",                     candy:45,  msg:"夢の力を手に入れた。彼女の目に失望が浮かんだ。"}
+        ]
+    }
+];
+
+/* ============================================================
+   ゲーム状態
+============================================================ */
+const state = {
+    candies: PLAYER_START,
+    week: 1,
+    dayIndex: 0,
+    survivors: 16,
+    playerName: "",
+    magicName: "",
+    isGameOver: false,
+    gameSpeed: 1,
+    difficulty: 'normal',
+    npcScores: {},
+    cheatClickCount: 0,
+    cheatUnlocked: false,
+    forceMurder: false,
+    isTyping: false
+};
+let npcList = [];
+
+/* ============================================================
+   ユーティリティ
+============================================================ */
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+/* ============================================================
+   BGM
+============================================================ */
+function updateBGM() {
+    const audio = document.getElementById('bgm-audio');
+    const on  = document.getElementById('bgm-toggle').checked;
+    const vol = parseFloat(document.getElementById('vol-slider').value);
+    audio.volume = vol;
+    if (on) { audio.play().catch(() => {}); }
+    else    { audio.pause(); }
+}
+
+/* ============================================================
+   セットアップ
+============================================================ */
+window.onload = () => {
+    const grid = document.getElementById('char-selection');
+    CHARACTER_LIST.forEach((c, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'setup-btn';
+        btn.textContent = c.name;
+        btn.onclick = () => selectChar(i, btn);
+        grid.appendChild(btn);
+    });
+    const ri = rand(0, CHARACTER_LIST.length - 1);
+    selectChar(ri, grid.children[ri]);
+};
+
+function selectChar(idx, btn) {
+    document.querySelectorAll('#char-selection .setup-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.playerName = CHARACTER_LIST[idx].name;
+    state.magicName  = CHARACTER_LIST[idx].magic;
+}
+
+function setDifficulty(diff, btn) {
+    document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.difficulty = diff;
+    document.getElementById('mode-display').textContent = diff.toUpperCase();
+
+    if (diff === 'normal') {
+        state.cheatClickCount++;
+        if (state.cheatClickCount >= 5) {
+            state.cheatUnlocked = true;
+            alert("チートモードが解放されたぽん！");
+        }
+    } else {
+        state.cheatClickCount = 0;
+    }
+}
+
+function startGame() {
+    document.getElementById('setup-screen').style.display = 'none';
+    if (state.cheatUnlocked) {
+        document.getElementById('cheat-ui').classList.add('active');
+    }
+    npcList = CHARACTER_LIST.filter(c => c.name !== state.playerName).map(c => c.name);
+    npcList.forEach(name => { state.npcScores[name] = rand(NPC_START_MIN, NPC_START_MAX); });
+
+    updateBGM();
+    updateUI();
+    updateRanking();
+
+    showFav(
+        `ようこそ、${state.playerName}！<br>
+        君の魔法は『${state.magicName}』だぽん。<br>
+        毎週金曜の集計で最下位になった子は消去されるぽん。<br>
+        頑張って飴を集めるぽん！`,
+        startTurn
+    );
+}
+
+/* ============================================================
+   UI更新
+============================================================ */
+function updateUI() {
+    document.getElementById('candy-display').textContent    = state.candies;
+    document.getElementById('survivor-display').textContent = state.survivors;
+    document.getElementById('week-display').textContent     = state.week;
+    document.getElementById('day-display').textContent      = DAYS[state.dayIndex] ?? "?";
+}
+
+function updateRanking() {
+    const list = document.getElementById('ranking-list');
+    list.innerHTML = '';
+    const all = npcList.map(n => ({ name: n, candies: state.npcScores[n], isPlayer: false }));
+    all.push({ name: state.playerName, candies: state.candies, isPlayer: true });
+    all.sort((a, b) => b.candies - a.candies);
+    all.forEach((item, i) => {
+        const isLast = i === all.length - 1;
+        const div = document.createElement('div');
+        div.className = `ranking-item${item.isPlayer ? ' player' : ''}${isLast ? ' last-place' : ''}`;
+        div.innerHTML = `<span>${i + 1}. ${item.name}</span><span>${item.candies}🍬</span>`;
+        list.appendChild(div);
+    });
+}
+
+/* ============================================================
+   タイプライター（タイプ中は選択肢を無効化）
+============================================================ */
+function typeWriter(html, elementId, callback) {
+    const el = document.getElementById(elementId);
+    el.innerHTML = '';
+    state.isTyping = true;
+    setChoicesEnabled(false);
+
+    const text = html;
+    let i = 0;
+    const speed = Math.round(28 / state.gameSpeed);
+
+    function type() {
+        if (i < text.length) {
+            el.innerHTML = text.substring(0, i + 1);
+            i++;
+            setTimeout(type, speed);
         } else {
-            audio.pause();
+            state.isTyping = false;
+            setChoicesEnabled(true);
+            if (callback) callback();
         }
     }
+    type();
+}
 
-    const commonEvents = [
-        { text: "大規模なビル火災が発生。生存者がいる。", choices: [{ text: "直接救出に向かう", candy: 30, msg: "英雄として称えられたが消耗が激しい。" }, { text: "魔法で消火を助ける", candy: 20, msg: "効率的に鎮火した。" }, { text: "周囲の安全を確保する", candy: 5, msg: "二次被害を防いだ。" }] },
-        { text: "老人が重い荷物を運んでいる。", choices: [{ text: "目的地まで運ぶ", candy: 8, msg: "小さな徳を積んだ。" }, { text: "魔法で軽量化する", candy: 10, msg: "老人は驚いたが無事に着いた。" }, { text: "高級な台車を魔法で召喚して贈る", candy: -25, msg: "非常に感謝され、生存の噂が広まった。" }] },
-        { text: "魔法少女を狩る者が近くにいるらしい。", choices: [{ text: "罠を仕掛ける", candy: 25, msg: "返り討ちにしたが負傷した。" }, { text: "拠点を魔法で補強する", candy: -35, msg: "安全を確保した。" }, { text: "人混みに紛れて過ごす", candy: 0, msg: "やり過ごした。" }] },
-        { text: "公園で「飴をくれたらいい情報を教える」と言う不審者がいる。", choices: [{ text: "飴を35個渡す", candy: -35, msg: "有用な生存情報を得た。" }, { text: "力ずくで聞き出す", candy: 12, msg: "情報を奪ったが警戒されている。" }, { text: "相手にしない", candy: 0, msg: "賢明な判断だ。" }] },
-        { text: "深夜の病院で、不自然な魔力を感知した。", choices: [{ text: "霊を魔法で浄化する", candy: 20, msg: "感謝の念が飴に変わった。" }, { text: "魔力を隠して調査する", candy: 5, msg: "事件の証拠を掴んだ。" }, { text: "結界を張って放置する", candy: -25, msg: "飴を消費して安全を確保した。" }] },
-        { text: "自分の「魔法少女としての姿」がSNSで拡散されそうだ。", choices: [{ text: "魔法でサーバーを焼く", candy: 15, msg: "証拠隠滅には成功したが、管理者に目をつけられた。" }, { text: "飴をばら撒いてデマだと信じ込ませる", candy: -55, msg: "大量の飴を失ったが、完璧に隠蔽した。" }, { text: "何もしない", candy: 0, msg: "正体がバレ、生存率が大きく下がった。" }] },
-        { text: "地下水道に異形の怪物が住み着いている。", choices: [{ text: "全力で討伐する", candy: 40, msg: "死闘の末、飴を回収。" }, { text: "怪物の餌として飴を置く", candy: -40, msg: "怪物は満足して去り、安全を得た。" }, { text: "入り口を封鎖する", candy: 5, msg: "被害を最小限に抑えた。" }] },
-        { text: "「魔法少女ファン」を名乗る子供が、サインを求めてきた。", choices: [{ text: "派手な魔法を見せて喜ばせる", candy: 15, msg: "笑顔と飴をもらったが、居場所がバレた。" }, { text: "魔法のチャームをプレゼントする", candy: -25, msg: "子供の幸福感が、間接的にあなたを守った。" }, { text: "冷たくあしらう", candy: 0, msg: "リスクは避けた。" }] },
-        { text: "猛吹雪が街を襲い、多くの人が遭難している。", choices: [{ text: "街全体を暖める魔法を使う", candy: 45, msg: "奇跡の救助。しかし、魔力が枯渇寸前だ。" }, { text: "避難所に飴を燃料として提供する", candy: -50, msg: "飴の魔力で人々が救われ、信頼を得た。" }, { text: "自分だけ暖を取る", candy: 0, msg: "自分一人生き残る分には十分だ。" }] },
-        { text: "古い鏡の中から、自分と同じ姿の影が襲いかかってきた。", choices: [{ text: "影を力でねじ伏せる", candy: 20, msg: "激しい消耗を伴ったが、自分に打ち勝った。" }, { text: "影に飴を分け与える", candy: -35, msg: "影はあなたの優しさに満足して消えた。" }, { text: "鏡を叩き割る", candy: 5, msg: "不吉な予感が残った。" }] },
-        { text: "ファヴが「臨時ボーナスのチャンスだぽん」と囁いている。", choices: [{ text: "危険な賭けに乗る", candy: 60, msg: "成功したが命を削りすぎた。" }, { text: "飴をワイロとして渡し、情報を引き出す", candy: -50, msg: "ファヴは機嫌を良くし、重要情報をくれた。" }, { text: "無視して働く", candy: 10, msg: "堅実が一番だ。" }] },
-        { text: "工事現場でクレーンが倒壊し、通行人が下敷きになりそうだ。", choices: [{ text: "クレーンを魔法で支える", candy: 35, msg: "超人的な活躍で飴を稼いだ。" }, { text: "通行人をワープさせる", candy: 15, msg: "一瞬で救助。目撃者は少ない。" }, { text: "現場に飴のバリアを張る", candy: -35, msg: "飴のクッションで死者は免れた。" }] },
-        { text: "街のシンボルタワーに、魔法の時限爆弾が仕掛けられた。", choices: [{ text: "魔法で解除を試みる", candy: 40, msg: "大爆発は防いだが、腕に怪物のような傷を負った。" }, { text: "爆発の影響を飴で相殺する", candy: -60, msg: "損害は出たが、人的被害はゼロだ。" }, { text: "犯人を追う", candy: 25, msg: "爆発は防げなかったが、犯人から飴を奪った。" }] },
-        { text: "記憶を失った魔法少女が、あなたを親だと思い込んでいる。", choices: [{ text: "飴を与えて面倒を見る", candy: -50, msg: "強力な守護者として彼女があなたを守る。" }, { text: "魔法で記憶を捏造して去らせる", candy: 10, msg: "後味は悪いが、飴は回収した。" }, { text: "放置する", candy: 0, msg: "彼女は消えてしまった。" }] },
-        { text: "ある宗教団体が「魔法少女は悪魔だ」とデモを行っている。", choices: [{ text: "魔法で教祖を操る", candy: 20, msg: "活動を止めさせたが、強い呪いを受けた。" }, { text: "飴を供物として渡し、和解する", candy: -35, msg: "彼らはあなたを天使だと崇め始めた。" }, { text: "別の街へ拠点を移す", candy: -30, msg: "安全な場所を飴で買った。" }] },
-        { text: "深い森の奥で、願いを叶える泉を見つけた。", choices: [{ text: "「飴が欲しい」と願う", candy: 50, msg: "不浄な飴が手に入った。体調が悪い。" }, { text: "「命が欲しい」と願い、飴を捧げる", candy: -60, msg: "生存への強い活力を得た。" }, { text: "泉に触れずに去る", candy: 0, msg: "賢明な判断だ。" }] },
-        { text: "カジノのオーナーが魔法少女をボディーガードに雇いたがっている。", choices: [{ text: "高額報酬で引き受ける", candy: 80, msg: "大金（飴）を得たが、命を狙われる。" }, { text: "断る代わりに守りの飴を売る", candy: 15, msg: "小さな商談成立。" }, { text: "カジノを魔法で破産させる", candy: 40, msg: "不正を暴き、飴を奪い取った。" }] },
-        { text: "深夜の学校で「百物語」をしていた生徒が消えた。", choices: [{ text: "異界に突入して救出する", candy: 30, msg: "恐怖の体験だったが、報酬は得た。" }, { text: "異界の入り口を飴で封印する", candy: -35, msg: "生徒は戻れないが、これ以上の被害はない。" }, { text: "朝日が昇るのを待つ", candy: 5, msg: "あなたは安全だ。" }] },
-        { text: "魔法少女専用の「闇市」が開かれている。", choices: [{ text: "商品を奪って逃げる", candy: 50, msg: "指名手配されたが、戦利品は多い。" }, { text: "安全を買う（飴70消費）", candy: -70, msg: "最高級の安全を手に入れた。" }, { text: "冷やかしで見て回る", candy: 0, msg: "情報は少し入った。" }] },
-        { text: "大規模な停電が発生し、街がパニックに陥っている。", choices: [{ text: "魔法で発電する", candy: 25, msg: "多大な魔力を消費して飴を得た。" }, { text: "パニックを飴の力で鎮める", candy: -35, msg: "人々は安らぎ、暴動は収まった。" }, { text: "暗劇に乗じて他者の飴を奪う", candy: 40, msg: "悪い魔法少女だ。" }] },
-        { text: "謎の病が魔法少女の間で流行している。", choices: [{ text: "特効薬を魔法で生成する", candy: 30, msg: "自分の命を削って薬を作った。" }, { text: "飴を消費してワクチンを買う", candy: -50, msg: "感染を免れ、体調も万全だ。" }, { text: "感染者から距離を置く", candy: 0, msg: "自分だけは無傷だ。" }] },
-        { text: "空から巨大な隕石が降ってきている！", choices: [{ text: "魔法の最大出力で粉砕する", candy: 80, msg: "世界を救ったが、あなたは死の淵に。" }, { text: "落下地点に飴のクッションを作る", candy: -100, msg: "甚大な飴を失ったが、奇跡的に助かった。" }, { text: "地下シェルターに逃げ込む", candy: -20, msg: "文明は崩壊したが、あなたは生きている。" }] },
-        { text: "誰かがあなたに「呪いの飴」を送りつけてきた。", choices: [{ text: "呪いを解除して食べる", candy: 25, msg: "不快な味がしたが、力にはなった。" }, { text: "呪いを他人に転嫁する", candy: 5, msg: "最悪の気分だ。" }, { text: "飴を浄化して捨てる", candy: -25, msg: "安全第一。" }] },
-        { text: "テレビの生放送中に怪獣が現れた。", choices: [{ text: "カメラの前で戦う", candy: 60, msg: "一躍スターだが、全魔法少女のターゲットに。" }, { text: "魔法で放送をジャックし、隠れて戦う", candy: 20, msg: "堅実に処理した。" }, { text: "中継車を魔法で守る", candy: -20, msg: "マスコミに恩を売った。" }] },
-        { text: "捨てられたアンドロイドが魔法の核で動いている。", choices: [{ text: "核を抜き取る", candy: 40, msg: "冷酷な判断。飴を得た。" }, { text: "飴を与えて再起動させる", candy: -45, msg: "忠実なロボットがあなたを守る。" }, { text: "そのまま破壊する", candy: 5, msg: "危険の芽を摘んだ。" }] },
-        { text: "古い書物に「魔法少女を辞める方法」が書いてあった。", choices: [{ text: "詳しく読む", candy: -35, msg: "希望が見え、生存意欲が高まった。" }, { text: "嘘だと断じて燃やす", candy: 15, msg: "今の力に執着した。" }, { text: "仲間に飴で情報を売る", candy: 30, msg: "罪深い取引だ。" }] },
-        { text: "魔法の木が枯れかけている。", choices: [{ text: "自分の魔力を注ぐ", candy: 25, msg: "木は蘇り、少量の飴の実をつけた。" }, { text: "飴を肥料として埋める", candy: -45, msg: "精霊の加護を得た。" }, { text: "木を薪にして暖を取る", candy: 5, msg: "バチが当たりそうだ。" }] },
-        { text: "迷い込んだ並行世界から、もう一人の自分が助けを求めている。", choices: [{ text: "彼女を救って招き入れる", candy: -70, msg: "二人のあなたが互いを守り合う。" }, { text: "彼女を見捨てて飴だけ奪う", candy: 50, msg: "並行世界の自分を殺した罪悪感。" }, { text: "扉を閉じる", candy: 0, msg: "異変を拒絶した。" }] },
-        { text: "街を巨大な霧が包み、人々の正気を奪っている。", choices: [{ text: "霧の核を破壊する", candy: 30, msg: "幻覚と戦い、勝利した。" }, { text: "飴を媒介に浄化の風を起こす", candy: -55, msg: "清浄な空気が戻った。" }, { text: "霧の中で他人の所持品を漁る", candy: 25, msg: "卑しい行為だ。" }] },
-        { text: "伝説の武具がオークションに出品されている。", choices: [{ text: "力ずくで強奪する", candy: 55, msg: "警備をなぎ倒した。" }, { text: "全財産の飴を投じて落札する", candy: -150, msg: "無一文だが、最強の守りを得た。" }, { text: "見送る", candy: 5, msg: "平和が一番だ。" }] },
-        { text: "ファヴの隠し口座を見つけた。", choices: [{ text: "飴を不正送金する", candy: 120, msg: "莫大な飴を得たが、抹殺対象になった。" }, { text: "弱みとして握り、脅す", candy: 15, msg: "ファヴが少し優しくなった。" }, { text: "何も見なかったことにする", candy: 10, msg: "賢明だ。" }] },
-        { text: "魔法少女を愛でる「魔法少女喫茶」が流行っている。", choices: [{ text: "バイトとして働く", candy: 30, msg: "精神的に削られるが、飴は良い。" }, { text: "偽物だと抗議して飴を要求する", candy: 15, msg: "迷惑料をぶんどった。" }, { text: "店を魔法で改造してあげる", candy: -25, msg: "隠れた支援者として愛された。" }] },
-        { text: "自分の魔法が、他人の不運を吸い取って成長し始めた。", choices: [{ text: "そのまま成長させる", candy: 50, msg: "呪われた力。命を削る。" }, { text: "飴を消費してこの力を封印する", candy: -60, msg: "正しい心を取り戻した。" }, { text: "特定のターゲットに不運をぶつける", candy: 25, msg: "ライバルを追い詰めた。" }] },
-        { text: "街に「願いの流星群」が降る夜だ。", choices: [{ text: "全ての星を飴に変える", candy: 100, msg: "空前の飴獲得量。しかし運命が歪んだ。" }, { text: "星に平和を祈る", candy: 0, msg: "穏やかな奇跡が起きた。" }, { text: "願いを飴で買い取り、叶えてあげる", candy: -55, msg: "人々の希望があなたを支える。" }] },
-        { text: "魔法少女の遺品整理を依頼された。", choices: [{ text: "形見を自分のものにする", candy: 30, msg: "呪われた遺品だが力にはなる。" }, { text: "遺族へ飴と一緒に届ける", candy: -35, msg: "涙ながらに感謝された。" }, { text: "全て焼却処分する", candy: 5, msg: "未練を断ち切った。" }] },
-        { text: "巨大な魔法少女の銅像が動き出した。", choices: [{ text: "倒して素材にする", candy: 40, msg: "激戦。銅像から飴を削り出した。" }, { text: "飴を供えて鎮める", candy: -40, msg: "銅像は再び静寂に戻った。" }, { text: "街を壊すのを眺める", candy: 0, msg: "街がボロボロだ。" }] },
-        { text: "魔法少女ランキングの操作疑惑が浮上した。", choices: [{ text: "ハッキングして自分を1位にする", candy: 80, msg: "数字は完璧だが、刺客が絶えない。" }, { text: "証拠を飴で買い取り、公表する", candy: -60, msg: "正義が行われ、あなたは英雄視された。" }, { text: "静観する", candy: 5, msg: "泥沼には関わらない。" }] },
-        { text: "ある子供が「魔法少女になりたい」と泣いている。", choices: [{ text: "地獄（ファヴ）に繋ぐ", candy: 40, msg: "紹介料をもらった。あなたは悪魔だ。" }, { text: "飴をあげて、普通の幸せを諭す", candy: -25, msg: "一人の少女を救ったのかもしれない。" }, { text: "魔法でその記憶を消す", candy: 10, msg: "慈悲深い残酷。" }] },
-        { text: "突然、魔法少女としての変身が解けなくなった。", choices: [{ text: "そのままの姿で生きる", candy: 20, msg: "一生狙われ続ける恐怖。" }, { text: "飴を消費して解呪する", candy: -65, msg: "人間に戻る安らぎを得た。" }, { text: "ファヴに文句を言う", candy: 5, msg: "あしらわれた。" }] },
-        { text: "魔力に汚染されたひまわりが巨大化して暴れている。", choices: [{ text: "根こそぎ魔法で抜く", candy: 25, msg: "力技で解決したが周囲の土壌が荒れた。" }, { text: "日光を飴で遮断して眠らせる", candy: -20, msg: "穏やかな方法で鎮静化に成功。" }, { text: "種を回収して売る", candy: 35, msg: "金にはなったが毒素が飛散した。" }] },
-        { text: "深夜のデパートでマネキンたちが踊り出した。", choices: [{ text: "一緒に踊って満足させる", candy: 20, msg: "彼らは満足して戻ったが、防犯カメラに映った。" }, { text: "すべての首を魔法で飛ばす", candy: 30, msg: "恐怖映像としてニュースになった。" }, { text: "飴の鎖で拘束する", candy: -25, msg: "無害なオブジェに戻した。" }] },
-        { text: "記憶を食らう獏が幼稚園に居座っている。", choices: [{ text: "悪夢を魔法で具現化して戦う", candy: 45, msg: "壮絶な精神戦の末、勝利した。" }, { text: "子供たちの夢を飴でコーティングする", candy: -50, msg: "獏は去り、子供たちは安眠を得た。" }, { text: "獏と取引する", candy: 15, msg: "嫌な記憶を消してもらい飴を貰った。" }] },
-        { text: "空飛ぶクジラが雲をすべて食べてしまった。", choices: [{ text: "魔法の雨を降らせる", candy: 40, msg: "干ばつを防いだが魔力を使い果たした。" }, { text: "飴の雲を空に浮かべる", candy: -60, msg: "街に甘い雨が降り、絶賛された。" }, { text: "クジラを狩る", candy: 60, msg: "天空の肉を手に入れたが恨みを買った。" }] },
-        { text: "魔法少女のゴシップ誌があなたのスキャンダルを狙っている。", choices: [{ text: "編集部を魔法で幻惑する", candy: 15, msg: "記事はボツになったが疑念は残った。" }, { text: "スクープを飴で買い取る", candy: -70, msg: "完全に封じ込めた。平穏は高い。" }, { text: "開き直って取材に応じる", candy: 40, msg: "知名度は上がったが敵も増えた。" }] },
-        { text: "雨がすべてキャンディーに変わる怪現象が起きた。", choices: [{ text: "傘を魔法で広げ独占する", candy: 50, msg: "強欲さが目立ち、反感を買った。" }, { text: "溶ける前に人々に配り歩く", candy: 10, msg: "慈善活動として高い評価を得た。" }, { text: "飴雨の源流を断つ", candy: 30, msg: "異常事態を収束させた。" }] },
-        { text: "図書館の禁書が逃げ出し、文字が街中に溢れている。", choices: [{ text: "一文字ずつ魔法で捕まえる", candy: 35, msg: "気の遠くなる作業だったがやり遂げた。" }, { text: "巨大な飴の栞を本に挟む", candy: -40, msg: "魔導書を封印し、知恵の加護を得た。" }, { text: "溢れた文字を食べる", candy: 20, msg: "知識が増えたが頭痛が止まらない。" }] },
-        { text: "魔法の電波塔が狂い、人々の欲望を放送し始めた。", choices: [{ text: "アンテナを魔法でへし折る", candy: 45, msg: "物理的に止めたが爆発に巻き込まれた。" }, { text: "飴のノイズで放送をかき消す", candy: -55, msg: "羞恥の嵐から街を救い出した。" }, { text: "録音して脅迫に使う", candy: 70, msg: "莫大な飴を得たが、あなたは標的だ。" }] },
-        { text: "鏡の国から逆さまの魔法少女が現れた。", choices: [{ text: "物理法則を無視して戦う", candy: 50, msg: "三半規管が狂ったが勝利した。" }, { text: "鏡に飴を塗りつぶす", candy: -45, msg: "通路を遮断し、平穏を守った。" }, { text: "彼女をこちら側に引き入れる", candy: -100, msg: "最強の協力者を得たが代償は大きい。" }] },
-        { text: "ファヴが「メンテナンスの間、飴が2倍だぽん」と言い出した。", choices: [{ text: "不眠不休で活動する", candy: 120, msg: "異常な収穫だが、心身ともに崩壊寸前。" }, { text: "バグを利用して飴を増殖させる", candy: 180, msg: "運営にバレ、消去のカウントダウンが始まった。" }, { text: "罠だと判断して休む", candy: 0, msg: "生存者は慎重であるべきだ。" }] },
-        { text: "街の銅像があなたの魔法をコピーして歩き回っている。", choices: [{ text: "自分の魔法の弱点を突く", candy: 35, msg: "自己批判のような戦闘だった。" }, { text: "飴のペンキで色を塗り変える", candy: -30, msg: "魔法の回路を狂わせて停止させた。" }, { text: "自分も銅像のふりをする", candy: 10, msg: "誰も見分けがつかず、やり過ごした。" }] },
-        { text: "海底から沈没した魔法都市が浮上してきた。", choices: [{ text: "財宝を魔法で回収する", candy: 90, msg: "古代の呪いを受けたが飴は手に入れた。" }, { text: "都市に結界を張り再び沈める", candy: -80, msg: "世界の均衡を守り、精霊に感謝された。" }, { text: "都市の王を名乗る", candy: 50, msg: "束の間の栄華。刺客が押し寄せる。" }] },
-        { text: "人々の「やる気」が影となって剥がれ落ちている。", choices: [{ text: "影を縫い付ける魔法を使う", candy: 30, msg: "街の活力を戻したが、ひどく疲労した。" }, { text: "影を飴で固めてコレクションする", candy: 40, msg: "他人の熱意を奪う冷酷な魔法少女。" }, { text: "やる気のない街で昼寝する", candy: 0, msg: "無気力は安全を招く。" }] },
-        { text: "空に巨大な「ファヴの顔」をした月が現れた。", choices: [{ text: "月にロケット魔法を撃ち込む", candy: 60, msg: "不敬罪だが、溜飲は下がった。" }, { text: "お供え物として飴を積み上げる", candy: -90, msg: "ファヴのご機嫌を取り、生存を確約された。" }, { text: "見ないふりをして地下に潜る", candy: -10, msg: "狂気から逃れるにはそれしかない。" }] },
-        { text: "魔法少女を「育成」するための特別合宿に誘われた。", choices: [{ text: "地獄の特訓に耐える", candy: 70, msg: "実力は上がったが、友人を一人失った。" }, { text: "教官を魔法で買収する", candy: -60, msg: "飴で「卒業証書」を手に入れた。" }, { text: "合宿所を爆破して逃げる", candy: 40, msg: "自由を手に入れたが指名手配だ。" }] },
-        { text: "死んだはずの魔法少女からのメールが届いた。", choices: [{ text: "発信源を魔法で追跡する", candy: 35, msg: "ゴーストネットワークに接触し、飴を得た。" }, { text: "飴を添付して返信する", candy: -40, msg: "黄泉の国から感謝の加護が届いた。" }, { text: "スマホを破壊して忘れる", candy: 5, msg: "過去に囚われる者は死ぬ。" }] },
-        { text: "あなたの魔法が「自我」を持ち、勝手に人助けを始めた。", choices: [{ text: "魔法を説得して戻らせる", candy: 20, msg: "自分の力と対話する奇妙な時間。" }, { text: "魔法の好物（飴）を与えて懐かせる", candy: -50, msg: "二身一体の完璧な連携が完成した。" }, { text: "魔法を切り捨てて新しい力を探す", candy: 40, msg: "力を失いかけたが、純粋な飴を得た。" }] },
-        { text: "街中の信号機がすべて「飴色」に点滅し始めた。", choices: [{ text: "交通整理を魔法で行う", candy: 25, msg: "事故を防ぎ、小銭ならぬ小飴を稼いだ。" }, { text: "信号機をキャンディーに変えて食べる", candy: 30, msg: "公共物を食す背徳の味。" }, { text: "飴色を透過する魔法の眼鏡を作る", candy: -35, msg: "自分だけは平穏な世界を歩ける。" }] },
-        { text: "魔法少女同士の「飴の奪い合い」がスポーツイベント化された。", choices: [{ text: "卑怯な手を使って優勝する", candy: 150, msg: "莫大な富。だが全魔法少女の敵となった。" }, { text: "八百長を持ちかけて飴を稼ぐ", candy: 80, msg: "汚いやり方だが、確実に生き残れる。" }, { text: "審判員として参加し、賄賂をもらう", candy: 50, msg: "安全な地位で甘い汁を吸った。" }] },
-        { text: "時間が5分ごとに巻き戻るループ地帯に迷い込んだ。", choices: [{ text: "ループを利用して飴を無限回収する", candy: 100, msg: "精神が摩耗し、自分が誰か忘れかけた。" }, { text: "ループの核を魔法で破壊する", candy: 40, msg: "時間を進めたが、数年分老けた気がする。" }, { text: "飴を置いてループから出してもらう", candy: -70, msg: "対価を払い、現在へ帰還した。" }] },
-        { text: "「魔法少女のお葬式」に参列することになった。", choices: [{ text: "弔辞で魔法を見せて故人を偲ぶ", candy: 15, msg: "しめやかな飴の雨を降らせた。" }, { text: "香典として大量の飴を包む", candy: -80, msg: "遺族（ファヴ）に認められた。" }, { text: "棺の中から飴を盗む", candy: 60, msg: "死者に口なし。だが呪いは重い。" }] },
-        { text: "夢の中で「魔法少女の神様」に出会った。", choices: [{ text: "「もっと飴を」と傲慢に頼む", candy: 200, msg: "富は得た。だが、神はあなたに飽きた。" }, { text: "「平和を」と祈り飴を捧げる", candy: -100, msg: "無欲な魂に、絶対的な守護が与えられた。" }, { text: "神様を魔法で攻撃してみる", candy: 100, msg: "神の欠片（飴）を奪ったが、右腕を失った。" }] },
-        { text: "あなたのステータスが「バグ」で全魔法少女に公開された。", choices: [{ text: "嘘の情報を魔法で流す", candy: 40, msg: "攪乱に成功したが、信用も失った。" }, { text: "公開停止を飴で交渉する", candy: -90, msg: "プライバシーは飴で守るものだ。" }, { text: "弱さを逆手に取り、助けを乞う", candy: 10, msg: "憐れみという名の防壁。" }] },
-        { text: "ゴミ捨て場に「使い捨てられた魔法少女」が転がっている。", choices: [{ text: "部品を剥ぎ取って飴にする", candy: 50, msg: "冷酷なリサイクル。" }, { text: "飴を注入して再起動させる", candy: -60, msg: "魂のない人形が、あなたの盾となった。" }, { text: "丁寧に埋葬する", candy: 0, msg: "いつかの自分を見ているようだ。" }] },
-        { text: "魔法少女の「人気投票」が始まった。", choices: [{ text: "不正投票を魔法で行う", candy: 70, msg: "1位獲得。だがアンチの魔の手が迫る。" }, { text: "投票してくれた人に飴を配る", candy: -100, msg: "飴による支持率工作。効果は絶大。" }, { text: "最下位を目指して目立たない", candy: 5, msg: "注目されないことが最高の生存戦略。" }] },
-        { text: "街が「魔法少女お断り」の結界で覆われた。", choices: [{ text: "力ずくで結界を叩き割る", candy: 60, msg: "侵入には成功したが、体力が限界。" }, { text: "通行証を飴で偽造する", candy: -50, msg: "スマートに潜入し、拠点を守った。" }, { text: "結界の外で新しい街を作る", candy: 30, msg: "開拓者の苦労と飴。" }] },
-        { text: "鏡合わせの自分と「飴の所有権」を賭けて決闘する。", choices: [{ text: "本物の矜持を見せて勝つ", candy: 80, msg: "偽者を消去したが、心に穴が開いた。" }, { text: "飴を半分分け与えて和解する", candy: -40, msg: "自分自身を許し、魔力が安定した。" }, { text: "審判のファヴに飴を握らせる", candy: -60, msg: "不戦勝。金がものを言う世界。" }] },
-        { text: "あなたの杖が「反抗期」を迎えた。", choices: [{ text: "力で押さえつけて従わせる", candy: 30, msg: "主従関係を再構築した。" }, { text: "最高級の飴で磨いて機嫌を取る", candy: -50, msg: "杖は光り輝き、あなたを優しく守る。" }, { text: "杖を捨てて素手で戦う", candy: 50, msg: "野生の魔法少女。野生の飴。" }] },
-        { text: "魔法少女としての「本当の目的」が書かれた手紙を拾った。", choices: [{ text: "震える手で封を切る", candy: -50, msg: "真実を知り、生存への覚悟が固まった。" }, { text: "読まずに食べて証拠を消す", candy: 30, msg: "無知は飴、知恵は毒。" }, { text: "手紙をファヴに突きつける", candy: 20, msg: "「知りすぎたぽん」と笑われた。" }] },
-        { text: "世界がモノクロになり、魔法の色だけが残った。", choices: [{ text: "自分の色を街に塗り広げる", candy: 45, msg: "あなたが世界の支配者に見えた瞬間。" }, { text: "色のない人々に飴で彩色する", candy: -60, msg: "モノクロの世界に希望の飴が降る。" }, { text: "色の濃い場所を探して隠れる", candy: 10, msg: "コントラストの中に潜む安全。" }] },
-        { text: "自分に瓜二つの偽者が、街で悪事を働いている。", choices: [{ text: "偽者を魔法で公開処刑する", candy: 50, msg: "不信感は拭えず、恐怖による飴を得た。" }, { text: "飴を配って誤解を解く", candy: -40, msg: "市民の信頼を取り戻し、安全を確保。" }, { text: "偽者と手を組む", candy: 80, msg: "悪名は広まったが、飴の収集効率は倍増。" }] },
-        { text: "魔法少女のステッキが、深夜に人間のような声で鳴き始めた。", choices: [{ text: "声を無視して使い続ける", candy: 25, msg: "ステッキに呪われたが、魔力は高まった。" }, { text: "飴をステッキに「食わせる」", candy: -50, msg: "ステッキは満足し、持ち主を守る盾となった。" }, { text: "ステッキを塩水で清める", candy: 5, msg: "静かになったが、魔法の威力が落ちた。" }] },
-        { text: "SNSで「魔法少女の正体を特定する」懸賞金がかけられた。", choices: [{ text: "投稿者を特定して再起不能にする", candy: 30, msg: "口を封じたが、新たな火種を生んだ。" }, { text: "飴で情報操作を依頼する", candy: -70, msg: "完璧なアリバイを作り、追及を逃れた。" }, { text: "あえて正体を一部明かしてファンを作る", candy: 50, msg: "熱狂的な支持者を得たが、暗殺のリスク増。" }] },
-        { text: "ファヴが「キャンディーの利子がつかない不具合」を告知した。", choices: [{ text: "全ての飴を即座に消費してステータスに変える", candy: -100, msg: "最強の肉体を手に入れたが、一文無しに。" }, { text: "運営に抗議のデモを行う", candy: 20, msg: "端た飴を貰ったが、ブラックリスト入り。" }, { text: "他人の飴を代わりに保管（横領）する", candy: 60, msg: "富は得たが、他魔法少女から恨まれた。" }] },
-        { text: "魔法少女専用の「地下闘技場」への招待状が届いた。", choices: [{ text: "圧倒的な力で連勝する", candy: 100, msg: "富を得たが、体力が限界を超えた。" }, { text: "観客に飴を投げて八百長を仕掛ける", candy: -50, msg: "無傷で勝利。賭け金（生存率）を稼いだ。" }, { text: "招待状を破り捨てる", candy: 0, msg: "堅実な判断。不参加は死なない。" }] },
-        { text: "かつて救った少女が、魔法少女狩りに加担しているのを見つけた。", choices: [{ text: "彼女を魔法で洗脳し直す", candy: 35, msg: "飴を生成する機械として側に置いた。" }, { text: "飴を与えて説得し、引退させる", candy: -45, msg: "恩を返し、敵を一人減らした。" }, { text: "容赦なく排除する", candy: 20, msg: "心は痛むが、後腐れはない。" }] },
-        { text: "街の全ての水が「飴のシロップ」に変わってしまった。", choices: [{ text: "シロップを回収して売る", candy: 45, msg: "高値で売れたが、街は脱水症状に。" }, { text: "魔法でシロップを水に還元する", candy: -55, msg: "聖女として称えられ、守護の力が宿った。" }, { text: "自分専用のプールにする", candy: 10, msg: "ベタベタして動きづらくなった。" }] },
-        { text: "ファヴから「親友を一人脱落させれば飴をあげる」と打診された。", choices: [{ text: "親友を裏切り、飴を頂く", candy: 150, msg: "莫大な富を得たが、孤独と罪悪感に苛まれる。" }, { text: "ファヴを物理的に殴る", candy: 10, msg: "飴は貰えないが、気分は晴れた。" }, { text: "親友と飴を分け合い、共に生き残る誓いをする", candy: -60, msg: "二人の絆が、何よりも強固な壁となった。" }] },
-        { text: "魔法の力が暴走し、街をキャンディーの彫像に変えようとしている。", choices: [{ text: "暴走を抑え込むために魔力を注ぐ", candy: 40, msg: "鎮圧成功。破片を飴として回収。" }, { text: "暴走を利用して自分を強化する", candy: 80, msg: "異形の力を得た。もう後戻りはできない。" }, { text: "飴の街を切り売りする", candy: -30, msg: "混乱に乗じて安全圏へ逃亡。" }] },
-        { text: "魔法少女としての記憶が、徐々に飴に変換されて抜けていく。", choices: [{ text: "大切な記憶を優先的に飴にする", candy: 100, msg: "最強になったが、自分が誰か分からない。" }, { text: "飴を消費して記憶を固定する", candy: -80, msg: "人間としての尊厳を守り抜いた。" }, { text: "忘れたまま、本能で生きる", candy: 20, msg: "効率的な獣となった。" }] },
-        { text: "謎の宗教団体が「魔法少女の血」を求めて襲ってきた。", choices: [{ text: "返り討ちにして教団の飴を奪う", candy: 60, msg: "殲滅。血塗られた飴を手に入れた。" }, { text: "飴で造った偽の血を渡して騙す", candy: -30, msg: "信仰を逆手に取り、追手を巻いた。" }, { text: "彼らの神として君臨する", candy: 40, msg: "狂信的な軍団を得たが、命を狙われる。" }] },
-        { text: "自分が住んでいるアパートが、魔法少女の戦場に指定された。", choices: [{ text: "アパートごと敵を吹き飛ばす", candy: 50, msg: "勝利したが、帰る家を失った。" }, { text: "飴を消費して時空を歪め、アパートを隠す", candy: -70, msg: "平穏な日常を死守した。" }, { text: "敵を誘い出して公園で決着をつける", candy: 25, msg: "正々堂々と戦い、消耗した。" }] },
-        { text: "魔法少女育成計画の「プロトタイプ」が目覚めた。", choices: [{ text: "旧型を破壊してコアを飴にする", candy: 70, msg: "強力な魔力を得たが、システムに目を付けられた。" }, { text: "旧型に飴を与えて従順にする", candy: -60, msg: "古の戦士があなたの守護霊となった。" }, { text: "旧型に街の管理を任せて隠居する", candy: -20, msg: "一時的な平穏。" }] },
-        { text: "雨の日に、泥だらけの魔法少女の死体を見つけた。", choices: [{ text: "死体から残存する飴を抽出する", candy: 40, msg: "ハイエナと呼ばれたが、生き残るためだ。" }, { text: "自分の飴を使って彼女を蘇生させる", candy: -100, msg: "奇跡の復活。彼女はあなたの為に命を懸ける。" }, { text: "ファヴに通報する", candy: 10, msg: "清掃料を少し貰った。" }] },
-        { text: "世界中の時計が逆回転し始めた。", choices: [{ text: "時間の逆流に逆らって飴を集める", candy: 50, msg: "過去の自分と戦い、飴を奪った。" }, { text: "飴を歯車にして時間を止める", candy: -55, msg: "束の間の休息を得た。" }, { text: "赤ん坊に戻る前に脱出する", candy: 0, msg: "危機一髪。" }] },
-        { text: "鏡の中の自分が「代わってくれ」と話しかけてきた。", choices: [{ text: "鏡の自分を飴で懐柔する", candy: -40, msg: "鏡面世界からの視点を得て、生存率アップ。" }, { text: "鏡を粉々にする", candy: 20, msg: "自分の半身を殺したような喪失感。" }, { text: "本当に入れ替わる", candy: 100, msg: "鏡の中の富を得たが、外には戻れない。" }] },
-        { text: "街に「魔法少女専用の税務署」ができた。", choices: [{ text: "正直に飴を納税する", candy: -50, msg: "優良魔法少女として公的な加護を得た。" }, { text: "魔法で書類を改ざんし、脱税する", candy: 40, msg: "飴は守ったが、査察官（刺客）が来た。" }, { text: "税務署を物理的に破壊する", candy: 60, msg: "無法者の王として君臨。" }] },
-        { text: "魔法のスマホに「死のカウントダウン」が表示された。", choices: [{ text: "他人にカウントを移す（飴50消費）", candy: -50, msg: "誰かの犠牲の上に自分の生を繋いだ。" }, { text: "魔法の力でアプリを削除する", candy: 30, msg: "強引に消したが、スマホが壊れた。" }, { text: "最後の晩餐として飴を食べる", candy: 20, msg: "死への恐怖が飴の味を苦くする。" }] },
-        { text: "魔法少女に憧れる「狂信者」たちが、あなたの家を取り囲んだ。", choices: [{ text: "彼らを魔法で下僕にする", candy: 45, msg: "人間の盾を手に入れた。心は死んだ。" }, { text: "飴を聖遺物として渡し、解散させる", candy: -40, msg: "平和的に去ってもらった。" }, { text: "全力で逃げ出し、住所を捨てる", candy: -20, msg: "放浪生活の始まり。" }] }
-    ];
+function setChoicesEnabled(enabled) {
+    document.querySelectorAll('#choices-container .choice-btn').forEach(btn => {
+        btn.disabled = !enabled;
+    });
+}
 
-    const mgEvents = [
-        // --- スノーホワイト ---
-        { text: "【交流】スノーホワイトが困っている人の声を聞いている。", choices: [{ text: "手伝いを申し出る", candy: 20, survival: -20, msg: "二人で多くの人を救った。" }, { text: "彼女の代わりに飴を集める", candy: 30, survival: -45, msg: "感謝されたが危険が増した。" }, { text: "遠くから静観する", candy: 0, survival: 10, msg: "心が洗われた。" }] },
-        { text: "【葛藤】スノーホワイトが血の付いた武器を見て震えている。", choices: [{ text: "優しく声をかける", candy: -10, survival: 40, msg: "彼女の精神的な支えになった。" }, { text: "武器を奪って捨てる", candy: 0, survival: 20, msg: "彼女の「純白」を守った。" }, { text: "「これが現実だ」と説く", candy: 15, survival: -10, msg: "彼女の覚悟が決まり、飴を少し分けてくれた。" }] },
-        { text: "【捜索】スノーホワイトが迷子の子供を探している。", choices: [{ text: "一緒に探す", candy: 5, survival: 20, msg: "無事に見つかり、母親から飴をもらった。" }, { text: "魔法で子供をおびき寄せる", candy: 25, survival: -30, msg: "効率的に解決したがスノーホワイトに怪しまれた。" }, { text: "子供が持っていた飴を奪う", candy: 40, survival: -60, msg: "泣き声を聞いて彼女が駆けつけてきた！急いで逃げる。" }] },
+/* ============================================================
+   ターン処理
+============================================================ */
+function startTurn() {
+    if (state.isGameOver) return;
+    if (state.dayIndex >= DAYS_PER_WEEK) { processFriday(); return; }
 
-        // --- リップル ---
-        { text: "【遭遇】リップルが特訓をしている。", choices: [{ text: "一緒に訓練する", candy: 10, survival: -25, msg: "技術は上がったが疲弊した。" }, { text: "的に魔法を動かす", candy: 18, survival: -30, msg: "彼女は怒ったが飴を得た。" }, { text: "差し入れに飴を渡す", candy: -25, survival: 45, msg: "少し仲良くなれた。" }] },
-        { text: "【因縁】リップルが宿敵の情報を探している。", choices: [{ text: "情報を提供する", candy: 15, survival: -20, msg: "感謝された。彼女は復讐へと向かった。" }, { text: "復讐を止める", candy: -20, survival: 60, msg: "激しい口論になったが、彼女の命は繋がった。" }, { text: "偽情報を流して戦わせる", candy: 50, survival: -80, msg: "混乱に乗じて大量の飴を奪い取った。" }] },
-        { text: "【不器用】リップルが怪我をして手当てに苦労している。", choices: [{ text: "手伝う", candy: 0, survival: 50, msg: "「余計なことを…」と言いつつ、信頼を得た。" }, { text: "忍者道具をプレゼントする", candy: -30, survival: 40, msg: "彼女の戦闘スタイルに合い、喜ばれた。" }, { text: "弱みにつけ込み飴を要求する", candy: 45, survival: -70, msg: "くないが飛んできたが、なんとか飴は奪った。" }] },
+    updateUI();
+    updateRanking();
 
-        // --- ラ・ピュセル ---
-        { text: "【正義】ラ・ピュセルが巨大な剣を振るっている。", choices: [{ text: "剣の修行に付き合う", candy: 10, survival: -15, msg: "騎士道精神を学んだ。" }, { text: "「竜騎士」と呼んであげる", candy: 0, survival: 25, msg: "照れながらも嬉しそうだ。" }, { text: "戦闘の隙に飴を回収する", candy: 35, survival: -40, msg: "激戦の余波でボロボロだ。" }] },
-        { text: "【守護】ラ・ピュセルが暴徒から街を守っている。", choices: [{ text: "背中を預けて共に戦う", candy: 20, survival: -10, msg: "見事な連携で街に平和が戻った。" }, { text: "守りが薄い場所を教える", candy: 0, survival: 40, msg: "彼女の騎士としての誇りを助けた。" }, { text: "守られている間に店から盗む", candy: 60, survival: -100, msg: "大量の飴を得たが、彼女に軽蔑された。" }] },
-        { text: "【騎士】ラ・ピュセルがスノーホワイトを守る誓いを立てている。", choices: [{ text: "応援する", candy: 5, survival: 30, msg: "「君もいい奴だな」と認められた。" }, { text: "自分の事も守ってほしいと頼む", candy: -20, survival: 70, msg: "飴と引き換えに一時的な護衛を得た。" }, { text: "「無駄な努力だ」と嘲笑う", candy: 10, survival: -30, msg: "険悪なムードになった。" }] },
+    // NPC飴獲得
+    const [dMin, dMax] = DIFF_NPC[state.difficulty];
+    npcList.forEach(name => { state.npcScores[name] += rand(dMin, dMax); });
 
-        // --- ハードゴア・アリス ---
-        { text: "【不滅】ハードゴア・アリスが血まみれで佇んでいる。", choices: [{ text: "手当をしてあげる", candy: -10, survival: 60, msg: "彼女は静かに懐いた。" }, { text: "うさぎのぬいぐるみを貸す", candy: 0, survival: 30, msg: "少しだけ表情が和らいだ。" }, { text: "再生力を利用して囮にする", candy: 40, survival: -50, msg: "飴は稼げたが良心が痛む。" }] },
-        { text: "【追跡】アリスが何かを探して街を徘徊している。", choices: [{ text: "白い手袋を渡す", candy: -5, survival: 40, msg: "彼女の大事なものだったようだ。" }, { text: "一緒に探してあげる", candy: 5, survival: 30, msg: "言葉は少ないが、確かな絆を感じた。" }, { text: "気味が悪いので攻撃する", candy: 20, survival: -60, msg: "切っても切っても向かってくる姿に恐怖した。" }] },
-        { text: "【献身】アリスがあなたをじっと見つめている。", choices: [{ text: "頭を撫でる", candy: 0, survival: 50, msg: "彼女は満足そうに目を閉じた。" }, { text: "飴を半分分ける", candy: -25, survival: 80, msg: "最強の盾としての信頼を得た。" }, { text: "逃げ出す", candy: 0, survival: -20, msg: "どこまでも追いかけてくる……。" }] },
+    // イベント抽選（コモン7割・MGイベント3割）
+    const pool = Math.random() < 0.7 ? COMMON_EVENTS : MG_EVENTS;
+    const ev   = pool[Math.floor(Math.random() * pool.length)];
 
-        // --- トップスピード ---
-        { text: "【爆速】トップスピードが箒で空を駆けている。", choices: [{ text: "後ろに乗せてもらう", candy: 15, survival: -10, msg: "あっという間に現場へ着いた。" }, { text: "妊婦さんへの伝言を頼む", candy: -20, survival: 80, msg: "彼女の「最優先事項」を助けた。" }, { text: "最高速度で競争する", candy: 10, survival: -30, msg: "振り切られたが爽快だった。" }] },
-        { text: "【休息】トップスピードが隠れ家で料理を作っている。", choices: [{ text: "一緒に食べる", candy: 0, survival: 40, msg: "家庭的な味に癒やされた。" }, { text: "食材を差し入れる", candy: -15, survival: 60, msg: "「気が利くねぇ！」と絶賛された。" }, { text: "レシピを盗んで売る", candy: 30, survival: -40, msg: "怒った彼女に上空から落とされた。" }] },
-        { text: "【覚悟】トップスピードが「あと半年」と呟いている。", choices: [{ text: "話を聞いてあげる", candy: 0, survival: 50, msg: "彼女の重荷を少し分かち合った。" }, { text: "お守りを渡す", candy: -10, survival: 70, msg: "「意地でも生き残ってやるよ」と笑った。" }, { text: "弱点を分析する", candy: 25, survival: -30, msg: "冷徹に情報を集めた。" }] },
+    clearChoices();
+    typeWriter(ev.text, 'message-window', () => {
+        renderChoices(shuffle(ev.choices), choice => handleChoice(choice));
+    });
+}
 
-        // --- カラミティ・メアリ ---
-        { text: "【危機】カラミティ・メアリが酔って暴れている。", choices: [{ text: "正面から止める", candy: 40, survival: -80, msg: "激戦の末、沈静化させた。" }, { text: "酒に睡眠薬を混ぜる", candy: 15, survival: -30, msg: "うまく眠らせた。" }, { text: "飴を置いて去る", candy: -45, survival: 60, msg: "店主から深く感謝された。" }] },
-        { text: "【略奪】メアリがガソリンスタンドを占拠した。", choices: [{ text: "分け前を要求する", candy: 40, survival: -50, msg: "狂犬の仲間入りを果たした。" }, { text: "影から狙撃する", candy: 20, survival: -40, msg: "威嚇には成功したが睨まれた。" }, { text: "遠くから通報する", candy: 5, survival: 20, msg: "警察が来た隙に逃げた。" }] },
-        { text: "【恐怖】メアリが新しい銃を試そうとしている。", choices: [{ text: "的になる（フリをする）", candy: 50, survival: -90, msg: "命がけのパフォーマンスで気に入られた。" }, { text: "もっと強い武器を教える", candy: -20, survival: 40, msg: "興味をそらして難を逃れた。" }, { text: "隠れる", candy: 0, survival: 10, msg: "銃声が響き渡る中、息を潜めた。" }] },
+function handleChoice(choice) {
+    clearChoices();
 
-        // --- スイムスイム ---
-        { text: "【強襲】スイムスイムが床から忍び寄ってきた！", choices: [{ text: "全力で空へ逃げる", candy: 0, survival: 20, msg: "危機一髪で回避した。" }, { text: "床を魔法で硬質化させる", candy: 15, survival: -20, msg: "彼女を閉じ込めて追い払った。" }, { text: "持っていた飴をすべて差し出す", candy: -80, survival: 150, msg: "見逃してもらえたが、ほぼ全てを失った。" }] },
-        { text: "【教育】スイムスイムがルーラの教えを思い出している。", choices: [{ text: "新しい「教育」を施す", candy: 35, survival: -50, msg: "彼女は冷酷なリーダーへと成長した。" }, { text: "「王の資質がある」と褒める", candy: 10, survival: 30, msg: "彼女は静かに頷いた。" }, { text: "本をプレゼントする", candy: -10, survival: 40, msg: "熱心に読み始めた。隙ができた。" }] },
-        { text: "【無感情】スイムスイムが無表情にあなたを追ってくる。", choices: [{ text: "ライトで目をくらませる", candy: 10, survival: 30, msg: "弱点を見抜き、一時撤退させた。" }, { text: "水の中に誘い込む", candy: 20, survival: -40, msg: "彼女の得意フィールドで苦戦した。" }, { text: "命乞いをする", candy: -50, survival: 60, msg: "飴を半分渡して見逃してもらった。" }] },
-
-        // --- ルーラ ---
-        { text: "【支配】ルーラが「跪け」と命じている。", choices: [{ text: "従うフリをする", candy: -25, survival: 45, msg: "臣下として守られた。" }, { text: "命令を魔法で跳ね返す", candy: 30, survival: -50, msg: "主導権を奪い返した。" }, { text: "背後から奇襲する", candy: 45, survival: -90, msg: "王位を簒奪し、飴を奪った。" }] },
-        { text: "【傲慢】ルーラが作戦会議を開いている。", choices: [{ text: "意見を出す", candy: 10, survival: 10, msg: "「生意気ね」と言いつつ採用された。" }, { text: "ひたすら称賛する", candy: -10, survival: 50, msg: "気分を良くした彼女に庇護された。" }, { text: "会議を台無しにする", candy: 20, survival: -60, msg: "怒りの魔法を叩き込まれた。" }] },
-        { text: "【孤高】ルーラが一人で紅茶を飲んでいる。", choices: [{ text: "最高級の茶葉を出す", candy: -20, survival: 60, msg: "優雅な時間を共有し、絆が深まった。" }, { text: "毒を盛る", candy: 40, survival: -100, msg: "失敗して処刑されかけた。" }, { text: "給仕をする", candy: 5, survival: 30, msg: "使用人として飴を少し貰った。" }] },
-
-        // --- たま ---
-        { text: "【事故】たまが誤って街を穴だらけにしてしまった。", choices: [{ text: "一緒に埋め戻す", candy: 5, survival: 25, msg: "たまは泣いて喜んだ。" }, { text: "穴を利用して罠を作る", candy: 25, survival: -45, msg: "効率的に他者から奪えた。" }, { text: "魔法で修復する", candy: -35, survival: 55, msg: "街は元通りになった。" }] },
-        { text: "【劣等感】たまが「自分なんて…」と落ち込んでいる。", choices: [{ text: "才能を褒める", candy: 0, survival: 60, msg: "彼女は自信を取り戻し、あなたを守った。" }, { text: "飴をあげて励ます", candy: -15, survival: 40, msg: "笑顔が見られた。" }, { text: "さらに追い込む", candy: 30, survival: -50, msg: "パニックになった彼女の穴掘りに巻き込まれた。" }] },
-        { text: "【突撃】たまがルーラの命令であなたを襲ってきた！", choices: [{ text: "説得する", candy: -10, survival: 50, msg: "泣きながら彼女は去っていった。" }, { text: "穴に突き落とす", candy: 20, survival: 10, msg: "自業自得な結果になった。" }, { text: "ルーラを倒すと脅す", candy: 0, survival: 30, msg: "怯えて動けなくなったようだ。" }] },
-
-        // --- ユナエル ---
-        { text: "【幻惑】ユナエルが誰かに変身して悪戯をしている。", choices: [{ text: "一緒になって騙す", candy: 25, survival: -15, msg: "二人で飴を騙し取った。" }, { text: "ピーナッツをあげる", candy: -5, survival: 30, msg: "機嫌を直して去っていった。" }, { text: "本物を見破って叱る", candy: 0, survival: 10, msg: "つまらなそうに舌を出された。" }] },
-        { text: "【偽装】ユナエルがあなたの姿に変身した！", choices: [{ text: "鏡合わせで踊る", candy: 10, survival: 20, msg: "意気投合して飴を分け合った。" }, { text: "偽物だと周囲に言いふらす", candy: 0, survival: -30, msg: "逆ギレして攻撃してきた。" }, { text: "身代わりにして逃げる", candy: 30, survival: 50, msg: "彼女にヘイトを押し付けた。" }] },
-        { text: "【姉妹】ユナエルがミナエルと喧嘩している。", choices: [{ text: "仲裁する", candy: -10, survival: 40, msg: "二人から感謝された。" }, { text: "ミナエルの肩を持つ", candy: 10, survival: -20, msg: "ユナエルに恨まれた。" }, { text: "どさくさに紛れて飴を盗む", candy: 40, survival: -50, msg: "喧嘩を止めて二人で追ってきた！" }] },
-
-        // --- ミナエル ---
-        { text: "【模倣】ミナエルが看板に化けて隠れている。", choices: [{ text: "知らないふりで通り過ぎる", candy: 0, survival: 15, msg: "やり過ごすことができた。" }, { text: "看板を蹴飛ばす", candy: 20, survival: -30, msg: "正体を現し、飴を落として逃げた。" }, { text: "姉（ユナエル）を連れてくる", candy: 10, survival: 20, msg: "姉妹で仲良く遊び始めた。" }] },
-        { text: "【潜伏】ミナエルが凶器に化けて他の魔法少女を狙っている。", choices: [{ text: "標的に教える", candy: -10, survival: 50, msg: "正義の味方として感謝された。" }, { text: "共謀して不意打ちする", candy: 40, survival: -60, msg: "酷い事をした。飴はたっぷり得た。" }, { text: "彼女を拾って持ち歩く", candy: 0, survival: 10, msg: "重たかった。途中で逃げられた。" }] },
-        { text: "【執念】ミナエルが死んだフリをして飴を稼いでいる。", choices: [{ text: "お供え物（飴）を置く", candy: -20, survival: 60, msg: "「いい奴ね」と小声で言われた。" }, { text: "本当に埋める準備をする", candy: 20, survival: -20, msg: "慌てて飛び起きて逃げていった。" }, { text: "放置する", candy: 0, survival: 0, msg: "シュールな光景だった。" }] },
-
-        // --- マジカルロイド44 ---
-        { text: "【取引】マジカルロイド44が怪しい機械を売っている。", choices: [{ text: "飴増殖機を買う", candy: -50, survival: 15, msg: "即座に爆発した！" }, { text: "シールドを買う", candy: -35, survival: 65, msg: "頑丈な守りを得た。" }, { text: "彼女をスクラップにする", candy: 35, survival: -60, msg: "パーツを飴と交換した。" }] },
-        { text: "【修理】マジカルロイドがバッテリー切れで止まっている。", choices: [{ text: "充電してあげる", candy: -10, survival: 50, msg: "起動直後、お礼の飴をもらった。" }, { text: "分解して中身を調べる", candy: 40, survival: -40, msg: "高度な技術を飴と交換した。" }, { text: "そのまま放置して錆びさせる", candy: 0, survival: 10, msg: "機能停止したままだ。" }] },
-        { text: "【実験】マジカルロイドが新発明の薬を試そうとしている。", choices: [{ text: "自分で飲む", candy: 30, survival: -70, msg: "飴の味はしたが体調が悪化した。" }, { text: "通行人に飲ませる", candy: 50, survival: -90, msg: "阿鼻叫喚の地獄絵図に。飴は稼げた。" }, { text: "燃料として飴を渡す", candy: -20, survival: 40, msg: "彼女の性能がアップした。" }] },
-
-        // --- シスター・ナナ ---
-        { text: "【慈愛】シスターナナが愛を説いている。", choices: [{ text: "共に平和を祈る", candy: 5, survival: 45, msg: "精神的な守護を得た。" }, { text: "活動資金として飴を寄付する", candy: -40, survival: 80, msg: "絶大な信頼を得た。" }, { text: "偽善だと笑う", candy: 5, survival: -25, msg: "気まずい沈黙。" }] },
-        { text: "【悲劇】シスターナナがウィンタープリズンの死に絶望している。", choices: [{ text: "寄り添って慰める", candy: -20, survival: 100, msg: "彼女の最後の理性を繋ぎ止めた。" }, { text: "「死は救いだ」と囁く", candy: 40, survival: -120, msg: "彼女は狂乱し、周囲を巻き込んで自爆した。" }, { text: "遺品を飴と交換する", candy: 50, survival: -80, msg: "最低の行為だ。でも飴は必要だ。" }] },
-        { text: "【理想】シスターナナが協力して戦おうと呼びかけている。", choices: [{ text: "同盟を組む", candy: -10, survival: 70, msg: "強力な後ろ盾を得た。" }, { text: "彼女を裏切る", candy: 60, survival: -150, msg: "計画を崩壊させ、飴を独占した。" }, { text: "黙って見守る", candy: 0, survival: 20, msg: "彼女の理想は儚く散った。" }] },
-
-        // --- ヴェス・ウィンタープリズン ---
-        { text: "【堅実】ウィンタープリズンが氷の壁を作っている。", choices: [{ text: "壁の中で休憩させてもらう", candy: 0, survival: 50, msg: "鉄壁の守りに守られた。" }, { text: "建築を手伝う", candy: 10, survival: -10, msg: "頑丈な拠点が完成した。" }, { text: "シスターナナの居場所を教える", candy: -15, survival: 70, msg: "深い感謝と守護の誓いを得た。" }] },
-        { text: "【迎撃】ウィンタープリズンが敵の襲撃を食い止めている。", choices: [{ text: "加勢する", candy: 15, survival: -20, msg: "共に敵を撃退した。" }, { text: "彼女を強化する魔法をかける", candy: -10, survival: 60, msg: "彼女は無双の強さを発揮した。" }, { text: "逃げる", candy: 0, survival: 30, msg: "彼女が時間を稼いでくれた。" }] },
-        { text: "【静寂】ウィンタープリズンが無言で修行している。", choices: [{ text: "手合わせを願う", candy: 10, survival: -30, msg: "圧倒的な力にひれ伏した。" }, { text: "防寒具を差し入れる", candy: -5, survival: 40, msg: "わずかに口角が上がった気がした。" }, { text: "氷を削ってかき氷にする", candy: 5, survival: 10, msg: "少し怒られたが、飴を貰えた。" }] },
-
-        // --- 森の音楽家クラムベリー ---
-        { text: "【誘惑】クラムベリーが演奏会を開いている。", choices: [{ text: "聴き入る", candy: 0, survival: -60, msg: "旋律に当てられ、衰弱した。" }, { text: "拍手と共に飴を贈る", candy: -30, survival: 60, msg: "「強い魂」だと認められた。" }, { text: "演奏を魔法で妨害する", candy: 30, survival: -80, msg: "殺し合いに発展した。" }] },
-        { text: "【選別】クラムベリーが「強い魔法少女」を求めて襲ってきた！", choices: [{ text: "死力を尽くして戦う", candy: 50, survival: -150, msg: "致命傷を負いながらも、認められた。" }, { text: "音楽の才能を見せる", candy: 10, survival: 40, msg: "興味の対象が戦闘から音楽に移った。" }, { text: "他の誰かの居場所を教える", candy: -20, survival: 80, msg: "彼女の矛先を逸らすことに成功した。" }] },
-        { text: "【真実】クラムベリーが試験の裏側について語り始めた。", choices: [{ text: "聞き流す", candy: 0, survival: 10, msg: "知らぬが仏、かもしれない。" }, { text: "詳細を問い詰める", candy: 0, survival: -40, msg: "知りすぎた代償として攻撃された。" }, { text: "ファヴを壊そうと提案する", candy: 30, survival: 50, msg: "「面白い提案ね」と飴をくれた。" }] },
-
-        // --- ねむりん ---
-        { text: "【迷夢】ねむりんの夢の中に入り込んでしまった。", choices: [{ text: "楽しい夢を見せる", candy: 15, survival: 25, msg: "現実の彼女も満足したようだ。" }, { text: "夢から飴を具現化する", candy: 30, survival: -20, msg: "不思議な力で飴が増えた。" }, { text: "寝言を聞いてあげる", candy: 0, survival: 35, msg: "安らかな時間を過ごした。" }] },
-        { text: "【怠惰】ねむりんが雲の上で昼寝している。", choices: [{ text: "一緒に寝る", candy: 0, survival: 60, msg: "最高のリフレッシュになった。" }, { text: "耳元でラッパを吹く", candy: 10, survival: -10, msg: "驚いて飴をばら撒いて落ちていった。" }, { text: "夢の相談をする", candy: -10, survival: 40, msg: "的確なアドバイスをもらった。" }] },
-        { text: "【消滅】ねむりんが「もうすぐお別れ」と言っている。", choices: [{ text: "感謝を伝える", candy: 0, survival: 70, msg: "彼女の夢は誰かの心に残った。" }, { text: "飴をたくさん食べさせる", candy: -40, survival: 50, msg: "最後に幸せな時間を過ごした。" }, { text: "魔法を奪い取る", candy: 45, survival: -90, msg: "夢の力の一部を飴に変換した。" }] }
-    ];
-
-    window.onload = () => {
-        const charGrid = document.getElementById('char-selection');
-        state.characterList.forEach((c, idx) => {
-            const btn = document.createElement('button');
-            btn.className = 'setup-btn';
-            btn.innerText = c.name;
-            btn.onclick = () => selectChar(idx, btn);
-            charGrid.appendChild(btn);
-        });
-        const rand = Math.floor(Math.random()*state.characterList.length);
-        selectChar(rand, charGrid.children[rand]);
-    };
-
-    function selectChar(idx, btn) {
-        document.querySelectorAll('#char-selection .setup-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.playerName = state.characterList[idx].name;
-        state.magicName = state.characterList[idx].magic;
-    }
-
-    function setDifficulty(diff, btn) {
-        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.difficulty = diff;
-        document.getElementById('mode-display').innerText = diff.toUpperCase();
-
-        if (diff === 'normal') {
-            state.cheatClickCount++;
-            if (state.cheatClickCount === 5) {
-                state.cheatUnlocked = true;
-                alert("チートモードが有効になったぽん！開始後にパネルが出るぽん。");
-            }
-        } else {
-            state.cheatClickCount = 0;
-        }
-    }
-
-    function applyCandyCheat() {
-        const val = parseInt(document.getElementById('cheat-candy').value);
-        if (!isNaN(val)) state.candies = val;
-        updateUI();
-        updateRanking();
-    }
-
-    function toggleKillCheat() {
-        state.forceMurder = !state.forceMurder;
-        document.getElementById('kill-cheat-btn').innerText = `殺害確定: ${state.forceMurder ? 'ON' : 'OFF'}`;
-        document.getElementById('kill-cheat-btn').classList.toggle('active');
-    }
-
-    function toggleSpeed() {
-        state.gameSpeed = document.getElementById('speed-toggle').checked ? 2 : 1;
-    }
-
-    function startGame() {
-        document.getElementById('setup-screen').style.display = 'none';
-        
-        if (state.cheatUnlocked) {
-            document.getElementById('cheat-ui').style.display = 'block';
-        }
-
-        npcList = state.characterList.filter(n => n.name !== state.playerName).map(n => n.name);
-        npcList.forEach(name => state.npcScores[name] = 40 + Math.floor(Math.random()*20));
-        updateBGM();
-        triggerFav(`${state.playerName}、君の魔法は${state.magicName}だぽん。<br>金曜の夜に「最下位」だと消されるぽん。頑張るぽん！`, startTurn);
-        updateUI();
-        updateRanking();
-    }
-
-    function updateUI() {
-        document.getElementById('candy-display').innerText = state.candies;
-        document.getElementById('survivor-display').innerText = state.survivors;
-        document.getElementById('week-display').innerText = state.week;
-        document.getElementById('day-display').innerText = days[state.dayIndex];
-    }
-
-    function updateRanking() {
-        const list = document.getElementById('ranking-list');
-        list.innerHTML = '';
-        let fullList = [];
-        npcList.forEach(name => {
-            fullList.push({ name: name, candies: state.npcScores[name], isPlayer: false });
-        });
-        fullList.push({ name: state.playerName, candies: state.candies, isPlayer: true });
-        fullList.sort((a,b) => b.candies - a.candies);
-        fullList.forEach((item, i) => {
-            const div = document.createElement('div');
-            div.className = `ranking-item ${item.isPlayer ? 'player' : ''}`;
-            div.innerHTML = `<span>${i+1}. ${item.name}</span><span>${item.candies}🍬</span>`;
-            list.appendChild(div);
-        });
-    }
-
-    function typeWriter(text, elementId, callback) {
-        const el = document.getElementById(elementId);
-        el.innerHTML = "";
-        let i = 0;
-        const speed = 30 / state.gameSpeed;
-        function type() {
-            if (i < text.length) {
-                el.innerHTML += text.charAt(i);
-                i++;
-                setTimeout(type, speed);
-            } else if (callback) { callback(); }
-        }
-        type();
-    }
-
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
-
-    function startTurn() {
-        if (state.isGameOver) return;
-        if (state.dayIndex >= days.length) { processFriday(); return; }
-        updateUI();
-        updateRanking();
-        npcList.forEach(name => {
-            const gain = Math.floor(Math.random()*15) * state.difficultyMults[state.difficulty];
-            state.npcScores[name] += Math.round(gain);
-        });
-        const pool = commonEvents.concat(mgEvents);
-        if (pool.length === 0) { 
-            state.dayIndex++; 
-            startTurn(); 
-            return; 
-        }
-        const ev = pool[Math.floor(Math.random() * pool.length)];
-        document.getElementById('choices-container').innerHTML = '';
-        typeWriter(ev.text, 'message-window', () => {
-            const shuffledChoices = shuffleArray([...ev.choices]);
-            shuffledChoices.forEach((c) => {
-                const btn = document.createElement('button');
-                btn.className = 'choice-btn';
-                btn.innerText = c.text;
-                btn.onclick = () => handleChoice(c);
-                document.getElementById('choices-container').appendChild(btn);
-            });
-        });
-    }
-
-    function handleChoice(choice) {
-        document.getElementById('choices-container').innerHTML = '';
+    // クリティカル・不運はプラスの選択肢にのみ適用
+    let mult = 1.0, prefix = '';
+    if (choice.candy > 0) {
         const luck = Math.random();
-        let mult = 1.0; let prefix = "";
-        if (luck > 0.85) { mult = 1.5; prefix = "【クリティカル！】 "; }
-        else if (luck < 0.15) { mult = 0.5; prefix = "【不運……】 "; }
-        const cGained = Math.round(choice.candy * mult);
-        state.candies += cGained;
-        state.dayIndex++;
-        if (cGained < 0) flashRed();
-        const resultMsg = `${prefix}${choice.msg} <br>（飴: ${cGained >= 0 ? '+' : ''}${cGained}）`;
-        typeWriter(resultMsg, 'message-window', () => {
-            setTimeout(startTurn, 1500 / state.gameSpeed);
-        });
+        if (luck > 0.85)      { mult = 1.5; prefix = '【クリティカル！】 '; }
+        else if (luck < 0.15) { mult = 0.5; prefix = '【不運……】 ';        }
     }
 
-    function processFriday() {
-        document.getElementById('game-main').classList.add('glitch-anim');
-        setTimeout(() => {
-            document.getElementById('game-main').classList.remove('glitch-anim');
-            let finalScores = npcList.map(name => ({ name, candies: state.npcScores[name], isPlayer: false }));
-            finalScores.push({ name: state.playerName, candies: state.candies, isPlayer: true });
-            finalScores.sort((a,b) => a.candies - b.candies);
+    const gained = Math.round(choice.candy * mult);
+    state.candies += gained;
+    state.dayIndex++;
 
-            if (finalScores.length === 2) {
-                const survivorsList = finalScores.map(f => f.name).join('、');
-                triggerFav(`第${state.week}週の集計が終わったぽん。残りは${finalScores.length}名（${survivorsList}）だぽん。ゲームはここで終了だぽん！`, () => {
-                    endGameFinal(finalScores);
-                });
-                return;
-            }
+    if (gained < 0) flashRed();
 
-            const victim = finalScores[0];
-            if (victim.isPlayer) {
-                gameOver();
-                return;
-            } else {
-                npcList = npcList.filter(n => n !== victim.name);
-                delete state.npcScores[victim.name];
-                state.survivors--;
-                updateRanking();
+    const sign  = gained >= 0 ? '+' : '';
+    const color = gained >= 0 ? '#aaffaa' : '#ff8888';
+    typeWriter(
+        `${prefix}${choice.msg}<br><span style="color:${color}">（飴: ${sign}${gained}）</span>`,
+        'message-window',
+        () => { setTimeout(startTurn, Math.round(1400 / state.gameSpeed)); }
+    );
+}
 
-                const murderRoll = Math.random();
-                if ((state.forceMurder || murderRoll < 0.10) && (npcList.length + 1) >= 2) {
-                    const remaining = npcList.slice();
-                    remaining.push(state.playerName);
-                    const killer = state.forceMurder ? state.playerName : remaining[Math.floor(Math.random() * remaining.length)];
-                    let murderBaseMsg = `第${state.week}週の集計が終わったぽん。最下位は【${victim.name}】だぽん。消去したぽん。<br>`;
+function renderChoices(choices, onSelect) {
+    const container = document.getElementById('choices-container');
+    container.innerHTML = '';
+    container.classList.remove('murder-grid');
+    choices.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = c.text;
+        btn.onclick = () => onSelect(c);
+        container.appendChild(btn);
+    });
+}
 
-                    if (killer === state.playerName) {
-                        typeWriter(murderBaseMsg + "……おや、君の中にドス黒い衝動が湧き上がったぽん。誰を「処理」するぽん？", 'message-window', () => {
-                            const container = document.getElementById('choices-container');
-                            container.innerHTML = '';
-                            container.classList.add('murder-grid'); // ここで4列モードに変更
+function clearChoices() {
+    const c = document.getElementById('choices-container');
+    c.innerHTML = '';
+    c.classList.remove('murder-grid');
+}
 
-                            npcList.forEach(targetName => {
-                                const btn = document.createElement('button');
-                                // choice-btn と target-btn の両方を付与
-                                btn.className = 'choice-btn target-btn'; 
-                                btn.innerText = `【殺害】\n${targetName}`; // 改行を入れると収まりが良い
-                                btn.onclick = () => {
-                                    container.classList.remove('murder-grid'); // 通常モードに戻す
-                                    executeMurder(killer, targetName, murderBaseMsg);
-                                };
-                                container.appendChild(btn);
-                            });
-                        });
-                    } else {
-                        const targets = remaining.filter(n => n !== killer);
-                        const target = targets[Math.floor(Math.random() * targets.length)];
-                        executeMurder(killer, target, murderBaseMsg);
-                    }
-                } else {
-                    state.week++;
-                    state.dayIndex = 0;
-                    triggerFav(`第${state.week-1}週の集計が終わったぽん。最下位は【${victim.name}】だぽん。消去したぽん。<br>来週も飴を集めまくるぽん！`, startTurn);
-                }
-            }
-        }, 2000 / state.gameSpeed);
+/* ============================================================
+   週末集計（金曜処理）
+============================================================ */
+function processFriday() {
+    const main = document.getElementById('game-main');
+    main.classList.add('glitch-anim');
+    setTimeout(() => {
+        main.classList.remove('glitch-anim');
+        doFridayLogic();
+    }, Math.round(1800 / state.gameSpeed));
+}
+
+function doFridayLogic() {
+    const all = npcList.map(n => ({ name: n, candies: state.npcScores[n], isPlayer: false }));
+    all.push({ name: state.playerName, candies: state.candies, isPlayer: true });
+    all.sort((a, b) => a.candies - b.candies);
+
+    // 残り2人以下でゲーム終了
+    if (all.length <= 2) { endGameFinal(all); return; }
+
+    const victim = all[0];
+
+    if (victim.isPlayer) {
+        // プレイヤーが最下位
+        showFav(
+            `第${state.week}週の集計が終わったぽん。<br>最下位は……【${state.playerName}】だぽん。<br>規定により消去するぽん。さよならぽん。`,
+            () => gameOver('最下位消去')
+        );
+        return;
     }
 
-    function executeMurder(killer, target, baseMsg) {
-        document.getElementById('choices-container').innerHTML = '';
-        let murderMsg = baseMsg + `その後、【${killer}】が【${target}】を殺したぽん！`;
-        if (target === state.playerName) {
-            triggerFav(murderMsg, () => { gameOver(); });
-            return;
+    // NPCが最下位
+    removeNpc(victim.name);
+    const baseMsg = `第${state.week}週の集計が終わったぽん。<br>最下位は【${victim.name}】だぽん。消去したぽん。`;
+
+    // 殺害イベント判定
+    const doMurder = state.forceMurder || Math.random() < MURDER_CHANCE;
+    if (doMurder && npcList.length >= 1) {
+        const remaining = [...npcList, state.playerName];
+        const killer    = state.forceMurder
+            ? state.playerName
+            : remaining[Math.floor(Math.random() * remaining.length)];
+
+        if (killer === state.playerName) {
+            typeWriter(
+                baseMsg + '<br>……おや。君の中に黒い衝動が湧き上がったぽん。誰を「処理」するぽん？',
+                'message-window',
+                () => renderMurderTargetButtons(baseMsg)
+            );
         } else {
-            npcList = npcList.filter(n => n !== target);
-            delete state.npcScores[target];
-            state.survivors--;
-            updateRanking();
-            let survivorsNow = npcList.length + 1;
-            if (survivorsNow <= 2) {
-                const survivorsList = npcList.concat(state.playerName).join('、');
-                triggerFav(murderMsg + `<br>現在残りは${survivorsNow}名（${survivorsList}）。ゲームを終了するぽん。`, () => {
-                    endGameFinal( (npcList.map(n => ({ name: n, isPlayer: false, candies: state.npcScores[n] }))).concat([{ name: state.playerName, isPlayer: true, candies: state.candies }]) );
-                });
-            } else {
-                state.week++;
-                state.dayIndex = 0;
-                triggerFav(murderMsg, startTurn);
-            }
+            const targets = remaining.filter(n => n !== killer);
+            const target  = targets[Math.floor(Math.random() * targets.length)];
+            executeMurder(killer, target, baseMsg);
         }
+    } else {
+        advanceWeek(baseMsg);
+    }
+}
+
+function renderMurderTargetButtons(baseMsg) {
+    const container = document.getElementById('choices-container');
+    container.innerHTML = '';
+    container.classList.add('murder-grid');
+    npcList.forEach(targetName => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn target-btn';
+        btn.textContent = `【殺害】${targetName}`;
+        btn.onclick = () => {
+            container.classList.remove('murder-grid');
+            executeMurder(state.playerName, targetName, baseMsg);
+        };
+        container.appendChild(btn);
+    });
+}
+
+function executeMurder(killer, target, baseMsg) {
+    clearChoices();
+    const murderMsg = `${baseMsg}<br>その後……【${killer}】が【${target}】を殺害したぽん！`;
+
+    if (target === state.playerName) {
+        showFav(murderMsg + '<br>君が標的になってしまったぽん……。', () => gameOver('殺害'));
+        return;
     }
 
-    function endGameFinal(finalList) {
-        state.isGameOver = true;
-        const survivorsNames = finalList.map(f => f.name).join('、');
-        document.getElementById('game-main').innerHTML = `
-            <div style="text-align:center; margin-top:120px">
-                <h1 style="font-size:2.5rem">GAME END</h1>
-                <p>残りの魔法少女: ${survivorsNames}</p>
-                <p>二人になったのでここで終了だぽん！</p>
-                <button class="restart-btn" onclick="location.reload()">タイトルに戻る</button>
-            </div>
-        `;
+    removeNpc(target);
+    const survivorsNow = npcList.length + 1;
+
+    if (survivorsNow <= 2) {
+        const finalAll = npcList.map(n => ({ name: n, isPlayer: false, candies: state.npcScores[n] }));
+        finalAll.push({ name: state.playerName, isPlayer: true, candies: state.candies });
+        showFav(murderMsg + `<br>残りは${survivorsNow}名になったぽん。ここで終了だぽん。`, () => endGameFinal(finalAll));
+    } else {
+        advanceWeek(murderMsg);
+    }
+}
+
+function removeNpc(name) {
+    npcList = npcList.filter(n => n !== name);
+    delete state.npcScores[name];
+    state.survivors--;
+    updateUI();
+    updateRanking();
+}
+
+function advanceWeek(msg) {
+    state.week++;
+    state.dayIndex = 0;
+    showFav(msg + `<br>来週も飴を集めるぽん！`, startTurn);
+}
+
+/* ============================================================
+   エンディング
+============================================================ */
+function endGameFinal(finalList) {
+    state.isGameOver = true;
+    finalList.sort((a, b) => b.candies - a.candies);
+
+    const playerPos = finalList.findIndex(f => f.isPlayer) + 1;
+    let endMsg = '';
+
+    if (playerPos === 1) {
+        endMsg = `君が最後まで生き残り、最多キャンディーを保有したぽん！<br>本当に……おめでとうぽん。`;
+    } else {
+        const names = finalList.map(f => f.name).join('、');
+        endMsg = `残りの魔法少女: ${names}<br>君は第${playerPos}位で終了だぽん。`;
     }
 
-    function triggerFav(msg, cb) {
-        document.getElementById('fav-message').innerHTML = msg;
-        document.getElementById('fav-popup').style.display = 'block';
-        window.favCb = cb;
-    }
-    
-    function closeFav() {
-        document.getElementById('fav-popup').style.display = 'none';
-        if(window.favCb) { window.favCb(); window.favCb = null; }
-    }
+    showEndScreen(
+        'GAME END',
+        `第${state.week}週をもってゲーム終了ぽん。<br>${endMsg}<br><br>
+        最終キャンディー数: <strong>${state.candies}🍬</strong><br>
+        生存週数: <strong>${state.week - 1}週</strong>`
+    );
+}
 
-    function flashRed() {
-        const m = document.getElementById('game-main');
-        m.classList.remove('flash-red-anim');
-        void m.offsetWidth;
-        m.classList.add('flash-red-anim');
-    }
+function gameOver(reason) {
+    state.isGameOver = true;
+    const reasonText = reason === '殺害'
+        ? 'あなたは別の魔法少女に殺害されました。'
+        : 'あなたは最下位になり、消去されました。';
+    showEndScreen(
+        'SYSTEM PURGE',
+        `${reasonText}<br>魔法少女としての記録は全て消去されます。<br><br>
+        最終キャンディー数: <strong>${state.candies}🍬</strong><br>
+        生存週数: <strong>${state.week - 1}週</strong>`
+    );
+}
 
-    function gameOver() {
-        state.isGameOver = true;
-        document.getElementById('game-main').innerHTML = `
-            <div style="text-align:center; margin-top:150px">
-                <h1 class="glitch-anim" style="font-size:3rem">SYSTEM PURGE</h1>
-                <p>あなたは最下位になったか、殺害されました。</p>
-                <p style="color:red">魔法少女の資格を失い、消去されます...</p>
-                <button class="restart-btn" onclick="location.reload()">タイトルに戻る</button>
-            </div>
-        `;
+function showEndScreen(title, body) {
+    const screen = document.getElementById('end-screen');
+    document.getElementById('end-title').innerHTML = title;
+    document.getElementById('end-body').innerHTML  = body;
+    screen.classList.add('visible');
+    if (title === 'SYSTEM PURGE') {
+        document.getElementById('end-title').style.color = '#ff2222';
+        document.getElementById('end-title').classList.add('glitch-anim');
+    } else {
+        document.getElementById('end-title').style.color = 'var(--pastel-pink)';
     }
+}
+
+/* ============================================================
+   ファヴポップアップ
+============================================================ */
+function showFav(msg, cb) {
+    document.getElementById('fav-message').innerHTML = msg;
+    document.getElementById('fav-popup').style.display = 'block';
+    window._favCb = cb;
+}
+function closeFav() {
+    document.getElementById('fav-popup').style.display = 'none';
+    if (window._favCb) { window._favCb(); window._favCb = null; }
+}
+
+/* ============================================================
+   演出
+============================================================ */
+function flashRed() {
+    const m = document.getElementById('game-main');
+    m.classList.remove('flash-red-anim');
+    void m.offsetWidth;
+    m.classList.add('flash-red-anim');
+}
+
+/* ============================================================
+   速度・チート
+============================================================ */
+function toggleSpeed() {
+    state.gameSpeed = document.getElementById('speed-toggle').checked ? 2 : 1;
+}
+function applyCandyCheat() {
+    const val = parseInt(document.getElementById('cheat-candy').value, 10);
+    if (!isNaN(val)) { state.candies = val; updateUI(); updateRanking(); }
+}
+function toggleKillCheat() {
+    state.forceMurder = !state.forceMurder;
+    const btn = document.getElementById('kill-cheat-btn');
+    btn.textContent = `殺害確定: ${state.forceMurder ? 'ON' : 'OFF'}`;
+    btn.classList.toggle('kill-on', state.forceMurder);
+}
 </script>
 </body>
 </html>
-
