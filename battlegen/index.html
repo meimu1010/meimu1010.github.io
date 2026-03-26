@@ -203,10 +203,10 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
     <br>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px">
       <button class="copy-btn" id="copyPromptBtn" onclick="copyPrompt()">📋 プロンプトをコピー</button>
-      <button class="copy-btn" id="openGeminiBtn" onclick="openGemini()" style="background:rgba(66,133,244,.12);border-color:#4285f4;color:#7ab4f8">🔗 Gemini で開く</button>
+      <button class="copy-btn" id="openGeminiBtn" onclick="openGemini()" style="background:rgba(66,133,244,.12);border-color:#4285f4;color:#7ab4f8">📋🔗 コピーして Gemini を開く</button>
     </div>
     <div style="margin-top:8px;padding:9px 13px;background:rgba(66,133,244,.07);border:1px solid rgba(66,133,244,.25);border-radius:7px;font-size:.78rem;color:#7ab4f8;line-height:1.6">
-      💡 Gemini が開いたらモデルを <strong style="color:#a8c8f8">「思考モード」</strong> または <strong style="color:#a8c8f8">「Pro」</strong> に切り替えてください（画面左下のモデル名をクリック）。<br>
+      💡 Gemini が開いたらモデルを <strong style="color:#a8c8f8">「思考モード」</strong> または <strong style="color:#a8c8f8">「Pro」</strong> に切り替えてください（画面右下のモデル名をクリック）。<br>
       <span style="color:#4a7aaa">通常モードより精度の高い分析結果が得られます。</span>
     </div>
   </div>
@@ -446,16 +446,15 @@ async function copyPrompt(){
     setTimeout(()=>{ btn.textContent='📋 プロンプトをコピー'; btn.classList.remove('copied'); },2200);
   }catch(e){ alert('コピーに失敗しました。手動でコピーしてください。'); }
 }
-function openGemini(){
+async function openGemini(){
   const txt = document.getElementById('promptArea').value;
   if(!txt || txt.includes('STEP 1')){ alert('STEP 1 でキャラ名を入力してください'); return; }
-  // Gemini に q= パラメータでプロンプトを渡す
-  const url = 'https://gemini.google.com/app?q=' + encodeURIComponent(txt);
-  window.open(url, '_blank', 'noopener');
   const btn = document.getElementById('openGeminiBtn');
   const orig = btn.textContent;
-  btn.textContent = '✅ 開きました！';
-  setTimeout(()=>{ btn.textContent = orig; }, 2200);
+  try{ await navigator.clipboard.writeText(txt); }catch(e){}
+  window.open('https://gemini.google.com/app', '_blank', 'noopener');
+  btn.textContent = '✅ コピー済み・開きました！';
+  setTimeout(()=>{ btn.textContent = orig; }, 2500);
 }
 function applyJson(){
   const raw = document.getElementById('jsonInput').value.trim();
