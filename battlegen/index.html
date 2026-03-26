@@ -201,7 +201,14 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
     </h3>
     <textarea class="prompt-area" id="promptArea" readonly placeholder="STEP 1 でキャラ名を入力するとプロンプトが自動生成されます"></textarea>
     <br>
-    <button class="copy-btn" id="copyPromptBtn" onclick="copyPrompt()">📋 プロンプトをコピー</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px">
+      <button class="copy-btn" id="copyPromptBtn" onclick="copyPrompt()">📋 プロンプトをコピー</button>
+      <button class="copy-btn" id="openGeminiBtn" onclick="openGemini()" style="background:rgba(66,133,244,.12);border-color:#4285f4;color:#7ab4f8">🔗 Gemini で開く</button>
+    </div>
+    <div style="margin-top:8px;padding:9px 13px;background:rgba(66,133,244,.07);border:1px solid rgba(66,133,244,.25);border-radius:7px;font-size:.78rem;color:#7ab4f8;line-height:1.6">
+      💡 Gemini が開いたらモデルを <strong style="color:#a8c8f8">「思考モード」</strong> または <strong style="color:#a8c8f8">「Pro」</strong> に切り替えてください（画面左下のモデル名をクリック）。<br>
+      <span style="color:#4a7aaa">通常モードより精度の高い分析結果が得られます。</span>
+    </div>
   </div>
   <div class="gemini-box" style="border-color:#1e2d50">
     <h3 style="color:var(--cyan)">
@@ -211,8 +218,11 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
     <div class="json-box">
       <label>JSON を貼り付け</label>
       <textarea class="json-input" id="jsonInput" placeholder='{"CharacterA":"...","Strength":"A","Speed":"B",...}'></textarea>
-      <button class="apply-btn" onclick="applyJson()">✅ JSON を適用</button>
-      <span class="apply-status" id="applyStatus">適用しました！</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:9px">
+        <button class="apply-btn" onclick="applyJson()" style="margin-top:0">✅ JSON を適用</button>
+        <button class="apply-btn" onclick="pasteAndApply()" id="pasteApplyBtn" style="margin-top:0;background:rgba(255,215,0,.08);border-color:var(--yellow);color:var(--yellow)">📋 クリップボードから適用</button>
+        <span class="apply-status" id="applyStatus">適用しました！</span>
+      </div>
     </div>
   </div>
 </div>
@@ -304,7 +314,11 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 <div id="output-wrap">
   <h2>✅ 生成完了！</h2>
   <video id="preview-video" controls playsinline></video><br>
-  <a class="dl-btn" id="dlBtn" download="battle.webm">⬇ 動画をダウンロード (.webm)</a>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px">
+    <a class="dl-btn" id="dlBtn" download="battle.webm">⬇ WebM ダウンロード</a>
+    <button class="dl-btn" id="dlMp4Btn" onclick="downloadMp4()" style="border:1px solid #4a9aff;color:#4a9aff;background:rgba(42,100,255,.1);cursor:pointer">⬇ MP4 ダウンロード</button>
+  </div>
+  <div id="mp4Status" style="margin-top:8px;font-size:.78rem;color:#4a7a9a;display:none"></div>
 </div>
 
 </main>
@@ -432,6 +446,17 @@ async function copyPrompt(){
     setTimeout(()=>{ btn.textContent='📋 プロンプトをコピー'; btn.classList.remove('copied'); },2200);
   }catch(e){ alert('コピーに失敗しました。手動でコピーしてください。'); }
 }
+function openGemini(){
+  const txt = document.getElementById('promptArea').value;
+  if(!txt || txt.includes('STEP 1')){ alert('STEP 1 でキャラ名を入力してください'); return; }
+  // Gemini に q= パラメータでプロンプトを渡す
+  const url = 'https://gemini.google.com/app?q=' + encodeURIComponent(txt);
+  window.open(url, '_blank', 'noopener');
+  const btn = document.getElementById('openGeminiBtn');
+  const orig = btn.textContent;
+  btn.textContent = '✅ 開きました！';
+  setTimeout(()=>{ btn.textContent = orig; }, 2200);
+}
 function applyJson(){
   const raw = document.getElementById('jsonInput').value.trim();
   if(!raw){ alert('JSONを入力してください'); return; }
@@ -457,6 +482,22 @@ function applyJson(){
   updateScore();
   const st=document.getElementById('applyStatus');
   st.classList.add('show'); setTimeout(()=>st.classList.remove('show'),2500);
+}
+async function pasteAndApply(){
+  const btn=document.getElementById('pasteApplyBtn');
+  try{
+    const text=await navigator.clipboard.readText();
+    if(!text.trim()){ btn.textContent='⚠ クリップボードが空'; setTimeout(()=>btn.textContent='📋 クリップボードから適用',2000); return; }
+    document.getElementById('jsonInput').value=text;
+    applyJson();
+    btn.textContent='✅ 適用しました！';
+    setTimeout(()=>{ btn.textContent='📋 クリップボードから適用'; },2000);
+  }catch(e){
+    btn.textContent='⚠ 許可が必要です';
+    setTimeout(()=>{ btn.textContent='📋 クリップボードから適用'; },2500);
+    // フォールバック: テキストエリアにフォーカスして貼り付けを促す
+    document.getElementById('jsonInput').focus();
+  }
 }
 
 // ═══════════════════════════════════════════════
@@ -1440,6 +1481,8 @@ async function startGenerate(){
   document.getElementById('preview-video').src=url;
   const dlBtn=document.getElementById('dlBtn');
   dlBtn.href=url; const spdLabel=getSpeed()===1.0?'':('_x'+getSpeed()); dlBtn.download=`${S.nameA}VS${S.nameB}${spdLabel}.webm`;
+  // MP4ボタン用にBlobを保持
+  window._lastVideoBlob=finalBlob; window._lastVideoName=`${S.nameA}VS${S.nameB}${spdLabel}`;
   dlBtn.textContent='⬇ 動画をダウンロード (.webm)';
   document.getElementById('output-wrap').classList.add('visible');
   document.getElementById('genBtn').disabled=false;
@@ -1448,6 +1491,47 @@ async function startGenerate(){
   document.getElementById('progFill').style.width='100%';
 }
 
+
+// ═══════════════════════════════════════════════
+// MP4 DOWNLOAD
+// ═══════════════════════════════════════════════
+async function downloadMp4(){
+  const blob = window._lastVideoBlob;
+  if(!blob){ alert('先に動画を生成してください'); return; }
+  const btn = document.getElementById('dlMp4Btn');
+  const status = document.getElementById('mp4Status');
+  btn.disabled = true;
+  status.style.display = 'block';
+
+  // FFmpeg.wasm を使ってWebM→MP4変換
+  try{
+    status.textContent = '⏳ FFmpeg を読み込み中...';
+    const { createFFmpeg, fetchFile } = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
+    const ffmpeg = createFFmpeg({ log: false });
+    await ffmpeg.load();
+    status.textContent = '🔄 MP4 に変換中...';
+    ffmpeg.FS('writeFile','input.webm', await fetchFile(blob));
+    await ffmpeg.run('-i','input.webm','-c:v','copy','-c:a','aac','-movflags','+faststart','output.mp4');
+    const data = ffmpeg.FS('readFile','output.mp4');
+    const mp4Blob = new Blob([data.buffer],{type:'video/mp4'});
+    const url = URL.createObjectURL(mp4Blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=`${window._lastVideoName}.mp4`; a.click();
+    URL.revokeObjectURL(url);
+    status.textContent = '✅ MP4 のダウンロードを開始しました';
+    setTimeout(()=>{ status.style.display='none'; }, 3000);
+  }catch(e){
+    // FFmpeg失敗時はWebMをMP4拡張子で保存（コンテナだけ変更）
+    console.warn('FFmpeg失敗、フォールバック:', e);
+    status.textContent = '⚠ 変換ライブラリ読み込み失敗。拡張子のみ変更してダウンロードします（一部プレイヤー非対応）';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=`${window._lastVideoName}.mp4`; a.click();
+    URL.revokeObjectURL(url);
+    setTimeout(()=>{ status.style.display='none'; }, 4000);
+  }
+  btn.disabled = false;
+}
 
 // ═══════════════════════════════════════════════
 // STYLE PREVIEW
