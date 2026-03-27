@@ -87,71 +87,6 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .est-time-box{margin-top:12px;padding:10px 14px;background:rgba(0,0,0,.3);border:1px solid #1e3a50;border-radius:7px;font-size:.85rem;color:#4a7a9a;letter-spacing:.04em}
 .est-time-box span{color:var(--yellow);font-weight:700;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.08em}
 
-/* ── OPTIMIZATION TOGGLE ── */
-.opt-box{
-  margin-top:16px;
-  padding:14px 18px;
-  background:rgba(0,255,255,.03);
-  border:1px solid rgba(0,255,255,.18);
-  border-radius:10px;
-  display:flex;
-  align-items:flex-start;
-  gap:14px;
-  cursor:pointer;
-  transition:border-color .25s, background .25s;
-  user-select:none;
-}
-.opt-box:hover{border-color:rgba(0,255,255,.45);background:rgba(0,255,255,.06)}
-.opt-box.active{border-color:var(--cyan);background:rgba(0,255,255,.08)}
-.opt-toggle{
-  position:relative;
-  width:44px;height:24px;flex-shrink:0;margin-top:2px;
-}
-.opt-toggle input{opacity:0;width:0;height:0;position:absolute}
-.opt-slider{
-  position:absolute;inset:0;
-  background:#1a2a3a;border:1px solid #2a4a6a;
-  border-radius:24px;cursor:pointer;
-  transition:background .25s,border-color .25s;
-}
-.opt-slider::before{
-  content:'';position:absolute;
-  width:18px;height:18px;
-  border-radius:50%;background:#3a5a7a;
-  top:2px;left:2px;
-  transition:transform .25s,background .25s,box-shadow .25s;
-}
-.opt-toggle input:checked + .opt-slider{
-  background:rgba(0,255,255,.25);border-color:var(--cyan);
-}
-.opt-toggle input:checked + .opt-slider::before{
-  transform:translateX(20px);
-  background:var(--cyan);
-  box-shadow:0 0 10px rgba(0,255,255,.7);
-}
-.opt-body{}
-.opt-title{
-  font-family:'Bebas Neue',sans-serif;font-size:1.05rem;
-  letter-spacing:.12em;color:var(--cyan);margin-bottom:4px;
-}
-.opt-desc{font-size:.78rem;color:#4a7a9a;line-height:1.6}
-.opt-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.opt-tag{
-  font-size:.68rem;font-weight:700;letter-spacing:.08em;
-  padding:2px 9px;border-radius:20px;
-  border:1px solid rgba(0,255,255,.25);color:rgba(0,255,255,.65);
-  background:rgba(0,255,255,.05);
-  font-family:'Rajdhani',sans-serif;
-}
-.opt-detail{
-  margin-top:10px;padding:10px 13px;
-  background:rgba(0,255,255,.04);border:1px solid rgba(0,255,255,.1);
-  border-radius:7px;font-size:.75rem;color:#3a6a7a;line-height:1.65;
-  display:none;
-}
-.opt-box.active .opt-detail{display:block}
-.opt-detail strong{color:rgba(0,255,255,.55)}
-
 .gen-btn{width:100%;padding:17px;background:linear-gradient(135deg,#ff3c2a 0%,#ff8c00 50%,#ffd700 100%);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:.2em;color:#000;cursor:pointer;transition:opacity .2s,transform .1s;box-shadow:0 0 28px rgba(255,100,0,.42);margin-top:6px}
 .gen-btn:hover{opacity:.87;transform:translateY(-1px)}
 .gen-btn:active{transform:translateY(1px)}
@@ -181,16 +116,15 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .error-msg{background:rgba(255,60,42,.1);border:1px solid var(--red);color:var(--red);border-radius:8px;padding:11px 16px;margin-top:11px;font-size:.88rem;display:none}
 .error-msg.visible{display:block}
 #mainCanvas{display:none}
-
-/* opt mode indicator in progress */
-.opt-mode-badge{
-  display:inline-flex;align-items:center;gap:5px;
-  font-size:.72rem;font-family:'Rajdhani',sans-serif;font-weight:700;
-  letter-spacing:.1em;padding:3px 10px;border-radius:20px;
-  border:1px solid rgba(0,255,255,.4);color:var(--cyan);
-  background:rgba(0,255,255,.07);margin-left:8px;vertical-align:middle;
-}
-.opt-mode-badge.hidden{display:none}
+/* ── STYLE PREVIEW ── */
+.preview-section{margin-top:14px}
+.preview-label{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:#3a6a8a;margin-bottom:8px}
+.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.preview-card{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative}
+.preview-card canvas,.preview-card img{width:100%;display:block;border-radius:7px}
+.preview-tag{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.75);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:.65rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.1em;padding:2px 7px;border-radius:3px}
+.preview-spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-size:.75rem;color:#4a7a9a;letter-spacing:.06em}
+.preview-spinner.hidden{display:none}
 
 @media(max-width:600px){
   .char-grid{grid-template-columns:1fr}
@@ -254,6 +188,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       <div class="style-desc">上下分割・キャラ大・ダーク＆ゴールド</div>
     </div>
   </div>
+
 </div>
 
 <!-- STEP 3: GEMINI -->
@@ -345,32 +280,6 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
     <span style="color:#3a5a7a;font-size:.78rem;margin-left:6px">（フレーム生成 + リアルタイム録画）</span>
   </div>
 
-  <!-- ══ OPTIMIZATION TOGGLE ══ -->
-  <label class="opt-box" id="optBox" for="optCheck">
-    <div class="opt-toggle">
-      <input type="checkbox" id="optCheck" onchange="onOptChange()">
-      <span class="opt-slider"></span>
-    </div>
-    <div class="opt-body">
-      <div class="opt-title">⚡ 生成を最適化</div>
-      <div class="opt-desc">品質を維持しながら生成速度・メモリ・録画の精度を改善します。<br>チェックOFFの場合は従来通りの生成動作になります。</div>
-      <div class="opt-tags">
-        <span class="opt-tag">速度向上</span>
-        <span class="opt-tag">高ビットレート</span>
-        <span class="opt-tag">メモリ節約</span>
-        <span class="opt-tag">スキップ削減</span>
-      </div>
-      <div class="opt-detail" id="optDetail">
-        <strong>✅ 有効時の変更点：</strong><br>
-        • フレームyield間隔を <strong>12f→6f</strong> に短縮し、UIの詰まりを抑制<br>
-        • 録画ビットレートを <strong>8Mbps→12Mbps</strong> に向上（高画質）<br>
-        • ImageBitmapを生成後すぐにキャンバスへ書き込み、逐次解放してRAMを節約<br>
-        • 録画スキップ閾値を <strong>5%→2%</strong> に厳格化し、フレーム欠落を最小化<br>
-        • 録画チャンク間隔を <strong>100ms→50ms</strong> に短縮してバッファを細分化
-      </div>
-    </div>
-  </label>
-
 </div>
 
 <div class="error-msg" id="errorMsg"></div>
@@ -392,9 +301,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 <!-- PROGRESS -->
 <div id="progress-wrap">
   <div class="prog-header">
-    <span class="prog-label" id="progLabel">RENDERING...
-      <span class="opt-mode-badge hidden" id="optBadge">⚡ OPT ON</span>
-    </span>
+    <span class="prog-label" id="progLabel">RENDERING...</span>
     <span class="prog-pct" id="progPct">0%</span>
   </div>
   <div class="prog-bar-bg"><div class="prog-bar-fill" id="progFill"></div></div>
@@ -425,7 +332,7 @@ const CATEGORIES = [
   "Strength","Speed","Durability","IQ","Battle IQ","Power","Combat",
   "Defence","Endurance","Experience","Stamina","Agility","Skill"
 ];
-
+// タイミング定数はUIから動的取得
 function resetDur(){
   document.getElementById('durIntro').value=0.8;
   document.getElementById('durCut').value=1.2;
@@ -440,42 +347,6 @@ function getDur(){
   return { INTRO:v('durIntro',0.8), CUT:v('durCut',1.2), FINAL:v('durFinal',9.1), BLACK:v('durBlack',0.5) };
 }
 const COLOR_A='#ff3c2a', COLOR_B='#2a8fff', COLOR_D='#aaaaaa';
-
-// ═══════════════════════════════════════════════
-// OPTIMIZATION STATE
-// ═══════════════════════════════════════════════
-function isOptEnabled(){
-  return document.getElementById('optCheck').checked;
-}
-function onOptChange(){
-  const on = isOptEnabled();
-  const box = document.getElementById('optBox');
-  box.classList.toggle('active', on);
-}
-
-/**
- * 最適化パラメータを返す
- * チェックOFF → 従来値
- * チェックON  → 最適化値（品質維持）
- */
-function getOptParams(){
-  const on = isOptEnabled();
-  return {
-    // フレームyield間隔（フレームごとに非同期スリープを入れる頻度）
-    yieldInterval:      on ? 6    : 12,
-    // 録画ビットレート (bps)
-    videoBitrate:       on ? 12_000_000 : 8_000_000,
-    audioBitrate:       on ? 192_000    : 128_000,
-    // 録画チャンク間隔 (ms)
-    recChunkMs:         on ? 50         : 100,
-    // 録画スキップ許容閾値（totalFramesに対する割合）
-    skipThresholdRatio: on ? 0.02        : 0.05,
-    // bitmapを逐次解放（メモリ節約）するかどうか
-    streamBitmaps:      on,
-    // ラベル表示用
-    label: on ? '⚡ 最適化ON' : '通常モード',
-  };
-}
 
 // ═══════════════════════════════════════════════
 // STATE
@@ -623,6 +494,7 @@ async function pasteAndApply(){
   }catch(e){
     btn.textContent='⚠ 許可が必要です';
     setTimeout(()=>{ btn.textContent='📋 クリップボードから適用'; },2500);
+    // フォールバック: テキストエリアにフォーカスして貼り付けを促す
     document.getElementById('jsonInput').focus();
   }
 }
@@ -700,6 +572,7 @@ function updateEstTime(){
   const fps = +document.getElementById('cfgFps').value;
   const spd = getSpeed();
   const _d=getDur();
+  // 1.25倍速時はタイミング定数を1/spd倍に短縮 → フレーム数が減る
   const NI=Math.round(_d.INTRO/spd*fps), NC=Math.round(_d.CUT/spd*fps);
   const NF=Math.round(_d.FINAL/spd*fps), NB=Math.round(_d.BLACK/spd*fps);
   const totalFrames = CATEGORIES.length*(NI+NC)+NB+NF;
@@ -720,7 +593,9 @@ let INTRO_DUR=0.8,CUT_DUR=1.2,FINAL_DUR=9.1,BLACK_DUR=0.5;
 function syncDurGlobals(){
   const d=getDur();
   const spd=getSpeed();
+  // 速度倍率分だけタイミングを短縮
   INTRO_DUR=d.INTRO/spd; CUT_DUR=d.CUT/spd; FINAL_DUR=d.FINAL/spd; BLACK_DUR=d.BLACK/spd;
+  console.log('[DUR] SPEED='+spd+' INTRO='+INTRO_DUR+' CUT='+CUT_DUR+' FINAL='+FINAL_DUR+' BLACK='+BLACK_DUR);
 }
 function initCanvas(){
   const res=document.getElementById('cfgRes').value.split('x');
@@ -804,16 +679,19 @@ function centerText(lines,yR,basePx,color,glow){
     y+=px+sp;
   });
 }
+// カテゴリ日本語訳
 const CAT_JA = {
   "Strength":"筋力","Speed":"速度","Durability":"耐久力","IQ":"知能",
   "Battle IQ":"戦闘知能","Power":"能力値","Combat":"格闘技術",
   "Defence":"防御力","Endurance":"持久力","Experience":"経験値",
   "Stamina":"スタミナ","Agility":"俊敏性","Skill":"技術"
 };
+// カテゴリ名を英語大文字 + 上に小さく日本語で描画
 function drawCatLabel(cat, yR, enPx, enColor, enGlow){
   const ja  = CAT_JA[cat] || '';
   const cx  = CW/2;
   const jaPx = Math.round(enPx * 0.34);
+  // capHeight ≈ 0.72em（視覚的な文字高さ）でブロック中心を合わせる
   const jaCapH = jaPx * 0.72;
   const enCapH = enPx * 0.72;
   const gap    = jaPx * 0.55;
@@ -821,6 +699,7 @@ function drawCatLabel(cat, yR, enPx, enColor, enGlow){
   const midY  = CH * yR;
   const jaY   = midY - totalVisH/2 + jaCapH;
   const enY   = jaY + gap + enCapH;
+  // 日本語
   ctx.save();
   ctx.font = `600 ${jaPx}px "Noto Sans JP","Hiragino Kaku Gothic Pro",sans-serif`;
   ctx.textAlign = 'center';
@@ -830,6 +709,7 @@ function drawCatLabel(cat, yR, enPx, enColor, enGlow){
   ctx.shadowBlur = 7;
   ctx.fillText(ja, cx, jaY);
   ctx.restore();
+  // 英語
   const px = fitPx(cat.toUpperCase(), CW*.88, enPx);
   glowText(cat.toUpperCase(), cx, enY, px, enColor, enGlow);
 }
@@ -860,7 +740,7 @@ function drawScoreBar(pA,pB){
 }
 
 // ═══════════════════════════════════════════════
-// STYLE: BATTLE
+// STYLE: BATTLE (デフォルト)
 // ═══════════════════════════════════════════════
 function B_drawBg(t){
   const g=ctx.createLinearGradient(0,0,0,CH);
@@ -954,7 +834,9 @@ function B_renderFinal(i,winner,pA,pB){
 
 // ═══════════════════════════════════════════════
 // STYLE: BATTLE V2
+// 上下分割背景・キャラ大きく・ダーク＆ゴールド
 // ═══════════════════════════════════════════════
+
 const V2_easeOut  = t => 1-(1-t)**3;
 const V2_easeBack = t => { const c=1.70158; return 1+(c+1)*(t-1)**3+c*(t-1)**2; };
 const V2_easeOutBounce = t => {
@@ -963,6 +845,8 @@ const V2_easeOutBounce = t => {
   if(t<2.5/2.75){ t-=2.25/2.75; return 7.5625*t*t+.9375; }
   t-=2.625/2.75; return 7.5625*t*t+.984375;
 };
+
+// キャラ描画（中心座標）
 function V2_char(img, cx, cy, sc, hR, alpha, glow, glowBlur){
   if(!img) return;
   const th=CH*hR, tw=img.width*(th/img.height);
@@ -972,12 +856,16 @@ function V2_char(img, cx, cy, sc, hR, alpha, glow, glowBlur){
   ctx.drawImage(img, cx-tw*sc/2, cy-th*sc/2, tw*sc, th*sc);
   ctx.restore();
 }
+
+// ── 上下分割背景 ──
+// 上半分=A、下半分=B のキャラ画像をぼかして敷く
 function V2_splitBg(wSide){
   const drawHalf = (img, clipY, clipH) => {
     if(!img) return;
     ctx.save();
     ctx.beginPath(); ctx.rect(0, clipY, CW, clipH); ctx.clip();
     ctx.globalAlpha = 0.52;
+    // アスペクト比維持でCW幅に合わせてスケール
     const scale = CW / img.width * 1.05;
     const iw = img.width*scale, ih = img.height*scale;
     ctx.drawImage(img, (CW-iw)/2, clipY+(clipH-ih)/2, iw, ih);
@@ -986,9 +874,12 @@ function V2_splitBg(wSide){
   ctx.fillStyle='#07070c'; ctx.fillRect(0,0,CW,CH);
   drawHalf(S.imgA, 0,      CH/2);
   drawHalf(S.imgB, CH/2,   CH/2);
+  // 暗くオーバーレイ
   ctx.fillStyle='rgba(3,3,10,.68)'; ctx.fillRect(0,0,CW,CH);
+  // 勝者側ハイライト
   if(wSide==='A'){ ctx.fillStyle='rgba(255,60,30,.08)';  ctx.fillRect(0,0,CW,CH/2); }
   if(wSide==='B'){ ctx.fillStyle='rgba(30,100,255,.08)'; ctx.fillRect(0,CH/2,CW,CH/2); }
+  // 中央の横区切り線（ゴールド）
   const gl=ctx.createLinearGradient(0,0,CW,0);
   gl.addColorStop(0,'rgba(180,140,0,0)');
   gl.addColorStop(.25,'rgba(255,210,0,.9)');
@@ -1004,6 +895,8 @@ function V2_splitBg(wSide){
   ctx.beginPath(); ctx.moveTo(0,CH/2+5); ctx.lineTo(CW,CH/2+5); ctx.stroke();
   ctx.restore();
 }
+
+// ゴールド名前プレート
 function V2_namePlate(name, cx, cy, color){
   if(!name) return;
   const fPx = CW*.034;
@@ -1012,8 +905,8 @@ function V2_namePlate(name, cx, cy, color){
   ctx.textAlign='center';
   const tw=ctx.measureText(name).width;
   const pw=tw+CW*.07, ph=Math.max(CH*.042,fPx*1.5);
-  const px=cx-pw/2, py=cy-ph/2;
-  const textY=cy+fPx*.36;
+  const px=cx-pw/2, py=cy-ph/2;          // 枠：cyを垂直中心に
+  const textY=cy+fPx*.36;                 // テキスト：cap-heightを考慮して中央揃え
   ctx.fillStyle='rgba(0,0,0,.80)';
   ctx.beginPath(); ctx.roundRect(px,py,pw,ph,5); ctx.fill();
   ctx.strokeStyle=color; ctx.lineWidth=1.5;
@@ -1023,6 +916,8 @@ function V2_namePlate(name, cx, cy, color){
   ctx.fillText(name, cx, textY);
   ctx.restore();
 }
+
+// VSバッジ（ゴールド六角形）
 function V2_vsRing(t){
   const cx=CW/2, cy=CH*.5;
   const pulse=.5+.5*Math.sin(t*Math.PI*6);
@@ -1040,8 +935,10 @@ function V2_vsRing(t){
   ctx.restore();
   glowText('VS',cx,cy+CW*.022,CW*.054,'#ffd700','#cc8800',20);
 }
+
+// カテゴリ横バナー（上下分割の中央に重ねる）
 function V2_catBanner(cat, ease){
-  const bh=CH*.11, by=CH/2-CH*.055;
+  const bh=CH*.11, by=CH/2-CH*.055;  // バナーをゴールドライン中心に配置
   ctx.save();
   ctx.translate(-(1-ease)*CW, 0);
   ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(0,by,CW,bh);
@@ -1054,6 +951,8 @@ function V2_catBanner(cat, ease){
   drawCatLabel(cat,.5,CW*.086,'#ffd700','#cc8800');
   ctx.restore();
 }
+
+// スコアバー（V2版）
 function V2_scoreBanner(pA, pB){
   const bx=CW*.04, bw=CW*.92, bh=CH*.009, by=CH*.928;
   ctx.fillStyle='rgba(0,0,0,.5)';
@@ -1071,35 +970,52 @@ function V2_scoreBanner(pA, pB){
   ctx.textAlign='right'; ctx.fillStyle=COLOR_B; ctx.fillText(String(pB),bx+bw,by-CH*.005);
   ctx.restore();
 }
+
+// ── INTRO ──
+// A: 上半分・上外からスライドダウン
+// B: 下半分・下外からスライドアップ
 function V2_renderIntro(i, cat, ci){
   const t=i/(INTRO_DUR*FPS);
   const ease=V2_easeBack(Math.min(1,t/.72));
   const shake=(1-ease)*4.5;
   V2_splitBg(null);
+
   const ayTarget=CH*.25, byTarget=CH*.75;
+  // Aは上外(-CH*.35)からayTargetへ
   const ay = -CH*.35 + (ayTarget+CH*.35)*ease + (Math.random()-.5)*shake;
+  // Bは下外(CH*1.35)からbyTargetへ
   const by2 = CH*1.35 - (CH*1.35-byTarget)*ease + (Math.random()-.5)*shake;
+
+  // 上半分にA、下半分にBをクリップして描画
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,CW,CH/2); ctx.clip();
   V2_char(S.imgA, CW*.5, ay, 1, .58, .95+ease*.05);
   ctx.restore();
+
   ctx.save(); ctx.beginPath(); ctx.rect(0,CH/2,CW,CH/2); ctx.clip();
   V2_char(S.imgB, CW*.5, by2, 1, .58, .95+ease*.05);
   ctx.restore();
+
+  // 着地衝撃ライン
   if(ease>.88 && t<.9){
     const da=(ease-.88)/.12*.6;
     ctx.save(); ctx.globalAlpha=da;
     ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=1.2;
     for(let d=0;d<5;d++){
       const len=CW*(.04+d*.02);
+      // A着地
       ctx.beginPath(); ctx.moveTo(CW/2-len,ayTarget+CH*.2); ctx.lineTo(CW/2-len*2.5,ayTarget+CH*.2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(CW/2+len,ayTarget+CH*.2); ctx.lineTo(CW/2+len*2.5,ayTarget+CH*.2); ctx.stroke();
+      // B着地
       ctx.beginPath(); ctx.moveTo(CW/2-len,byTarget-CH*.2); ctx.lineTo(CW/2-len*2.5,byTarget-CH*.2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(CW/2+len,byTarget-CH*.2); ctx.lineTo(CW/2+len*2.5,byTarget-CH*.2); ctx.stroke();
     }
     ctx.restore();
   }
+
   V2_vsRing(t);
   V2_catBanner(cat, ease);
+
+  // 名前プレート
   if(ease>.5){
     const na=Math.min(1,(ease-.5)/.5);
     ctx.save(); ctx.globalAlpha=na;
@@ -1107,12 +1023,17 @@ function V2_renderIntro(i, cat, ci){
     V2_namePlate((S.nameB||'B').toUpperCase(), CW*.5, CH*.9,  COLOR_B);
     ctx.restore();
   }
+
   drawProgNum(ci); drawVignette(.48);
 }
+
+// ── CUT ──
 function V2_renderCut(i, winner, pA, pB){
   const t=i/(CUT_DUR*FPS);
+
   if(winner==='Draw'){
     V2_splitBg(null);
+    // A: 上半分中央、B: 下半分中央 — 共に少しズームしながら静止
     ctx.save(); ctx.beginPath(); ctx.rect(0,0,CW,CH/2); ctx.clip();
     V2_char(S.imgA, CW*.5, CH*.25, 1+.06*t, .56, 1);
     ctx.restore();
@@ -1120,24 +1041,35 @@ function V2_renderCut(i, winner, pA, pB){
     V2_char(S.imgB, CW*.5, CH*.75, 1+.06*t, .56, 1);
     ctx.restore();
     V2_vsRing(t);
+    // DRAWテキスト：中央バナーに
     ctx.fillStyle='rgba(0,0,0,.7)'; ctx.fillRect(0,CH*.448,CW,CH*.104);
     centerText(['DRAW'],.5,CW*.13,COLOR_D,'#888');
     V2_scoreBanner(pA,pB); drawVignette(.5); drawFlash(i,5);
     return;
   }
+
+  // 勝者あり
   const wImg=winner==='A'?S.imgA:S.imgB;
   const lImg=winner==='A'?S.imgB:S.imgA;
   const wc=winner==='A'?COLOR_A:COLOR_B;
+  // 勝者は上 or 下どちら？
   const wHalf = winner==='A' ? 'top' : 'bottom';
   const wCY   = wHalf==='top' ? CH*.25 : CH*.75;
   const lCY   = wHalf==='top' ? CH*.75 : CH*.25;
+
   V2_splitBg(winner);
+
+  // ズームイン(0→0.42)
   const zT=Math.min(1,t/.42), zE=V2_easeOut(zT);
-  const wSc=1+.42*zE;
+  const wSc=1+.42*zE; // 上半分から画面中央方向に飛び出すイメージ
+  // 勝者のY: 元の上下中心 → 中央(0.44)に少し寄る
   const wYFinal=wCY+(CH*.44-wCY)*zE*.5;
+  // 着地シェイク(0.42→1.0)
   const shT=Math.max(0,(t-.42)/.58);
   const shAmp=(1-Math.min(1,shT*1.6))*9*(zT>=1?1:0);
   const shX=(Math.random()-.5)*shAmp, shY=(Math.random()-.5)*shAmp*.4;
+
+  // 敗者: フェードアウト＋縮小
   const lA=Math.max(0,1-zE*1.6);
   if(lA>0){
     const lSc=1-zE*.2;
@@ -1145,10 +1077,14 @@ function V2_renderCut(i, winner, pA, pB){
     V2_char(lImg, CW*.5, lCY, lSc, .48, 1);
     ctx.restore();
   }
+
+  // 勝者: ゴールドグロー＋ズーム
   ctx.save();
   ctx.shadowColor='#ffd700'; ctx.shadowBlur=CW*.06*(zE*.6+.2)*(1+Math.sin(t*Math.PI*7)*.15);
   V2_char(wImg, CW*.5+shX, wYFinal+shY, wSc, .68, 1);
   ctx.restore();
+
+  // ゴールド縁枠
   if(zE>.45){
     const fa=Math.min(1,(zE-.45)/.55)*.5;
     const th2=CH*.68*wSc, tw2=wImg?wImg.width*(th2/wImg.height):CW*.55;
@@ -1158,7 +1094,10 @@ function V2_renderCut(i, winner, pA, pB){
     ctx.beginPath(); ctx.roundRect(CW*.5+shX-tw2/2, wYFinal+shY-th2/2, tw2, th2, 8); ctx.stroke();
     ctx.restore();
   }
+
   applyColorGrade(winner);
+
+  // 勝者名プレート（中央にバウンス登場）
   if(t>.38){
     const nT=Math.min(1,(t-.38)/.28), nE=V2_easeBack(nT);
     const nameY=CH*.5;
@@ -1166,17 +1105,23 @@ function V2_renderCut(i, winner, pA, pB){
     V2_namePlate((winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase(), CW*.5, nameY, wc);
     ctx.restore();
   }
+
   const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
   centerText([`${pA}  —  ${pB}`], .1, CW*.12, sc2, sc2);
+
   if(i<7){ ctx.fillStyle=`rgba(255,220,0,${(7-i)/7*.32})`; ctx.fillRect(0,0,CW,CH); }
   V2_scoreBanner(pA,pB); drawVignette(.5); drawFlash(i,6);
 }
+
+// ── FINAL ──
 function V2_renderFinal(i, winner, pA, pB){
   const t  = i / (FINAL_DUR * FPS);
   const wc = winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
   const fi = winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
   const wn = winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
   const R  = (seed) => { const x=Math.sin(seed*127.1+i*31.7)*43758.5453; return x-Math.floor(x); };
+
+  // DRAW時
   if(!fi){
     V2_splitBg(null);
     ctx.save(); ctx.beginPath(); ctx.rect(0,0,CW,CH/2); ctx.clip();
@@ -1187,7 +1132,21 @@ function V2_renderFinal(i, winner, pA, pB){
     ctx.globalAlpha=eI2; centerText(['DRAW'],.5,CW*.14,COLOR_D,'#888'); ctx.globalAlpha=1;
     V2_scoreBanner(pA,pB); drawVignette(.55); drawFlash(i,18); return;
   }
-  const bursts=[[0.12,0.26,1.05],[0.48,0.62,0.90],[0.80,0.94,1.50]];
+
+  // ── タイムライン ──
+  // [0.00→0.12] 暗闇から浮上＋開幕フラッシュ
+  // [0.12→0.26] 第1グリッチバースト
+  // [0.26→0.48] 落ち着きパン＋オーラ
+  // [0.48→0.62] 第2グリッチバースト
+  // [0.62→0.80] ゆったりパン＋呼吸
+  // [0.80→0.94] 第3バースト（最強）
+  // [0.94→1.00] 余韻
+
+  const bursts=[
+    [0.12,0.26,1.05],
+    [0.48,0.62,0.90],
+    [0.80,0.94,1.50],
+  ];
   let glitchAmt=0;
   for(const [bs,be,bi] of bursts){
     if(t>=bs&&t<=be){
@@ -1198,11 +1157,15 @@ function V2_renderFinal(i, winner, pA, pB){
   if(t<.12) glitchAmt=Math.max(glitchAmt,(1-t/.12)*CW*.06);
   if(R(7)>.72&&t>.1) glitchAmt=Math.max(glitchAmt,CW*.009);
   const inBurst=bursts.some(([bs,be])=>t>=bs&&t<=be)||t<.12;
+
+  // ── 背景 ──
   ctx.fillStyle='#04030a'; ctx.fillRect(0,0,CW,CH);
   ctx.save(); ctx.globalAlpha=Math.min(.48,t*.95);
   const bs2=CW/fi.width*1.1, biw=fi.width*bs2, bih=fi.height*bs2;
   ctx.drawImage(fi,(CW-biw)/2,(CH-bih)/2,biw,bih); ctx.restore();
   ctx.fillStyle=`rgba(4,3,10,${Math.max(.60,.82-t*.28)})`; ctx.fillRect(0,0,CW,CH);
+
+  // ── モーション ──
   const shAmp=glitchAmt*.52+(t<.14?CW*.024*(1-t/.14):0);
   const shX=Math.sin(i*3.3+R(3)*.8)*shAmp;
   const shY=Math.cos(i*2.1+R(5)*.8)*shAmp*.36;
@@ -1213,6 +1176,8 @@ function V2_renderFinal(i, winner, pA, pB){
   const sc=enterSc+breathe;
   const charH=CH*.86, charW2=fi.width*(charH*sc/fi.height);
   const cx0=CW*.5+panX+shX, cy0=CH*.44+shY;
+
+  // ── カラーフリンジ ──
   if(glitchAmt>CW*.007){
     const shift=glitchAmt*(R(11)>.5?1.6:-1.6);
     ctx.save(); ctx.globalAlpha=.30;
@@ -1220,6 +1185,8 @@ function V2_renderFinal(i, winner, pA, pB){
     ctx.save(); ctx.globalAlpha=.30;
     ctx.drawImage(fi,cx0-shift*1.1-charW2/2,cy0-charH*sc/2,charW2,charH*sc); ctx.restore();
   }
+
+  // ── 水平グリッチスライス ──
   if(glitchAmt>CW*.004){
     const nSl=inBurst?6+Math.floor(R(17)*9):1+Math.floor(R(17)*3);
     for(let s=0;s<nSl;s++){
@@ -1231,6 +1198,8 @@ function V2_renderFinal(i, winner, pA, pB){
       ctx.restore();
     }
   }
+
+  // ── ブロックノイズ（バースト強時） ──
   if(inBurst&&glitchAmt>CW*.018){
     const nB=3+Math.floor(R(23)*7);
     for(let b=0;b<nB;b++){
@@ -1240,34 +1209,45 @@ function V2_renderFinal(i, winner, pA, pB){
       ctx.restore();
     }
   }
+
+  // ── メインキャラ ──
   const charAlpha=t<.10?V2_easeOut(t/.10):1;
   ctx.save();
   ctx.shadowColor='#ffd700';
   ctx.shadowBlur=CW*.05*(1+(inBurst?1.3:0)+Math.sin(t*Math.PI*5)*.14);
   V2_char(fi,cx0,cy0,sc,.86,charAlpha);
   ctx.restore();
+
   applyColorGrade(winner);
+
+  // ── ゴールドオーラ縁枠 ──
   const auraA=inBurst?(R(29)>.38?.78:.12):.20+.1*Math.sin(t*Math.PI*6)+t*.06;
   ctx.save(); ctx.globalAlpha=Math.min(.82,auraA);
   ctx.strokeStyle='#ffd700'; ctx.lineWidth=3+inBurst*1.8;
   ctx.shadowColor='#ffcc00'; ctx.shadowBlur=inBurst?48:22;
   ctx.beginPath(); ctx.roundRect(cx0-charW2/2,cy0-charH*sc/2,charW2,charH*sc,6); ctx.stroke();
   ctx.restore();
+
+  // ── ヴィジュアルエフェクト ──
   drawScanlines();
   if(glitchAmt>CW*.011){
     const fa=Math.min(.48,(glitchAmt-CW*.011)/(CW*.038));
     ctx.fillStyle=`rgba(255,255,255,${fa})`; ctx.fillRect(0,0,CW,CH);
   }
+  // バースト開始ホワイトアウト
   for(const [bs3,be3] of bursts){
     if(t>=bs3&&t<bs3+.04){
       ctx.fillStyle=`rgba(255,255,255,${(1-(t-bs3)/.04)*.72})`; ctx.fillRect(0,0,CW,CH); break;
     }
   }
+
+  // ── WINNERテキスト ──
   const eI=Math.min(1,t*6);
   const pulse=1+.04*Math.sin(t*Math.PI*10);
   const txShX=inBurst?(R(41)-.5)*glitchAmt*.38:0;
   ctx.globalAlpha=eI;
   glowText('WINNER',CW*.5+txShX,CH*.075,CW*.112*pulse,'#ffd700','#cc8800',26);
+
   if(wn&&t>.12){
     const nT=Math.min(1,(t-.12)/.14);
     const nE=V2_easeBack(nT);
@@ -1278,17 +1258,19 @@ function V2_renderFinal(i, winner, pA, pB){
     ctx.restore();
   }
   ctx.globalAlpha=1;
+
   if(t>.38){
     ctx.globalAlpha=Math.min(1,(t-.38)*4);
     centerText([`${pA}  —  ${pB}`],.90,CW*.086,wc,'#906000');
     ctx.globalAlpha=1;
   }
+
   if(i<22){ ctx.fillStyle=`rgba(255,200,0,${Math.max(0,(22-i)/22*.65)})`; ctx.fillRect(0,0,CW,CH); }
   V2_scoreBanner(pA,pB); drawVignette(.62); drawFlash(i,22);
 }
 
 // ═══════════════════════════════════════════════
-// DISPATCHER
+// DISPATCHER — S.style に応じて分岐
 // ═══════════════════════════════════════════════
 function renderIntro(i,cat,ci){
   if(S.style==='battlev2') return V2_renderIntro(i,cat,ci);
@@ -1321,10 +1303,6 @@ function initProgressUI(total){
   document.getElementById('progress-wrap').classList.add('visible');
   document.getElementById('output-wrap').classList.remove('visible');
   const list=document.getElementById('phaseList'); list.innerHTML=''; chips={};
-  // 最適化バッジ
-  const badge=document.getElementById('optBadge');
-  if(isOptEnabled()){ badge.classList.remove('hidden'); }
-  else { badge.classList.add('hidden'); }
   [...CATEGORIES,'FINAL'].forEach(c=>{
     const el=document.createElement('span');
     el.className='phase-chip'; el.textContent=c; list.appendChild(el); chips[c]=el;
@@ -1334,12 +1312,11 @@ function initProgressUI(total){
 let _genStartTime=0;
 function setProgress(done,total,label,cat,startTime){
   const pct=done/total*100;
+  // DOM更新はwidth・%・labelは毎回、detailは8フレームに1回だけ（ガクガク防止）
   document.getElementById('progFill').style.width=pct+'%';
   document.getElementById('progPct').textContent=pct.toFixed(1)+'%';
   document.getElementById('progLabel').textContent=label;
-  // バッジを再追加（textContent上書きで消えるため）
-  const badge=document.getElementById('optBadge');
-  if(badge&&isOptEnabled()) badge.classList.remove('hidden');
+  // ETA: 進行バーの速さから残り時間を推定
   let detail=`フレーム ${done} / ${total}`;
   const t0=startTime||_genStartTime;
   if(t0&&done>10&&done<total){
@@ -1347,7 +1324,12 @@ function setProgress(done,total,label,cat,startTime){
     const eta=Math.round(elapsed/done*(total-done));
     detail+=eta>60?` — 残り約${Math.floor(eta/60)}分${eta%60}秒`
                   :` — 残り約${eta}秒`;
-    const finAt=new Date(Date.now()+(elapsed/done*(total-done))*1000);
+  }
+  // 残り時間と完了推定時刻
+  if(t0&&done>10&&done<total){
+    const elapsed2=(performance.now()-t0)/1000;
+    const totalEst=elapsed2/done*total;
+    const finAt=new Date(Date.now()+(totalEst-elapsed2)*1000);
     const hh=finAt.getHours().toString().padStart(2,'0');
     const mm=finAt.getMinutes().toString().padStart(2,'0');
     const ss=finAt.getSeconds().toString().padStart(2,'0');
@@ -1371,9 +1353,6 @@ async function startGenerate(){
   S.nameA=document.getElementById('nameA').value.trim()||'Character A';
   S.nameB=document.getElementById('nameB').value.trim()||'Character B';
 
-  // ── 最適化パラメータ取得（チェックON/OFFで自動切替） ──
-  const OPT = getOptParams();
-
   const NI=Math.round(INTRO_DUR*FPS), NC=Math.round(CUT_DUR*FPS);
   const NF=Math.round(FINAL_DUR*FPS), NB=Math.round(BLACK_DUR*FPS);
   const TOTAL=CATEGORIES.length*(NI+NC)+NB+NF;
@@ -1381,73 +1360,42 @@ async function startGenerate(){
   initProgressUI(TOTAL);
   document.getElementById('genBtn').disabled=true;
 
+  // ─ PHASE 1: 全フレームをImageBitmapとしてRAMに収集 ─
+  setFfmpegMsg('📸 フレームを生成中...');
   const yld=()=>new Promise(r=>setTimeout(r,0));
-
-  // ─ PHASE 1: フレーム生成 ─
-  setFfmpegMsg(`📸 フレームを生成中... ${OPT.label}`);
-
-  // streamBitmaps=true(最適化ON) → bitmapsをすぐcanvasに書き込みBitmapを解放
-  // streamBitmaps=false(従来)   → 全フレームRAMに蓄積してから録画
-  const bitmaps = OPT.streamBitmaps ? null : [];
-  // 最適化ON時はOffscreenCanvasに事前描画してキャッシュ
-  const streamFrames = OPT.streamBitmaps ? [] : null;
-
-  let fc=0, pA=0, pB=0;
+  const bitmaps=[]; let fc=0, pA=0, pB=0;
 
   for(let ci=0;ci<CATEGORIES.length;ci++){
     const cat=CATEGORIES[ci], winner=S.results[cat];
     for(let i=0;i<NI;i++){
       renderIntro(i,cat,ci);
-      if(OPT.streamBitmaps){
-        const bmp=await createImageBitmap(canvas);
-        streamFrames.push(bmp);
-      }else{
-        bitmaps.push(await createImageBitmap(canvas));
-      }
+      bitmaps.push(await createImageBitmap(canvas));
       fc++; setProgress(fc,TOTAL,`INTRO [${cat}]`,cat);
-      if(fc%OPT.yieldInterval===0) await yld();
+      if(fc%12===0) await yld();
     }
     if(winner==='A') pA++; else if(winner==='B') pB++;
     for(let i=0;i<NC;i++){
       renderCut(i,winner,pA,pB);
-      if(OPT.streamBitmaps){
-        const bmp=await createImageBitmap(canvas);
-        streamFrames.push(bmp);
-      }else{
-        bitmaps.push(await createImageBitmap(canvas));
-      }
+      bitmaps.push(await createImageBitmap(canvas));
       fc++; setProgress(fc,TOTAL,`CUT [${winner}]`,cat);
-      if(fc%OPT.yieldInterval===0) await yld();
+      if(fc%12===0) await yld();
     }
     markChipDone(cat);
   }
   ctx.fillStyle='#000'; ctx.fillRect(0,0,CW,CH);
   for(let i=0;i<NB;i++){
-    if(OPT.streamBitmaps){
-      const bmp=await createImageBitmap(canvas);
-      streamFrames.push(bmp);
-    }else{
-      bitmaps.push(await createImageBitmap(canvas));
-    }
+    bitmaps.push(await createImageBitmap(canvas));
     fc++; setProgress(fc,TOTAL,'BLACK OUT','FINAL');
-    if(fc%OPT.yieldInterval===0) await yld();
+    if(fc%12===0) await yld();
   }
   const fw=pA>pB?'A':(pB>pA?'B':'Draw');
   for(let i=0;i<NF;i++){
     renderFinal(i,fw,pA,pB);
-    if(OPT.streamBitmaps){
-      const bmp=await createImageBitmap(canvas);
-      streamFrames.push(bmp);
-    }else{
-      bitmaps.push(await createImageBitmap(canvas));
-    }
+    bitmaps.push(await createImageBitmap(canvas));
     fc++; setProgress(fc,TOTAL,'FINAL','FINAL');
-    if(fc%OPT.yieldInterval===0) await yld();
+    if(fc%12===0) await yld();
   }
   markChipDone('FINAL');
-
-  // 使うフレームリスト
-  const frames = OPT.streamBitmaps ? streamFrames : bitmaps;
 
   // ─ PHASE 2: BGMデコード ─
   let bgmAudioBuf=null;
@@ -1460,8 +1408,8 @@ async function startGenerate(){
     }catch(e){ console.warn('BGMデコード失敗',e); }
   }
 
-  // ─ PHASE 3: 録画 ─
-  setFfmpegMsg(`🎬 録画中... ${OPT.label}`);
+  // ─ PHASE 3: rAF + AudioContext.currentTime 完全同期録画 ─
+  setFfmpegMsg('🎬 録画中...');
   setProgress(0,TOTAL,'録画中...',null);
 
   const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
@@ -1469,10 +1417,8 @@ async function startGenerate(){
     :(MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
       ?'video/webm;codecs=vp8,opus':'video/webm');
 
-  const SKIP_THRESHOLD=Math.floor(TOTAL*OPT.skipThresholdRatio);
-
   const runRecord=(attempt)=>new Promise(async(resolveRec)=>{
-    setFfmpegMsg(attempt>0?`🔄 再録画中... (${attempt}回目) ${OPT.label}`:`🎬 録画中... ${OPT.label}`);
+    setFfmpegMsg(attempt>0?`🔄 再録画中... (${attempt}回目)`:'🎬 録画中...');
     const recAudioCtx=new AudioContext({sampleRate:44100});
     const dest=recAudioCtx.createMediaStreamDestination();
     if(bgmAudioBuf){
@@ -1487,29 +1433,25 @@ async function startGenerate(){
     const videoTrack=videoStream.getVideoTracks()[0];
     const combined=new MediaStream([videoTrack,dest.stream.getAudioTracks()[0]]);
     const chunks=[];
-    const rec=new MediaRecorder(combined,{
-      mimeType:mime,
-      videoBitsPerSecond: OPT.videoBitrate,
-      audioBitsPerSecond: OPT.audioBitrate,
-    });
+    const rec=new MediaRecorder(combined,{mimeType:mime,videoBitsPerSecond:8_000_000,audioBitsPerSecond:128_000});
     rec.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
     const recStopped=new Promise(r=>{ rec.onstop=r; });
     await new Promise(r=>setTimeout(r,150));
-    rec.start(OPT.recChunkMs);
+    rec.start(100);
     const audioStart=recAudioCtx.currentTime;
     let lastDrawnIdx=-1, skippedTotal=0, rafId;
     const result=await new Promise(resolveLoop=>{
       const loop=()=>{
         const elapsed=recAudioCtx.currentTime-audioStart;
-        const targetIdx=Math.min(Math.floor(elapsed*FPS),frames.length-1);
+        const targetIdx=Math.min(Math.floor(elapsed*FPS),bitmaps.length-1);
         if(targetIdx>lastDrawnIdx){
           skippedTotal+=targetIdx-lastDrawnIdx-1;
           lastDrawnIdx=targetIdx;
-          ctx.drawImage(frames[targetIdx],0,0);
+          ctx.drawImage(bitmaps[targetIdx],0,0);
           videoTrack.requestFrame();
           setProgress(targetIdx+1,TOTAL,attempt>0?'再録画中...':'録画中...',null);
         }
-        if(lastDrawnIdx>=frames.length-1){ resolveLoop({skippedTotal}); return; }
+        if(lastDrawnIdx>=bitmaps.length-1){ resolveLoop({skippedTotal}); return; }
         rafId=requestAnimationFrame(loop);
       };
       rafId=requestAnimationFrame(loop);
@@ -1520,7 +1462,7 @@ async function startGenerate(){
     resolveRec({chunks,skippedTotal:result.skippedTotal});
   });
 
-  const MAX_ATTEMPTS=3;
+  const MAX_ATTEMPTS=3, SKIP_THRESHOLD=Math.floor(TOTAL*.05);
   let finalChunks;
   for(let attempt=0;attempt<MAX_ATTEMPTS;attempt++){
     const {chunks,skippedTotal}=await runRecord(attempt);
@@ -1532,17 +1474,14 @@ async function startGenerate(){
     await new Promise(r=>setTimeout(r,500));
   }
 
-  frames.forEach(b=>b.close());
-
+  bitmaps.forEach(b=>b.close());
   const finalBlob=new Blob(finalChunks,{type:mime});
   const url=URL.createObjectURL(finalBlob);
   document.getElementById('preview-video').src=url;
   const dlBtn=document.getElementById('dlBtn');
-  dlBtn.href=url;
-  const spdLabel=getSpeed()===1.0?'':('_x'+getSpeed());
-  dlBtn.download=`${S.nameA}VS${S.nameB}${spdLabel}.webm`;
-  window._lastVideoBlob=finalBlob;
-  window._lastVideoName=`${S.nameA}VS${S.nameB}${spdLabel}`;
+  dlBtn.href=url; const spdLabel=getSpeed()===1.0?'':('_x'+getSpeed()); dlBtn.download=`${S.nameA}VS${S.nameB}${spdLabel}.webm`;
+  // MP4ボタン用にBlobを保持
+  window._lastVideoBlob=finalBlob; window._lastVideoName=`${S.nameA}VS${S.nameB}${spdLabel}`;
   dlBtn.textContent='⬇ 動画をダウンロード (.webm)';
   document.getElementById('output-wrap').classList.add('visible');
   document.getElementById('genBtn').disabled=false;
@@ -1550,6 +1489,7 @@ async function startGenerate(){
   document.getElementById('progPct').textContent='100%';
   document.getElementById('progFill').style.width='100%';
 }
+
 
 // ═══════════════════════════════════════════════
 // MP4 DOWNLOAD
@@ -1561,6 +1501,8 @@ async function downloadMp4(){
   const status = document.getElementById('mp4Status');
   btn.disabled = true;
   status.style.display = 'block';
+
+  // FFmpeg.wasm を使ってWebM→MP4変換
   try{
     status.textContent = '⏳ FFmpeg を読み込み中...';
     const { createFFmpeg, fetchFile } = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
@@ -1578,6 +1520,7 @@ async function downloadMp4(){
     status.textContent = '✅ MP4 のダウンロードを開始しました';
     setTimeout(()=>{ status.style.display='none'; }, 3000);
   }catch(e){
+    // FFmpeg失敗時はWebMをMP4拡張子で保存（コンテナだけ変更）
     console.warn('FFmpeg失敗、フォールバック:', e);
     status.textContent = '⚠ 変換ライブラリ読み込み失敗。拡張子のみ変更してダウンロードします（一部プレイヤー非対応）';
     const url = URL.createObjectURL(blob);
@@ -1595,6 +1538,7 @@ async function downloadMp4(){
 let _prevPending = false;
 function triggerStylePreview(){
   if(!S.imgA || !S.imgB){ return; }
+  // stylePreviewSection removed
   if(_prevPending) return;
   _prevPending=true;
   setTimeout(()=>{ _prevPending=false; renderStylePreview(); },80);
@@ -1602,8 +1546,10 @@ function triggerStylePreview(){
 function onClickPreview(){
   if(!S.imgA||!S.imgB){ showErr('両方のキャラクター画像をアップロードしてください'); return; }
   hideErr();
+  // GENERATEボタン上のプレビューエリアに表示
   const wrap=document.getElementById('quickPreviewWrap');
   wrap.style.display='block';
+  // renderStylePreview と同じロジックで生成
   syncDurGlobals(); initCanvas();
   const PW=270, PH=480;
   const cvs=document.createElement('canvas');
@@ -1619,24 +1565,43 @@ function onClickPreview(){
 }
 function renderStylePreview(){
   if(!S.imgA || !S.imgB) return;
+  // オフスクリーンサイズ (270x480 = 540x960の半分)
   const PW=270, PH=480;
   const cvs=document.createElement('canvas');
   cvs.width=PW; cvs.height=PH;
   const pc=cvs.getContext('2d',{willReadFrequently:true});
+
+  // 本番CW/CH/FPS/ctx を一時上書き
   const _CW=CW,_CH=CH,_FPS=FPS,_ctx=ctx,_canvas=canvas;
   CW=PW; CH=PH; FPS=30; canvas=cvs; ctx=pc;
-  const cat='Strength'; const ci=0;
-  try{ renderIntro(Math.round(INTRO_DUR*FPS*0.65)|0, cat, ci); }catch(e){ console.warn('prevIntro err',e); }
+
+  const cat='Strength'; // 代表カテゴリ
+  const ci=0;
+
+  // ── INTRO プレビュー ──
+  try{
+    renderIntro(Math.round(INTRO_DUR*FPS*0.65)|0, cat, ci);
+  }catch(e){ console.warn('prevIntro err',e); }
   const introUrl = cvs.toDataURL('image/jpeg',0.88);
-  try{ renderCut(Math.round(CUT_DUR*FPS*0.72)|0,'A',7,3); }catch(e){ console.warn('prevCut err',e); }
+
+  // ── CUT プレビュー: 勝者=A で name表示 ──
+  try{
+    renderCut(Math.round(CUT_DUR*FPS*0.72)|0,'A',7,3);
+  }catch(e){ console.warn('prevCut err',e); }
   const cutUrl = cvs.toDataURL('image/jpeg',0.88);
+
+  // 本番値を戻す
   CW=_CW; CH=_CH; FPS=_FPS; ctx=_ctx; canvas=_canvas;
+
+  // 表示
+  // STEP2プレビュー削除済み - 代わりにGENERATEボタン上のプレビューを更新
   const qpI=document.getElementById('qpIntro');
   const qpC=document.getElementById('qpCut');
   if(qpI) qpI.src=introUrl;
   if(qpC) qpC.src=cutUrl;
+  const wrap=document.getElementById('quickPreviewWrap');
+  // 自動更新時はwrapを開かない（ボタン押下時のみ表示）
 }
-
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
