@@ -220,9 +220,12 @@ header{background:var(--surface);border-bottom:2px solid var(--accent);padding:1
     <div class="pool-grid" id="char-pool"></div>
 
     <div class="placement-controls">
-      <span style="font-size:12px;color:var(--text-muted);">グリッド:</span>
-      <select class="grid-sel" id="grid-cols" onchange="rebuildGrid()"><option value="2">2列</option><option value="3" selected>3列</option><option value="4">4列</option><option value="5">5列</option></select>
-      <select class="grid-sel" id="grid-rows" onchange="rebuildGrid()"><option value="2">2行</option><option value="3" selected>3行</option><option value="4">4行</option><option value="5">5行</option></select>
+      <span style="font-size:12px;color:var(--text-muted);">グリッドサイズ:</span>
+      <select class="grid-sel" id="grid-size" onchange="onGridSizeChange(this.value)">
+        <option value="2">2×2</option>
+        <option value="3" selected>3×3</option>
+        <option value="4">4×4</option>
+      </select>
       <button class="btn btn-secondary btn-xs" onclick="clearAll()">全クリア</button>
       <span style="font-size:12px;color:var(--text-muted);">間隔</span>
       <input type="range" id="speed-range-sel" min="500" max="4000" step="100" value="500" oninput="iMs=parseInt(this.value);document.getElementById('spd-val-sel').textContent=(iMs/1000).toFixed(1)+'s'" style="width:120px;accent-color:var(--accent);">
@@ -483,9 +486,12 @@ function renderPool(){
 }
 
 /* グリッド再構築 */
+function onGridSizeChange(val){
+  const n=parseInt(val)||3;
+  gCols=n; gRows=n;
+  rebuildGrid();
+}
 function rebuildGrid(){
-  gCols=parseInt(document.getElementById('grid-cols').value)||3;
-  gRows=parseInt(document.getElementById('grid-rows').value)||3;
   initSlots();
   const grid=document.getElementById('placement-grid');
   grid.style.gridTemplateColumns=`repeat(${gCols},1fr)`;
