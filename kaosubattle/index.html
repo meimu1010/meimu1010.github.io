@@ -100,16 +100,16 @@ header{display:none;}
 .placement-outer{overflow-x:auto;margin-bottom:14px;display:flex;justify-content:center;}
 .placement-grid{display:grid;gap:6px;width:fit-content;}
 /* 配置セル */
-.pc{background:var(--surface2);border:2px dashed var(--border2);border-radius:10px;aspect-ratio:1;width:225px;height:225px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--border2);font-weight:700;flex-shrink:0;}
+.pc{background:var(--surface2);border:2px dashed var(--border2);border-radius:10px;aspect-ratio:1;width:165px;height:165px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--border2);font-weight:700;flex-shrink:0;}
 .pc:hover{border-color:var(--accent3);}
 .pc.drag-over{border-color:var(--accent3);background:#e8f4ff;}
 .pc.occupied{border-style:solid;border-color:var(--border2);background:var(--surface);}
 .pc-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
-.pc-emoji{font-size:78px;}
-.pc-name{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.9);font-size:14px;font-weight:700;text-align:center;padding:4px;}
+.pc-emoji{font-size:58px;}
+.pc-name{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.9);font-size:12px;font-weight:700;text-align:center;padding:3px;}
 /* チームバッジ (配置セル上) */
-.pc-team-badge{position:absolute;top:8px;left:8px;width:48px;height:48px;border-radius:50%;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;z-index:5;border:2px solid rgba(255,255,255,.8);box-shadow:0 1px 4px rgba(0,0,0,.3);}
-.pc-del{position:absolute;top:8px;right:8px;width:54px;height:54px;background:rgba(232,48,58,.9);border:none;border-radius:50%;color:#fff;font-size:26px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.35);}
+.pc-team-badge{position:absolute;top:6px;left:6px;width:36px;height:36px;border-radius:50%;font-size:15px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;z-index:5;border:2px solid rgba(255,255,255,.8);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.pc-del{position:absolute;top:6px;right:6px;width:40px;height:40px;background:rgba(232,48,58,.9);border:none;border-radius:50%;color:#fff;font-size:19px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.35);}
 
 /* アクションバー */
 .select-action-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);}
@@ -228,9 +228,9 @@ header{display:none;}
         <option value="4">4×4</option>
       </select>
       <button class="btn btn-secondary btn-xs" onclick="clearAll()">全クリア</button>
-      <span style="font-size:12px;color:var(--text-muted);">間隔</span>
-      <input type="range" id="speed-range-sel" min="500" max="4000" step="100" value="500" oninput="iMs=parseInt(this.value);document.getElementById('spd-val-sel').textContent=(iMs/1000).toFixed(1)+'s'" style="width:120px;accent-color:var(--accent);">
-      <span id="spd-val-sel" style="font-size:12px;color:var(--text-muted);">0.5s</span>
+      <button class="btn btn-secondary btn-xs" onclick="randomFill()">ランダム登場</button>
+      <span style="font-size:12px;color:var(--text-muted);">ターン間隔(秒)</span>
+      <input type="number" id="speed-input-sel" min="0.1" max="30" step="0.1" value="0.5" oninput="onSelSpeedInput(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
       <span style="margin-left:6px;width:1px;height:20px;background:var(--border2);display:inline-block;vertical-align:middle;"></span>
       <span class="sel-count" id="sel-count" style="font-size:13px;color:var(--text-muted);font-weight:700;">0人配置中</span>
       <button class="btn btn-secondary btn-sm" onclick="switchTab('setup')">戻る</button>
@@ -245,9 +245,8 @@ header{display:none;}
   <div class="battle-layout">
     <div class="battle-main">
       <div id="battle-controls">
-        <span class="speed-label">間隔</span>
-        <input type="range" id="speed-range" min="500" max="4000" step="100" value="500" oninput="updateSpeed(this.value)">
-        <span id="spd-val" style="font-size:12px;color:var(--text-muted);">0.5s</span>
+        <span class="speed-label">ターン間隔(秒)</span>
+        <input type="number" id="speed-input" min="0.1" max="30" step="0.1" value="0.5" oninput="updateSpeed(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
         <button class="btn btn-secondary btn-sm" id="pause-btn" onclick="togglePause()" disabled>一時停止</button>
         <button class="btn btn-secondary btn-sm" onclick="endAndReturn()">終了</button>
       </div>
@@ -495,7 +494,7 @@ function rebuildGrid(){
   initSlots();
   const grid=document.getElementById('placement-grid');
   // 固定150pxセル + 8pxギャップ
-  const cellPx=225;
+  const cellPx=165;
   const gapPx=6;
   grid.style.gridTemplateColumns=`repeat(${gCols},${cellPx}px)`;
   grid.style.gap='10px';
@@ -600,6 +599,17 @@ function showPicker(idx){
 }
 
 function clearAll(){slots=slots.map(()=>null);rebuildGrid();}
+function randomFill(){
+  // 全スロットをクリアしてcharをシャッフルしてランダムに配置
+  slots=slots.map(()=>null);
+  if(!chars.length){rebuildGrid();return;}
+  const total=gCols*gRows;
+  // charをシャッフル（同じキャラを何度でも使えるようにtotalぶん作る）
+  const pool=[];
+  for(let i=0;i<total;i++) pool.push(chars[Math.floor(Math.random()*chars.length)]);
+  pool.forEach((c,i)=>{if(i<total)slots[i]=mkSlot(c.id,null);});
+  rebuildGrid();
+}
 
 function updateSelCount(){
   const n=slots.filter(Boolean).length;
@@ -611,7 +621,8 @@ function updateSelCount(){
    BATTLE LAUNCH
 ============================================================ */
 let iMs=500;
-function updateSpeed(v){iMs=parseInt(v);document.getElementById('spd-val').textContent=(iMs/1000).toFixed(1)+'s';}
+function onSelSpeedInput(v){iMs=Math.max(100,Math.round(parseFloat(v)*1000));}
+function updateSpeed(v){iMs=Math.max(100,Math.round(parseFloat(v)*1000));const inp=document.getElementById('speed-input');if(inp&&document.activeElement!==inp)inp.value=(iMs/1000).toFixed(1);}
 
 function launchBattle(){
   const placed=slots.filter(Boolean);
@@ -657,10 +668,10 @@ function buildFighters(placed){
   }).filter(Boolean);
 
   // 間隔スライダーを同期
-  const srSel=document.getElementById('speed-range-sel');
-  if(srSel)iMs=parseInt(srSel.value);
-  document.getElementById('speed-range').value=iMs;
-  document.getElementById('spd-val').textContent=(iMs/1000).toFixed(1)+'s';
+  const srSel=document.getElementById('speed-input-sel');
+  if(srSel)iMs=Math.max(100,Math.round(parseFloat(srSel.value)*1000));
+  const bi=document.getElementById('speed-input');
+  if(bi)bi.value=(iMs/1000).toFixed(1);
 
   renderArena();
   scheduleNext();
