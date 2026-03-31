@@ -13,12 +13,12 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'M PLUS 1p',sans-serif;min-height:100vh;}
-header{background:var(--surface);border-bottom:2px solid var(--accent);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px var(--shadow);}
-.logo{font-family:'DotGothic16',monospace;font-size:20px;color:var(--accent);letter-spacing:2px;}
+header{display:none;}
+.logo{font-family:'DotGothic16',monospace;font-size:20px;color:var(--accent);letter-spacing:2px;}.tabs-logo{font-family:'DotGothic16',monospace;font-size:18px;color:var(--accent);letter-spacing:2px;padding:0 18px;white-space:nowrap;flex-shrink:0;border-right:1px solid var(--border);margin-right:4px;line-height:1;}
 .logo span{color:var(--accent2);}
 .header-btns{display:flex;gap:6px;flex-wrap:wrap;}
-.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;}
-.tab{padding:11px 22px;cursor:pointer;font-weight:700;font-size:13px;color:var(--text-muted);border-bottom:3px solid transparent;transition:all .15s;user-select:none;white-space:nowrap;}
+.tabs{display:flex;background:var(--surface);border-bottom:2px solid var(--accent);overflow-x:auto;align-items:center;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px var(--shadow);}
+.tab{padding:14px 22px;cursor:pointer;font-weight:700;font-size:13px;color:var(--text-muted);border-bottom:3px solid transparent;transition:all .15s;user-select:none;white-space:nowrap;}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .tab:hover:not(.active){color:var(--text);}
 .panel{display:none;}.panel.active{display:block;}
@@ -97,19 +97,19 @@ header{background:var(--surface);border-bottom:2px solid var(--accent);padding:1
 /* 配置グリッド */
 .placement-controls{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
 .grid-sel{padding:4px 8px;border-radius:5px;border:1px solid var(--border);font-family:'M PLUS 1p',sans-serif;font-size:12px;background:var(--surface2);}
-.placement-outer{overflow-x:auto;margin-bottom:14px;display:flex;justify-content:flex-start;}
+.placement-outer{overflow-x:auto;margin-bottom:14px;display:flex;justify-content:center;}
 .placement-grid{display:grid;gap:6px;width:fit-content;}
 /* 配置セル */
-.pc{background:var(--surface2);border:2px dashed var(--border2);border-radius:8px;aspect-ratio:1;width:96px;height:96px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--border2);font-weight:700;flex-shrink:0;}
+.pc{background:var(--surface2);border:2px dashed var(--border2);border-radius:10px;aspect-ratio:1;width:150px;height:150px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--border2);font-weight:700;flex-shrink:0;}
 .pc:hover{border-color:var(--accent3);}
 .pc.drag-over{border-color:var(--accent3);background:#e8f4ff;}
 .pc.occupied{border-style:solid;border-color:var(--border2);background:var(--surface);}
 .pc-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
-.pc-emoji{font-size:34px;}
-.pc-name{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.9);font-size:10px;font-weight:700;text-align:center;padding:2px;}
+.pc-emoji{font-size:52px;}
+.pc-name{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.9);font-size:12px;font-weight:700;text-align:center;padding:3px;}
 /* チームバッジ (配置セル上) */
-.pc-team-badge{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;z-index:5;border:2px solid rgba(255,255,255,.8);box-shadow:0 1px 4px rgba(0,0,0,.3);}
-.pc-del{position:absolute;top:4px;right:4px;width:30px;height:30px;background:rgba(232,48,58,.9);border:none;border-radius:50%;color:#fff;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.35);}
+.pc-team-badge{position:absolute;top:6px;left:6px;width:32px;height:32px;border-radius:50%;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;z-index:5;border:2px solid rgba(255,255,255,.8);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.pc-del{position:absolute;top:6px;right:6px;width:36px;height:36px;background:rgba(232,48,58,.9);border:none;border-radius:50%;color:#fff;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.35);}
 
 /* アクションバー */
 .select-action-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);}
@@ -193,6 +193,7 @@ header{background:var(--surface);border-bottom:2px solid var(--accent);padding:1
   </div>
 </header>
 <div class="tabs">
+  <div class="tabs-logo">カオス<span style="color:var(--accent2)">バトル</span></div>
   <div class="tab active" id="tab-setup" onclick="switchTab('setup')">キャラクター登録</div>
   <div class="tab" id="tab-select" onclick="switchTab('select')">配置モード：キャラ選択</div>
   <div class="tab" id="tab-battle" onclick="switchTab('battle')">バトル</div>
@@ -230,11 +231,10 @@ header{background:var(--surface);border-bottom:2px solid var(--accent);padding:1
       <span style="font-size:12px;color:var(--text-muted);">間隔</span>
       <input type="range" id="speed-range-sel" min="500" max="4000" step="100" value="500" oninput="iMs=parseInt(this.value);document.getElementById('spd-val-sel').textContent=(iMs/1000).toFixed(1)+'s'" style="width:120px;accent-color:var(--accent);">
       <span id="spd-val-sel" style="font-size:12px;color:var(--text-muted);">0.5s</span>
-    </div>
-    <div class="select-action-bar" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);border-top:none;padding-top:0;">
-      <span class="sel-count" id="sel-count">0人配置中</span>
+      <span style="margin-left:6px;width:1px;height:20px;background:var(--border2);display:inline-block;vertical-align:middle;"></span>
+      <span class="sel-count" id="sel-count" style="font-size:13px;color:var(--text-muted);font-weight:700;">0人配置中</span>
       <button class="btn btn-secondary btn-sm" onclick="switchTab('setup')">戻る</button>
-      <button class="btn btn-primary" id="battle-go-btn" onclick="launchBattle()" disabled>バトル開始！</button>
+      <button class="btn btn-primary btn-sm" id="battle-go-btn" onclick="launchBattle()" disabled>バトル開始！</button>
     </div>
     <div class="placement-outer"><div class="placement-grid" id="placement-grid"></div></div>
   </div>
@@ -494,11 +494,11 @@ function onGridSizeChange(val){
 function rebuildGrid(){
   initSlots();
   const grid=document.getElementById('placement-grid');
-  // 固定96pxセル + 6pxギャップ
-  const cellPx=96;
+  // 固定150pxセル + 8pxギャップ
+  const cellPx=150;
   const gapPx=6;
   grid.style.gridTemplateColumns=`repeat(${gCols},${cellPx}px)`;
-  grid.style.gap=gapPx+'px';
+  grid.style.gap='8px';
   grid.innerHTML='';
   slots.forEach((s,i)=>grid.appendChild(buildPCell(s,i)));
   updateSelCount();
