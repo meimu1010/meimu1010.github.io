@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>カオスバトル</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+1p:wght@400;700;900&display=swap');
+:root{
+  --bg:#f5f5f0;--surface:#fff;--surface2:#f0eeea;--border:#d8d5ce;--border2:#bbb8b0;
+  --accent:#e8303a;--accent2:#e8a800;--accent3:#1a7abf;--text:#1a1a1a;--text-muted:#888880;--shadow:rgba(0,0,0,.08);
+  --ta:#e8303a;--tb:#1a7abf;--tc:#22aa55;--td:#9b59b6;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'M PLUS 1p',sans-serif;min-height:100vh;}
+header{background:var(--surface);border-bottom:2px solid var(--accent);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px var(--shadow);}
+.logo{font-family:'DotGothic16',monospace;font-size:20px;color:var(--accent);letter-spacing:2px;}
+.logo span{color:var(--accent2);}
+.header-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab{padding:11px 22px;cursor:pointer;font-weight:700;font-size:13px;color:var(--text-muted);border-bottom:3px solid transparent;transition:all .15s;user-select:none;white-space:nowrap;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab:hover:not(.active){color:var(--text);}
+.panel{display:none;}.panel.active{display:block;}
+.btn{padding:8px 18px;border-radius:6px;border:none;cursor:pointer;font-family:'M PLUS 1p',sans-serif;font-weight:700;font-size:13px;transition:all .15s;}
+.btn:active{transform:scale(.97);}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{background:#c42530;}
+.btn-warn{background:var(--accent2);color:#fff;}.btn-warn:hover{background:#c98f00;}
+.btn-info{background:var(--accent3);color:#fff;}.btn-info:hover{background:#1565a0;}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border2);}.btn-secondary:hover{border-color:var(--accent3);color:var(--accent3);}
+.btn-sm{padding:5px 12px;font-size:12px;}.btn-xs{padding:3px 8px;font-size:11px;}
+
+/* ========== SETUP ========== */
+#panel-setup{padding:20px;}
+.setup-inner{max-width:1020px;margin:0 auto;}
+.info-bar{background:#eef6ff;border:1px solid #b8d8f0;border-radius:8px;padding:11px 14px;font-size:13px;color:#2a5a80;margin-bottom:18px;line-height:1.7;}
+.sec-title{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.preset-strip{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+.preset-btn{padding:5px 13px;background:var(--surface);border:1px solid var(--border);border-radius:18px;color:var(--text-muted);cursor:pointer;font-size:12px;font-family:'M PLUS 1p',sans-serif;transition:all .15s;}
+.preset-btn:hover{border-color:var(--accent2);color:var(--accent2);background:#fffbee;}
+.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:18px;margin-bottom:14px;}
+.char-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;box-shadow:0 2px 8px var(--shadow);}
+.char-card-top{display:flex;gap:16px;margin-bottom:16px;}
+.char-img-area{width:108px;height:108px;border-radius:10px;border:2px dashed var(--border2);overflow:hidden;cursor:pointer;flex-shrink:0;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:44px;transition:border-color .15s;position:relative;}
+.char-img-area:hover{border-color:var(--accent3);}
+.char-img-area img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.char-img-hint{font-size:10px;color:var(--text-muted);position:absolute;bottom:3px;left:0;right:0;text-align:center;background:rgba(255,255,255,.85);}
+.char-right{flex:1;display:flex;flex-direction:column;gap:10px;}
+.field-label{font-size:11px;color:var(--text-muted);margin-bottom:2px;font-weight:700;}
+.char-name-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 11px;font-family:'M PLUS 1p',sans-serif;font-size:15px;font-weight:700;outline:none;}
+.char-name-input:focus{border-color:var(--accent3);}
+.char-emoji-row{display:flex;gap:7px;align-items:center;}
+.char-emoji-input{width:60px;text-align:center;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px;font-size:20px;outline:none;}
+.stat-row{display:flex;gap:8px;flex-wrap:wrap;}.stat-wrap{flex:1;min-width:100px;}
+.sounds-section{border-top:1px solid var(--border);padding-top:14px;}
+.sound-type-tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;}
+.st-tab{padding:4px 12px;border-radius:14px;border:1px solid var(--border);font-size:11px;cursor:pointer;font-family:'M PLUS 1p',sans-serif;background:var(--surface2);color:var(--text-muted);transition:all .15s;}
+.st-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.voice-list{display:flex;flex-direction:column;gap:8px;}
+.voice-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:9px;}
+.voice-item-left{flex:1;display:flex;flex-direction:column;gap:7px;}
+.voice-text-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:6px 9px;font-family:'M PLUS 1p',sans-serif;font-size:13px;outline:none;}
+.voice-text-input:focus{border-color:var(--accent3);}
+.voice-text-input::placeholder{color:var(--text-muted);}
+.voice-file-row{display:flex;gap:5px;align-items:center;}
+.snd-upload-btn{padding:4px 10px;background:var(--surface);border:1px solid var(--border);border-radius:5px;cursor:pointer;font-size:11px;font-family:'M PLUS 1p',sans-serif;color:var(--text-muted);transition:all .15s;white-space:nowrap;}
+.snd-upload-btn:hover{border-color:var(--accent3);color:var(--accent3);}
+.snd-upload-btn.has-file{border-color:#22aa55;color:#22aa55;background:#eeffee;}
+.snd-play-btn{padding:4px 8px;background:transparent;border:1px solid var(--border);border-radius:5px;cursor:pointer;font-size:11px;color:var(--text-muted);}
+.voice-del-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;padding:2px;align-self:center;}
+.voice-del-btn:hover{color:var(--accent);}
+.voice-add-btn{display:flex;align-items:center;gap:7px;padding:9px 14px;background:none;border:1px dashed var(--border2);border-radius:8px;cursor:pointer;font-family:'M PLUS 1p',sans-serif;font-size:12px;color:var(--text-muted);width:100%;transition:all .15s;}
+.voice-add-btn:hover{border-color:var(--accent3);color:var(--accent3);}
+.remove-char-btn{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;}
+.remove-char-btn:hover{color:var(--accent);}
+.add-char-card{background:none;border:2px dashed var(--border2);border-radius:12px;padding:32px;text-align:center;cursor:pointer;color:var(--text-muted);font-size:14px;font-family:'M PLUS 1p',sans-serif;transition:all .15s;min-height:110px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;}
+.add-char-card:hover{border-color:var(--accent3);color:var(--accent3);background:#f0f7ff;}
+.empty-state{text-align:center;padding:44px 20px;color:var(--text-muted);grid-column:1/-1;}
+.empty-state h3{font-size:18px;color:var(--text);margin-bottom:8px;}
+
+/* ========== SELECT (配置モード) ========== */
+#panel-select{padding:20px;}
+.select-inner{max-width:1000px;margin:0 auto;}
+.select-inner>h2{font-size:20px;font-weight:700;margin-bottom:5px;}
+.select-inner>p{font-size:13px;color:var(--text-muted);margin-bottom:14px;}
+
+/* プール */
+.pool-label{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.pool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:7px;margin-bottom:16px;}
+.pool-card{background:var(--surface);border:2px solid var(--border);border-radius:9px;padding:8px 4px;text-align:center;cursor:pointer;transition:all .15s;user-select:none;position:relative;}
+.pool-card:hover{border-color:var(--accent3);background:#f0f7ff;}
+.pool-card-img{width:50px;height:50px;border-radius:7px;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:24px;background:var(--surface2);overflow:hidden;}
+.pool-card-img img{width:100%;height:100%;object-fit:cover;}
+.pool-card-name{font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pool-card .plus-badge{position:absolute;top:3px;right:4px;background:var(--accent3);color:#fff;font-size:9px;border-radius:7px;padding:1px 4px;}
+
+/* 配置グリッド */
+.placement-controls{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+.grid-sel{padding:4px 8px;border-radius:5px;border:1px solid var(--border);font-family:'M PLUS 1p',sans-serif;font-size:12px;background:var(--surface2);}
+.placement-outer{overflow-x:auto;margin-bottom:14px;}
+.placement-grid{display:grid;gap:6px;}
+/* 配置セル */
+.pc{background:var(--surface2);border:2px dashed var(--border2);border-radius:8px;aspect-ratio:1;min-width:60px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--border2);font-weight:700;}
+.pc:hover{border-color:var(--accent3);}
+.pc.drag-over{border-color:var(--accent3);background:#e8f4ff;}
+.pc.occupied{border-style:solid;border-color:var(--border2);background:var(--surface);}
+.pc-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.pc-emoji{font-size:28px;}
+.pc-name{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.9);font-size:9px;font-weight:700;text-align:center;padding:2px;}
+/* チームバッジ (配置セル上) */
+.pc-team-badge{position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;z-index:5;border:2px solid rgba(255,255,255,.8);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.pc-del{position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(232,48,58,.85);border:none;border-radius:50%;color:#fff;font-size:14px;font-weight:700;cursor:pointer;line-height:24px;text-align:center;display:flex;align-items:center;justify-content:center;z-index:5;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+
+/* アクションバー */
+.select-action-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);}
+.sel-count{font-size:13px;color:var(--text-muted);font-weight:700;}
+
+/* ========== BATTLE ========== */
+#panel-battle{padding:18px;}
+.battle-layout{display:flex;gap:16px;max-width:1300px;margin:0 auto;}
+.battle-main{flex:1;min-width:0;}
+.battle-log-col{width:280px;flex-shrink:0;}
+#battle-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.speed-label{font-size:13px;color:var(--text-muted);}
+#speed-range{width:100px;accent-color:var(--accent);}
+#winner-banner{background:var(--surface);border:2px solid var(--accent2);border-radius:12px;padding:18px;text-align:center;margin-bottom:14px;display:none;box-shadow:0 4px 20px rgba(232,168,0,.15);animation:fadeIn .5s ease;}
+#winner-banner h2{font-size:22px;color:var(--accent2);font-family:'DotGothic16',monospace;margin-bottom:6px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+#arena-wrap{position:relative;margin-bottom:12px;}
+#arrow-canvas{position:absolute;top:0;left:0;pointer-events:none;z-index:10;}
+#arena{display:grid;gap:8px;justify-content:center;}
+
+/* ファイターセル */
+.fighter-cell{position:relative;border:3px solid var(--border);border-radius:10px;overflow:visible;background:var(--surface2);aspect-ratio:1;transition:border-color .2s,box-shadow .2s;}
+.fighter-cell.attacking{border-color:var(--accent);box-shadow:0 0 14px rgba(232,48,58,.3);}
+.fighter-cell.dead{border-color:#ccc!important;background:#ddd;filter:grayscale(1) brightness(.7);}
+.fighter-cell.winner{border-color:var(--accent2)!important;box-shadow:0 0 20px rgba(232,168,0,.5);animation:winner-pulse .8s infinite alternate;}
+@keyframes winner-pulse{from{box-shadow:0 0 10px rgba(232,168,0,.3);}to{box-shadow:0 0 30px rgba(232,168,0,.7);}}
+/* チームカラー枠 */
+.fighter-cell[data-team="a"]{border-color:var(--ta);}
+.fighter-cell[data-team="b"]{border-color:var(--tb);}
+.fighter-cell[data-team="c"]{border-color:var(--tc);}
+.fighter-cell[data-team="d"]{border-color:var(--td);}
+.fighter-img{width:100%;height:100%;object-fit:cover;display:block;border-radius:7px;}
+.fighter-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:42px;background:var(--surface2);}
+.fighter-name-tag{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.88);text-align:center;font-size:10px;font-weight:700;padding:3px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);border-top:1px solid var(--border);border-radius:0 0 7px 7px;}
+.fighter-cell.dead .fighter-name-tag{color:#aaa;}
+.dead-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:26px;background:rgba(0,0,0,.2);color:var(--accent);font-weight:900;}
+.fighter-cell.dead .dead-overlay{display:flex;}
+.hp-strip{position:absolute;bottom:22px;left:3px;right:3px;height:5px;background:rgba(0,0,0,.12);border-radius:3px;overflow:hidden;}
+.hp-fill{height:100%;background:#22bb55;transition:width .3s,background .3s;border-radius:3px;}
+/* チームバッジ バトル中 */
+.fighter-team-badge{position:absolute;top:4px;left:4px;width:16px;height:16px;border-radius:50%;font-size:8px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;z-index:5;border:1px solid rgba(255,255,255,.5);}
+
+/* セリフバブル */
+.speech-bubble{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#fff;border:2px solid var(--accent);border-radius:10px;padding:5px 9px;font-size:11px;font-weight:700;color:var(--text);z-index:100;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.15);max-width:160px;white-space:pre-wrap;text-align:center;animation:bubblePop .15s ease;word-break:break-all;}
+@keyframes bubblePop{from{transform:translateX(-50%) scale(.8);}to{transform:translateX(-50%) scale(1);}}
+.speech-bubble::after{content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--accent);}
+
+/* アニメーション */
+@keyframes flash-hit{0%{filter:brightness(2.5) saturate(0);}100%{filter:brightness(1) saturate(1);}}
+.cell-flash{animation:flash-hit .4s ease-out;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+.cell-shake{animation:shake .3s ease-out;}
+@keyframes dodge-up{0%{transform:translateY(0);}35%{transform:translateY(-14px);}65%{transform:translateY(-14px);}100%{transform:translateY(0);}}
+.cell-dodge{animation:dodge-up .5s ease;}
+@keyframes death-anim{0%{transform:scale(1);opacity:1;}50%{transform:scale(1.08);filter:brightness(2.5) saturate(0);}100%{transform:scale(1);filter:grayscale(1) brightness(.7);}}
+.cell-death{animation:death-anim .6s ease-out forwards;}
+@keyframes revive-anim{0%{filter:grayscale(1) brightness(.7);}50%{filter:brightness(2) saturate(2);}100%{filter:none;}}
+.cell-revive{animation:revive-anim .8s ease-out forwards;}
+
+/* ログ */
+.log-col-title{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+#battle-log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'DotGothic16',monospace;color:var(--text-muted);height:calc(100vh - 200px);max-height:700px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+.log-entry{color:var(--text);}
+.log-entry .atk{color:var(--accent);font-weight:700;}
+.log-entry .def{color:var(--accent3);font-weight:700;}
+.log-entry .dead-log{color:#e8a800;font-weight:700;}
+.log-entry .dodge-log{color:#22aa55;font-weight:700;}
+.log-entry .revive-log{color:#9b59b6;font-weight:700;}
+.log-entry .team-win{color:#e8a800;font-weight:700;}
+
+/* 空セル */
+.empty-cell{aspect-ratio:1;background:#f0eeea;border-radius:10px;border:1px dashed #d8d5ce;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">カオス<span>バトル</span></div>
+  <div class="header-btns">
+    <button class="btn btn-secondary btn-sm" onclick="switchTab('setup')">キャラ登録</button>
+    <button class="btn btn-info btn-sm" onclick="gotoSelect()">配置して開始</button>
+  </div>
+</header>
+<div class="tabs">
+  <div class="tab active" id="tab-setup" onclick="switchTab('setup')">キャラクター登録</div>
+  <div class="tab" id="tab-select" onclick="switchTab('select')">配置モード：キャラ選択</div>
+  <div class="tab" id="tab-battle" onclick="switchTab('battle')">バトル</div>
+</div>
+
+<!-- SETUP -->
+<div class="panel active" id="panel-setup">
+  <div class="setup-inner">
+    <div class="info-bar">キャラクターを登録してください。画像・セリフ・音声を複数追加できます。データはブラウザに自動保存されます。</div>
+    <div class="sec-title">プリセットから追加</div>
+    <div class="preset-strip" id="preset-strip"></div>
+    <div class="sec-title">登録済みキャラクター</div>
+    <div class="char-grid" id="char-list"></div>
+    <div class="add-char-card" id="add-char-card-btn"><span style="font-size:28px">＋</span><span>新しいキャラクターを追加</span></div>
+  </div>
+</div>
+
+<!-- SELECT / 配置 -->
+<div class="panel" id="panel-select">
+  <div class="select-inner">
+    <h2>配置モード：キャラ選択</h2>
+    <p>プールのキャラをクリックでグリッドに追加、またはドラッグして直接配置。セルのチームバッジをクリックでチーム変更(なし→A→B→C→D→なし)。</p>
+
+    <div class="pool-label">キャラクタープール（クリックまたはドラッグで配置）</div>
+    <div class="pool-grid" id="char-pool"></div>
+
+    <div class="placement-controls">
+      <span style="font-size:12px;color:var(--text-muted);">グリッド:</span>
+      <select class="grid-sel" id="grid-cols" onchange="rebuildGrid()"><option value="2">2列</option><option value="3" selected>3列</option><option value="4">4列</option><option value="5">5列</option></select>
+      <select class="grid-sel" id="grid-rows" onchange="rebuildGrid()"><option value="2">2行</option><option value="3" selected>3行</option><option value="4">4行</option><option value="5">5行</option></select>
+      <button class="btn btn-secondary btn-xs" onclick="clearAll()">全クリア</button>
+      <span style="font-size:12px;color:var(--text-muted);">間隔</span>
+      <input type="range" id="speed-range-sel" min="400" max="4000" step="200" value="1000" oninput="iMs=parseInt(this.value);document.getElementById('spd-val-sel').textContent=(iMs/1000).toFixed(1)+'s'" style="width:100px;accent-color:var(--accent);">
+      <span id="spd-val-sel" style="font-size:12px;color:var(--text-muted);">1.0s</span>
+    </div>
+    <div class="placement-outer"><div class="placement-grid" id="placement-grid"></div></div>
+
+    <div class="select-action-bar">
+      <span class="sel-count" id="sel-count">0人配置中</span>
+      <button class="btn btn-secondary btn-sm" onclick="switchTab('setup')">戻る</button>
+      <button class="btn btn-primary" id="battle-go-btn" onclick="launchBattle()" disabled>バトル開始！</button>
+    </div>
+  </div>
+</div>
+
+<!-- BATTLE -->
+<div class="panel" id="panel-battle">
+  <div class="battle-layout">
+    <div class="battle-main">
+      <div id="battle-controls">
+        <span class="speed-label">間隔</span>
+        <input type="range" id="speed-range" min="400" max="4000" step="200" value="1000" oninput="updateSpeed(this.value)">
+        <span id="spd-val" style="font-size:12px;color:var(--text-muted);">1.0s</span>
+        <button class="btn btn-secondary btn-sm" id="pause-btn" onclick="togglePause()" disabled>一時停止</button>
+        <button class="btn btn-secondary btn-sm" onclick="endAndReturn()">終了</button>
+      </div>
+      <div id="winner-banner">
+        <h2>🏆 <span id="winner-name">???</span></h2>
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:10px;">バトル終了！</p>
+        <button class="btn btn-warn btn-sm" onclick="gotoSelect()">もう一度</button>
+      </div>
+      <div id="arena-wrap"><canvas id="arrow-canvas"></canvas><div id="arena"></div></div>
+    </div>
+    <div class="battle-log-col">
+      <div class="log-col-title">バトルログ</div>
+      <div id="battle-log"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   STORAGE
+============================================================ */
+const SK='chaos_v7';
+const SOUND_TYPES=[
+  {key:'attack',label:'攻撃',ph:'「食らえ！」など'},
+  {key:'hit',label:'やられ',ph:'「ぐあっ！」など'},
+  {key:'dodge',label:'回避(opt)',ph:'「よけた！」など'},
+  {key:'death',label:'死亡(opt)',ph:'「やられた…」など'},
+  {key:'revive',label:'蘇生(opt)',ph:'「復活！」など'},
+];
+const PRESETS=[
+  {name:'ドナルド',emoji:'🤡'},{name:'ムスカ',emoji:'🧐'},
+  {name:'キーボクラッシャー',emoji:'💻'},{name:'松岡修造',emoji:'🔥'},
+  {name:'ピカチュウ',emoji:'⚡'},{name:'ドラゴン',emoji:'🐉'},
+  {name:'忍者',emoji:'🥷'},{name:'ロボット',emoji:'🤖'},
+];
+const TEAMS_CYCLE=[null,'a','b','c','d']; // クリックで循環
+const TEAM_COLORS={a:'var(--ta)',b:'var(--tb)',c:'var(--tc)',d:'var(--td)'};
+const TEAM_NAMES={a:'A',b:'B',c:'C',d:'D'};
+
+function save(){try{localStorage.setItem(SK,JSON.stringify(chars));}catch(e){alert('保存容量超過');}}
+function load(){try{const r=localStorage.getItem(SK);if(r)return JSON.parse(r);}catch(e){}return[];}
+let chars=load();
+let nid=chars.length?Math.max(...chars.map(c=>c.id))+1:1;
+function mkChar(name,emoji){
+  return{id:nid++,name,emoji,imgSrc:null,maxHp:100,atk:20,dodgePct:20,revivePct:20,
+    sounds:{attack:[],hit:[],dodge:[],death:[],revive:[]}};
+}
+// 古いデータに新フィールドがない場合の補完
+chars.forEach(c=>{
+  if(c.dodgePct===undefined)c.dodgePct=20;
+  if(c.revivePct===undefined)c.revivePct=20;
+  if(!c.sounds.revive)c.sounds.revive=[];
+});
+
+/* ============================================================
+   PLACEMENT STATE
+   slots: [{charId, instanceId, team}|null]  length = gCols*gRows
+============================================================ */
+let gCols=3, gRows=3;
+let slots=[]; // null or {charId, iid, team}
+let niid=1;
+function mkSlot(charId,team=null){return{charId,iid:niid++,team};}
+
+function initSlots(){
+  const total=gCols*gRows;
+  while(slots.length<total)slots.push(null);
+  slots=slots.slice(0,total);
+  // 削除されたcharのスロットをnullに
+  slots=slots.map(s=>s&&chars.find(c=>c.id===s.charId)?s:null);
+}
+
+/* ============================================================
+   TABS
+============================================================ */
+function switchTab(t){
+  ['setup','select','battle'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('active',x===t);
+    document.getElementById('panel-'+x).classList.toggle('active',x===t);
+  });
+  if(t==='setup') renderSetup();
+  if(t==='select'){initSlots();renderSelectPanel();}
+}
+function gotoSelect(){
+  if(chars.length<1){alert('キャラクターを登録してください！');switchTab('setup');return;}
+  initSlots();
+  renderSelectPanel();
+  switchTab('select');
+}
+
+/* ============================================================
+   SETUP
+============================================================ */
+function renderPresets(){
+  const s=document.getElementById('preset-strip');s.innerHTML='';
+  PRESETS.forEach(p=>{
+    const b=document.createElement('button');b.className='preset-btn';b.textContent=p.emoji+' '+p.name;
+    b.onclick=()=>{chars.push(mkChar(p.name,p.emoji));save();renderSetup();};
+    s.appendChild(b);
+  });
+}
+function addBlankChar(){chars.push(mkChar('キャラ'+nid,'👤'));save();renderSetup();}
+function removeChar(id){
+  if(!confirm('削除しますか？'))return;
+  chars=chars.filter(c=>c.id!==id);
+  slots=slots.map(s=>s&&s.charId===id?null:s);
+  save();renderSetup();
+}
+function renderSetup(){
+  const l=document.getElementById('char-list');l.innerHTML='';
+  if(!chars.length){l.innerHTML='<div class="empty-state"><h3>キャラクターがいません</h3><p>プリセットから追加してください。</p></div>';return;}
+  chars.forEach(c=>l.appendChild(buildCard(c)));
+}
+
+function buildCard(c){
+  const card=document.createElement('div');card.className='char-card';
+  const rm=document.createElement('button');rm.className='remove-char-btn';rm.textContent='✕';rm.onclick=()=>removeChar(c.id);card.appendChild(rm);
+  const top=document.createElement('div');top.className='char-card-top';
+
+  // 画像
+  const ia=document.createElement('div');ia.className='char-img-area';
+  const ii=document.createElement('input');ii.type='file';ii.accept='image/*';ii.style.display='none';
+  ii.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{c.imgSrc=ev.target.result;save();renderSetup();};r.readAsDataURL(f);};
+  card.appendChild(ii);
+  if(c.imgSrc){const img=document.createElement('img');img.src=c.imgSrc;ia.appendChild(img);}else{ia.textContent=c.emoji;}
+  const h=document.createElement('span');h.className='char-img-hint';h.textContent='クリックで画像';ia.appendChild(h);
+  ia.onclick=()=>ii.click();top.appendChild(ia);
+
+  const rt=document.createElement('div');rt.className='char-right';
+
+  // 名前
+  fl(rt,'キャラクター名');
+  const ni=inp(c.name,'char-name-input','text');ni.oninput=e=>{c.name=e.target.value;save();};rt.appendChild(ni);
+
+  // 絵文字
+  fl(rt,'絵文字');
+  const er=document.createElement('div');er.className='char-emoji-row';
+  const ei=inp(c.emoji,'char-emoji-input','text');ei.maxLength=4;ei.oninput=e=>{c.emoji=e.target.value;save();};er.appendChild(ei);
+  if(c.imgSrc){const cb=document.createElement('button');cb.className='btn btn-secondary btn-xs';cb.textContent='画像削除';cb.onclick=()=>{c.imgSrc=null;save();renderSetup();};er.appendChild(cb);}
+  rt.appendChild(er);
+
+  // ステータス行
+  const sr=document.createElement('div');sr.className='stat-row';
+  [
+    {key:'maxHp',lbl:'HP',def:100},
+    {key:'atk',lbl:'攻撃力',def:20},
+    {key:'dodgePct',lbl:'回避率%',def:20},
+    {key:'revivePct',lbl:'蘇生率%',def:20},
+  ].forEach(({key,lbl,def})=>{
+    const w=document.createElement('div');w.className='stat-wrap';
+    fl(w,lbl+' (初期:'+def+')');
+    const i=inp(c[key]!==undefined?c[key]:def,'char-name-input','number');
+    i.min=0;i.max=key.endsWith('Pct')?100:9999;
+    i.oninput=e=>{c[key]=Number(e.target.value);save();};
+    w.appendChild(i);sr.appendChild(w);
+  });
+  rt.appendChild(sr);
+  top.appendChild(rt);card.appendChild(top);
+
+  // サウンド
+  const ss=document.createElement('div');ss.className='sounds-section';
+  const stabs=document.createElement('div');stabs.className='sound-type-tabs';
+  let at='attack';const vw=document.createElement('div');
+  function rvl(){
+    vw.innerHTML='';const vl=document.createElement('div');vl.className='voice-list';
+    c.sounds[at].forEach((item,idx)=>vl.appendChild(buildVI(c,at,item,idx,rvl)));
+    const ab=document.createElement('button');ab.className='voice-add-btn';
+    ab.innerHTML='<span style="font-size:18px">＋</span> セリフ / 音声を追加';
+    ab.onclick=()=>{c.sounds[at].push({text:'',audio:null});save();rvl();};
+    vl.appendChild(ab);vw.appendChild(vl);
+  }
+  SOUND_TYPES.forEach(st=>{
+    const tab=document.createElement('div');tab.className='st-tab'+(st.key===at?' active':'');
+    const cnt=c.sounds[st.key].length;tab.textContent=st.label+(cnt>0?' ('+cnt+')':'');
+    tab.onclick=()=>{at=st.key;stabs.querySelectorAll('.st-tab').forEach((t,i)=>t.classList.toggle('active',SOUND_TYPES[i].key===at));rvl();};
+    stabs.appendChild(tab);
+  });
+  ss.appendChild(stabs);rvl();ss.appendChild(vw);
+  const svw=document.createElement('div');svw.style.cssText='text-align:right;margin-top:10px;';
+  const svb=document.createElement('button');svb.className='btn btn-primary btn-sm';svb.textContent='このキャラを保存';
+  svb.onclick=()=>{save();alert('保存しました！');};svw.appendChild(svb);ss.appendChild(svw);
+  card.appendChild(ss);return card;
+}
+
+function fl(parent,text){const l=document.createElement('div');l.className='field-label';l.textContent=text;parent.appendChild(l);}
+function inp(val,cls,type){const i=document.createElement('input');i.className=cls;i.type=type;i.value=val;return i;}
+
+function buildVI(c,tk,item,idx,refresh){
+  const st=SOUND_TYPES.find(s=>s.key===tk);
+  const vi=document.createElement('div');vi.className='voice-item';
+  const left=document.createElement('div');left.className='voice-item-left';
+  const ti=document.createElement('input');ti.className='voice-text-input';ti.type='text';ti.value=item.text||'';ti.placeholder=st.ph;ti.oninput=e=>{item.text=e.target.value;save();};left.appendChild(ti);
+  const fr=document.createElement('div');fr.className='voice-file-row';
+  const fi=document.createElement('input');fi.type='file';fi.accept='audio/*';fi.style.display='none';
+  const ub=document.createElement('button');ub.className='snd-upload-btn'+(item.audio?' has-file':'');ub.textContent=item.audio?'✓ 音声あり':'音声アップロード';ub.onclick=()=>fi.click();
+  fi.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{item.audio=ev.target.result;save();refresh();};r.readAsDataURL(f);};
+  left.appendChild(fi);
+  const pb=document.createElement('button');pb.className='snd-play-btn';pb.textContent='▶';pb.style.display=item.audio?'inline-block':'none';pb.onclick=()=>{if(item.audio)new Audio(item.audio).play().catch(()=>{});};
+  fr.appendChild(ub);fr.appendChild(pb);left.appendChild(fr);vi.appendChild(left);
+  const db=document.createElement('button');db.className='voice-del-btn';db.textContent='✕';db.onclick=()=>{c.sounds[tk].splice(idx,1);save();refresh();};vi.appendChild(db);return vi;
+}
+
+/* ============================================================
+   SELECT / PLACEMENT PANEL
+============================================================ */
+// ドラッグ元管理
+let dragSrcCharId=null; // プールからドラッグ
+let dragSrcSlotIdx=null; // スロットからスロットへドラッグ
+
+function renderSelectPanel(){
+  renderPool();
+  rebuildGrid();
+  updateSelCount();
+}
+
+/* プール描画 */
+function renderPool(){
+  const pool=document.getElementById('char-pool');pool.innerHTML='';
+  chars.forEach(c=>{
+    const card=document.createElement('div');card.className='pool-card';
+    card.draggable=true;
+    card.dataset.charId=c.id;
+    const ib=document.createElement('div');ib.className='pool-card-img';
+    if(c.imgSrc){const img=document.createElement('img');img.src=c.imgSrc;ib.appendChild(img);}else{ib.textContent=c.emoji;}
+    card.appendChild(ib);
+    const nm=document.createElement('div');nm.className='pool-card-name';nm.textContent=c.name;card.appendChild(nm);
+    const badge=document.createElement('span');badge.className='plus-badge';badge.textContent='＋';card.appendChild(badge);
+
+    // クリック: 空きスロットに自動配置
+    card.onclick=()=>autoPlace(c.id);
+
+    // ドラッグ開始
+    card.ondragstart=e=>{dragSrcCharId=c.id;dragSrcSlotIdx=null;e.dataTransfer.effectAllowed='copy';};
+    card.ondragend=()=>{dragSrcCharId=null;};
+    pool.appendChild(card);
+  });
+}
+
+/* グリッド再構築 */
+function rebuildGrid(){
+  gCols=parseInt(document.getElementById('grid-cols').value)||3;
+  gRows=parseInt(document.getElementById('grid-rows').value)||3;
+  initSlots();
+  const grid=document.getElementById('placement-grid');
+  grid.style.gridTemplateColumns=`repeat(${gCols},1fr)`;
+  grid.innerHTML='';
+  slots.forEach((s,i)=>grid.appendChild(buildPCell(s,i)));
+  updateSelCount();
+}
+
+function buildPCell(s,idx){
+  const cell=document.createElement('div');cell.className='pc'+(s?' occupied':'');
+  cell.dataset.idx=idx;
+
+  if(s){
+    const c=chars.find(x=>x.id===s.charId);
+    if(c){
+      // 画像/絵文字
+      if(c.imgSrc){const img=document.createElement('img');img.className='pc-img';img.src=c.imgSrc;cell.appendChild(img);}
+      else{const em=document.createElement('div');em.className='pc-emoji';em.textContent=c.emoji;cell.appendChild(em);}
+      // 名前タグ
+      const nm=document.createElement('div');nm.className='pc-name';nm.textContent=c.name;cell.appendChild(nm);
+      // チームバッジ
+      const tb=document.createElement('div');tb.className='pc-team-badge';
+      tb.style.background=s.team?TEAM_COLORS[s.team]:'rgba(100,100,100,.6)';
+      tb.textContent=s.team?TEAM_NAMES[s.team]:'?';
+      tb.title='タップでチーム変更';
+      tb.onclick=e=>{e.stopPropagation();cycleTeam(idx);};
+      cell.appendChild(tb);
+      // 削除ボタン (常時表示・大きめ)
+      const db=document.createElement('button');db.className='pc-del';db.textContent='✕';
+      db.onclick=e=>{e.stopPropagation();slots[idx]=null;rebuildGrid();};
+      cell.appendChild(db);
+    }
+    // セル全体クリックでチーム変更 (occupied時)
+    cell.onclick=()=>cycleTeam(idx);
+    // スロット→スロット ドラッグ
+    cell.draggable=true;
+    cell.ondragstart=e=>{dragSrcSlotIdx=idx;dragSrcCharId=null;e.dataTransfer.effectAllowed='move';};
+    cell.ondragend=()=>{dragSrcSlotIdx=null;};
+  } else {
+    cell.textContent='+';
+  }
+
+  // ドロップ受け入れ
+  cell.ondragover=e=>{e.preventDefault();cell.classList.add('drag-over');};
+  cell.ondragleave=()=>cell.classList.remove('drag-over');
+  cell.ondrop=e=>{
+    e.preventDefault();cell.classList.remove('drag-over');
+    if(dragSrcCharId!=null){
+      // プールから
+      slots[idx]=mkSlot(dragSrcCharId,null);
+      dragSrcCharId=null;
+    } else if(dragSrcSlotIdx!=null && dragSrcSlotIdx!==idx){
+      // スロット間移動
+      const tmp=slots[idx];slots[idx]=slots[dragSrcSlotIdx];slots[dragSrcSlotIdx]=tmp;
+      dragSrcSlotIdx=null;
+    }
+    rebuildGrid();
+  };
+
+  // クリック: セルが空ならプールピッカー
+  if(!s){cell.onclick=()=>showPicker(idx);}
+
+  return cell;
+}
+
+function cycleTeam(idx){
+  if(!slots[idx])return;
+  const cur=slots[idx].team;
+  const ci=TEAMS_CYCLE.indexOf(cur);
+  slots[idx].team=TEAMS_CYCLE[(ci+1)%TEAMS_CYCLE.length];
+  rebuildGrid();
+}
+
+function autoPlace(charId){
+  // 空きスロットを先頭から探す
+  const empty=slots.findIndex(s=>s===null);
+  if(empty===-1){alert('グリッドが満杯です。列・行を増やすかクリアしてください。');return;}
+  slots[empty]=mkSlot(charId,null);
+  rebuildGrid();
+}
+
+function showPicker(idx){
+  let ex=document.getElementById('__picker');if(ex)ex.remove();
+  const modal=document.createElement('div');modal.id='__picker';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;display:flex;align-items:center;justify-content:center;';
+  const box=document.createElement('div');box.style.cssText='background:#fff;border-radius:14px;padding:20px;max-width:500px;width:92%;max-height:80vh;overflow-y:auto;';
+  const ti=document.createElement('div');ti.style.cssText='font-weight:700;font-size:15px;margin-bottom:12px;';ti.textContent='配置するキャラを選択';box.appendChild(ti);
+  const g=document.createElement('div');g.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;';
+  chars.forEach(c=>{
+    const card=document.createElement('div');card.style.cssText='border:2px solid #d8d5ce;border-radius:9px;padding:8px 5px;text-align:center;cursor:pointer;transition:border-color .12s;';
+    const ib=document.createElement('div');ib.style.cssText='width:50px;height:50px;border-radius:7px;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:24px;background:#f0eeea;overflow:hidden;';
+    if(c.imgSrc){const img=document.createElement('img');img.style.cssText='width:100%;height:100%;object-fit:cover;';img.src=c.imgSrc;ib.appendChild(img);}else{ib.textContent=c.emoji;}
+    const nm=document.createElement('div');nm.style.cssText='font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';nm.textContent=c.name;
+    card.appendChild(ib);card.appendChild(nm);
+    card.onclick=()=>{slots[idx]=mkSlot(c.id,null);modal.remove();rebuildGrid();};
+    card.onmouseenter=()=>card.style.borderColor='#1a7abf';card.onmouseleave=()=>card.style.borderColor='#d8d5ce';
+    g.appendChild(card);
+  });
+  box.appendChild(g);
+  const cb=document.createElement('button');cb.style.cssText='margin-top:14px;padding:6px 18px;background:#f0eeea;border:1px solid #bbb;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;';cb.textContent='キャンセル';cb.onclick=()=>modal.remove();box.appendChild(cb);
+  modal.appendChild(box);modal.onclick=e=>{if(e.target===modal)modal.remove();};document.body.appendChild(modal);
+}
+
+function clearAll(){slots=slots.map(()=>null);rebuildGrid();}
+
+function updateSelCount(){
+  const n=slots.filter(Boolean).length;
+  document.getElementById('sel-count').textContent=n+'人配置中';
+  document.getElementById('battle-go-btn').disabled=n<2;
+}
+
+/* ============================================================
+   BATTLE LAUNCH
+============================================================ */
+let iMs=1000;
+function updateSpeed(v){iMs=parseInt(v);document.getElementById('spd-val').textContent=(iMs/1000).toFixed(1)+'s';}
+
+function launchBattle(){
+  const placed=slots.filter(Boolean);
+  if(placed.length<2){alert('2人以上配置してください。');return;}
+
+  // チームが設定されている場合、チームが1種類だけなら警告
+  const teams=new Set(placed.filter(s=>s.team).map(s=>s.team));
+  const hasTeams=teams.size>0;
+  const allSameTeam=hasTeams && placed.every(s=>s.team===placed[0].team);
+  if(allSameTeam){
+    if(!confirm('全員同じチームです。チームなし同士のバトルとして続けますか？'))return;
+  }
+
+  buildFighters(placed);
+  switchTab('battle');
+}
+
+/* ============================================================
+   BATTLE ENGINE
+============================================================ */
+let fighters=[];
+let bActive=false,paused=false,trRunning=false,tto=null;
+// 発声中フラグ (hit/death中は次のターンを開始しない)
+let voiceLock=false;
+
+function buildFighters(placed){
+  clearT();bActive=true;paused=false;trRunning=false;voiceLock=false;
+  document.getElementById('winner-banner').style.display='none';
+  document.getElementById('pause-btn').disabled=false;
+  document.getElementById('pause-btn').textContent='一時停止';
+  document.getElementById('battle-log').innerHTML='';
+
+  fighters=placed.map(s=>{
+    const c=chars.find(x=>x.id===s.charId);if(!c)return null;
+    return{
+      iid:s.iid, charId:c.id, name:c.name, emoji:c.emoji, imgSrc:c.imgSrc,
+      hp:c.maxHp||100, maxHp:c.maxHp||100, atk:c.atk||20,
+      dodgePct:c.dodgePct!==undefined?c.dodgePct:20,
+      revivePct:c.revivePct!==undefined?c.revivePct:20,
+      alive:true, team:s.team||null, gridPos:slots.indexOf(s),
+      sounds:JSON.parse(JSON.stringify(c.sounds)),
+    };
+  }).filter(Boolean);
+
+  // 間隔スライダーを同期
+  const srSel=document.getElementById('speed-range-sel');
+  if(srSel)iMs=parseInt(srSel.value);
+  document.getElementById('speed-range').value=iMs;
+  document.getElementById('spd-val').textContent=(iMs/1000).toFixed(1)+'s';
+
+  renderArena();
+  scheduleNext();
+}
+
+function resetBattle(){clearT();bActive=false;paused=false;trRunning=false;voiceLock=false;fighters=[];document.getElementById('arena').innerHTML='';document.getElementById('winner-banner').style.display='none';document.getElementById('battle-log').innerHTML='';document.getElementById('pause-btn').disabled=true;clearArrow();}
+function endAndReturn(){resetBattle();switchTab('select');}
+function gotoSelect(){if(!bActive){resetBattle();}renderSelectPanel();switchTab('select');}
+function togglePause(){if(!bActive)return;paused=!paused;document.getElementById('pause-btn').textContent=paused?'再開':'一時停止';if(!paused&&!trRunning)scheduleNext();}
+function clearT(){if(tto){clearTimeout(tto);tto=null;}}
+
+function scheduleNext(){
+  clearT();
+  if(!bActive||paused)return;
+  tto=setTimeout(async()=>{
+    if(paused||!bActive)return;
+    // voiceLock中は少し待ってリトライ
+    if(voiceLock){tto=setTimeout(()=>scheduleNext(),200);return;}
+    trRunning=true;
+    await doTurn();
+    trRunning=false;
+    scheduleNext();
+  },iMs);
+}
+
+/* ---- チーム勝利判定 ---- */
+function checkWin(){
+  const alive=fighters.filter(f=>f.alive);
+  if(alive.length===0){endBattle(null,null);return true;}
+  if(alive.length===1){endBattle(alive[0],null);return true;}
+
+  // チームバトルの場合: 生存チームが1種類以下なら終了
+  const hasTeams=fighters.some(f=>f.team);
+  if(hasTeams){
+    const aliveTeams=new Set(alive.filter(f=>f.team).map(f=>f.team));
+    // チームなし(null)のファイターがいる場合は除外判定が複雑なので、
+    // チームありファイターが全員同じチームになったら
+    const aliveWithTeam=alive.filter(f=>f.team);
+    const aliveNoTeam=alive.filter(f=>!f.team);
+    if(aliveWithTeam.length>0 && aliveTeams.size===1 && aliveNoTeam.length===0){
+      // 全員同じチーム→そのチームの勝利
+      endBattle(null,aliveTeams.values().next().value);return true;
+    }
+    // チームなし同士だけが残った場合 → 通常の最後の1人まで
+    if(aliveWithTeam.length===0 && aliveNoTeam.length<=1){endBattle(aliveNoTeam[0]||null,null);return true;}
+    // チームありが1人でチームなしもいる → まだ続く
+  }
+  return false;
+}
+
+/* ---- メインターン ---- */
+async function doTurn(){
+  if(!bActive)return;
+  if(checkWin())return;
+
+  const alive=fighters.filter(f=>f.alive);
+  if(alive.length<2)return;
+
+  const attacker=alive[Math.floor(Math.random()*alive.length)];
+
+  // 攻撃対象: チームが設定されているなら敵チームのみ
+  let targets;
+  if(attacker.team){
+    targets=alive.filter(f=>f.iid!==attacker.iid&&f.team!==attacker.team);
+    if(!targets.length)targets=alive.filter(f=>f.iid!==attacker.iid); // 全員同チームならフリー
+  } else {
+    targets=alive.filter(f=>f.iid!==attacker.iid);
+  }
+  if(!targets.length)return;
+  const target=targets[Math.floor(Math.random()*targets.length)];
+
+  // ---- 攻撃フェーズ ----
+  drawArrow(attacker.iid,target.iid);
+  const atkCell=document.getElementById('cell-'+attacker.iid);
+  if(atkCell)atkCell.classList.add('attacking');
+
+  // 攻撃セリフ/音声 (待機)
+  const atkV=pickR(attacker.sounds.attack);
+  if(atkV&&(atkV.text||atkV.audio))await speechWait(attacker.iid,atkV);
+  if(!bActive)return;
+
+  // 1秒待機後ヒット
+  await wait(1000);
+  if(!bActive)return;
+
+  // 矢印は攻撃フェーズ中ずっと残す (hit/deathが終わるまで残す)
+
+  // ---- 回避判定 ----
+  const dodgeChance=(target.dodgePct!==undefined?target.dodgePct:20)/100;
+  if(Math.random()<dodgeChance){
+    const dc=document.getElementById('cell-'+target.iid);
+    if(dc){dc.classList.add('cell-dodge');setTimeout(()=>dc.classList.remove('cell-dodge'),500);}
+    const dv=pickR(target.sounds.dodge);
+    if(dv&&(dv.text||dv.audio)){
+      voiceLock=true;
+      playVoice(dv,()=>{voiceLock=false;});
+      if(dv.text)showBubble(target.iid,dv.text,Math.max(1500,estimateDur(dv)));
+    }
+    addLog(`<span class="dodge-log">💨 ${target.name} は回避した！</span>`);
+    await wait(400);
+    clearArrow();if(atkCell)atkCell.classList.remove('attacking');
+    return;
+  }
+
+  // ---- ダメージ ----
+  const dmg=Math.max(1,Math.floor((Number(attacker.atk)||20)*(0.8+Math.random()*.4)));
+  target.hp=Math.max(0,target.hp-dmg);
+  const dc=document.getElementById('cell-'+target.iid);
+  if(dc){dc.classList.add('cell-flash','cell-shake');setTimeout(()=>dc.classList.remove('cell-flash','cell-shake'),400);}
+  updateHp(target);
+
+  const tl=attacker.team?' ['+TEAM_NAMES[attacker.team]+']':'';
+  const tl2=target.team?' ['+TEAM_NAMES[target.team]+']':'';
+  addLog(`<span class="atk">${attacker.name}${tl}</span> → <span class="def">${target.name}${tl2}</span> に ${dmg} ダメージ！（残HP:${target.hp}）`);
+
+  // ---- やられ音声 (非同期ロック) ----
+  if(target.hp>0){
+    const hv=pickR(target.sounds.hit);
+    if(hv&&(hv.text||hv.audio)){
+      voiceLock=true;
+      // 矢印はhit音声が終わるまで維持
+      await speechWait(target.iid,hv);
+      voiceLock=false;
+    }
+    clearArrow();if(atkCell)atkCell.classList.remove('attacking');
+    return;
+  }
+
+  // ---- 死亡 ----
+  target.alive=false;
+  if(dc){dc.classList.add('cell-death');setTimeout(()=>{dc.classList.remove('cell-death','alive');dc.classList.add('dead');},600);}
+  addLog(`<span class="dead-log">☠ ${target.name} 脱落！</span>`);
+
+  // 死亡音声 (矢印はそのまま維持・ロック)
+  const deathV=pickR(target.sounds.death);
+  if(deathV&&(deathV.text||deathV.audio)){
+    voiceLock=true;
+    await speechWait(target.iid,deathV);
+    voiceLock=false;
+  } else {
+    await wait(700);
+  }
+
+  // 矢印消去・攻撃状態解除
+  clearArrow();if(atkCell)atkCell.classList.remove('attacking');
+  if(!bActive)return;
+
+  // ---- 蘇生判定 (revive セリフ/音声がある場合のみ) ----
+  const revChance=(target.revivePct||0)/100;
+  const hasReviveVoice=target.sounds.revive&&target.sounds.revive.length>0;
+  if(revChance>0&&hasReviveVoice&&Math.random()<revChance){
+    // 蘇生!
+    await wait(400);
+    target.alive=true;
+    target.hp=Math.floor(target.maxHp*0.3); // 最大HPの30%で復活
+    if(dc){
+      dc.classList.remove('dead');dc.classList.add('alive');
+      dc.classList.add('cell-revive');
+      setTimeout(()=>dc.classList.remove('cell-revive'),800);
+    }
+    updateHp(target);
+    const rv=pickR(target.sounds.revive);
+    if(rv&&(rv.text||rv.audio))await speechWait(target.iid,rv);
+    addLog(`<span class="revive-log">✨ ${target.name} 蘇生！（HP:${target.hp}）</span>`);
+  }
+
+  checkWin();
+}
+
+/* ============================================================
+   SPEECH / AUDIO
+============================================================ */
+// resolveまで待つ (攻撃セリフ・やられセリフ・死亡セリフ用)
+function speechWait(iid,entry){
+  return new Promise(resolve=>{
+    if(entry.text)showBubble(iid,entry.text,null);
+    if(entry.audio){
+      const a=new Audio(entry.audio);
+      const done=()=>{removeBubble(iid);resolve();};
+      a.onended=done;a.onerror=done;
+      a.play().catch(()=>{removeBubble(iid);resolve();});
+    } else {
+      const dur=estimateDur(entry);
+      setTimeout(()=>{removeBubble(iid);resolve();},dur);
+    }
+  });
+}
+
+// fire-and-forget (コールバックで終了通知)
+function playVoice(entry,onDone){
+  if(entry.audio){
+    const a=new Audio(entry.audio);
+    a.onended=onDone||null;a.onerror=onDone||null;
+    a.play().catch(()=>{if(onDone)onDone();});
+  } else {
+    const dur=estimateDur(entry);
+    setTimeout(onDone?onDone:()=>{},dur);
+  }
+}
+
+function estimateDur(entry){return Math.max(1000,(entry.text||'').length*100);}
+function showBubble(iid,text,dur){
+  removeBubble(iid);
+  const cell=document.getElementById('cell-'+iid);if(!cell)return;
+  const b=document.createElement('div');b.className='speech-bubble';b.id='bubble-'+iid;b.textContent=text;
+  cell.appendChild(b);if(dur)setTimeout(()=>removeBubble(iid),dur);
+}
+function removeBubble(iid){const b=document.getElementById('bubble-'+iid);if(b)b.remove();}
+function pickR(arr){if(!arr||!arr.length)return null;return arr[Math.floor(Math.random()*arr.length)];}
+function wait(ms){return new Promise(r=>setTimeout(r,ms));}
+
+/* ============================================================
+   ARENA
+============================================================ */
+function renderArena(){
+  const arena=document.getElementById('arena');arena.innerHTML='';
+  const total=gCols*gRows;
+  const cs=Math.min(190,Math.floor(900/gCols));
+  arena.style.gridTemplateColumns=`repeat(${gCols},${cs}px)`;
+
+  for(let i=0;i<total;i++){
+    const f=fighters.find(x=>x.gridPos===i);
+    if(!f){
+      const em=document.createElement('div');em.className='empty-cell';em.style.aspectRatio='1';arena.appendChild(em);continue;
+    }
+    const cell=document.createElement('div');cell.className='fighter-cell alive';cell.id='cell-'+f.iid;
+    if(f.team)cell.setAttribute('data-team',f.team);
+
+    if(f.imgSrc){const img=document.createElement('img');img.className='fighter-img';img.src=f.imgSrc;cell.appendChild(img);}
+    else{const ph=document.createElement('div');ph.className='fighter-placeholder';ph.textContent=f.emoji;cell.appendChild(ph);}
+
+    if(f.team){
+      const tb=document.createElement('div');tb.className='fighter-team-badge';
+      tb.style.background=TEAM_COLORS[f.team];tb.textContent=TEAM_NAMES[f.team];cell.appendChild(tb);
+    }
+
+    const hs=document.createElement('div');hs.className='hp-strip';
+    const hf=document.createElement('div');hf.className='hp-fill';hf.id='hp-'+f.iid;hf.style.width='100%';
+    hs.appendChild(hf);cell.appendChild(hs);
+
+    const nt=document.createElement('div');nt.className='fighter-name-tag';nt.textContent=f.name;cell.appendChild(nt);
+    const dov=document.createElement('div');dov.className='dead-overlay';dov.textContent='×';cell.appendChild(dov);
+    arena.appendChild(cell);
+  }
+  setTimeout(()=>resizeC(),60);
+}
+
+function updateHp(f){
+  const fill=document.getElementById('hp-'+f.iid);if(!fill)return;
+  const p=(f.hp/f.maxHp)*100;fill.style.width=p+'%';fill.style.background=p>50?'#22bb55':p>25?'#e8a800':'#e8303a';
+}
+
+function endBattle(winner,winTeam){
+  clearT();bActive=false;
+  let label='';
+  if(winTeam){label=`チーム${TEAM_NAMES[winTeam]} の勝利！`;}
+  else if(winner){label=winner.name+' の勝利！';}
+  else{label='引き分け';}
+  if(winner){const cell=document.getElementById('cell-'+winner.iid);if(cell)cell.classList.add('winner');}
+  document.getElementById('winner-name').textContent=label;
+  document.getElementById('winner-banner').style.display='block';
+  addLog(`🏆 ${label}`);
+  clearArrow();
+}
+
+/* ============================================================
+   ARROW
+============================================================ */
+function resizeC(){
+  const w=document.getElementById('arena-wrap');const cv=document.getElementById('arrow-canvas');
+  if(!w||!cv)return;cv.width=w.offsetWidth;cv.height=w.offsetHeight;
+}
+function ctr(iid){
+  const cell=document.getElementById('cell-'+iid);const wrap=document.getElementById('arena-wrap');
+  if(!cell||!wrap)return null;
+  const cr=cell.getBoundingClientRect();const wr=wrap.getBoundingClientRect();
+  return{x:cr.left-wr.left+cr.width/2,y:cr.top-wr.top+cr.height/2};
+}
+function drawArrow(fi,ti){
+  const cv=document.getElementById('arrow-canvas');const ctx=cv.getContext('2d');
+  const from=ctr(fi);const to=ctr(ti);if(!from||!to)return;
+  const ang=Math.atan2(to.y-from.y,to.x-from.x);const hl=14;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.save();ctx.strokeStyle='#e8303a';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();
+  ctx.fillStyle='#e8303a';ctx.beginPath();ctx.moveTo(to.x,to.y);
+  ctx.lineTo(to.x-hl*Math.cos(ang-Math.PI/6),to.y-hl*Math.sin(ang-Math.PI/6));
+  ctx.lineTo(to.x-hl*Math.cos(ang+Math.PI/6),to.y-hl*Math.sin(ang+Math.PI/6));
+  ctx.closePath();ctx.fill();ctx.restore();
+}
+function clearArrow(){const cv=document.getElementById('arrow-canvas');if(cv)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);}
+
+/* ============================================================
+   LOG
+============================================================ */
+function addLog(html){
+  const log=document.getElementById('battle-log');
+  const e=document.createElement('div');e.className='log-entry';e.innerHTML=html;
+  log.appendChild(e);
+  log.scrollTop=log.scrollHeight;
+}
+
+/* ============================================================
+   INIT
+============================================================ */
+document.addEventListener('DOMContentLoaded',()=>{
+  renderPresets();
+  renderSetup();
+  const ab=document.getElementById('add-char-card-btn');
+  if(ab)ab.addEventListener('click',addBlankChar);
+  window.addEventListener('resize',()=>{if(bActive)resizeC();});
+});
+</script>
+</body>
+</html>
