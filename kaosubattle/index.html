@@ -228,7 +228,8 @@ header{display:none;}
         <option value="4">4×4</option>
       </select>
       <button class="btn btn-secondary btn-xs" onclick="clearAll()">全クリア</button>
-      <button class="btn btn-secondary btn-xs" onclick="randomFill()">ランダム登場</button>
+      <button class="btn btn-secondary btn-xs" onclick="randomFill(false)">ランダム登場</button>
+      <button class="btn btn-secondary btn-xs" onclick="randomFill(true)">ランダム登場(重複あり)</button>
       <span style="font-size:12px;color:var(--text-muted);">ターン間隔(秒)</span>
       <input type="number" id="speed-input-sel" min="0.1" max="30" step="0.1" value="0.5" oninput="onSelSpeedInput(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
       <span style="margin-left:6px;width:1px;height:20px;background:var(--border2);display:inline-block;vertical-align:middle;"></span>
@@ -599,15 +600,19 @@ function showPicker(idx){
 }
 
 function clearAll(){slots=slots.map(()=>null);rebuildGrid();}
-function randomFill(){
-  // 全スロットをクリアしてcharをシャッフルしてランダムに配置
+function randomFill(allowDup){
   slots=slots.map(()=>null);
   if(!chars.length){rebuildGrid();return;}
   const total=gCols*gRows;
-  // charをシャッフル（同じキャラを何度でも使えるようにtotalぶん作る）
-  const pool=[];
-  for(let i=0;i<total;i++) pool.push(chars[Math.floor(Math.random()*chars.length)]);
-  pool.forEach((c,i)=>{if(i<total)slots[i]=mkSlot(c.id,null);});
+  if(allowDup){
+    // 重複あり: 毎回全charからランダムに選ぶ
+    for(let i=0;i<total;i++) slots[i]=mkSlot(chars[Math.floor(Math.random()*chars.length)].id,null);
+  } else {
+    // 重複なし: charをシャッフルして先頭からtotal個(charが足りなければそこまで)
+    const shuffled=[...chars].sort(()=>Math.random()-.5);
+    const count=Math.min(total,shuffled.length);
+    for(let i=0;i<count;i++) slots[i]=mkSlot(shuffled[i].id,null);
+  }
   rebuildGrid();
 }
 
