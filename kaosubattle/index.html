@@ -98,18 +98,18 @@ header{background:var(--surface);border-bottom:2px solid var(--accent);padding:1
 .placement-controls{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
 .grid-sel{padding:4px 8px;border-radius:5px;border:1px solid var(--border);font-family:'M PLUS 1p',sans-serif;font-size:12px;background:var(--surface2);}
 .placement-outer{overflow-x:auto;margin-bottom:14px;}
-.placement-grid{display:grid;gap:6px;}
+.placement-grid{display:grid;gap:5px;}
 /* 配置セル */
-.pc{background:var(--surface2);border:2px dashed var(--border2);border-radius:8px;aspect-ratio:1;min-width:60px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--border2);font-weight:700;}
+.pc{background:var(--surface2);border:2px dashed var(--border2);border-radius:8px;aspect-ratio:1;min-width:48px;max-width:90px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--border2);font-weight:700;}
 .pc:hover{border-color:var(--accent3);}
 .pc.drag-over{border-color:var(--accent3);background:#e8f4ff;}
 .pc.occupied{border-style:solid;border-color:var(--border2);background:var(--surface);}
 .pc-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
-.pc-emoji{font-size:28px;}
-.pc-name{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.9);font-size:9px;font-weight:700;text-align:center;padding:2px;}
+.pc-emoji{font-size:22px;}
+.pc-name{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.9);font-size:8px;font-weight:700;text-align:center;padding:1px 2px;}
 /* チームバッジ (配置セル上) */
-.pc-team-badge{position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;z-index:5;border:2px solid rgba(255,255,255,.8);box-shadow:0 1px 4px rgba(0,0,0,.3);}
-.pc-del{position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(232,48,58,.85);border:none;border-radius:50%;color:#fff;font-size:14px;font-weight:700;cursor:pointer;line-height:24px;text-align:center;display:flex;align-items:center;justify-content:center;z-index:5;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.pc-team-badge{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;z-index:5;border:2px solid rgba(255,255,255,.8);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.pc-del{position:absolute;top:4px;right:4px;width:30px;height:30px;background:rgba(232,48,58,.9);border:none;border-radius:50%;color:#fff;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.35);}
 
 /* アクションバー */
 .select-action-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);}
@@ -225,16 +225,15 @@ header{background:var(--surface);border-bottom:2px solid var(--accent);padding:1
       <select class="grid-sel" id="grid-rows" onchange="rebuildGrid()"><option value="2">2行</option><option value="3" selected>3行</option><option value="4">4行</option><option value="5">5行</option></select>
       <button class="btn btn-secondary btn-xs" onclick="clearAll()">全クリア</button>
       <span style="font-size:12px;color:var(--text-muted);">間隔</span>
-      <input type="range" id="speed-range-sel" min="400" max="4000" step="200" value="1000" oninput="iMs=parseInt(this.value);document.getElementById('spd-val-sel').textContent=(iMs/1000).toFixed(1)+'s'" style="width:100px;accent-color:var(--accent);">
-      <span id="spd-val-sel" style="font-size:12px;color:var(--text-muted);">1.0s</span>
+      <input type="range" id="speed-range-sel" min="500" max="4000" step="100" value="500" oninput="iMs=parseInt(this.value);document.getElementById('spd-val-sel').textContent=(iMs/1000).toFixed(1)+'s'" style="width:120px;accent-color:var(--accent);">
+      <span id="spd-val-sel" style="font-size:12px;color:var(--text-muted);">0.5s</span>
     </div>
-    <div class="placement-outer"><div class="placement-grid" id="placement-grid"></div></div>
-
-    <div class="select-action-bar">
+    <div class="select-action-bar" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);border-top:none;padding-top:0;">
       <span class="sel-count" id="sel-count">0人配置中</span>
       <button class="btn btn-secondary btn-sm" onclick="switchTab('setup')">戻る</button>
       <button class="btn btn-primary" id="battle-go-btn" onclick="launchBattle()" disabled>バトル開始！</button>
     </div>
+    <div class="placement-outer"><div class="placement-grid" id="placement-grid"></div></div>
   </div>
 </div>
 
@@ -244,8 +243,8 @@ header{background:var(--surface);border-bottom:2px solid var(--accent);padding:1
     <div class="battle-main">
       <div id="battle-controls">
         <span class="speed-label">間隔</span>
-        <input type="range" id="speed-range" min="400" max="4000" step="200" value="1000" oninput="updateSpeed(this.value)">
-        <span id="spd-val" style="font-size:12px;color:var(--text-muted);">1.0s</span>
+        <input type="range" id="speed-range" min="500" max="4000" step="100" value="500" oninput="updateSpeed(this.value)">
+        <span id="spd-val" style="font-size:12px;color:var(--text-muted);">0.5s</span>
         <button class="btn btn-secondary btn-sm" id="pause-btn" onclick="togglePause()" disabled>一時停止</button>
         <button class="btn btn-secondary btn-sm" onclick="endAndReturn()">終了</button>
       </div>
@@ -601,7 +600,7 @@ function updateSelCount(){
 /* ============================================================
    BATTLE LAUNCH
 ============================================================ */
-let iMs=1000;
+let iMs=500;
 function updateSpeed(v){iMs=parseInt(v);document.getElementById('spd-val').textContent=(iMs/1000).toFixed(1)+'s';}
 
 function launchBattle(){
@@ -869,7 +868,10 @@ function wait(ms){return new Promise(r=>setTimeout(r,ms));}
 function renderArena(){
   const arena=document.getElementById('arena');arena.innerHTML='';
   const total=gCols*gRows;
-  const cs=Math.min(190,Math.floor(900/gCols));
+  // バトル中は配置モードより大きいセルサイズ（列数で動的に調整）
+  const maxW=document.getElementById('arena-wrap').offsetWidth||700;
+  const available=Math.min(maxW, gCols<=2?500:gCols<=3?680:gCols<=4?800:900);
+  const cs=Math.floor((available-(gCols-1)*8)/gCols);
   arena.style.gridTemplateColumns=`repeat(${gCols},${cs}px)`;
 
   for(let i=0;i<total;i++){
