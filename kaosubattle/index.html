@@ -657,11 +657,10 @@ function launchBattle(){
 ============================================================ */
 let fighters=[];
 let bActive=false,paused=false,trRunning=false,tto=null;
-// 発声中フラグ (hit/death中は次のターンを開始しない)
-let voiceLock=false;
+
 
 function buildFighters(placed){
-  clearT();bActive=true;paused=false;trRunning=false;voiceLock=false;
+  clearT();bActive=true;paused=false;trRunning=false;
   document.getElementById('winner-banner').style.display='none';
   document.getElementById('pause-btn').disabled=false;
   document.getElementById('pause-btn').textContent='一時停止';
@@ -693,7 +692,7 @@ function buildFighters(placed){
   scheduleNext();
 }
 
-function resetBattle(){clearT();bActive=false;paused=false;trRunning=false;voiceLock=false;fighters=[];document.getElementById('arena').innerHTML='';document.getElementById('winner-banner').style.display='none';document.getElementById('battle-log').innerHTML='';document.getElementById('pause-btn').disabled=true;clearArrow();}
+function resetBattle(){clearT();bActive=false;paused=false;trRunning=false;fighters=[];document.getElementById('arena').innerHTML='';document.getElementById('winner-banner').style.display='none';document.getElementById('battle-log').innerHTML='';document.getElementById('pause-btn').disabled=true;clearArrow();}
 function endAndReturn(){resetBattle();switchTab('select');}
 function gotoSelect(){if(!bActive){resetBattle();}renderSelectPanel();switchTab('select');}
 function togglePause(){if(!bActive)return;paused=!paused;document.getElementById('pause-btn').textContent=paused?'再開':'一時停止';if(!paused&&!trRunning)scheduleNext();}
@@ -704,8 +703,6 @@ function scheduleNext(){
   if(!bActive||paused)return;
   tto=setTimeout(async()=>{
     if(paused||!bActive)return;
-    // voiceLock中は少し待ってリトライ
-    if(voiceLock){tto=setTimeout(()=>scheduleNext(),200);return;}
     trRunning=true;
     await doTurn();
     trRunning=false;
@@ -764,16 +761,14 @@ async function doTurn(){
   const atkCell=document.getElementById('cell-'+attacker.iid);
   if(atkCell)atkCell.classList.add('attacking');
 
-  // 攻撃セリフ/音声 (待機)
+  // 攻撃セリフ/音声
   const atkV=pickR(attacker.sounds.attack);
   if(atkV&&(atkV.text||atkV.audio))await speechWait(attacker.iid,atkV);
   if(!bActive)return;
 
-  // 1秒待機後ヒット
-  await wait(1000);
+  // セリフ待機後ヒット
+  if(rMs>0)await wait(rMs);
   if(!bActive)return;
-
-  // 矢印は攻撃フェーズ中ずっと残す (hit/deathが終わるまで残す)
 
   // ---- 回避判定 ----
   const dodgeChance=(target.dodgePct!==undefined?target.dodgePct:20)/100;
@@ -782,8 +777,7 @@ async function doTurn(){
     if(dc){dc.classList.add('cell-dodge');setTimeout(()=>dc.classList.remove('cell-dodge'),500);}
     const dv=pickR(target.sounds.dodge);
     if(dv&&(dv.text||dv.audio)){
-      voiceLock=true;
-      playVoice(dv,()=>{voiceLock=false;});
+      playVoice(dv,()=>{});
       if(dv.text)showBubble(target.iid,dv.text,Math.max(1500,estimateDur(dv)));
     }
     addLog(`<span class="dodge-log">💨 ${target.name} は回避した！</span>`);
@@ -803,15 +797,10 @@ async function doTurn(){
   const tl2=target.team?' ['+TEAM_NAMES[target.team]+']':'';
   addLog(`<span class="atk">${attacker.name}${tl}</span> → <span class="def">${target.name}${tl2}</span> に ${dmg} ダメージ！（残HP:${target.hp}）`);
 
-  // ---- やられ音声 (非同期ロック) ----
+  // ---- やられ音声 ----
   if(target.hp>0){
     const hv=pickR(target.sounds.hit);
-    if(hv&&(hv.text||hv.audio)){
-      voiceLock=true;
-      await speechWait(target.iid,hv);
-      if(rMs>0)await wait(rMs);
-      voiceLock=false;
-    }
+    if(hv&&(hv.text||hv.audio)) await speechWait(target.iid,hv);
     clearArrow();if(atkCell)atkCell.classList.remove('attacking');
     return;
   }
@@ -821,15 +810,12 @@ async function doTurn(){
   if(dc){dc.classList.add('cell-death');setTimeout(()=>{dc.classList.remove('cell-death','alive');dc.classList.add('dead');},600);}
   addLog(`<span class="dead-log">☠ ${target.name} 脱落！</span>`);
 
-  // 死亡音声 (矢印はそのまま維持・ロック)
+  // 死亡音声
   const deathV=pickR(target.sounds.death);
   if(deathV&&(deathV.text||deathV.audio)){
-    voiceLock=true;
     await speechWait(target.iid,deathV);
-    if(rMs>0)await wait(rMs);
-    voiceLock=false;
   } else {
-    await wait(700);
+    await wait(400);
   }
 
   // 矢印消去・攻撃状態解除
