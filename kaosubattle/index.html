@@ -232,6 +232,8 @@ header{display:none;}
       <button class="btn btn-secondary btn-xs" onclick="randomFill(true)">ランダム登場(重複あり)</button>
       <span style="font-size:12px;color:var(--text-muted);">ターン間隔(秒)</span>
       <input type="number" id="speed-input-sel" min="0.1" max="30" step="0.1" value="0.5" oninput="onSelSpeedInput(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
+      <span style="font-size:12px;color:var(--text-muted);">セリフ待機(秒)</span>
+      <input type="number" id="resp-input-sel" min="0" max="30" step="0.1" value="0.5" oninput="onSelRespInput(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
       <span style="margin-left:6px;width:1px;height:20px;background:var(--border2);display:inline-block;vertical-align:middle;"></span>
       <span class="sel-count" id="sel-count" style="font-size:13px;color:var(--text-muted);font-weight:700;">0人配置中</span>
       <button class="btn btn-secondary btn-sm" onclick="switchTab('setup')">戻る</button>
@@ -248,6 +250,8 @@ header{display:none;}
       <div id="battle-controls">
         <span class="speed-label">ターン間隔(秒)</span>
         <input type="number" id="speed-input" min="0.1" max="30" step="0.1" value="0.5" oninput="updateSpeed(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
+        <span class="speed-label">セリフ待機(秒)</span>
+        <input type="number" id="resp-input" min="0" max="30" step="0.1" value="0.5" oninput="updateResp(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
         <button class="btn btn-secondary btn-sm" id="pause-btn" onclick="togglePause()" disabled>一時停止</button>
         <button class="btn btn-secondary btn-sm" onclick="endAndReturn()">終了</button>
       </div>
@@ -626,7 +630,10 @@ function updateSelCount(){
    BATTLE LAUNCH
 ============================================================ */
 let iMs=500;
+let rMs=500; // セリフ後追加待機(ms)
 function onSelSpeedInput(v){iMs=Math.max(100,Math.round(parseFloat(v)*1000));}
+function onSelRespInput(v){rMs=Math.max(0,Math.round(parseFloat(v)*1000));}
+function updateResp(v){rMs=Math.max(0,Math.round(parseFloat(v)*1000));const inp=document.getElementById('resp-input');if(inp&&document.activeElement!==inp)inp.value=(rMs/1000).toFixed(1);}
 function updateSpeed(v){iMs=Math.max(100,Math.round(parseFloat(v)*1000));const inp=document.getElementById('speed-input');if(inp&&document.activeElement!==inp)inp.value=(iMs/1000).toFixed(1);}
 
 function launchBattle(){
@@ -675,8 +682,12 @@ function buildFighters(placed){
   // 間隔スライダーを同期
   const srSel=document.getElementById('speed-input-sel');
   if(srSel)iMs=Math.max(100,Math.round(parseFloat(srSel.value)*1000));
+  const rrSel=document.getElementById('resp-input-sel');
+  if(rrSel)rMs=Math.max(0,Math.round(parseFloat(rrSel.value)*1000));
   const bi=document.getElementById('speed-input');
   if(bi)bi.value=(iMs/1000).toFixed(1);
+  const ri=document.getElementById('resp-input');
+  if(ri)ri.value=(rMs/1000).toFixed(1);
 
   renderArena();
   scheduleNext();
@@ -797,8 +808,8 @@ async function doTurn(){
     const hv=pickR(target.sounds.hit);
     if(hv&&(hv.text||hv.audio)){
       voiceLock=true;
-      // 矢印はhit音声が終わるまで維持
       await speechWait(target.iid,hv);
+      if(rMs>0)await wait(rMs);
       voiceLock=false;
     }
     clearArrow();if(atkCell)atkCell.classList.remove('attacking');
@@ -815,6 +826,7 @@ async function doTurn(){
   if(deathV&&(deathV.text||deathV.audio)){
     voiceLock=true;
     await speechWait(target.iid,deathV);
+    if(rMs>0)await wait(rMs);
     voiceLock=false;
   } else {
     await wait(700);
