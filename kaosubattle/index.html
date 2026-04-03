@@ -202,9 +202,10 @@ header{display:none;}
 <!-- SETUP -->
 <div class="panel active" id="panel-setup">
   <div class="setup-inner">
-    <div class="info-bar">キャラクターを登録してください。画像・セリフ・音声を複数追加できます。データはブラウザに自動保存されます。</div>
+    <div class="info-bar">キャラクターを登録してください。画像・セリフ・音声を複数追加できます。データはブラウザに自動保存されます（上限5MB）。<br>📦 保存使用量: <span id="storage-usage">計算中...</span></div>
     <div class="sec-title">プリセットから追加 (未実装)</div>
     <div class="preset-strip" id="preset-strip"></div>
+    <div class="info-bar" style="background:#fff8ee;border-color:#f0c040;color:#7a5500;margin-bottom:12px;">💡 <b>容量削減のコツ</b>：画像はアップロード時に自動圧縮（300px/WEBP）されます。音声ファイルが容量の大半を占めます。音声は短いファイルを推奨。不要なキャラはエクスポート後に削除して管理してください。</div>
     <div class="sec-title">インポート / エクスポート</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
       <button class="btn btn-secondary btn-sm" onclick="showExportMenu(this)">📤 エクスポート ▾</button>
@@ -388,7 +389,55 @@ function importData(data){
   save();renderSetup();
   alert(imported.length+'人のキャラクターを読み込みました！');
 }
-function save(){try{localStorage.setItem(SK,JSON.stringify(chars));}catch(e){alert('保存容量超過');}}
+
+/* ============================================================
+   画像圧縮ユーティリティ
+============================================================ */
+function compressImage(file, maxPx, quality){
+  // Canvas経由でリサイズ＋JPEG圧縮してdataURLを返すPromise
+  return new Promise((resolve)=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width, h=img.height;
+        if(w>maxPx||h>maxPx){
+          if(w>h){h=Math.round(h*maxPx/w);w=maxPx;}
+          else{w=Math.round(w*maxPx/h);h=maxPx;}
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        // WebPが使えればWebP、なければJPEG
+        let dataUrl=canvas.toDataURL('image/webp',quality);
+        if(dataUrl.indexOf('image/webp')===-1){
+          dataUrl=canvas.toDataURL('image/jpeg',quality);
+        }
+        resolve(dataUrl);
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function getStorageUsageKB(){
+  try{
+    const raw=localStorage.getItem('chaos_v7')||'';
+    return Math.round(raw.length/1024);
+  }catch{return 0;}
+}
+
+function updateStorageDisplay(){
+  const el=document.getElementById('storage-usage');
+  if(!el)return;
+  const kb=getStorageUsageKB();
+  const pct=Math.round(kb/5120*100);
+  const color=pct>80?'#e8303a':pct>60?'#e8a800':'#22aa55';
+  el.innerHTML=`<span style="color:${color};font-weight:700;">${kb}KB / 5120KB (${pct}%)</span>`;
+}
+
+function save(){try{localStorage.setItem(SK,JSON.stringify(chars));}catch(e){alert('保存容量超過');} updateStorageDisplay();}
 function load(){try{const r=localStorage.getItem(SK);if(r)return JSON.parse(r);}catch(e){}return[];}
 let chars=load();
 let nid=chars.length?Math.max(...chars.map(c=>c.id))+1:1;
@@ -458,6 +507,7 @@ function removeChar(id){
   save();renderSetup();
 }
 function renderSetup(){
+  updateStorageDisplay();
   const l=document.getElementById('char-list');l.innerHTML='';
   if(!chars.length){l.innerHTML='<div class="empty-state"><h3>キャラクターがいません</h3><p>プリセットから追加してください。</p></div>';return;}
   chars.forEach(c=>l.appendChild(buildCard(c)));
@@ -472,7 +522,7 @@ function buildCard(c){
   const imgCol=document.createElement('div');imgCol.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;';
   const ia=document.createElement('div');ia.className='char-img-area';
   const ii=document.createElement('input');ii.type='file';ii.accept='image/*';ii.style.display='none';
-  ii.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{c.imgSrc=ev.target.result;save();renderSetup();};r.readAsDataURL(f);};
+  ii.onchange=e=>{const f=e.target.files[0];if(!f)return;compressImage(f,300,0.75).then(dataUrl=>{c.imgSrc=dataUrl;save();renderSetup();});};
   card.appendChild(ii);
   if(c.imgSrc){const img=document.createElement('img');img.src=c.imgSrc;ia.appendChild(img);}else{ia.textContent=c.emoji;}
   const h=document.createElement('span');h.className='char-img-hint';h.textContent='クリックで画像';ia.appendChild(h);
@@ -1083,6 +1133,7 @@ function addLog(html){
 document.addEventListener('DOMContentLoaded',()=>{
   renderPresets();
   renderSetup();
+  updateStorageDisplay();
   const ab=document.getElementById('add-char-card-btn');
   if(ab)ab.addEventListener('click',addBlankChar);
   window.addEventListener('resize',()=>{if(bActive)resizeC();});
