@@ -214,6 +214,15 @@ header{display:none;}
     <div class="sec-title">登録済みキャラクター</div>
     <div class="char-grid" id="char-list"></div>
     <div class="add-char-card" id="add-char-card-btn"><span style="font-size:28px">＋</span><span>新しいキャラクターを追加</span></div>
+    <!-- ストレージモード切替 -->
+    <div id="storage-mode-bar" style="display:flex;align-items:center;gap:10px;margin-top:18px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:var(--text-muted);">保存先:</span>
+      <span id="storage-mode-badge" style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;background:#e8f4ff;color:#1a7abf;">LocalStorage</span>
+      <span id="storage-usage-text" style="font-size:12px;color:var(--text-muted);"></span>
+      <button id="switch-to-idb-btn" class="btn btn-info btn-xs" onclick="switchToIndexedDB()" style="display:none;">IndexedDBに切り替え（容量大）</button>
+      <button id="switch-to-ls-btn" class="btn btn-secondary btn-xs" onclick="switchToLocalStorage()" style="display:none;">LocalStorageに戻す</button>
+      <button id="add-idb-only-btn" class="btn btn-secondary btn-xs" onclick="addBlankCharIDB()" style="display:none;">＋ IndexedDB限定で追加（LS満杯時）</button>
+    </div>
   </div>
 </div>
 
@@ -279,7 +288,6 @@ header{display:none;}
 /* ============================================================
    STORAGE
 ============================================================ */
-const SK='chaos_v7';
 const SOUND_TYPES=[
   {key:'attack',label:'攻撃',ph:'「食らえ！」など'},
   {key:'hit',label:'やられ',ph:'「ぐあっ！」など'},
@@ -389,8 +397,174 @@ function importData(data){
   alert(imported.length+'人のキャラクターを読み込みました！');
 }
 
-function save(){try{localStorage.setItem(SK,JSON.stringify(chars));}catch(e){alert('保存容量超過');}}
-function load(){try{const r=localStorage.getItem(SK);if(r)return JSON.parse(r);}catch(e){}return[];}
+
+/* ============================================================
+   STORAGE MANAGER (LocalStorage + IndexedDB)
+============================================================ */
+const SK='chaos_v7';
+const IDB_NAME='ChaosDB', IDB_STORE='chars', IDB_VER=1;
+let storageMode='ls'; // 'ls' | 'idb'
+let idb=null;
+
+// IndexedDB 初期化
+function openIDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(IDB_NAME,IDB_VER);
+    req.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(IDB_STORE))
+        db.createObjectStore(IDB_STORE,{keyPath:'id'});
+    };
+    req.onsuccess=e=>{res(e.target.result);};
+    req.onerror=e=>{rej(e);};
+  });
+}
+
+function idbSaveAll(db,data){
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(IDB_STORE,'readwrite');
+    const store=tx.objectStore(IDB_STORE);
+    store.clear();
+    data.forEach(c=>store.put(c));
+    tx.oncomplete=()=>res();
+    tx.onerror=e=>rej(e);
+  });
+}
+
+function idbLoadAll(db){
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(IDB_STORE,'readonly');
+    const req=tx.objectStore(IDB_STORE).getAll();
+    req.onsuccess=e=>res(e.target.result||[]);
+    req.onerror=e=>rej(e);
+  });
+}
+
+function getLSUsageKB(){
+  try{return Math.round((localStorage.getItem(SK)||'').length/1024);}catch{return 0;}
+}
+
+function updateStorageUI(){
+  const badge=document.getElementById('storage-mode-badge');
+  const usageEl=document.getElementById('storage-usage-text');
+  const toIdb=document.getElementById('switch-to-idb-btn');
+  const toLs=document.getElementById('switch-to-ls-btn');
+  const addIdb=document.getElementById('add-idb-only-btn');
+  if(!badge)return;
+  if(storageMode==='ls'){
+    const kb=getLSUsageKB();
+    const pct=Math.round(kb/5120*100);
+    const col=pct>80?'#e8303a':pct>60?'#e8a800':'#1a7abf';
+    badge.textContent='LocalStorage';
+    badge.style.background='#e8f4ff';badge.style.color='#1a7abf';
+    usageEl.innerHTML=`<span style="color:${col};font-weight:700;">${kb}KB / 5120KB (${pct}%)</span>`;
+    toIdb.style.display='inline-flex';
+    toLs.style.display='none';
+    addIdb.style.display=pct>=90?'inline-flex':'none';
+  } else {
+    badge.textContent='IndexedDB';
+    badge.style.background='#eeffee';badge.style.color='#22aa55';
+    usageEl.textContent='（容量制限なし）';
+    toIdb.style.display='none';
+    toLs.style.display='inline-flex';
+    addIdb.style.display='none';
+  }
+}
+
+function save(){
+  if(storageMode==='idb'){
+    if(idb) idbSaveAll(idb,chars).catch(e=>console.error('IDB save error',e));
+  } else {
+    try{
+      localStorage.setItem(SK,JSON.stringify(chars));
+    } catch(e){
+      alert('⚠️ LocalStorageが満杯です！\n\n必ずエクスポートしてデータを保存してください。\n再読み込みすると未保存のデータは失われます。\n\nIndexedDBに切り替えると容量制限なく保存できます。');
+    }
+  }
+  updateStorageUI();
+}
+
+function load(){
+  try{const r=localStorage.getItem(SK);if(r)return JSON.parse(r);}catch(e){}return[];
+}
+
+// IndexedDBに切り替え
+async function switchToIndexedDB(){
+  if(!confirm('IndexedDBに切り替えます。\n\n現在のキャラクターデータをIndexedDBにコピーします。\nLocalStorageのデータはそのまま残ります。\n\n続けますか？'))return;
+  try{
+    if(!idb) idb=await openIDB();
+    await idbSaveAll(idb,chars);
+    storageMode='idb';
+    localStorage.setItem('chaos_storage_mode','idb');
+    updateStorageUI();
+    alert('IndexedDBに切り替えました！容量制限なく保存できます。');
+  }catch(e){
+    alert('IndexedDBの初期化に失敗しました: '+e);
+  }
+}
+
+// LocalStorageに戻す
+function switchToLocalStorage(){
+  if(!confirm('LocalStorageに戻します。\n\n⚠️ 5MBの容量制限があります。\nデータが多い場合は保存できないことがあります。\n\n続けますか？'))return;
+  try{
+    localStorage.setItem(SK,JSON.stringify(chars));
+    storageMode='ls';
+    localStorage.setItem('chaos_storage_mode','ls');
+    updateStorageUI();
+    alert('LocalStorageに戻しました。');
+  }catch(e){
+    alert('⚠️ データが大きすぎてLocalStorageに保存できません。\nまず不要なキャラを削除するか、エクスポートしてください。');
+  }
+}
+
+// IndexedDB限定で追加（LS満杯時用）
+function addBlankCharIDB(){
+  if(storageMode!=='ls'){addBlankChar();return;}
+  // LSに保存せずにメモリだけに追加して警告
+  if(!confirm('⚠️ このキャラはLocalStorageには保存されません。\nIndexedDBに切り替えてから追加するか、\n追加後すぐにエクスポートしてください。\n\n追加しますか？'))return;
+  chars.push(mkChar('キャラ'+nid,'👤'));
+  renderSetup();
+  alert('キャラを追加しました。\n⚠️ 再読み込みで消えます！必ずエクスポートかIndexedDB切り替えを行ってください。');
+}
+
+// 起動時のストレージモード復元
+async function initStorage(){
+  const savedMode=localStorage.getItem('chaos_storage_mode')||'ls';
+  if(savedMode==='idb'){
+    try{
+      idb=await openIDB();
+      const idbChars=await idbLoadAll(idb);
+      if(idbChars.length>0){
+        storageMode='idb';
+        chars=idbChars;
+        // フィールド補完
+        chars.forEach(c=>{
+          if(c.dodgePct===undefined)c.dodgePct=20;
+          if(c.revivePct===undefined)c.revivePct=0;
+          if(c.reviveHp===undefined)c.reviveHp=30;
+          if(!c.sounds)c.sounds={attack:[],hit:[],dodge:[],death:[],revive:[]};
+          if(!c.sounds.revive)c.sounds.revive=[];
+        });
+        nid=chars.length?Math.max(...chars.map(c=>c.id))+1:1;
+        renderSetup();
+        updateStorageUI();
+      } else {
+        storageMode='idb';
+        localStorage.setItem('chaos_storage_mode','idb');
+        updateStorageUI();
+      }
+    }catch(e){
+      console.error('IDB init error',e);
+      storageMode='ls';
+      localStorage.removeItem('chaos_storage_mode');
+      updateStorageUI();
+    }
+  } else {
+    storageMode='ls';
+    updateStorageUI();
+  }
+}
+
 let chars=load();
 let nid=chars.length?Math.max(...chars.map(c=>c.id))+1:1;
 function mkChar(name,emoji){
@@ -1093,6 +1267,7 @@ function addLog(html){
 document.addEventListener('DOMContentLoaded',()=>{
   renderPresets();
   renderSetup();
+  initStorage();
   const ab=document.getElementById('add-char-card-btn');
   if(ab)ab.addEventListener('click',addBlankChar);
   window.addEventListener('resize',()=>{if(bActive)resizeC();});
