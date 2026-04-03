@@ -203,8 +203,16 @@ header{display:none;}
 <div class="panel active" id="panel-setup">
   <div class="setup-inner">
     <div class="info-bar">キャラクターを登録してください。画像・セリフ・音声を複数追加できます。データはブラウザに自動保存されます。</div>
-    <div class="sec-title">プリセットから追加</div>
+    <div class="sec-title">プリセットから追加 (未実装)</div>
     <div class="preset-strip" id="preset-strip"></div>
+    <div class="sec-title">インポート / エクスポート</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+      <button class="btn btn-secondary btn-sm" onclick="exportFile()">📥 ファイルに書き出し</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportClipboard()">📋 クリップボードにコピー</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-file-input').click()">📤 ファイルから読み込み</button>
+      <button class="btn btn-secondary btn-sm" onclick="importClipboard()">📋 クリップボードから貼り付け</button>
+      <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importFile(this)">
+    </div>
     <div class="sec-title">登録済みキャラクター</div>
     <div class="char-grid" id="char-list"></div>
     <div class="add-char-card" id="add-char-card-btn"><span style="font-size:28px">＋</span><span>新しいキャラクターを追加</span></div>
@@ -231,9 +239,9 @@ header{display:none;}
       <button class="btn btn-secondary btn-xs" onclick="randomFill(false)">ランダム登場</button>
       <button class="btn btn-secondary btn-xs" onclick="randomFill(true)">ランダム登場(重複あり)</button>
       <span style="font-size:12px;color:var(--text-muted);">ターン間隔(秒)</span>
-      <input type="number" id="speed-input-sel" min="0.1" max="30" step="0.1" value="0.5" oninput="onSelSpeedInput(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
+      <input type="number" id="speed-input-sel" min="0" max="30" step="0.1" value="0.1" oninput="onSelSpeedInput(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
       <span style="font-size:12px;color:var(--text-muted);">セリフ待機(秒)</span>
-      <input type="number" id="resp-input-sel" min="0" max="30" step="0.1" value="0.5" oninput="onSelRespInput(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
+      <input type="number" id="resp-input-sel" min="0" max="30" step="0.1" value="0.1" oninput="onSelRespInput(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
       <span style="margin-left:6px;width:1px;height:20px;background:var(--border2);display:inline-block;vertical-align:middle;"></span>
       <span class="sel-count" id="sel-count" style="font-size:13px;color:var(--text-muted);font-weight:700;">0人配置中</span>
       <button class="btn btn-secondary btn-sm" onclick="switchTab('setup')">戻る</button>
@@ -249,9 +257,9 @@ header{display:none;}
     <div class="battle-main">
       <div id="battle-controls">
         <span class="speed-label">ターン間隔(秒)</span>
-        <input type="number" id="speed-input" min="0.1" max="30" step="0.1" value="0.5" oninput="updateSpeed(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
+        <input type="number" id="speed-input" min="0" max="30" step="0.1" value="0.1" oninput="updateSpeed(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
         <span class="speed-label">セリフ待機(秒)</span>
-        <input type="number" id="resp-input" min="0" max="30" step="0.1" value="0.5" oninput="updateResp(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
+        <input type="number" id="resp-input" min="0" max="30" step="0.1" value="0.1" oninput="updateResp(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);">
         <button class="btn btn-secondary btn-sm" id="pause-btn" onclick="togglePause()" disabled>一時停止</button>
         <button class="btn btn-secondary btn-sm" onclick="endAndReturn()">終了</button>
       </div>
@@ -291,18 +299,73 @@ const TEAMS_CYCLE=[null,'a','b','c','d']; // クリックで循環
 const TEAM_COLORS={a:'var(--ta)',b:'var(--tb)',c:'var(--tc)',d:'var(--td)'};
 const TEAM_NAMES={a:'A',b:'B',c:'C',d:'D'};
 
+
+/* ============================================================
+   IMPORT / EXPORT
+============================================================ */
+function exportFile(){
+  const json=JSON.stringify(chars,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='chaos-chars.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function exportClipboard(){
+  const json=JSON.stringify(chars,null,2);
+  navigator.clipboard.writeText(json).then(()=>alert('クリップボードにコピーしました！')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=json;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();alert('クリップボードにコピーしました！');
+  });
+}
+function importFile(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      importData(data);
+    }catch{alert('読み込みに失敗しました。正しいJSONファイルか確認してください。');}
+  };
+  r.readAsText(file);
+  input.value='';
+}
+function importClipboard(){
+  navigator.clipboard.readText().then(text=>{
+    try{
+      const data=JSON.parse(text);
+      importData(data);
+    }catch{alert('クリップボードの内容が正しいJSONではありません。');}
+  }).catch(()=>alert('クリップボードの読み取りに失敗しました。'));
+}
+function importData(data){
+  if(!Array.isArray(data)){alert('データ形式が正しくありません。');return;}
+  const mode=confirm('現在のキャラクターを置き換えますか？\nOK=置き換え / キャンセル=追加');
+  // IDの衝突を避けるため新IDを振り直す
+  const maxId=chars.length?Math.max(...chars.map(c=>c.id)):0;
+  let newId=Math.max(maxId,nid)+1;
+  const imported=data.map(c=>({
+    ...c, id:newId++,
+    sounds:c.sounds||{attack:[],hit:[],dodge:[],death:[],revive:[]},
+    dodgePct:c.dodgePct??20, revivePct:c.revivePct??0,
+    reviveHp:c.reviveHp??30,
+  }));
+  if(mode){chars=imported;}else{chars=[...chars,...imported];}
+  nid=Math.max(...chars.map(c=>c.id))+1;
+  save();renderSetup();
+  alert(imported.length+'人のキャラクターを読み込みました！');
+}
 function save(){try{localStorage.setItem(SK,JSON.stringify(chars));}catch(e){alert('保存容量超過');}}
 function load(){try{const r=localStorage.getItem(SK);if(r)return JSON.parse(r);}catch(e){}return[];}
 let chars=load();
 let nid=chars.length?Math.max(...chars.map(c=>c.id))+1:1;
 function mkChar(name,emoji){
-  return{id:nid++,name,emoji,imgSrc:null,maxHp:100,atk:20,dodgePct:20,revivePct:20,
+  return{id:nid++,name,emoji,imgSrc:null,maxHp:100,atk:20,dodgePct:20,revivePct:0,reviveHp:30,
     sounds:{attack:[],hit:[],dodge:[],death:[],revive:[]}};
 }
 // 古いデータに新フィールドがない場合の補完
 chars.forEach(c=>{
   if(c.dodgePct===undefined)c.dodgePct=20;
-  if(c.revivePct===undefined)c.revivePct=20;
+  if(c.revivePct===undefined)c.revivePct=0;
+  if(c.reviveHp===undefined)c.reviveHp=30;
   if(!c.sounds.revive)c.sounds.revive=[];
 });
 
@@ -370,14 +433,17 @@ function buildCard(c){
   const rm=document.createElement('button');rm.className='remove-char-btn';rm.textContent='✕';rm.onclick=()=>removeChar(c.id);card.appendChild(rm);
   const top=document.createElement('div');top.className='char-card-top';
 
-  // 画像
+  // 画像エリア（縦並び: 画像 + 削除ボタン）
+  const imgCol=document.createElement('div');imgCol.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;';
   const ia=document.createElement('div');ia.className='char-img-area';
   const ii=document.createElement('input');ii.type='file';ii.accept='image/*';ii.style.display='none';
   ii.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{c.imgSrc=ev.target.result;save();renderSetup();};r.readAsDataURL(f);};
   card.appendChild(ii);
   if(c.imgSrc){const img=document.createElement('img');img.src=c.imgSrc;ia.appendChild(img);}else{ia.textContent=c.emoji;}
   const h=document.createElement('span');h.className='char-img-hint';h.textContent='クリックで画像';ia.appendChild(h);
-  ia.onclick=()=>ii.click();top.appendChild(ia);
+  ia.onclick=()=>ii.click();imgCol.appendChild(ia);
+  if(c.imgSrc){const cb=document.createElement('button');cb.className='btn btn-secondary btn-xs';cb.style.width='100%';cb.textContent='画像削除';cb.onclick=()=>{c.imgSrc=null;save();renderSetup();};imgCol.appendChild(cb);}
+  top.appendChild(imgCol);
 
   const rt=document.createElement('div');rt.className='char-right';
 
@@ -385,23 +451,18 @@ function buildCard(c){
   fl(rt,'キャラクター名');
   const ni=inp(c.name,'char-name-input','text');ni.oninput=e=>{c.name=e.target.value;save();};rt.appendChild(ni);
 
-  // 絵文字
-  fl(rt,'絵文字');
-  const er=document.createElement('div');er.className='char-emoji-row';
-  const ei=inp(c.emoji,'char-emoji-input','text');ei.maxLength=4;ei.oninput=e=>{c.emoji=e.target.value;save();};er.appendChild(ei);
-  if(c.imgSrc){const cb=document.createElement('button');cb.className='btn btn-secondary btn-xs';cb.textContent='画像削除';cb.onclick=()=>{c.imgSrc=null;save();renderSetup();};er.appendChild(cb);}
-  rt.appendChild(er);
-
   // ステータス行
   const sr=document.createElement('div');sr.className='stat-row';
   [
-    {key:'maxHp',lbl:'HP',def:100},
-    {key:'atk',lbl:'攻撃力',def:20},
-    {key:'dodgePct',lbl:'回避率%',def:20},
-    {key:'revivePct',lbl:'蘇生率%',def:20},
-  ].forEach(({key,lbl,def})=>{
+    {key:'maxHp',lbl:'HP',def:100,hint:''},
+    {key:'atk',lbl:'攻撃力',def:20,hint:''},
+    {key:'dodgePct',lbl:'回避率%',def:20,hint:''},
+    {key:'revivePct',lbl:'蘇生率%',def:0,hint:'推奨:50'},
+    {key:'reviveHp',lbl:'蘇生後HP',def:30,hint:''},
+  ].forEach(({key,lbl,def,hint})=>{
     const w=document.createElement('div');w.className='stat-wrap';
-    fl(w,lbl+' (初期:'+def+')');
+    const ltext=lbl+(hint?' ('+hint+')':'');
+    fl(w,ltext);
     const i=inp(c[key]!==undefined?c[key]:def,'char-name-input','number');
     i.min=0;i.max=key.endsWith('Pct')?100:9999;
     i.oninput=e=>{c[key]=Number(e.target.value);save();};
@@ -629,8 +690,8 @@ function updateSelCount(){
 /* ============================================================
    BATTLE LAUNCH
 ============================================================ */
-let iMs=500;
-let rMs=500; // セリフ後追加待機(ms)
+let iMs=100;
+let rMs=100; // セリフ後追加待機(ms)
 function onSelSpeedInput(v){iMs=Math.max(100,Math.round(parseFloat(v)*1000));}
 function onSelRespInput(v){rMs=Math.max(0,Math.round(parseFloat(v)*1000));}
 function updateResp(v){rMs=Math.max(0,Math.round(parseFloat(v)*1000));const inp=document.getElementById('resp-input');if(inp&&document.activeElement!==inp)inp.value=(rMs/1000).toFixed(1);}
@@ -672,7 +733,8 @@ function buildFighters(placed){
       iid:s.iid, charId:c.id, name:c.name, emoji:c.emoji, imgSrc:c.imgSrc,
       hp:c.maxHp||100, maxHp:c.maxHp||100, atk:c.atk||20,
       dodgePct:c.dodgePct!==undefined?c.dodgePct:20,
-      revivePct:c.revivePct!==undefined?c.revivePct:20,
+      revivePct:c.revivePct!==undefined?c.revivePct:0,
+      reviveHp:c.reviveHp!==undefined?c.reviveHp:30,
       alive:true, team:s.team||null, gridPos:slots.indexOf(s),
       sounds:JSON.parse(JSON.stringify(c.sounds)),
     };
@@ -829,7 +891,7 @@ async function doTurn(){
     // 蘇生!
     await wait(400);
     target.alive=true;
-    target.hp=Math.floor(target.maxHp*0.3); // 最大HPの30%で復活
+    target.hp=Math.max(1,target.reviveHp||30);
     if(dc){
       dc.classList.remove('dead');dc.classList.add('alive');
       dc.classList.add('cell-revive');
