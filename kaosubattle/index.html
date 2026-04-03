@@ -207,10 +207,8 @@ header{display:none;}
     <div class="preset-strip" id="preset-strip"></div>
     <div class="sec-title">インポート / エクスポート</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
-      <button class="btn btn-secondary btn-sm" onclick="exportFile()">📥 ファイルに書き出し</button>
-      <button class="btn btn-secondary btn-sm" onclick="exportClipboard()">📋 クリップボードにコピー</button>
-      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-file-input').click()">📤 ファイルから読み込み</button>
-      <button class="btn btn-secondary btn-sm" onclick="importClipboard()">📋 クリップボードから貼り付け</button>
+      <button class="btn btn-secondary btn-sm" onclick="showExportMenu(this)">📤 エクスポート ▾</button>
+      <button class="btn btn-secondary btn-sm" onclick="showImportMenu(this)">📥 インポート ▾</button>
       <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importFile(this)">
     </div>
     <div class="sec-title">登録済みキャラクター</div>
@@ -303,6 +301,43 @@ const TEAM_NAMES={a:'A',b:'B',c:'C',d:'D'};
 /* ============================================================
    IMPORT / EXPORT
 ============================================================ */
+/* ---- インポート/エクスポートメニュー ---- */
+function showExportMenu(btn){
+  showDropMenu(btn,[
+    {label:'📄 JSONファイルに書き出し', fn:exportFile},
+    {label:'📋 クリップボードにコピー', fn:exportClipboard},
+  ]);
+}
+function showImportMenu(btn){
+  showDropMenu(btn,[
+    {label:'📄 JSONファイルから読み込み', fn:()=>document.getElementById('import-file-input').click()},
+    {label:'📋 クリップボードから貼り付け', fn:importClipboard},
+  ]);
+}
+function showDropMenu(anchor,items){
+  // 既存メニューを閉じる
+  document.querySelectorAll('.__drop-menu').forEach(m=>m.remove());
+  const menu=document.createElement('div');
+  menu.className='__drop-menu';
+  menu.style.cssText='position:absolute;background:#fff;border:1px solid #d8d5ce;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:999;min-width:220px;overflow:hidden;';
+  items.forEach(item=>{
+    const row=document.createElement('button');
+    row.style.cssText='display:block;width:100%;padding:10px 16px;background:none;border:none;text-align:left;cursor:pointer;font-family:"M PLUS 1p",sans-serif;font-size:13px;color:#1a1a1a;';
+    row.textContent=item.label;
+    row.onmouseenter=()=>row.style.background='#f0eeea';
+    row.onmouseleave=()=>row.style.background='none';
+    row.onclick=()=>{menu.remove();item.fn();};
+    menu.appendChild(row);
+  });
+  // 位置計算
+  document.body.appendChild(menu);
+  const r=anchor.getBoundingClientRect();
+  menu.style.left=(r.left+window.scrollX)+'px';
+  menu.style.top=(r.bottom+window.scrollY+4)+'px';
+  // 外クリックで閉じる
+  setTimeout(()=>document.addEventListener('click',function h(e){if(!menu.contains(e.target)){menu.remove();document.removeEventListener('click',h);}},{once:false}),0);
+}
+
 function exportFile(){
   const json=JSON.stringify(chars,null,2);
   const blob=new Blob([json],{type:'application/json'});
