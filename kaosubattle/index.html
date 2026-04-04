@@ -312,8 +312,11 @@ const TEAM_NAMES={a:'A',b:'B',c:'C',d:'D'};
 /* ---- インポート/エクスポートメニュー ---- */
 function showExportMenu(btn){
   showDropMenu(btn,[
-    {label:'📄 JSONファイルに書き出し', fn:exportFile},
-    {label:'📋 クリップボードにコピー', fn:exportClipboard},
+    {label:'📄 全キャラ → JSONファイル', fn:()=>exportFile(null)},
+    {label:'📋 全キャラ → クリップボード', fn:()=>exportClipboard(null)},
+    {label:'─────────────', fn:null},
+    {label:'📄 キャラを選んで → JSONファイル', fn:()=>showCharPicker('export-file')},
+    {label:'📋 キャラを選んで → クリップボード', fn:()=>showCharPicker('export-clip')},
   ]);
 }
 function showImportMenu(btn){
@@ -329,6 +332,11 @@ function showDropMenu(anchor,items){
   menu.className='__drop-menu';
   menu.style.cssText='position:absolute;background:#fff;border:1px solid #d8d5ce;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:999;min-width:220px;overflow:hidden;';
   items.forEach(item=>{
+    if(item.fn===null){
+      const sep=document.createElement('div');
+      sep.style.cssText='height:1px;background:#e8e5de;margin:2px 0;';
+      menu.appendChild(sep);return;
+    }
     const row=document.createElement('button');
     row.style.cssText='display:block;width:100%;padding:10px 16px;background:none;border:none;text-align:left;cursor:pointer;font-family:"M PLUS 1p",sans-serif;font-size:13px;color:#1a1a1a;';
     row.textContent=item.label;
@@ -346,18 +354,88 @@ function showDropMenu(anchor,items){
   setTimeout(()=>document.addEventListener('click',function h(e){if(!menu.contains(e.target)){menu.remove();document.removeEventListener('click',h);}},{once:false}),0);
 }
 
-function exportFile(){
-  const json=JSON.stringify(chars,null,2);
+function exportFile(ids){
+  const data=ids?chars.filter(c=>ids.includes(c.id)):chars;
+  const json=JSON.stringify(data,null,2);
   const blob=new Blob([json],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='chaos-chars.json';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-function exportClipboard(){
-  const json=JSON.stringify(chars,null,2);
+function exportClipboard(ids){
+  const data=ids?chars.filter(c=>ids.includes(c.id)):chars;
+  const json=JSON.stringify(data,null,2);
   navigator.clipboard.writeText(json).then(()=>alert('クリップボードにコピーしました！')).catch(()=>{
     const ta=document.createElement('textarea');ta.value=json;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();alert('クリップボードにコピーしました！');
   });
+}
+
+// キャラ選択ピッカー (エクスポート用)
+function showCharPicker(mode){
+  let ex=document.getElementById('__char-picker');if(ex)ex.remove();
+  const selected=new Set();
+  const modal=document.createElement('div');modal.id='__char-picker';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;display:flex;align-items:center;justify-content:center;';
+  const box=document.createElement('div');box.style.cssText='background:#fff;border-radius:14px;padding:20px;max-width:560px;width:92%;max-height:82vh;display:flex;flex-direction:column;gap:12px;';
+
+  const ti=document.createElement('div');ti.style.cssText='font-weight:700;font-size:15px;';
+  ti.textContent='エクスポートするキャラを選択';box.appendChild(ti);
+
+  const sub=document.createElement('div');sub.style.cssText='font-size:12px;color:#888;';
+  sub.textContent='クリックで選択/解除。複数選択可。';box.appendChild(sub);
+
+  // 全選択/解除ボタン
+  const topBar=document.createElement('div');topBar.style.cssText='display:flex;gap:6px;';
+  const selAll=document.createElement('button');selAll.style.cssText='padding:4px 10px;background:#f0eeea;border:1px solid #bbb;border-radius:5px;cursor:pointer;font-size:12px;font-family:inherit;';selAll.textContent='全選択';
+  const deselAll=document.createElement('button');deselAll.style.cssText='padding:4px 10px;background:#f0eeea;border:1px solid #bbb;border-radius:5px;cursor:pointer;font-size:12px;font-family:inherit;';deselAll.textContent='全解除';
+  topBar.appendChild(selAll);topBar.appendChild(deselAll);box.appendChild(topBar);
+
+  const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;overflow-y:auto;flex:1;';
+
+  function updateCard(card,id){
+    const sel=selected.has(id);
+    card.style.borderColor=sel?'#e8303a':'#d8d5ce';
+    card.style.background=sel?'#fff0f1':'#fff';
+    card.querySelector('.__chk').textContent=sel?'✓':'';
+    card.querySelector('.__chk').style.color='#e8303a';
+  }
+
+  chars.forEach(c=>{
+    const card=document.createElement('div');
+    card.style.cssText='border:2px solid #d8d5ce;border-radius:9px;padding:8px 5px;text-align:center;cursor:pointer;transition:all .12s;position:relative;';
+    const chk=document.createElement('span');chk.className='__chk';chk.style.cssText='position:absolute;top:4px;right:6px;font-size:14px;font-weight:700;';
+    card.appendChild(chk);
+    const ib=document.createElement('div');ib.style.cssText='width:56px;height:56px;border-radius:7px;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:26px;background:#f0eeea;overflow:hidden;';
+    if(c.imgSrc){const img=document.createElement('img');img.style.cssText='width:100%;height:100%;object-fit:cover;';img.src=c.imgSrc;ib.appendChild(img);}else{ib.textContent=c.emoji;}
+    const nm=document.createElement('div');nm.style.cssText='font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';nm.textContent=c.name;
+    card.appendChild(ib);card.appendChild(nm);
+    card.onclick=()=>{
+      if(selected.has(c.id))selected.delete(c.id);else selected.add(c.id);
+      updateCard(card,c.id);
+      execBtn.disabled=selected.size===0;
+    };
+    updateCard(card,c.id);
+    grid.appendChild(card);
+  });
+  box.appendChild(grid);
+
+  selAll.onclick=()=>{chars.forEach(c=>{selected.add(c.id);grid.querySelectorAll('div[style]').forEach((cd,i)=>{if(chars[i])updateCard(cd,chars[i].id);});});execBtn.disabled=false;};
+  deselAll.onclick=()=>{selected.clear();grid.querySelectorAll('div[style]').forEach((cd,i)=>{if(chars[i])updateCard(cd,chars[i].id);});execBtn.disabled=true;};
+
+  const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;';
+  const execBtn=document.createElement('button');execBtn.style.cssText='padding:8px 20px;background:#e8303a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;font-size:13px;';
+  execBtn.textContent=mode==='export-file'?'JSONファイルに書き出し':'クリップボードにコピー';
+  execBtn.disabled=true;
+  execBtn.onclick=()=>{
+    modal.remove();
+    const ids=[...selected];
+    if(mode==='export-file') exportFile(ids);
+    else exportClipboard(ids);
+  };
+  const cancelBtn=document.createElement('button');cancelBtn.style.cssText='padding:8px 18px;background:#f0eeea;border:1px solid #bbb;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;';cancelBtn.textContent='キャンセル';cancelBtn.onclick=()=>modal.remove();
+  btns.appendChild(cancelBtn);btns.appendChild(execBtn);
+  box.appendChild(btns);
+  modal.appendChild(box);modal.onclick=e=>{if(e.target===modal)modal.remove();};document.body.appendChild(modal);
 }
 function importFile(input){
   const file=input.files[0];if(!file)return;
@@ -565,17 +643,19 @@ async function initStorage(){
   }
 }
 
+// chars初期化 (LSモード時のみここで同期ロード、IDBモードはinitStorage内で非同期ロード)
 let chars=load();
 let nid=chars.length?Math.max(...chars.map(c=>c.id))+1:1;
 function mkChar(name,emoji){
   return{id:nid++,name,emoji,imgSrc:null,maxHp:100,atk:20,dodgePct:20,revivePct:0,reviveHp:30,
     sounds:{attack:[],hit:[],dodge:[],death:[],revive:[]}};
 }
-// 古いデータに新フィールドがない場合の補完
+// 古いデータ補完
 chars.forEach(c=>{
   if(c.dodgePct===undefined)c.dodgePct=20;
   if(c.revivePct===undefined)c.revivePct=0;
   if(c.reviveHp===undefined)c.reviveHp=30;
+  if(!c.sounds)c.sounds={attack:[],hit:[],dodge:[],death:[],revive:[]};
   if(!c.sounds.revive)c.sounds.revive=[];
 });
 
@@ -656,7 +736,8 @@ function buildCard(c){
   // URL入力ボタン
   const urlBtn=document.createElement('button');urlBtn.className='btn btn-secondary btn-xs';urlBtn.style.width='100%';urlBtn.textContent='URLで指定';
   urlBtn.onclick=()=>{
-    const url=prompt('画像のURLを入力してください:',c.imgSrc&&c.imgSrc.startsWith('http')?c.imgSrc:'');
+    const cur=c.imgSrc&&c.imgSrc.startsWith('http')?c.imgSrc:'';
+    const url=prompt('画像のURLを入力してください\n\n推奨: https://imgur.com/ にアップロードした画像のURLを使うと\nLocalStorage容量を消費しません。',cur);
     if(url===null)return;
     if(url.trim()===''){c.imgSrc=null;}else{c.imgSrc=url.trim();}
     save();renderSetup();
@@ -723,13 +804,48 @@ function buildVI(c,tk,item,idx,refresh){
   const vi=document.createElement('div');vi.className='voice-item';
   const left=document.createElement('div');left.className='voice-item-left';
   const ti=document.createElement('input');ti.className='voice-text-input';ti.type='text';ti.value=item.text||'';ti.placeholder=st.ph;ti.oninput=e=>{item.text=e.target.value;save();};left.appendChild(ti);
+
+  // 音声ソース表示 (URL or ファイル)
+  const isUrl=item.audio&&item.audio.startsWith('http');
+  if(isUrl){
+    const urlTag=document.createElement('div');
+    urlTag.style.cssText='font-size:10px;color:var(--accent3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px;';
+    urlTag.title=item.audio;
+    urlTag.textContent='🔗 '+item.audio;
+    left.appendChild(urlTag);
+  }
+
   const fr=document.createElement('div');fr.className='voice-file-row';
+
+  // ファイルアップロード
   const fi=document.createElement('input');fi.type='file';fi.accept='audio/*';fi.style.display='none';
-  const ub=document.createElement('button');ub.className='snd-upload-btn'+(item.audio?' has-file':'');ub.textContent=item.audio?'✓ 音声あり':'音声アップロード';ub.onclick=()=>fi.click();
+  const ub=document.createElement('button');
+  ub.className='snd-upload-btn'+((item.audio&&!isUrl)?' has-file':'');
+  ub.textContent=(item.audio&&!isUrl)?'✓ ファイルあり':'ファイル';
+  ub.title='ローカルファイルをアップロード';
+  ub.onclick=()=>fi.click();
   fi.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{item.audio=ev.target.result;save();refresh();};r.readAsDataURL(f);};
   left.appendChild(fi);
-  const pb=document.createElement('button');pb.className='snd-play-btn';pb.textContent='▶';pb.style.display=item.audio?'inline-block':'none';pb.onclick=()=>{if(item.audio)new Audio(item.audio).play().catch(()=>{});};
-  fr.appendChild(ub);fr.appendChild(pb);left.appendChild(fr);vi.appendChild(left);
+
+  // URLで指定ボタン
+  const urlb=document.createElement('button');
+  urlb.className='snd-upload-btn'+(isUrl?' has-file':'');
+  urlb.textContent=isUrl?'✓ URL':'URLで指定';
+  urlb.title='catbox.moe などのURLで指定（LS容量を使わない）';
+  urlb.onclick=()=>{
+    const cur=isUrl?item.audio:'';
+    const url=prompt('音声ファイルのURLを入力してください\n\n推奨: https://catbox.moe/ にアップロードしたURLを使うと\nLocalStorage容量を消費しません。\n\n空白にするとURLをクリアします。',cur);
+    if(url===null)return;
+    if(url.trim()===''){item.audio=null;}else{item.audio=url.trim();}
+    save();refresh();
+  };
+
+  // 再生ボタン
+  const pb=document.createElement('button');pb.className='snd-play-btn';pb.textContent='▶';
+  pb.style.display=item.audio?'inline-block':'none';
+  pb.onclick=()=>{if(item.audio)new Audio(item.audio).play().catch(e=>alert('再生失敗: '+e.message));};
+
+  fr.appendChild(ub);fr.appendChild(urlb);fr.appendChild(pb);left.appendChild(fr);vi.appendChild(left);
   const db=document.createElement('button');db.className='voice-del-btn';db.textContent='✕';db.onclick=()=>{c.sounds[tk].splice(idx,1);save();refresh();};vi.appendChild(db);return vi;
 }
 
