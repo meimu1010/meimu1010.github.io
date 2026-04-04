@@ -565,17 +565,19 @@ async function initStorage(){
   }
 }
 
+// chars初期化 (LSモード時のみここで同期ロード、IDBモードはinitStorage内で非同期ロード)
 let chars=load();
 let nid=chars.length?Math.max(...chars.map(c=>c.id))+1:1;
 function mkChar(name,emoji){
   return{id:nid++,name,emoji,imgSrc:null,maxHp:100,atk:20,dodgePct:20,revivePct:0,reviveHp:30,
     sounds:{attack:[],hit:[],dodge:[],death:[],revive:[]}};
 }
-// 古いデータに新フィールドがない場合の補完
+// 古いデータ補完
 chars.forEach(c=>{
   if(c.dodgePct===undefined)c.dodgePct=20;
   if(c.revivePct===undefined)c.revivePct=0;
   if(c.reviveHp===undefined)c.reviveHp=30;
+  if(!c.sounds)c.sounds={attack:[],hit:[],dodge:[],death:[],revive:[]};
   if(!c.sounds.revive)c.sounds.revive=[];
 });
 
@@ -656,7 +658,8 @@ function buildCard(c){
   // URL入力ボタン
   const urlBtn=document.createElement('button');urlBtn.className='btn btn-secondary btn-xs';urlBtn.style.width='100%';urlBtn.textContent='URLで指定';
   urlBtn.onclick=()=>{
-    const url=prompt('画像のURLを入力してください:',c.imgSrc&&c.imgSrc.startsWith('http')?c.imgSrc:'');
+    const cur=c.imgSrc&&c.imgSrc.startsWith('http')?c.imgSrc:'';
+    const url=prompt('画像のURLを入力してください\n\n推奨: https://imgur.com/ にアップロードした画像のURLを使うと\nLocalStorage容量を消費しません。',cur);
     if(url===null)return;
     if(url.trim()===''){c.imgSrc=null;}else{c.imgSrc=url.trim();}
     save();renderSetup();
@@ -723,13 +726,48 @@ function buildVI(c,tk,item,idx,refresh){
   const vi=document.createElement('div');vi.className='voice-item';
   const left=document.createElement('div');left.className='voice-item-left';
   const ti=document.createElement('input');ti.className='voice-text-input';ti.type='text';ti.value=item.text||'';ti.placeholder=st.ph;ti.oninput=e=>{item.text=e.target.value;save();};left.appendChild(ti);
+
+  // 音声ソース表示 (URL or ファイル)
+  const isUrl=item.audio&&item.audio.startsWith('http');
+  if(isUrl){
+    const urlTag=document.createElement('div');
+    urlTag.style.cssText='font-size:10px;color:var(--accent3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px;';
+    urlTag.title=item.audio;
+    urlTag.textContent='🔗 '+item.audio;
+    left.appendChild(urlTag);
+  }
+
   const fr=document.createElement('div');fr.className='voice-file-row';
+
+  // ファイルアップロード
   const fi=document.createElement('input');fi.type='file';fi.accept='audio/*';fi.style.display='none';
-  const ub=document.createElement('button');ub.className='snd-upload-btn'+(item.audio?' has-file':'');ub.textContent=item.audio?'✓ 音声あり':'音声アップロード';ub.onclick=()=>fi.click();
+  const ub=document.createElement('button');
+  ub.className='snd-upload-btn'+((item.audio&&!isUrl)?' has-file':'');
+  ub.textContent=(item.audio&&!isUrl)?'✓ ファイルあり':'ファイル';
+  ub.title='ローカルファイルをアップロード';
+  ub.onclick=()=>fi.click();
   fi.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{item.audio=ev.target.result;save();refresh();};r.readAsDataURL(f);};
   left.appendChild(fi);
-  const pb=document.createElement('button');pb.className='snd-play-btn';pb.textContent='▶';pb.style.display=item.audio?'inline-block':'none';pb.onclick=()=>{if(item.audio)new Audio(item.audio).play().catch(()=>{});};
-  fr.appendChild(ub);fr.appendChild(pb);left.appendChild(fr);vi.appendChild(left);
+
+  // URLで指定ボタン
+  const urlb=document.createElement('button');
+  urlb.className='snd-upload-btn'+(isUrl?' has-file':'');
+  urlb.textContent=isUrl?'✓ URL':'URLで指定';
+  urlb.title='catbox.moe などのURLで指定（LS容量を使わない）';
+  urlb.onclick=()=>{
+    const cur=isUrl?item.audio:'';
+    const url=prompt('音声ファイルのURLを入力してください\n\n推奨: https://catbox.moe/ にアップロードしたURLを使うと\nLocalStorage容量を消費しません。\n\n空白にするとURLをクリアします。',cur);
+    if(url===null)return;
+    if(url.trim()===''){item.audio=null;}else{item.audio=url.trim();}
+    save();refresh();
+  };
+
+  // 再生ボタン
+  const pb=document.createElement('button');pb.className='snd-play-btn';pb.textContent='▶';
+  pb.style.display=item.audio?'inline-block':'none';
+  pb.onclick=()=>{if(item.audio)new Audio(item.audio).play().catch(e=>alert('再生失敗: '+e.message));};
+
+  fr.appendChild(ub);fr.appendChild(urlb);fr.appendChild(pb);left.appendChild(fr);vi.appendChild(left);
   const db=document.createElement('button');db.className='voice-del-btn';db.textContent='✕';db.onclick=()=>{c.sounds[tk].splice(idx,1);save();refresh();};vi.appendChild(db);return vi;
 }
 
