@@ -130,7 +130,7 @@ header{display:none;}
 /* Fighter Cells */
 .fighter-cell{position:relative;border:3px solid var(--border);border-radius:10px;overflow:visible;background:var(--surface2);aspect-ratio:1;transition:border-color .2s,box-shadow .2s;}
 .fighter-cell.attacking{border-color:var(--accent);box-shadow:0 0 20px rgba(233,69,96,.5);}
-.fighter-cell.dead-exploded{border-color:#333!important;background:#111;opacity:.25;filter:grayscale(1) brightness(.3);}
+.fighter-cell.dead-exploded{border-color:#555!important;background:#1a1010;opacity:.55;filter:grayscale(1) brightness(.5);}
 .fighter-cell.winner{border-color:var(--accent2)!important;box-shadow:0 0 30px rgba(245,166,35,.6);animation:winner-pulse .8s infinite alternate;}
 @keyframes winner-pulse{from{box-shadow:0 0 15px rgba(245,166,35,.3);}to{box-shadow:0 0 40px rgba(245,166,35,.8);}}
 .fighter-cell[data-team="a"]{border-color:var(--ta);}
@@ -177,12 +177,18 @@ header{display:none;}
 
 /* ===== EXPLOSION ===== */
 .explosion-container{position:absolute;inset:0;z-index:150;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:visible;}
-.explosion-ring{position:absolute;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,#fff 0%,#ffcc00 30%,#ff6600 60%,#ff0000 80%,transparent 100%);animation:explodeRing .7s ease-out forwards;opacity:0;}
-@keyframes explodeRing{0%{transform:scale(0);opacity:1;}40%{opacity:1;}100%{transform:scale(6);opacity:0;}}
-.explosion-particle{position:absolute;width:8px;height:8px;border-radius:50%;animation:explodePart .8s ease-out forwards;}
-@keyframes explodePart{0%{transform:translate(0,0) scale(1);opacity:1;}100%{opacity:0;}}
-.explosion-flash{position:absolute;inset:-20px;background:radial-gradient(circle,rgba(255,255,255,.9) 0%,rgba(255,200,0,.5) 40%,transparent 70%);animation:explodeFlash .3s ease-out forwards;z-index:160;}
-@keyframes explodeFlash{0%{opacity:1;transform:scale(.5);}100%{opacity:0;transform:scale(2);}}
+.explosion-ring{position:absolute;border-radius:50%;background:radial-gradient(circle,#fff 0%,#ffee00 20%,#ff8800 45%,#ff2200 70%,transparent 100%);animation:explodeRing .9s cubic-bezier(.1,.6,.3,1) forwards;opacity:0;}
+.explosion-ring2{position:absolute;border-radius:50%;background:radial-gradient(circle,transparent 30%,rgba(255,100,0,.6) 60%,transparent 80%);border:3px solid rgba(255,200,0,.8);animation:explodeRing2 .7s ease-out forwards;opacity:0;}
+@keyframes explodeRing{0%{width:10px;height:10px;opacity:1;}15%{opacity:1;}100%{width:300%;height:300%;opacity:0;}}
+@keyframes explodeRing2{0%{width:20px;height:20px;opacity:1;}100%{width:250%;height:250%;opacity:0;}}
+.explosion-particle{position:absolute;border-radius:50%;animation:explodePart .9s ease-out forwards;}
+.explosion-shard{position:absolute;width:4px;height:12px;animation:explodeShard 1s ease-out forwards;transform-origin:center bottom;}
+@keyframes explodePart{0%{transform:translate(0,0) scale(1.5);opacity:1;}70%{opacity:.8;}100%{opacity:0;}}
+@keyframes explodeShard{0%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1;}100%{opacity:0;}}
+.explosion-flash{position:absolute;inset:-40px;background:radial-gradient(circle,rgba(255,255,255,1) 0%,rgba(255,220,0,.8) 25%,rgba(255,80,0,.4) 55%,transparent 75%);animation:explodeFlash .5s ease-out forwards;z-index:160;border-radius:50%;}
+@keyframes explodeFlash{0%{opacity:1;transform:scale(.3);}30%{opacity:1;transform:scale(1.5);}100%{opacity:0;transform:scale(2.5);}}
+.explosion-smoke{position:absolute;width:80%;height:80%;border-radius:50%;background:radial-gradient(circle,rgba(80,80,80,.7) 0%,rgba(40,40,40,.4) 50%,transparent 75%);animation:explodeSmoke 1.5s ease-out forwards;top:10%;left:10%;}
+@keyframes explodeSmoke{0%{transform:scale(0);opacity:.8;}40%{opacity:.6;}100%{transform:scale(3) translateY(-20px);opacity:0;}}
 
 /* ===== MULTIPLY ===== */
 .multiply-effect{position:absolute;inset:0;z-index:140;pointer-events:none;display:flex;align-items:center;justify-content:center;}
@@ -382,7 +388,7 @@ function getActiveEvents(){
 ============================================================ */
 const TERRAIN_TYPES=[
   {type:'normal',emoji:'',effect:null},
-  {type:'lava',emoji:'🌋',effectDesc:'毎ターン10ダメージ'},
+  {type:'lava',emoji:'🌋',effectDesc:'毎ターン5ダメージ'},
   {type:'heal',emoji:'💚',effectDesc:'毎ターン8回復'},
   {type:'warp',emoji:'🌀',effectDesc:'ワープする'},
   {type:'bomb',emoji:'💣',effectDesc:'踏むと爆発(50ダメージ)'},
@@ -399,7 +405,35 @@ function playBeep(freq,dur,type='square',vol=.15){
 }
 function seHit(){playBeep(200,.15,'sawtooth',.12);}
 function seCrit(){playBeep(150,.2,'sawtooth',.15);setTimeout(()=>playBeep(100,.15,'square',.12),80);}
-function seExplode(){playBeep(80,.3,'sawtooth',.2);setTimeout(()=>playBeep(50,.4,'square',.18),50);setTimeout(()=>playBeep(30,.3,'sawtooth',.15),150);}
+function seExplode(){
+  try{
+    const ctx=getAudioCtx();const now=ctx.currentTime;
+    // 低域ドーン
+    const sub=ctx.createOscillator();const subG=ctx.createGain();
+    sub.type='sine';sub.frequency.setValueAtTime(80,now);sub.frequency.exponentialRampToValueAtTime(20,now+0.8);
+    subG.gain.setValueAtTime(0,now);subG.gain.linearRampToValueAtTime(0.6,now+0.02);subG.gain.exponentialRampToValueAtTime(0.001,now+0.9);
+    sub.connect(subG);subG.connect(ctx.destination);sub.start(now);sub.stop(now+0.9);
+    // 中域ガリガリ
+    const mid=ctx.createOscillator();const midG=ctx.createGain();
+    mid.type='sawtooth';mid.frequency.setValueAtTime(120,now);mid.frequency.exponentialRampToValueAtTime(30,now+0.6);
+    midG.gain.setValueAtTime(0,now);midG.gain.linearRampToValueAtTime(0.4,now+0.01);midG.gain.exponentialRampToValueAtTime(0.001,now+0.7);
+    mid.connect(midG);midG.connect(ctx.destination);mid.start(now);mid.stop(now+0.7);
+    // ノイズ（バッファ生成）
+    const bufSize=ctx.sampleRate*0.5;const buf=ctx.createBuffer(1,bufSize,ctx.sampleRate);
+    const data=buf.getChannelData(0);for(let i=0;i<bufSize;i++)data[i]=(Math.random()*2-1);
+    const noise=ctx.createBufferSource();noise.buffer=buf;
+    const noiseG=ctx.createGain();noiseG.gain.setValueAtTime(0.3,now);noiseG.gain.exponentialRampToValueAtTime(0.001,now+0.5);
+    const noiseF=ctx.createBiquadFilter();noiseF.type='lowpass';noiseF.frequency.value=1000;
+    noise.connect(noiseF);noiseF.connect(noiseG);noiseG.connect(ctx.destination);noise.start(now);noise.stop(now+0.5);
+    // 高音パチパチ×3
+    [0,0.06,0.14].forEach(d=>{
+      const cr=ctx.createOscillator();const crG=ctx.createGain();
+      cr.type='square';cr.frequency.setValueAtTime(800+Math.random()*400,now+d);
+      crG.gain.setValueAtTime(0.2,now+d);crG.gain.exponentialRampToValueAtTime(0.001,now+d+0.08);
+      cr.connect(crG);crG.connect(ctx.destination);cr.start(now+d);cr.stop(now+d+0.09);
+    });
+  }catch(e){}
+}
 function seEvent(){playBeep(440,.1,'sine',.1);setTimeout(()=>playBeep(660,.1,'sine',.1),100);setTimeout(()=>playBeep(880,.15,'sine',.12),200);}
 function seDodge(){playBeep(600,.08,'sine',.08);setTimeout(()=>playBeep(800,.08,'sine',.08),80);}
 function seWin(){[0,100,200,300,400].forEach((d,i)=>setTimeout(()=>playBeep([523,659,784,1047,1319][i],.2,'sine',.12),d));}
@@ -654,11 +688,13 @@ async function checkRandomEvent(){
 
 /* ---- Event Functions ---- */
 async function evShuffle(){
-  const alive=fighters.filter(f=>f.alive);if(alive.length<=1)return;
-  const positions=alive.map(f=>f.gridPos);const shuffled=[...positions].sort(()=>Math.random()-.5);
-  alive.forEach((f,i)=>f.gridPos=shuffled[i]);shakeArena(true);renderArena();updateAliveCounter();
+  if(fighters.length<=1)return;
+  const positions=fighters.map(f=>f.gridPos);
+  const shuffled=[...positions].sort(()=>Math.random()-.5);
+  fighters.forEach((f,i)=>f.gridPos=shuffled[i]);
+  shakeArena(true);renderArena();updateAliveCounter();
   setTimeout(()=>resizeC(),100);
-  addLog('<span class="event-log">🔄 全員の位置がシャッフルされた！</span>');
+  addLog('<span class="event-log">🔄 全員（生死問わず）の位置がシャッフルされた！</span>');
 }
 async function evBetray(){
   const alive=fighters.filter(f=>f.alive&&f.team);if(alive.length<1)return;
@@ -758,9 +794,15 @@ async function evResurrect(){
 async function applyTerrainEffects(){
   for(const f of fighters){
     if(!f.alive)continue;const t=terrainMap[f.gridPos];if(!t||t==='normal')continue;
-    if(t==='lava'){const dmg=10;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg,'event-dmg');updateHp(f);if(f.hp<=0){await killWithExplosion(f);addLog(`<span class="event-log">🌋 ${f.name} が溶岩で焼かれた！</span>`);}}
+    if(t==='lava'){const dmg=5;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg,'event-dmg');updateHp(f);if(f.hp<=0){await killWithExplosion(f);addLog(`<span class="event-log">🌋 ${f.name} が溶岩で焼かれた！</span>`);}}
     else if(t==='heal'){const heal=8;f.hp=Math.min(f.maxHp,f.hp+heal);showDamagePopup(f.iid,'+'+heal,'heal');updateHp(f);}
-    else if(t==='warp'){const empties=[];for(let i=0;i<gCols*gRows;i++){if(!fighters.some(x=>x.alive&&x.gridPos===i)&&i!==f.gridPos)empties.push(i);}if(empties.length){f.gridPos=empties[Math.floor(Math.random()*empties.length)];renderArena();setTimeout(()=>resizeC(),100);addLog(`<span class="event-log">🌀 ${f.name} がワープした！</span>`);}}
+    else if(t==='warp'){
+      // ワープ：グリッドから消える（gridPos=-1で非表示）
+      f.gridPos=-1;
+      renderArena();setTimeout(()=>resizeC(),100);
+      showDamagePopup(f.iid,'🌀 消えた！','event-dmg');
+      addLog(`<span class="event-log">🌀 ${f.name} がワープして消えた！</span>`);
+    }
     else if(t==='bomb'){const dmg=50;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg+'💥','event-dmg');updateHp(f);shakeArena(false);delete terrainMap[f.gridPos];addLog(`<span class="event-log">💣 ${f.name} が爆弾を踏んだ！${dmg}ダメージ！</span>`);if(f.hp<=0){await killWithExplosion(f);}}
   }
 }
@@ -773,30 +815,58 @@ function playExplosion(iid){
     const cell=document.getElementById('cell-'+iid);
     if(!cell){resolve();return;}
     seExplode();
+
+    // フラッシュ
     const flash=document.createElement('div');flash.className='explosion-flash';cell.appendChild(flash);
+
     const container=document.createElement('div');container.className='explosion-container';
-    const ring=document.createElement('div');ring.className='explosion-ring';container.appendChild(ring);
-    const colors=['#ff0','#ff6600','#ff0000','#fff','#ffcc00'];
-    for(let i=0;i<12;i++){
+
+    // メインリング×2
+    const ring1=document.createElement('div');ring1.className='explosion-ring';ring1.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);';container.appendChild(ring1);
+    const ring2=document.createElement('div');ring2.className='explosion-ring2';ring2.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);animation-delay:.08s;';container.appendChild(ring2);
+
+    // パーティクル（大量・大きめ）
+    const colors=['#fff','#ffee00','#ffaa00','#ff6600','#ff2200','#ffdd44','#ffffff'];
+    const sizes=[6,8,10,12,14];
+    for(let i=0;i<24;i++){
       const p=document.createElement('div');p.className='explosion-particle';
-      const angle=(i/12)*Math.PI*2;const dist=30+Math.random()*30;
+      const angle=(i/24)*Math.PI*2+(Math.random()-.5)*0.4;
+      const dist=50+Math.random()*80;
       const dx=Math.cos(angle)*dist;const dy=Math.sin(angle)*dist;
-      p.style.background=colors[Math.floor(Math.random()*colors.length)];
-      p.style.left='calc(50% - 4px)';p.style.top='calc(50% - 4px)';
-      p.style.animation=`explodePart ${0.5+Math.random()*0.4}s ease-out forwards`;
+      const sz=sizes[Math.floor(Math.random()*sizes.length)];
+      p.style.cssText=`width:${sz}px;height:${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};left:calc(50% - ${sz/2}px);top:calc(50% - ${sz/2}px);box-shadow:0 0 ${sz}px ${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${0.6+Math.random()*0.5}s;`;
       p.animate([
-        {transform:'translate(0,0) scale(1)',opacity:1},
-        {transform:`translate(${dx}px,${dy}px) scale(0.3)`,opacity:0}
-      ],{duration:500+Math.random()*400,easing:'ease-out',fill:'forwards'});
+        {transform:`translate(0,0) scale(1.8)`,opacity:1},
+        {transform:`translate(${dx}px,${dy}px) scale(0.2)`,opacity:0}
+      ],{duration:700+Math.random()*500,easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'});
       container.appendChild(p);
     }
+
+    // 破片（細長い）
+    for(let i=0;i<10;i++){
+      const s=document.createElement('div');s.className='explosion-shard';
+      const angle=Math.random()*Math.PI*2;
+      const dist=40+Math.random()*60;
+      const dx=Math.cos(angle)*dist;const dy=Math.sin(angle)*dist;
+      s.style.cssText=`background:${colors[Math.floor(Math.random()*3)]};left:calc(50% - 2px);top:calc(50% - 6px);`;
+      s.animate([
+        {transform:`translate(0,0) rotate(${Math.random()*360}deg) scale(1)`,opacity:1},
+        {transform:`translate(${dx}px,${dy}px) rotate(${Math.random()*720}deg) scale(0)`,opacity:0}
+      ],{duration:800+Math.random()*400,easing:'ease-out',fill:'forwards'});
+      container.appendChild(s);
+    }
+
+    // 煙
+    const smoke=document.createElement('div');smoke.className='explosion-smoke';container.appendChild(smoke);
+
     cell.appendChild(container);
     shakeArena(true);
+
     setTimeout(()=>{
       flash.remove();container.remove();
       cell.classList.add('dead-exploded');
       resolve();
-    },700);
+    },950);
   });
 }
 
