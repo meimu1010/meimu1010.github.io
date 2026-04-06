@@ -797,11 +797,15 @@ async function applyTerrainEffects(){
     if(t==='lava'){const dmg=5;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg,'event-dmg');updateHp(f);if(f.hp<=0){await killWithExplosion(f);addLog(`<span class="event-log">🌋 ${f.name} が溶岩で焼かれた！</span>`);}}
     else if(t==='heal'){const heal=8;f.hp=Math.min(f.maxHp,f.hp+heal);showDamagePopup(f.iid,'+'+heal,'heal');updateHp(f);}
     else if(t==='warp'){
-      // ワープ：グリッドから消える（gridPos=-1で非表示）
-      f.gridPos=-1;
-      renderArena();setTimeout(()=>resizeC(),100);
-      showDamagePopup(f.iid,'🌀 消えた！','event-dmg');
-      addLog(`<span class="event-log">🌀 ${f.name} がワープして消えた！</span>`);
+      const empties=[];
+      for(let i=0;i<gCols*gRows;i++){
+        if(!fighters.some(x=>x.gridPos===i)&&i!==f.gridPos)empties.push(i);
+      }
+      if(empties.length){
+        f.gridPos=empties[Math.floor(Math.random()*empties.length)];
+        renderArena();setTimeout(()=>resizeC(),100);
+        addLog(`<span class="event-log">🌀 ${f.name} がワープした！</span>`);
+      }
     }
     else if(t==='bomb'){const dmg=50;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg+'💥','event-dmg');updateHp(f);shakeArena(false);delete terrainMap[f.gridPos];addLog(`<span class="event-log">💣 ${f.name} が爆弾を踏んだ！${dmg}ダメージ！</span>`);if(f.hp<=0){await killWithExplosion(f);}}
   }
