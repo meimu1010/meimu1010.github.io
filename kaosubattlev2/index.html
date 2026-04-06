@@ -539,15 +539,24 @@ function renderEventToggles(){
   ALL_EVENTS.forEach(ev=>{
     const lbl=document.createElement('label');
     lbl.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:12px;color:var(--text);user-select:none;transition:border-color .15s;';
-    const cb=document.createElement('input');cb.type='checkbox';cb.dataset.evKey=ev.key;
+    
+    const cb=document.createElement('input');
+    cb.type='checkbox';
+    cb.dataset.evKey=ev.key;
     cb.checked=enabledEvents===null||enabledEvents.has(ev.key);
+    
     const teamNote=ev.teamOnly?' <span style="font-size:10px;color:var(--text-muted);">(チーム戦)</span>':'';
+    
     cb.onchange=()=>{
       const allCbs=container.querySelectorAll('input[type=checkbox]');
       const checkedKeys=new Set([...allCbs].filter(c=>c.checked).map(c=>c.dataset.evKey));
       enabledEvents=checkedKeys.size===ALL_EVENTS.length?null:checkedKeys;
     };
-    lbl.appendChild(cb);lbl.innerHTML+=ev.name+teamNote;lbl.prepend(cb);
+
+    // 修正ポイント: appendChildの後に、テキスト/HTMLのみを挿入する
+    lbl.appendChild(cb);
+    lbl.insertAdjacentHTML('beforeend', ev.name + teamNote);
+    
     container.appendChild(lbl);
   });
 }
