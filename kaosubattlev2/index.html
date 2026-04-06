@@ -184,7 +184,7 @@ header{display:none;}
 .explosion-flash{position:absolute;inset:-20px;background:radial-gradient(circle,rgba(255,255,255,.9) 0%,rgba(255,200,0,.5) 40%,transparent 70%);animation:explodeFlash .3s ease-out forwards;z-index:160;}
 @keyframes explodeFlash{0%{opacity:1;transform:scale(.5);}100%{opacity:0;transform:scale(2);}}
 
-/* ===== MULTIPLY (増殖) ===== */
+/* ===== MULTIPLY ===== */
 .multiply-effect{position:absolute;inset:0;z-index:140;pointer-events:none;display:flex;align-items:center;justify-content:center;}
 .multiply-ghost{position:absolute;width:100%;height:100%;border-radius:10px;overflow:hidden;animation:multiplyGhost .8s ease-out forwards;opacity:0;}
 @keyframes multiplyGhost{0%{transform:scale(1);opacity:.8;filter:brightness(2) hue-rotate(90deg);}50%{transform:scale(1.3);opacity:.5;}100%{transform:scale(.3) translateY(-40px);opacity:0;}}
@@ -224,6 +224,34 @@ header{display:none;}
 .log-entry .multiply-log{color:#c77dff;font-weight:700;}
 .empty-cell{aspect-ratio:1;background:rgba(15,52,96,.3);border-radius:10px;border:1px dashed rgba(42,42,90,.5);}
 #storage-mode-bar{display:flex;align-items:center;gap:10px;margin-top:18px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;}
+
+/* ===== CHEAT PANEL ===== */
+#cheat-panel{display:none;margin-top:14px;padding:16px;background:rgba(233,69,96,.05);border:1px solid rgba(233,69,96,.3);border-radius:10px;}
+#cheat-panel .cheat-title{font-family:'DotGothic16',monospace;font-size:14px;color:var(--accent);margin-bottom:10px;text-shadow:0 0 10px rgba(233,69,96,.4);}
+#cheat-panel .cheat-section{margin-bottom:12px;}
+#cheat-panel .cheat-section-title{font-size:11px;font-weight:700;color:var(--accent2);letter-spacing:1px;margin-bottom:6px;}
+.cheat-event-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.cheat-event-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:'M PLUS 1p',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
+.cheat-event-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(233,69,96,.1);}
+.cheat-event-btn.queued{border-color:var(--accent);color:#fff;background:var(--accent);box-shadow:0 0 10px rgba(233,69,96,.4);}
+.cheat-char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;max-height:200px;overflow-y:auto;}
+.cheat-char-card{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:11px;}
+.cheat-char-card .cc-img{width:28px;height:28px;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--surface2);flex-shrink:0;}
+.cheat-char-card .cc-img img{width:100%;height:100%;object-fit:cover;}
+.cheat-char-card .cc-name{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cheat-char-card .cc-status{font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700;}
+.cheat-char-card .cc-status.alive{background:rgba(34,238,102,.15);color:var(--tc);}
+.cheat-char-card .cc-status.dead{background:rgba(233,69,96,.15);color:var(--accent);}
+.cheat-char-card .cc-btn{padding:2px 7px;border-radius:4px;border:1px solid var(--border2);background:var(--surface2);color:var(--text-muted);font-size:10px;cursor:pointer;font-family:'M PLUS 1p',sans-serif;font-weight:700;transition:all .12s;}
+.cheat-char-card .cc-btn:hover{border-color:var(--accent);color:var(--accent);}
+.cheat-char-card .cc-btn.revive-btn:hover{border-color:var(--tc);color:var(--tc);}
+
+/* Password bar */
+#pw-bar{margin-top:20px;padding:10px 16px;display:flex;align-items:center;gap:8px;opacity:0.3;transition:opacity .3s;}
+#pw-bar:hover{opacity:0.7;}
+#pw-bar input{background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text-muted);padding:5px 10px;font-family:'M PLUS 1p',sans-serif;font-size:12px;outline:none;width:140px;}
+#pw-bar input:focus{border-color:var(--border2);}
+
 @media(max-width:800px){.battle-layout{flex-direction:column;}.battle-log-col{width:100%;}#battle-log{max-height:250px;}.char-grid{grid-template-columns:1fr;}.pc{width:80px;height:80px;}}
 </style>
 </head>
@@ -293,6 +321,13 @@ header{display:none;}
       <button class="btn btn-primary btn-sm" id="battle-go-btn" onclick="launchBattle()" disabled>🔥 バトル開始！</button>
     </div>
     <div class="placement-outer"><div class="placement-grid" id="placement-grid"></div></div>
+
+    <!-- Password Bar (薄く表示) -->
+    <div id="pw-bar">
+      <input type="password" id="pw-input" placeholder="パスワード">
+      <button class="btn btn-secondary btn-xs" onclick="checkPassword()">決定</button>
+      <span id="pw-status" style="font-size:11px;color:var(--text-muted);"></span>
+    </div>
   </div>
 </div>
 
@@ -310,6 +345,19 @@ header{display:none;}
       </div>
       <div id="round-counter"></div>
       <div id="alive-counter"></div>
+      <!-- Cheat Panel (バトル画面内) -->
+      <div id="cheat-panel">
+        <div class="cheat-title">🔧 CHEAT MODE</div>
+        <div class="cheat-section">
+          <div class="cheat-section-title">⚡ 次のターンでイベント発動（1つだけ選択可能）</div>
+          <div class="cheat-event-btns" id="cheat-event-btns"></div>
+          <div style="margin-top:6px;font-size:11px;color:var(--text-muted);" id="cheat-queue-status">予約なし</div>
+        </div>
+        <div class="cheat-section">
+          <div class="cheat-section-title">💀 キャラ操作（即死/復活）</div>
+          <div class="cheat-char-grid" id="cheat-char-grid"></div>
+        </div>
+      </div>
       <div id="winner-banner">
         <h2>🏆 <span id="winner-name">???</span></h2>
         <p style="color:var(--text-muted);font-size:13px;margin-bottom:6px;">バトル終了！</p>
@@ -338,7 +386,7 @@ const SOUND_TYPES=[
 ];
 const PRESETS=[
   {name:'ドナルド',emoji:'🤡'},{name:'ムスカ',emoji:'🧐'},
-  {name:'ロボクラッシャー',emoji:'🐻'},{name:'松岡修造',emoji:'🔥'},
+  {name:'ロボクラッシャー',emoji:'🏻'},{name:'松岡修造',emoji:'🔥'},
   {name:'ピカチュウ',emoji:'⚡'},{name:'ドラゴン',emoji:'🐉'},
   {name:'忍者',emoji:'🥷'},{name:'ロボット',emoji:'🤖'},
   {name:'魔王',emoji:'😈'},{name:'勇者',emoji:'⚔️'},
@@ -349,14 +397,127 @@ const TEAM_COLORS={a:'var(--ta)',b:'var(--tb)',c:'var(--tc)',d:'var(--td)'};
 const TEAM_NAMES={a:'A',b:'B',c:'C',d:'D'};
 
 /* ============================================================
-   RANDOM EVENTS (裏切り・混乱はチーム戦のみ)
+   CHEAT MODE
+============================================================ */
+let cheatMode=false;
+let cheatQueuedEvent=null; // queued event function name (string key)
+
+const CHEAT_EVENTS=[
+  {key:'shuffle',  label:'🔄 シャッフル',  fn:evShuffle},
+  {key:'powerup',  label:'💪 パワーアップ', fn:evPowerUp},
+  {key:'healall',  label:'💚 回復の雨',    fn:evHealAll},
+  {key:'multiply', label:'👻 増殖',        fn:evMultiply},
+  {key:'betray',   label:'🤝 裏切り',      fn:evBetray,teamOnly:true},
+  {key:'confusion',label:'🌀 混乱',        fn:evConfusion,teamOnly:true},
+];
+
+function checkPassword(){
+  const input=document.getElementById('pw-input');
+  const status=document.getElementById('pw-status');
+  if(input.value==='114514'){
+    cheatMode=true;
+    status.textContent='✅ チートモード有効';
+    status.style.color='var(--accent)';
+    input.value='';
+    input.disabled=true;
+  } else {
+    status.textContent='❌ パスワードが違います';
+    status.style.color='var(--accent)';
+    setTimeout(()=>{status.textContent='';},2000);
+  }
+}
+
+function renderCheatPanel(){
+  const panel=document.getElementById('cheat-panel');
+  if(!cheatMode||!bActive){panel.style.display='none';return;}
+  panel.style.display='block';
+  renderCheatEventButtons();
+  renderCheatCharGrid();
+}
+
+function renderCheatEventButtons(){
+  const container=document.getElementById('cheat-event-btns');
+  container.innerHTML='';
+  const isTeamBattle=fighters.some(f=>f.team);
+  CHEAT_EVENTS.forEach(ev=>{
+    if(ev.teamOnly&&!isTeamBattle)return;
+    const btn=document.createElement('button');
+    btn.className='cheat-event-btn'+(cheatQueuedEvent===ev.key?' queued':'');
+    btn.textContent=ev.label;
+    btn.onclick=()=>{
+      if(cheatQueuedEvent===ev.key){cheatQueuedEvent=null;}
+      else{cheatQueuedEvent=ev.key;}
+      renderCheatEventButtons();
+      updateCheatQueueStatus();
+    };
+    container.appendChild(btn);
+  });
+}
+
+function updateCheatQueueStatus(){
+  const el=document.getElementById('cheat-queue-status');
+  if(cheatQueuedEvent){
+    const ev=CHEAT_EVENTS.find(e=>e.key===cheatQueuedEvent);
+    el.textContent='⚡ 次のターンで発動: '+(ev?ev.label:cheatQueuedEvent);
+    el.style.color='var(--accent)';
+  } else {
+    el.textContent='予約なし';
+    el.style.color='var(--text-muted)';
+  }
+}
+
+function renderCheatCharGrid(){
+  const grid=document.getElementById('cheat-char-grid');
+  grid.innerHTML='';
+  if(!fighters.length)return;
+  fighters.forEach(f=>{
+    const card=document.createElement('div');
+    card.className='cheat-char-card';
+    const imgDiv=document.createElement('div');imgDiv.className='cc-img';
+    if(f.imgSrc){const img=document.createElement('img');img.src=f.imgSrc;imgDiv.appendChild(img);}
+    else{imgDiv.textContent=f.emoji;}
+    card.appendChild(imgDiv);
+    const nameDiv=document.createElement('div');nameDiv.className='cc-name';nameDiv.textContent=f.name;card.appendChild(nameDiv);
+    const statusDiv=document.createElement('div');statusDiv.className='cc-status '+(f.alive?'alive':'dead');statusDiv.textContent=f.alive?'生存':'死亡';card.appendChild(statusDiv);
+    if(f.alive){
+      const killBtn=document.createElement('button');killBtn.className='cc-btn';killBtn.textContent='💀即死';
+      killBtn.onclick=async()=>{
+        if(!bActive)return;
+        const wasPaused=paused;
+        paused=true;
+        await killWithExplosion(f);
+        addLog(`<span class="event-log">🔧[CHEAT] ${f.name} を即死させた</span>`);
+        if(checkWin()){paused=wasPaused;renderCheatPanel();return;}
+        updateAliveCounter();
+        renderCheatPanel();
+        paused=wasPaused;
+        if(!paused&&!trRunning)scheduleNext();
+      };
+      card.appendChild(killBtn);
+    } else {
+      const revBtn=document.createElement('button');revBtn.className='cc-btn revive-btn';revBtn.textContent='✨復活';
+      revBtn.onclick=()=>{
+        if(!bActive)return;
+        f.alive=true;f.hp=f.maxHp;
+        const cell=document.getElementById('cell-'+f.iid);
+        if(cell){cell.classList.remove('dead-exploded');cell.classList.add('cell-revive');setTimeout(()=>cell.classList.remove('cell-revive'),800);}
+        updateHp(f);updateAliveCounter();
+        addLog(`<span class="revive-log">🔧[CHEAT] ${f.name} を復活させた！（HP:${f.hp}）</span>`);
+        renderCheatPanel();
+      };
+      card.appendChild(revBtn);
+    }
+    grid.appendChild(card);
+  });
+}
+
+/* ============================================================
+   RANDOM EVENTS (裏切り・混乱はチーム戦のみ, 天変地異・突然死 削除)
 ============================================================ */
 function getActiveEvents(){
   const isTeamBattle=fighters.some(f=>f.team);
   const base=[
-    {name:'🌋 天変地異',prob:.06,color:'#ff4400',fn:evDestroy},
     {name:'🔄 シャッフル',prob:.07,color:'#00d2ff',fn:evShuffle},
-    {name:'☠️ 突然死',prob:.04,color:'#ff0000',fn:evInstantKill},
     {name:'💪 パワーアップ',prob:.06,color:'#ffdd00',fn:evPowerUp},
     {name:'💚 回復の雨',prob:.06,color:'#22ee66',fn:evHealAll},
     {name:'👻 増殖',prob:.04,color:'#c77dff',fn:evMultiply},
@@ -403,8 +564,8 @@ function showExportMenu(btn){showDropMenu(btn,[
   {label:'📁 全キャラ → JSONファイル',fn:()=>exportFile(null)},
   {label:'📋 全キャラ → クリップボード',fn:()=>exportClipboard(null)},
   {label:'─────────',fn:null},
-  {label:'🔍 選んで → JSONファイル',fn:()=>showCharPicker('export-file')},
-  {label:'🔍 選んで → クリップボード',fn:()=>showCharPicker('export-clip')},
+  {label:'📁 選んで → JSONファイル',fn:()=>showCharPicker('export-file')},
+  {label:'📁 選んで → クリップボード',fn:()=>showCharPicker('export-clip')},
 ]);}
 function showImportMenu(btn){showDropMenu(btn,[
   {label:'📁 JSONファイルから読み込み',fn:()=>document.getElementById('import-file-input').click()},
@@ -473,7 +634,7 @@ function initSlots(){const total=gCols*gRows;while(slots.length<total)slots.push
 /* ============================================================
    TABS
 ============================================================ */
-function switchTab(t){['setup','select','battle'].forEach(x=>{document.getElementById('tab-'+x).classList.toggle('active',x===t);document.getElementById('panel-'+x).classList.toggle('active',x===t);});if(t==='setup')renderSetup();if(t==='select'){initSlots();renderSelectPanel();}}
+function switchTab(t){['setup','select','battle'].forEach(x=>{document.getElementById('tab-'+x).classList.toggle('active',x===t);document.getElementById('panel-'+x).classList.toggle('active',x===t);});if(t==='setup')renderSetup();if(t==='select'){initSlots();renderSelectPanel();}if(t==='battle')renderCheatPanel();}
 function gotoSelect(){if(!bActive)resetBattle();if(chars.length<1){alert('キャラクターを登録してください！');switchTab('setup');return;}initSlots();renderSelectPanel();switchTab('select');}
 
 /* ============================================================
@@ -512,7 +673,7 @@ function buildVI(c,tk,item,idx,refresh){
   const st=SOUND_TYPES.find(s=>s.key===tk);const vi=document.createElement('div');vi.className='voice-item';const left=document.createElement('div');left.className='voice-item-left';
   const ti=document.createElement('input');ti.className='voice-text-input';ti.type='text';ti.value=item.text||'';ti.placeholder=st.ph;ti.oninput=e=>{item.text=e.target.value;save();};left.appendChild(ti);
   const fr=document.createElement('div');fr.className='voice-file-row';const fi=document.createElement('input');fi.type='file';fi.accept='audio/*';fi.style.display='none';
-  const ub=document.createElement('button');ub.className='snd-upload-btn'+(item.audio?' has-file':'');ub.textContent=item.audio?'✓ 音声あり':'音声アップロード';ub.onclick=()=>fi.click();
+  const ub=document.createElement('button');ub.className='snd-upload-btn'+(item.audio?' has-file':'');ub.textContent=item.audio?'✔ 音声あり':'音声アップロード';ub.onclick=()=>fi.click();
   fi.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{item.audio=ev.target.result;save();refresh();};r.readAsDataURL(f);};left.appendChild(fi);
   const pb=document.createElement('button');pb.className='snd-play-btn';pb.textContent='▶';pb.style.display=item.audio?'inline-block':'none';pb.onclick=()=>{if(item.audio)new Audio(item.audio).play().catch(()=>{});};
   fr.appendChild(ub);fr.appendChild(pb);left.appendChild(fr);vi.appendChild(left);
@@ -566,6 +727,7 @@ function launchBattle(){
 
 function buildFighters(placed){
   clearT();bActive=true;paused=false;trRunning=false;roundNum=0;finalPhase=0;
+  cheatQueuedEvent=null;
   battleStats={kills:{},damageDone:{},damageTaken:{},deathOrder:[],events:0};
   document.getElementById('winner-banner').style.display='none';
   document.getElementById('pause-btn').disabled=false;document.getElementById('pause-btn').textContent='⏸ 一時停止';
@@ -578,7 +740,7 @@ function buildFighters(placed){
     return{iid:s.iid,charId:c.id,name:c.name,emoji:c.emoji,imgSrc:c.imgSrc,hp:c.maxHp||100,maxHp:c.maxHp||100,atk:c.atk||20,dodgePct:c.dodgePct!==undefined?c.dodgePct:20,revivePct:c.revivePct!==undefined?c.revivePct:0,reviveHp:c.reviveHp!==undefined?c.reviveHp:30,alive:true,team:s.team||null,gridPos:slots.indexOf(s),sounds:JSON.parse(JSON.stringify(c.sounds)),confused:false,powerUp:1};
   }).filter(Boolean);
   fighters.forEach(f=>{battleStats.kills[f.iid]=0;battleStats.damageDone[f.iid]=0;battleStats.damageTaken[f.iid]=0;});
-  renderArena();updateAliveCounter();
+  renderArena();updateAliveCounter();renderCheatPanel();
   doIntro().then(()=>{addLog('<span class="round-log">🔔 ━━━ ROUND 1 ━━━</span>');roundNum=1;document.getElementById('round-counter').textContent='ROUND 1';scheduleNext();});
 }
 
@@ -596,15 +758,32 @@ async function doIntro(){
   overlay.remove();
 }
 
-function resetBattle(){clearT();bActive=false;paused=false;trRunning=false;fighters=[];document.getElementById('arena').innerHTML='';document.getElementById('winner-banner').style.display='none';document.getElementById('battle-log').innerHTML='';document.getElementById('pause-btn').disabled=true;document.getElementById('alive-counter').textContent='';document.getElementById('round-counter').textContent='';clearArrow();}
+function resetBattle(){clearT();bActive=false;paused=false;trRunning=false;fighters=[];document.getElementById('arena').innerHTML='';document.getElementById('winner-banner').style.display='none';document.getElementById('battle-log').innerHTML='';document.getElementById('pause-btn').disabled=true;document.getElementById('alive-counter').textContent='';document.getElementById('round-counter').textContent='';clearArrow();renderCheatPanel();}
 function endAndReturn(){resetBattle();switchTab('select');}
 function togglePause(){if(!bActive)return;paused=!paused;document.getElementById('pause-btn').textContent=paused?'▶ 再開':'⏸ 一時停止';if(!paused&&!trRunning)scheduleNext();}
 function clearT(){if(tto){clearTimeout(tto);tto=null;}}
-function scheduleNext(){clearT();if(!bActive||paused)return;tto=setTimeout(async()=>{if(paused||!bActive)return;trRunning=true;await doTurn();trRunning=false;scheduleNext();},iMs);}
+function scheduleNext(){clearT();if(!bActive||paused)return;tto=setTimeout(async()=>{if(paused||!bActive)return;trRunning=true;await doTurn();trRunning=false;if(cheatMode&&bActive)renderCheatPanel();scheduleNext();},iMs);}
 function updateAliveCounter(){const alive=fighters.filter(f=>f.alive).length;document.getElementById('alive-counter').textContent=`生存: ${alive} / ${fighters.length}`;}
 
-/* ---- Random Event ---- */
+/* ---- Random Event (チートモード対応) ---- */
 async function checkRandomEvent(){
+  // チートモードで予約がある場合、それを発動（1ターンに1イベントのみ）
+  if(cheatMode&&cheatQueuedEvent){
+    const ev=CHEAT_EVENTS.find(e=>e.key===cheatQueuedEvent);
+    if(ev){
+      cheatQueuedEvent=null; // 消費
+      seEvent();
+      const evName=ev.label;
+      const colorMap={shuffle:'#00d2ff',powerup:'#ffdd00',healall:'#22ee66',multiply:'#c77dff',betray:'#c77dff',confusion:'#ff8800'};
+      showEventBanner(evName,colorMap[ev.key]||'#fff',2000);
+      addLog(`<span class="event-log">${evName} 発動！[CHEAT]</span>`);
+      battleStats.events++;await wait(800);await ev.fn();
+      return true;
+    }
+    cheatQueuedEvent=null;
+  }
+
+  // チートで予約がなかった場合、通常のランダムイベント判定
   const events=getActiveEvents();
   for(const ev of events){
     if(Math.random()<ev.prob){
@@ -617,23 +796,13 @@ async function checkRandomEvent(){
 }
 
 /* ---- Event Functions ---- */
-async function evDestroy(){
-  const alive=fighters.filter(f=>f.alive);if(alive.length<=2)return;
-  const victim=alive[Math.floor(Math.random()*alive.length)];
-  await killWithExplosion(victim);
-  addLog(`<span class="event-log">🌋 ${victim.name} が天変地異で消滅した！</span>`);
-}
 async function evShuffle(){
   const alive=fighters.filter(f=>f.alive);if(alive.length<=1)return;
   const positions=alive.map(f=>f.gridPos);const shuffled=[...positions].sort(()=>Math.random()-.5);
   alive.forEach((f,i)=>f.gridPos=shuffled[i]);shakeArena(true);renderArena();updateAliveCounter();
+  // シャッフル後にCanvasをリサイズして矢印座標を更新
+  setTimeout(()=>resizeC(),100);
   addLog('<span class="event-log">🔄 全員の位置がシャッフルされた！</span>');
-}
-async function evInstantKill(){
-  const alive=fighters.filter(f=>f.alive);if(alive.length<=2)return;
-  const victim=alive[Math.floor(Math.random()*alive.length)];
-  await killWithExplosion(victim);
-  addLog(`<span class="event-log">☠️ ${victim.name} が突然死した…</span>`);
 }
 async function evBetray(){
   const alive=fighters.filter(f=>f.alive&&f.team);if(alive.length<1)return;
@@ -664,16 +833,12 @@ async function evMultiply(){
   const dead=fighters.filter(f=>!f.alive);
   if(!alive.length||!dead.length)return;
 
-  // 元になるキャラをランダムに選ぶ
   const source=alive[Math.floor(Math.random()*alive.length)];
-  // 死んだキャラのスロットを乗っ取る
   const target=dead[Math.floor(Math.random()*dead.length)];
 
-  // 元キャラのセルに分裂エフェクト表示
   const srcCell=document.getElementById('cell-'+source.iid);
   if(srcCell){
     const mfx=document.createElement('div');mfx.className='multiply-effect';
-    // ゴーストイメージ（元キャラの残像が飛んでいく感じ）
     const ghost=document.createElement('div');ghost.className='multiply-ghost';
     ghost.style.background=source.imgSrc?`url(${source.imgSrc}) center/cover`:'var(--surface2)';
     if(!source.imgSrc){ghost.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:42px;">${source.emoji}</div>`;}
@@ -685,7 +850,6 @@ async function evMultiply(){
     await wait(400);
   }
 
-  // targetファイターの情報をsourceのコピーに書き換え
   target.name=source.name+'\'';
   target.emoji=source.emoji;
   target.imgSrc=source.imgSrc;
@@ -701,11 +865,10 @@ async function evMultiply(){
   target.powerUp=1;
   target.confused=false;
 
-  // アリーナを再描画して新キャラを表示
   renderArena();
   updateAliveCounter();
+  setTimeout(()=>resizeC(),100);
 
-  // 新キャラのセルに出現エフェクト
   const newCell=document.getElementById('cell-'+target.iid);
   if(newCell){
     newCell.classList.add('cell-revive');
@@ -716,7 +879,6 @@ async function evMultiply(){
     setTimeout(()=>{newCell.classList.remove('cell-revive');mfx2.remove();},1000);
   }
 
-  // 元セルのエフェクト除去
   if(srcCell){const mfxOld=srcCell.querySelector('.multiply-effect');if(mfxOld)setTimeout(()=>mfxOld.remove(),800);}
 
   showEventBanner(`👻 ${source.name} が増殖した！`,'#c77dff',2000);
@@ -730,7 +892,7 @@ async function applyTerrainEffects(){
     if(!f.alive)continue;const t=terrainMap[f.gridPos];if(!t||t==='normal')continue;
     if(t==='lava'){const dmg=10;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg,'event-dmg');updateHp(f);if(f.hp<=0){await killWithExplosion(f);addLog(`<span class="event-log">🌋 ${f.name} が溶岩で焼かれた！</span>`);}}
     else if(t==='heal'){const heal=8;f.hp=Math.min(f.maxHp,f.hp+heal);showDamagePopup(f.iid,'+'+heal,'heal');updateHp(f);}
-    else if(t==='warp'){const empties=[];for(let i=0;i<gCols*gRows;i++){if(!fighters.some(x=>x.alive&&x.gridPos===i)&&i!==f.gridPos)empties.push(i);}if(empties.length){f.gridPos=empties[Math.floor(Math.random()*empties.length)];renderArena();addLog(`<span class="event-log">🌀 ${f.name} がワープした！</span>`);}}
+    else if(t==='warp'){const empties=[];for(let i=0;i<gCols*gRows;i++){if(!fighters.some(x=>x.alive&&x.gridPos===i)&&i!==f.gridPos)empties.push(i);}if(empties.length){f.gridPos=empties[Math.floor(Math.random()*empties.length)];renderArena();setTimeout(()=>resizeC(),100);addLog(`<span class="event-log">🌀 ${f.name} がワープした！</span>`);}}
     else if(t==='bomb'){const dmg=50;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg+'💥','event-dmg');updateHp(f);shakeArena(false);delete terrainMap[f.gridPos];addLog(`<span class="event-log">💣 ${f.name} が爆弾を踏んだ！${dmg}ダメージ！</span>`);if(f.hp<=0){await killWithExplosion(f);}}
   }
 }
@@ -743,12 +905,9 @@ function playExplosion(iid){
     const cell=document.getElementById('cell-'+iid);
     if(!cell){resolve();return;}
     seExplode();
-    // Flash
     const flash=document.createElement('div');flash.className='explosion-flash';cell.appendChild(flash);
-    // Ring
     const container=document.createElement('div');container.className='explosion-container';
     const ring=document.createElement('div');ring.className='explosion-ring';container.appendChild(ring);
-    // Particles
     const colors=['#ff0','#ff6600','#ff0000','#fff','#ffcc00'];
     for(let i=0;i<12;i++){
       const p=document.createElement('div');p.className='explosion-particle';
@@ -757,8 +916,6 @@ function playExplosion(iid){
       p.style.background=colors[Math.floor(Math.random()*colors.length)];
       p.style.left='calc(50% - 4px)';p.style.top='calc(50% - 4px)';
       p.style.animation=`explodePart ${0.5+Math.random()*0.4}s ease-out forwards`;
-      p.style.setProperty('--dx',dx+'px');p.style.setProperty('--dy',dy+'px');
-      // Use custom keyframes via transform
       p.animate([
         {transform:'translate(0,0) scale(1)',opacity:1},
         {transform:`translate(${dx}px,${dy}px) scale(0.3)`,opacity:0}
@@ -767,7 +924,6 @@ function playExplosion(iid){
     }
     cell.appendChild(container);
     shakeArena(true);
-    // After explosion, mark cell as dead-exploded
     setTimeout(()=>{
       flash.remove();container.remove();
       cell.classList.add('dead-exploded');
@@ -782,7 +938,6 @@ async function killWithExplosion(f){
   battleStats.deathOrder.push(f.iid);
   const dc=document.getElementById('cell-'+f.iid);
 
-  // まず死亡セリフ/音声を再生
   const deathV=pickR(f.sounds.death);
   if(deathV&&(deathV.text||deathV.audio)){
     if(dc){dc.classList.add('cell-death');setTimeout(()=>dc.classList.remove('cell-death'),500);}
@@ -791,7 +946,6 @@ async function killWithExplosion(f){
     await wait(200);
   }
 
-  // セリフ再生完了後に爆発
   await playExplosion(f.iid);
   updateAliveCounter();
 }
@@ -834,7 +988,12 @@ async function doTurn(){
     fighters.forEach(f=>f.confused=false);
   }
 
-  if(roundNum>1&&Math.random()<0.3){
+  // チートイベント予約がある場合、それを優先して発動（1ターン1イベント）
+  if(cheatMode&&cheatQueuedEvent){
+    const evH=await checkRandomEvent();
+    if(evH&&checkWin())return;
+    // チートイベント発動後は通常イベントを飛ばす
+  } else if(roundNum>1&&Math.random()<0.3){
     const evH=await checkRandomEvent();if(evH&&checkWin())return;
   }
 
@@ -848,6 +1007,8 @@ async function doTurn(){
   if(!targets.length)return;
   const target=targets[Math.floor(Math.random()*targets.length)];
 
+  // 矢印を描画する前にCanvasサイズを更新
+  resizeC();
   drawArrow(attacker.iid,target.iid);
   const atkCell=document.getElementById('cell-'+attacker.iid);if(atkCell)atkCell.classList.add('attacking');
   const atkV=pickR(attacker.sounds.attack);
@@ -890,7 +1051,7 @@ async function doTurn(){
     clearArrow();if(atkCell)atkCell.classList.remove('attacking');return;
   }
 
-  // ---- 死亡: セリフ再生 → 爆発 ----
+  // ---- 死亡 ----
   battleStats.kills[attacker.iid]=(battleStats.kills[attacker.iid]||0)+1;
   const aliveCount=fighters.filter(f=>f!==target&&f.alive).length;
   addLog(`<span class="dead-log">☠ ${target.name} 脱落！</span> <span style="color:var(--accent2);">（残り${aliveCount}体）</span>`);
@@ -978,7 +1139,7 @@ function endBattle(winner,winTeam){
   let tankIid=null,tankMax=0;for(const[iid,dmg]of Object.entries(battleStats.damageTaken)){if(dmg>tankMax){tankMax=dmg;tankIid=iid;}}
   if(tankIid){const tank=fighters.find(f=>f.iid==tankIid);if(tank)statsHtml+=`<div>🛡️ 最も不運: <span class="stat-highlight">${tank.name} (被ダメ${tankMax})</span></div>`;}
   document.getElementById('winner-stats').innerHTML=statsHtml;document.getElementById('winner-banner').style.display='block';
-  addLog(`<span class="final-log">🏆 ${label}</span>`);clearArrow();
+  addLog(`<span class="final-log">🏆 ${label}</span>`);clearArrow();renderCheatPanel();
 }
 
 /* ============================================================
