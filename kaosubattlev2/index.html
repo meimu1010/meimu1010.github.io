@@ -293,6 +293,10 @@ header{display:none;}
       <button class="btn btn-secondary btn-sm" onclick="switchTab('setup')">戻る</button>
       <button class="btn btn-primary btn-sm" id="battle-go-btn" onclick="launchBattle()" disabled>🔥 バトル開始！</button>
     </div>
+    <div style="margin-bottom:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">発生イベント選択（チェックを外すと無効）</div>
+      <div id="event-toggle-list" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
     <div class="placement-outer"><div class="placement-grid" id="placement-grid"></div></div>
   </div>
 </div>
@@ -350,21 +354,27 @@ const TEAM_COLORS={a:'var(--ta)',b:'var(--tb)',c:'var(--tc)',d:'var(--td)'};
 const TEAM_NAMES={a:'A',b:'B',c:'C',d:'D'};
 
 /* ============================================================
-   RANDOM EVENTS (裏切り・混乱はチーム戦のみ)
+   RANDOM EVENTS
 ============================================================ */
+const ALL_EVENTS=[
+  {key:'shuffle',  name:'🔄 シャッフル',    prob:.07,color:'#00d2ff',fn:()=>evShuffle(),  teamOnly:false},
+  {key:'powerup',  name:'💪 パワーアップ',  prob:.06,color:'#ffdd00',fn:()=>evPowerUp(),  teamOnly:false},
+  {key:'healall',  name:'💚 回復の雨',      prob:.06,color:'#22ee66',fn:()=>evHealAll(),  teamOnly:false},
+  {key:'multiply', name:'👻 増殖',          prob:.04,color:'#c77dff',fn:()=>evMultiply(), teamOnly:false},
+  {key:'resurrect',name:'✨ ランダム復活',   prob:.05,color:'#aaffcc',fn:()=>evResurrect(),teamOnly:false},
+  {key:'betray',   name:'🤝 裏切り',        prob:.05,color:'#c77dff',fn:()=>evBetray(),   teamOnly:true},
+  {key:'confusion',name:'🌀 混乱',          prob:.04,color:'#ff8800',fn:()=>evConfusion(),teamOnly:true},
+];
+// ユーザーが有効にしたイベントキーのSet (nullの場合は全イベント有効)
+let enabledEvents=null;
+
 function getActiveEvents(){
   const isTeamBattle=fighters.some(f=>f.team);
-  const base=[
-    {name:'🔄 シャッフル',prob:.07,color:'#00d2ff',fn:evShuffle},
-    {name:'💪 パワーアップ',prob:.06,color:'#ffdd00',fn:evPowerUp},
-    {name:'💚 回復の雨',prob:.06,color:'#22ee66',fn:evHealAll},
-    {name:'👻 増殖',prob:.04,color:'#c77dff',fn:evMultiply},
-  ];
-  if(isTeamBattle){
-    base.push({name:'🤝 裏切り',prob:.05,color:'#c77dff',fn:evBetray});
-    base.push({name:'🌀 混乱',prob:.04,color:'#ff8800',fn:evConfusion});
-  }
-  return base;
+  return ALL_EVENTS.filter(ev=>{
+    if(ev.teamOnly&&!isTeamBattle)return false;
+    if(enabledEvents!==null&&!enabledEvents.has(ev.key))return false;
+    return true;
+  });
 }
 
 /* ============================================================
@@ -522,7 +532,25 @@ function buildVI(c,tk,item,idx,refresh){
    SELECT PANEL
 ============================================================ */
 let dragSrcCharId=null,dragSrcSlotIdx=null;
-function renderSelectPanel(){renderPool();rebuildGrid();updateSelCount();}
+function renderSelectPanel(){renderPool();rebuildGrid();updateSelCount();renderEventToggles();}
+function renderEventToggles(){
+  const container=document.getElementById('event-toggle-list');if(!container)return;
+  container.innerHTML='';
+  ALL_EVENTS.forEach(ev=>{
+    const lbl=document.createElement('label');
+    lbl.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:12px;color:var(--text);user-select:none;transition:border-color .15s;';
+    const cb=document.createElement('input');cb.type='checkbox';cb.dataset.evKey=ev.key;
+    cb.checked=enabledEvents===null||enabledEvents.has(ev.key);
+    const teamNote=ev.teamOnly?' <span style="font-size:10px;color:var(--text-muted);">(チーム戦)</span>':'';
+    cb.onchange=()=>{
+      const allCbs=container.querySelectorAll('input[type=checkbox]');
+      const checkedKeys=new Set([...allCbs].filter(c=>c.checked).map(c=>c.dataset.evKey));
+      enabledEvents=checkedKeys.size===ALL_EVENTS.length?null:checkedKeys;
+    };
+    lbl.appendChild(cb);lbl.innerHTML+=ev.name+teamNote;lbl.prepend(cb);
+    container.appendChild(lbl);
+  });
+}
 function renderPool(){const pool=document.getElementById('char-pool');pool.innerHTML='';chars.forEach(c=>{const card=document.createElement('div');card.className='pool-card';card.draggable=true;card.dataset.charId=c.id;const ib=document.createElement('div');ib.className='pool-card-img';if(c.imgSrc){const img=document.createElement('img');img.src=c.imgSrc;ib.appendChild(img);}else{ib.textContent=c.emoji;}card.appendChild(ib);const nm=document.createElement('div');nm.className='pool-card-name';nm.textContent=c.name;card.appendChild(nm);const badge=document.createElement('span');badge.className='plus-badge';badge.textContent='＋';card.appendChild(badge);card.onclick=()=>autoPlace(c.id);card.ondragstart=e=>{dragSrcCharId=c.id;dragSrcSlotIdx=null;e.dataTransfer.effectAllowed='copy';};card.ondragend=()=>{dragSrcCharId=null;};pool.appendChild(card);});}
 function onGridSizeChange(val){const n=parseInt(val)||3;gCols=n;gRows=n;rebuildGrid();}
 function rebuildGrid(){initSlots();const grid=document.getElementById('placement-grid');const cellPx=gCols<=4?120:gCols<=6?90:70;grid.style.gridTemplateColumns=`repeat(${gCols},${cellPx}px)`;grid.style.gap='6px';grid.innerHTML='';slots.forEach((s,i)=>grid.appendChild(buildPCell(s,i,cellPx)));updateSelCount();}
@@ -669,7 +697,7 @@ async function evMultiply(){
     await wait(400);
   }
 
-  target.name=source.name+'\'';
+  target.name=source.name+'(増殖)';
   target.emoji=source.emoji;
   target.imgSrc=source.imgSrc;
   target.hp=Math.floor(source.maxHp*0.5);
@@ -705,7 +733,19 @@ async function evMultiply(){
   battleStats.kills[target.iid]=0;battleStats.damageDone[target.iid]=0;battleStats.damageTaken[target.iid]=0;
 }
 
-/* ---- Terrain ---- */
+/* ---- 復活イベント ---- */
+async function evResurrect(){
+  const dead=fighters.filter(f=>!f.alive);
+  if(!dead.length)return;
+  const target=dead[Math.floor(Math.random()*dead.length)];
+  target.alive=true;target.hp=Math.floor(target.maxHp*0.4);
+  const tdc=document.getElementById('cell-'+target.iid);
+  if(tdc){tdc.classList.remove('dead-exploded');tdc.classList.add('cell-revive');setTimeout(()=>tdc.classList.remove('cell-revive'),800);}
+  updateHp(target);updateAliveCounter();
+  showDamagePopup(target.iid,'✨ 復活！','heal');
+  addLog(`<span class="revive-log">✨ ${target.name} がランダム復活！（HP:${target.hp}）</span>`);
+  setTimeout(()=>resizeC(),100);
+}
 async function applyTerrainEffects(){
   for(const f of fighters){
     if(!f.alive)continue;const t=terrainMap[f.gridPos];if(!t||t==='normal')continue;
@@ -841,8 +881,9 @@ async function doTurn(){
   const isCrit=Math.random()<0.05;
   const critMult=isCrit?1.5:1;
   const baseDmg=Math.max(1,Math.floor((Number(attacker.atk)||20)*(0.8+Math.random()*.4)));
-  const dmg=Math.floor(baseDmg*critMult*attacker.powerUp);
-  attacker.powerUp=1;
+  const puMult=attacker.powerUp||1;
+  const dmg=Math.floor(baseDmg*critMult*puMult);
+  if(puMult>1){showDamagePopup(attacker.iid,'💪 POWER UP!','heal');attacker.powerUp=1;}
 
   target.hp=Math.max(0,target.hp-dmg);
   battleStats.damageDone[attacker.iid]=(battleStats.damageDone[attacker.iid]||0)+dmg;
