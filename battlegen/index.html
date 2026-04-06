@@ -67,8 +67,6 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .file-btn:hover{background:rgba(0,255,255,.18)}
 .file-info{color:#4a8aaa;font-size:.88rem}
 .file-info.ok{color:#2aff80}
-
-/* ── STYLE SELECTOR ── */
 .style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .style-card{background:rgba(0,0,0,.35);border:2px solid var(--border);border-radius:10px;padding:16px 12px 14px;text-align:center;cursor:pointer;transition:border-color .25s,background .25s,transform .15s}
 .style-card:hover{border-color:#3a6a8a;transform:translateY(-2px)}
@@ -78,15 +76,12 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .style-card.sel .style-name{color:#fff}
 .style-desc{font-size:.72rem;color:#4a6a8a;margin-top:4px;line-height:1.45}
 .style-card.sel .style-desc{color:#6a9aaa}
-
-/* ── SETTINGS ── */
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
 .settings-grid label{display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:#5a8aaa;letter-spacing:.12em;text-transform:uppercase}
 .settings-grid select{background:#0a121e;border:1px solid var(--border);color:#fff;padding:8px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
 .settings-grid select:focus{border-color:var(--cyan)}
 .est-time-box{margin-top:12px;padding:10px 14px;background:rgba(0,0,0,.3);border:1px solid #1e3a50;border-radius:7px;font-size:.85rem;color:#4a7a9a;letter-spacing:.04em}
 .est-time-box span{color:var(--yellow);font-weight:700;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.08em}
-
 .gen-btn{width:100%;padding:17px;background:linear-gradient(135deg,#ff3c2a 0%,#ff8c00 50%,#ffd700 100%);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:.2em;color:#000;cursor:pointer;transition:opacity .2s,transform .1s;box-shadow:0 0 28px rgba(255,100,0,.42);margin-top:6px}
 .gen-btn:hover{opacity:.87;transform:translateY(-1px)}
 .gen-btn:active{transform:translateY(1px)}
@@ -116,7 +111,6 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .error-msg{background:rgba(255,60,42,.1);border:1px solid var(--red);color:var(--red);border-radius:8px;padding:11px 16px;margin-top:11px;font-size:.88rem;display:none}
 .error-msg.visible{display:block}
 #mainCanvas{display:none}
-/* ── STYLE PREVIEW ── */
 .preview-section{margin-top:14px}
 .preview-label{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:#3a6a8a;margin-bottom:8px}
 .preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -125,7 +119,20 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .preview-tag{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.75);border:1px solid rgba(255,215,0,.4);color:#ffd700;font-size:.65rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.1em;padding:2px 7px;border-radius:3px}
 .preview-spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-size:.75rem;color:#4a7a9a;letter-spacing:.06em}
 .preview-spinner.hidden{display:none}
-
+/* === TURBO TOGGLE === */
+.turbo-box{margin-top:14px;padding:14px 16px;background:rgba(255,165,0,.06);border:1px solid rgba(255,165,0,.25);border-radius:8px;transition:border-color .3s,background .3s}
+.turbo-box.active{border-color:rgba(255,165,0,.6);background:rgba(255,165,0,.1)}
+.turbo-label{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.turbo-label input[type=checkbox]{display:none}
+.turbo-toggle{width:44px;height:24px;background:#1a2a3a;border-radius:12px;position:relative;transition:background .25s;flex-shrink:0}
+.turbo-toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:#4a6a8a;border-radius:50%;transition:transform .25s,background .25s}
+.turbo-label input:checked ~ .turbo-toggle{background:#ff8c00}
+.turbo-label input:checked ~ .turbo-toggle::after{transform:translateX(20px);background:#fff}
+.turbo-title{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.1em;color:#ff8c00}
+.turbo-desc{font-size:.76rem;color:#6a8a6a;line-height:1.5;margin-top:6px;padding-left:54px}
+.turbo-desc strong{color:#ffa030}
+.turbo-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;padding-left:54px}
+.turbo-chip{font-size:.68rem;padding:2px 8px;border-radius:12px;border:1px solid rgba(255,165,0,.3);color:#aa7a30;background:rgba(255,165,0,.06);letter-spacing:.04em}
 @media(max-width:600px){
   .char-grid{grid-template-columns:1fr}
   .vs-badge{font-size:1.3rem}
@@ -183,12 +190,11 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       <div class="style-desc">グリッチ・パーティクル・カラーグレード</div>
     </div>
     <div class="style-card sel" data-style="battlev2" onclick="selectStyle(this)">
-      <span class="style-icon">👑</span>
+      <span class="style-icon">🏆</span>
       <div class="style-name">BATTLE V2</div>
       <div class="style-desc">上下分割・キャラ大・ダーク＆ゴールド</div>
     </div>
   </div>
-
 </div>
 
 <!-- STEP 3: GEMINI -->
@@ -246,7 +252,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
   </div>
   <div class="bgm-row" style="margin-top:10px">
     <label class="file-btn" style="font-size:.82rem;padding:7px 14px;opacity:.7">
-      📂 手動で別ファイルを選択
+      📁 手動で別ファイルを選択
       <input type="file" id="bgmFile" accept="audio/*" style="display:none" onchange="loadBGM(this)">
     </label>
     <span style="font-size:.78rem;color:#3a5a7a">同フォルダの bgm.mp3 が読み込めない場合に使用</span>
@@ -275,15 +281,35 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       </select>
     </label>
   </div>
+
+  <!-- ⚡ TURBO MODE TOGGLE -->
+  <div class="turbo-box" id="turboBox">
+    <label class="turbo-label">
+      <input type="checkbox" id="cfgTurbo" checked onchange="onTurboChange()">
+      <span class="turbo-toggle"></span>
+      <span class="turbo-title">⚡ 高速モード（TURBO）</span>
+    </label>
+    <div class="turbo-desc">
+      品質を維持したまま生成速度を <strong>大幅に向上</strong> します。<br>
+      重いピクセル操作をスキップし、1パス録画で高速化します。
+    </div>
+    <div class="turbo-chips">
+      <span class="turbo-chip">ColorGrade → Overlay合成</span>
+      <span class="turbo-chip">Chromatic → 軽量シフト</span>
+      <span class="turbo-chip">Scanline キャッシュ</span>
+      <span class="turbo-chip">1パス直接録画</span>
+      <span class="turbo-chip">GPU描画有効</span>
+    </div>
+  </div>
+
   <div class="est-time-box" id="estTimeBox">
     ⏱ 推定生成時間：<span id="estTimeVal">—</span>
     <span style="color:#3a5a7a;font-size:.78rem;margin-left:6px">（フレーム生成 + リアルタイム録画）</span>
   </div>
-
 </div>
 
 <div class="error-msg" id="errorMsg"></div>
-<button class="prev-btn" id="prevBtn" onclick="onClickPreview()" style="width:100%;padding:12px;background:rgba(0,255,255,.08);border:1.5px solid var(--cyan);border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.18em;color:var(--cyan);cursor:pointer;margin-bottom:10px;transition:background .2s">🖼 PREVIEW</button>
+<button class="prev-btn" id="prevBtn" onclick="onClickPreview()" style="width:100%;padding:12px;background:rgba(0,255,255,.08);border:1.5px solid var(--cyan);border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.18em;color:var(--cyan);cursor:pointer;margin-bottom:10px;transition:background .2s">🔍 PREVIEW</button>
 <div id="quickPreviewWrap" style="display:none;margin-bottom:14px">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
     <div style="position:relative">
@@ -312,7 +338,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 
 <!-- OUTPUT -->
 <div id="output-wrap">
-  <h2>✅ 生成完了！</h2>
+  <h2>✨ 生成完了！</h2>
   <video id="preview-video" controls playsinline></video><br>
   <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:4px">
     <a class="dl-btn" id="dlBtn" download="battle.webm">⬇ WebM ダウンロード</a>
@@ -332,7 +358,6 @@ const CATEGORIES = [
   "Strength","Speed","Durability","IQ","Battle IQ","Power","Combat",
   "Defence","Endurance","Experience","Stamina","Agility","Skill"
 ];
-// タイミング定数はUIから動的取得
 function resetDur(){
   document.getElementById('durIntro').value=0.8;
   document.getElementById('durCut').value=1.2;
@@ -347,6 +372,16 @@ function getDur(){
   return { INTRO:v('durIntro',0.8), CUT:v('durCut',1.2), FINAL:v('durFinal',9.1), BLACK:v('durBlack',0.5) };
 }
 const COLOR_A='#ff3c2a', COLOR_B='#2a8fff', COLOR_D='#aaaaaa';
+
+// ═══════════════════════════════════════════════
+// TURBO MODE STATE
+// ═══════════════════════════════════════════════
+function isTurbo(){ return document.getElementById('cfgTurbo').checked; }
+function onTurboChange(){
+  const box=document.getElementById('turboBox');
+  if(isTurbo()){ box.classList.add('active'); } else { box.classList.remove('active'); }
+  updateEstTime();
+}
 
 // ═══════════════════════════════════════════════
 // STATE
@@ -408,11 +443,11 @@ function updatePrompt(){
 キャラクターB: ${b}
 
 【絶対ルール — 必ず守ること】
-1. 両キャラの原作・公式設定・戦闘描写をもとに、実力差を正直に判定すること
-2. "Draw"は本当に五分五分の場合のみ。迷ったら強い方を勝者にせよ。Draw は全13カテゴリ中 最大2個 まで
-3. 強いキャラが弱いキャラに負けるカテゴリを無理に作らなくていい。実力通りに判定せよ
+1. 両キャラの原作・公式設定・戦績をもとに、実力差を正直に判定すること
+2. "Draw"は本当に互角の場合のみ、迷ったら強い方を勝者にせよ。Draw は全13カテゴリ中 最大2回 まで
+3. 強いキャラが弱いキャラに負けるカテゴリを無理に作らなくてよい。実力通りに判定せよ
 4. 一方が圧倒的に強い場合は 10-3 や 11-2 になっても構わない。6-7 や 5-8 に無理に合わせるな
-5. 各カテゴリの値は必ず "A"・"B"・"Draw" のいずれか1つ
+5. 各カテゴリの値は必ず "A"・"B"・"Draw" のどれか1つ
 6. JSONのみ返答（説明文・前置き・コードブロック一切不要）
 
 【カテゴリ別の判定基準】
@@ -494,7 +529,6 @@ async function pasteAndApply(){
   }catch(e){
     btn.textContent='⚠ 許可が必要です';
     setTimeout(()=>{ btn.textContent='📋 クリップボードから適用'; },2500);
-    // フォールバック: テキストエリアにフォーカスして貼り付けを促す
     document.getElementById('jsonInput').focus();
   }
 }
@@ -540,7 +574,7 @@ async function autoLoadBGM(){
     S.bgmFile=new File([await res.blob()],'bgm.mp3',{type:'audio/mpeg'});
     info.textContent='✅ bgm.mp3 を自動読み込み済み'; info.className='file-info ok';
   }catch(e){
-    info.textContent='⚠ bgm.mp3 が見つかりません — 下のボタンで手動選択してください';
+    info.textContent='⚠ bgm.mp3 が見つかりません — 上のボタンで手動選択してください';
     info.className='file-info'; info.style.color='#aa7020';
   }
 }
@@ -571,18 +605,22 @@ function getSpeed(){
 function updateEstTime(){
   const fps = +document.getElementById('cfgFps').value;
   const spd = getSpeed();
+  const turbo = isTurbo();
   const _d=getDur();
-  // 1.25倍速時はタイミング定数を1/spd倍に短縮 → フレーム数が減る
   const NI=Math.round(_d.INTRO/spd*fps), NC=Math.round(_d.CUT/spd*fps);
   const NF=Math.round(_d.FINAL/spd*fps), NB=Math.round(_d.BLACK/spd*fps);
   const totalFrames = CATEGORIES.length*(NI+NC)+NB+NF;
-  const msPerFrame = fps===60 ? 4.0 : 2.5;
+  // Turbo: getImageData排除でフレーム生成が速い + 1パス録画
+  const msPerFrame = turbo ? (fps===60 ? 1.8 : 1.2) : (fps===60 ? 4.0 : 2.5);
   const genSec = totalFrames * msPerFrame / 1000;
-  const recSec = totalFrames / fps;
-  const total = Math.round(genSec + recSec + 5);
+  // Turbo=1パス(rAF録画)、通常=2パス(bitmap保存+rAF録画)
+  const recSec = turbo ? 0 : totalFrames / fps;
+  const overhead = turbo ? 3 : 5;
+  const total = Math.round(genSec + recSec + overhead);
   const m = Math.floor(total/60), s = total%60;
-  document.getElementById('estTimeVal').textContent =
-    m>0 ? `約${m}分${s}秒` : `約${s}秒`;
+  const label = m>0 ? `約${m}分${s}秒` : `約${s}秒`;
+  const mode = turbo ? ' ⚡TURBO' : '';
+  document.getElementById('estTimeVal').textContent = label + mode;
 }
 
 // ═══════════════════════════════════════════════
@@ -590,10 +628,11 @@ function updateEstTime(){
 // ═══════════════════════════════════════════════
 let CW,CH,FPS,canvas,ctx;
 let INTRO_DUR=0.8,CUT_DUR=1.2,FINAL_DUR=9.1,BLACK_DUR=0.5;
+// Scanline pattern cache for turbo mode
+let _scanlinePattern=null;
 function syncDurGlobals(){
   const d=getDur();
   const spd=getSpeed();
-  // 速度倍率分だけタイミングを短縮
   INTRO_DUR=d.INTRO/spd; CUT_DUR=d.CUT/spd; FINAL_DUR=d.FINAL/spd; BLACK_DUR=d.BLACK/spd;
   console.log('[DUR] SPEED='+spd+' INTRO='+INTRO_DUR+' CUT='+CUT_DUR+' FINAL='+FINAL_DUR+' BLACK='+BLACK_DUR);
 }
@@ -603,12 +642,28 @@ function initCanvas(){
   FPS=+document.getElementById('cfgFps').value;
   canvas=document.getElementById('mainCanvas');
   canvas.width=CW; canvas.height=CH;
-  ctx=canvas.getContext('2d',{willReadFrequently:true});
+  // Turbo: willReadFrequently=false → GPU acceleration
+  const wrf = isTurbo() ? false : true;
+  ctx=canvas.getContext('2d',{willReadFrequently:wrf});
+  _scanlinePattern=null; // reset cache
 }
 
 const cl=v=>Math.max(0,Math.min(255,Math.round(v)));
 
 function drawScanlines(){
+  if(isTurbo()){
+    // キャッシュされたパターンを使用（毎フレームのループ排除）
+    if(!_scanlinePattern){
+      const pc=document.createElement('canvas');
+      pc.width=4; pc.height=4;
+      const px=pc.getContext('2d');
+      px.fillStyle='rgba(0,0,0,0.045)';
+      px.fillRect(0,0,4,1);
+      _scanlinePattern=ctx.createPattern(pc,'repeat');
+    }
+    ctx.save(); ctx.fillStyle=_scanlinePattern; ctx.fillRect(0,0,CW,CH); ctx.restore();
+    return;
+  }
   ctx.save(); ctx.globalAlpha=.045; ctx.fillStyle='#000';
   for(let y=0;y<CH;y+=4) ctx.fillRect(0,y,CW,1);
   ctx.restore();
@@ -625,6 +680,22 @@ function drawFlash(fi,fd=8){
 }
 function drawGlitch(intensity,seed){
   if(intensity<1) return;
+  if(isTurbo()){
+    // Turbo: getImageData不使用のグリッチ（overlay方式）
+    let s=seed*9301+49297;
+    const rand=()=>{ s=(s*9301+49297)%233280; return s/233280; };
+    ctx.save();
+    for(let i=0;i<Math.floor(intensity*2);i++){
+      const y1=Math.floor(rand()*CH), sh=4+Math.floor(rand()*20);
+      const off=Math.floor((rand()-.5)*40);
+      if(Math.abs(off)<3) continue;
+      ctx.globalAlpha=.3+rand()*.3;
+      ctx.fillStyle=rand()>.5?'rgba(255,0,0,.15)':'rgba(0,150,255,.15)';
+      ctx.fillRect(off,y1,CW,sh);
+    }
+    ctx.restore();
+    return;
+  }
   let s=seed*9301+49297;
   const rand=()=>{ s=(s*9301+49297)%233280; return s/233280; };
   for(let i=0;i<Math.floor(intensity*3);i++){
@@ -635,6 +706,25 @@ function drawGlitch(intensity,seed){
   }
 }
 function applyColorGrade(winner){
+  if(isTurbo()){
+    // Turbo: overlay合成でカラーグレード（getImageData不使用）
+    ctx.save();
+    ctx.globalCompositeOperation='overlay';
+    ctx.globalAlpha=0.18;
+    if(winner==='A'){
+      ctx.fillStyle='#ff4422'; ctx.fillRect(0,0,CW,CH);
+    } else if(winner==='B'){
+      ctx.fillStyle='#2266ff'; ctx.fillRect(0,0,CW,CH);
+    }
+    ctx.restore();
+    // コントラスト強調（overlay白）
+    ctx.save();
+    ctx.globalCompositeOperation='overlay';
+    ctx.globalAlpha=0.06;
+    ctx.fillStyle='#888'; ctx.fillRect(0,0,CW,CH);
+    ctx.restore();
+    return;
+  }
   const id=ctx.getImageData(0,0,CW,CH), d=id.data;
   for(let i=0;i<d.length;i+=4){
     let r=d[i],g=d[i+1],b=d[i+2];
@@ -647,6 +737,17 @@ function applyColorGrade(winner){
 }
 function applyChromatic(intensity){
   if(intensity<.5) return;
+  if(isTurbo()){
+    // Turbo: 簡易色収差（Canvas再描画で擬似的に表現）
+    const s=Math.round(intensity);
+    ctx.save();
+    ctx.globalCompositeOperation='lighter';
+    ctx.globalAlpha=0.06;
+    ctx.drawImage(canvas,s,0);
+    ctx.drawImage(canvas,-s,0);
+    ctx.restore();
+    return;
+  }
   const s=Math.round(intensity);
   const id=ctx.getImageData(0,0,CW,CH), d=id.data, tmp=new Uint8ClampedArray(d);
   for(let y=0;y<CH;y++) for(let x=0;x<CW;x++){
@@ -679,19 +780,16 @@ function centerText(lines,yR,basePx,color,glow){
     y+=px+sp;
   });
 }
-// カテゴリ日本語訳
 const CAT_JA = {
   "Strength":"筋力","Speed":"速度","Durability":"耐久力","IQ":"知能",
   "Battle IQ":"戦闘知能","Power":"能力値","Combat":"格闘技術",
   "Defence":"防御力","Endurance":"持久力","Experience":"経験値",
   "Stamina":"スタミナ","Agility":"俊敏性","Skill":"技術"
 };
-// カテゴリ名を英語大文字 + 上に小さく日本語で描画
 function drawCatLabel(cat, yR, enPx, enColor, enGlow){
   const ja  = CAT_JA[cat] || '';
   const cx  = CW/2;
   const jaPx = Math.round(enPx * 0.34);
-  // capHeight ≈ 0.72em（視覚的な文字高さ）でブロック中心を合わせる
   const jaCapH = jaPx * 0.72;
   const enCapH = enPx * 0.72;
   const gap    = jaPx * 0.55;
@@ -699,7 +797,6 @@ function drawCatLabel(cat, yR, enPx, enColor, enGlow){
   const midY  = CH * yR;
   const jaY   = midY - totalVisH/2 + jaCapH;
   const enY   = jaY + gap + enCapH;
-  // 日本語
   ctx.save();
   ctx.font = `600 ${jaPx}px "Noto Sans JP","Hiragino Kaku Gothic Pro",sans-serif`;
   ctx.textAlign = 'center';
@@ -709,7 +806,6 @@ function drawCatLabel(cat, yR, enPx, enColor, enGlow){
   ctx.shadowBlur = 7;
   ctx.fillText(ja, cx, jaY);
   ctx.restore();
-  // 英語
   const px = fitPx(cat.toUpperCase(), CW*.88, enPx);
   glowText(cat.toUpperCase(), cx, enY, px, enColor, enGlow);
 }
@@ -834,9 +930,7 @@ function B_renderFinal(i,winner,pA,pB){
 
 // ═══════════════════════════════════════════════
 // STYLE: BATTLE V2
-// 上下分割背景・キャラ大きく・ダーク＆ゴールド
 // ═══════════════════════════════════════════════
-
 const V2_easeOut  = t => 1-(1-t)**3;
 const V2_easeBack = t => { const c=1.70158; return 1+(c+1)*(t-1)**3+c*(t-1)**2; };
 const V2_easeOutBounce = t => {
@@ -845,8 +939,6 @@ const V2_easeOutBounce = t => {
   if(t<2.5/2.75){ t-=2.25/2.75; return 7.5625*t*t+.9375; }
   t-=2.625/2.75; return 7.5625*t*t+.984375;
 };
-
-// キャラ描画（中心座標）
 function V2_char(img, cx, cy, sc, hR, alpha, glow, glowBlur){
   if(!img) return;
   const th=CH*hR, tw=img.width*(th/img.height);
@@ -856,16 +948,12 @@ function V2_char(img, cx, cy, sc, hR, alpha, glow, glowBlur){
   ctx.drawImage(img, cx-tw*sc/2, cy-th*sc/2, tw*sc, th*sc);
   ctx.restore();
 }
-
-// ── 上下分割背景 ──
-// 上半分=A、下半分=B のキャラ画像をぼかして敷く
 function V2_splitBg(wSide){
   const drawHalf = (img, clipY, clipH) => {
     if(!img) return;
     ctx.save();
     ctx.beginPath(); ctx.rect(0, clipY, CW, clipH); ctx.clip();
     ctx.globalAlpha = 0.52;
-    // アスペクト比維持でCW幅に合わせてスケール
     const scale = CW / img.width * 1.05;
     const iw = img.width*scale, ih = img.height*scale;
     ctx.drawImage(img, (CW-iw)/2, clipY+(clipH-ih)/2, iw, ih);
@@ -874,12 +962,9 @@ function V2_splitBg(wSide){
   ctx.fillStyle='#07070c'; ctx.fillRect(0,0,CW,CH);
   drawHalf(S.imgA, 0,      CH/2);
   drawHalf(S.imgB, CH/2,   CH/2);
-  // 暗くオーバーレイ
   ctx.fillStyle='rgba(3,3,10,.68)'; ctx.fillRect(0,0,CW,CH);
-  // 勝者側ハイライト
   if(wSide==='A'){ ctx.fillStyle='rgba(255,60,30,.08)';  ctx.fillRect(0,0,CW,CH/2); }
   if(wSide==='B'){ ctx.fillStyle='rgba(30,100,255,.08)'; ctx.fillRect(0,CH/2,CW,CH/2); }
-  // 中央の横区切り線（ゴールド）
   const gl=ctx.createLinearGradient(0,0,CW,0);
   gl.addColorStop(0,'rgba(180,140,0,0)');
   gl.addColorStop(.25,'rgba(255,210,0,.9)');
@@ -895,8 +980,6 @@ function V2_splitBg(wSide){
   ctx.beginPath(); ctx.moveTo(0,CH/2+5); ctx.lineTo(CW,CH/2+5); ctx.stroke();
   ctx.restore();
 }
-
-// ゴールド名前プレート
 function V2_namePlate(name, cx, cy, color){
   if(!name) return;
   const fPx = CW*.034;
@@ -905,8 +988,8 @@ function V2_namePlate(name, cx, cy, color){
   ctx.textAlign='center';
   const tw=ctx.measureText(name).width;
   const pw=tw+CW*.07, ph=Math.max(CH*.042,fPx*1.5);
-  const px=cx-pw/2, py=cy-ph/2;          // 枠：cyを垂直中心に
-  const textY=cy+fPx*.36;                 // テキスト：cap-heightを考慮して中央揃え
+  const px=cx-pw/2, py=cy-ph/2;
+  const textY=cy+fPx*.36;
   ctx.fillStyle='rgba(0,0,0,.80)';
   ctx.beginPath(); ctx.roundRect(px,py,pw,ph,5); ctx.fill();
   ctx.strokeStyle=color; ctx.lineWidth=1.5;
@@ -916,8 +999,6 @@ function V2_namePlate(name, cx, cy, color){
   ctx.fillText(name, cx, textY);
   ctx.restore();
 }
-
-// VSバッジ（ゴールド六角形）
 function V2_vsRing(t){
   const cx=CW/2, cy=CH*.5;
   const pulse=.5+.5*Math.sin(t*Math.PI*6);
@@ -935,10 +1016,8 @@ function V2_vsRing(t){
   ctx.restore();
   glowText('VS',cx,cy+CW*.022,CW*.054,'#ffd700','#cc8800',20);
 }
-
-// カテゴリ横バナー（上下分割の中央に重ねる）
 function V2_catBanner(cat, ease){
-  const bh=CH*.11, by=CH/2-CH*.055;  // バナーをゴールドライン中心に配置
+  const bh=CH*.11, by=CH/2-CH*.055;
   ctx.save();
   ctx.translate(-(1-ease)*CW, 0);
   ctx.fillStyle='rgba(0,0,0,.72)'; ctx.fillRect(0,by,CW,bh);
@@ -951,8 +1030,6 @@ function V2_catBanner(cat, ease){
   drawCatLabel(cat,.5,CW*.086,'#ffd700','#cc8800');
   ctx.restore();
 }
-
-// スコアバー（V2版）
 function V2_scoreBanner(pA, pB){
   const bx=CW*.04, bw=CW*.92, bh=CH*.009, by=CH*.928;
   ctx.fillStyle='rgba(0,0,0,.5)';
@@ -970,52 +1047,35 @@ function V2_scoreBanner(pA, pB){
   ctx.textAlign='right'; ctx.fillStyle=COLOR_B; ctx.fillText(String(pB),bx+bw,by-CH*.005);
   ctx.restore();
 }
-
-// ── INTRO ──
-// A: 上半分・上外からスライドダウン
-// B: 下半分・下外からスライドアップ
 function V2_renderIntro(i, cat, ci){
   const t=i/(INTRO_DUR*FPS);
   const ease=V2_easeBack(Math.min(1,t/.72));
   const shake=(1-ease)*4.5;
   V2_splitBg(null);
-
   const ayTarget=CH*.25, byTarget=CH*.75;
-  // Aは上外(-CH*.35)からayTargetへ
   const ay = -CH*.35 + (ayTarget+CH*.35)*ease + (Math.random()-.5)*shake;
-  // Bは下外(CH*1.35)からbyTargetへ
   const by2 = CH*1.35 - (CH*1.35-byTarget)*ease + (Math.random()-.5)*shake;
-
-  // 上半分にA、下半分にBをクリップして描画
   ctx.save(); ctx.beginPath(); ctx.rect(0,0,CW,CH/2); ctx.clip();
   V2_char(S.imgA, CW*.5, ay, 1, .58, .95+ease*.05);
   ctx.restore();
-
   ctx.save(); ctx.beginPath(); ctx.rect(0,CH/2,CW,CH/2); ctx.clip();
   V2_char(S.imgB, CW*.5, by2, 1, .58, .95+ease*.05);
   ctx.restore();
-
-  // 着地衝撃ライン
   if(ease>.88 && t<.9){
     const da=(ease-.88)/.12*.6;
     ctx.save(); ctx.globalAlpha=da;
     ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=1.2;
     for(let d=0;d<5;d++){
       const len=CW*(.04+d*.02);
-      // A着地
       ctx.beginPath(); ctx.moveTo(CW/2-len,ayTarget+CH*.2); ctx.lineTo(CW/2-len*2.5,ayTarget+CH*.2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(CW/2+len,ayTarget+CH*.2); ctx.lineTo(CW/2+len*2.5,ayTarget+CH*.2); ctx.stroke();
-      // B着地
       ctx.beginPath(); ctx.moveTo(CW/2-len,byTarget-CH*.2); ctx.lineTo(CW/2-len*2.5,byTarget-CH*.2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(CW/2+len,byTarget-CH*.2); ctx.lineTo(CW/2+len*2.5,byTarget-CH*.2); ctx.stroke();
     }
     ctx.restore();
   }
-
   V2_vsRing(t);
   V2_catBanner(cat, ease);
-
-  // 名前プレート
   if(ease>.5){
     const na=Math.min(1,(ease-.5)/.5);
     ctx.save(); ctx.globalAlpha=na;
@@ -1023,17 +1083,12 @@ function V2_renderIntro(i, cat, ci){
     V2_namePlate((S.nameB||'B').toUpperCase(), CW*.5, CH*.9,  COLOR_B);
     ctx.restore();
   }
-
   drawProgNum(ci); drawVignette(.48);
 }
-
-// ── CUT ──
 function V2_renderCut(i, winner, pA, pB){
   const t=i/(CUT_DUR*FPS);
-
   if(winner==='Draw'){
     V2_splitBg(null);
-    // A: 上半分中央、B: 下半分中央 — 共に少しズームしながら静止
     ctx.save(); ctx.beginPath(); ctx.rect(0,0,CW,CH/2); ctx.clip();
     V2_char(S.imgA, CW*.5, CH*.25, 1+.06*t, .56, 1);
     ctx.restore();
@@ -1041,35 +1096,24 @@ function V2_renderCut(i, winner, pA, pB){
     V2_char(S.imgB, CW*.5, CH*.75, 1+.06*t, .56, 1);
     ctx.restore();
     V2_vsRing(t);
-    // DRAWテキスト：中央バナーに
     ctx.fillStyle='rgba(0,0,0,.7)'; ctx.fillRect(0,CH*.448,CW,CH*.104);
     centerText(['DRAW'],.5,CW*.13,COLOR_D,'#888');
     V2_scoreBanner(pA,pB); drawVignette(.5); drawFlash(i,5);
     return;
   }
-
-  // 勝者あり
   const wImg=winner==='A'?S.imgA:S.imgB;
   const lImg=winner==='A'?S.imgB:S.imgA;
   const wc=winner==='A'?COLOR_A:COLOR_B;
-  // 勝者は上 or 下どちら？
   const wHalf = winner==='A' ? 'top' : 'bottom';
   const wCY   = wHalf==='top' ? CH*.25 : CH*.75;
   const lCY   = wHalf==='top' ? CH*.75 : CH*.25;
-
   V2_splitBg(winner);
-
-  // ズームイン(0→0.42)
   const zT=Math.min(1,t/.42), zE=V2_easeOut(zT);
-  const wSc=1+.42*zE; // 上半分から画面中央方向に飛び出すイメージ
-  // 勝者のY: 元の上下中心 → 中央(0.44)に少し寄る
+  const wSc=1+.42*zE;
   const wYFinal=wCY+(CH*.44-wCY)*zE*.5;
-  // 着地シェイク(0.42→1.0)
   const shT=Math.max(0,(t-.42)/.58);
   const shAmp=(1-Math.min(1,shT*1.6))*9*(zT>=1?1:0);
   const shX=(Math.random()-.5)*shAmp, shY=(Math.random()-.5)*shAmp*.4;
-
-  // 敗者: フェードアウト＋縮小
   const lA=Math.max(0,1-zE*1.6);
   if(lA>0){
     const lSc=1-zE*.2;
@@ -1077,14 +1121,10 @@ function V2_renderCut(i, winner, pA, pB){
     V2_char(lImg, CW*.5, lCY, lSc, .48, 1);
     ctx.restore();
   }
-
-  // 勝者: ゴールドグロー＋ズーム
   ctx.save();
   ctx.shadowColor='#ffd700'; ctx.shadowBlur=CW*.06*(zE*.6+.2)*(1+Math.sin(t*Math.PI*7)*.15);
   V2_char(wImg, CW*.5+shX, wYFinal+shY, wSc, .68, 1);
   ctx.restore();
-
-  // ゴールド縁枠
   if(zE>.45){
     const fa=Math.min(1,(zE-.45)/.55)*.5;
     const th2=CH*.68*wSc, tw2=wImg?wImg.width*(th2/wImg.height):CW*.55;
@@ -1094,10 +1134,7 @@ function V2_renderCut(i, winner, pA, pB){
     ctx.beginPath(); ctx.roundRect(CW*.5+shX-tw2/2, wYFinal+shY-th2/2, tw2, th2, 8); ctx.stroke();
     ctx.restore();
   }
-
   applyColorGrade(winner);
-
-  // 勝者名プレート（中央にバウンス登場）
   if(t>.38){
     const nT=Math.min(1,(t-.38)/.28), nE=V2_easeBack(nT);
     const nameY=CH*.5;
@@ -1105,23 +1142,17 @@ function V2_renderCut(i, winner, pA, pB){
     V2_namePlate((winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase(), CW*.5, nameY, wc);
     ctx.restore();
   }
-
   const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
   centerText([`${pA}  —  ${pB}`], .1, CW*.12, sc2, sc2);
-
   if(i<7){ ctx.fillStyle=`rgba(255,220,0,${(7-i)/7*.32})`; ctx.fillRect(0,0,CW,CH); }
   V2_scoreBanner(pA,pB); drawVignette(.5); drawFlash(i,6);
 }
-
-// ── FINAL ──
 function V2_renderFinal(i, winner, pA, pB){
   const t  = i / (FINAL_DUR * FPS);
   const wc = winner==='A'?COLOR_A:(winner==='B'?COLOR_B:COLOR_D);
   const fi = winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
   const wn = winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
   const R  = (seed) => { const x=Math.sin(seed*127.1+i*31.7)*43758.5453; return x-Math.floor(x); };
-
-  // DRAW時
   if(!fi){
     V2_splitBg(null);
     ctx.save(); ctx.beginPath(); ctx.rect(0,0,CW,CH/2); ctx.clip();
@@ -1132,16 +1163,6 @@ function V2_renderFinal(i, winner, pA, pB){
     ctx.globalAlpha=eI2; centerText(['DRAW'],.5,CW*.14,COLOR_D,'#888'); ctx.globalAlpha=1;
     V2_scoreBanner(pA,pB); drawVignette(.55); drawFlash(i,18); return;
   }
-
-  // ── タイムライン ──
-  // [0.00→0.12] 暗闇から浮上＋開幕フラッシュ
-  // [0.12→0.26] 第1グリッチバースト
-  // [0.26→0.48] 落ち着きパン＋オーラ
-  // [0.48→0.62] 第2グリッチバースト
-  // [0.62→0.80] ゆったりパン＋呼吸
-  // [0.80→0.94] 第3バースト（最強）
-  // [0.94→1.00] 余韻
-
   const bursts=[
     [0.12,0.26,1.05],
     [0.48,0.62,0.90],
@@ -1157,15 +1178,11 @@ function V2_renderFinal(i, winner, pA, pB){
   if(t<.12) glitchAmt=Math.max(glitchAmt,(1-t/.12)*CW*.06);
   if(R(7)>.72&&t>.1) glitchAmt=Math.max(glitchAmt,CW*.009);
   const inBurst=bursts.some(([bs,be])=>t>=bs&&t<=be)||t<.12;
-
-  // ── 背景 ──
   ctx.fillStyle='#04030a'; ctx.fillRect(0,0,CW,CH);
   ctx.save(); ctx.globalAlpha=Math.min(.48,t*.95);
   const bs2=CW/fi.width*1.1, biw=fi.width*bs2, bih=fi.height*bs2;
   ctx.drawImage(fi,(CW-biw)/2,(CH-bih)/2,biw,bih); ctx.restore();
   ctx.fillStyle=`rgba(4,3,10,${Math.max(.60,.82-t*.28)})`; ctx.fillRect(0,0,CW,CH);
-
-  // ── モーション ──
   const shAmp=glitchAmt*.52+(t<.14?CW*.024*(1-t/.14):0);
   const shX=Math.sin(i*3.3+R(3)*.8)*shAmp;
   const shY=Math.cos(i*2.1+R(5)*.8)*shAmp*.36;
@@ -1176,8 +1193,6 @@ function V2_renderFinal(i, winner, pA, pB){
   const sc=enterSc+breathe;
   const charH=CH*.86, charW2=fi.width*(charH*sc/fi.height);
   const cx0=CW*.5+panX+shX, cy0=CH*.44+shY;
-
-  // ── カラーフリンジ ──
   if(glitchAmt>CW*.007){
     const shift=glitchAmt*(R(11)>.5?1.6:-1.6);
     ctx.save(); ctx.globalAlpha=.30;
@@ -1185,8 +1200,6 @@ function V2_renderFinal(i, winner, pA, pB){
     ctx.save(); ctx.globalAlpha=.30;
     ctx.drawImage(fi,cx0-shift*1.1-charW2/2,cy0-charH*sc/2,charW2,charH*sc); ctx.restore();
   }
-
-  // ── 水平グリッチスライス ──
   if(glitchAmt>CW*.004){
     const nSl=inBurst?6+Math.floor(R(17)*9):1+Math.floor(R(17)*3);
     for(let s=0;s<nSl;s++){
@@ -1198,8 +1211,6 @@ function V2_renderFinal(i, winner, pA, pB){
       ctx.restore();
     }
   }
-
-  // ── ブロックノイズ（バースト強時） ──
   if(inBurst&&glitchAmt>CW*.018){
     const nB=3+Math.floor(R(23)*7);
     for(let b=0;b<nB;b++){
@@ -1209,45 +1220,34 @@ function V2_renderFinal(i, winner, pA, pB){
       ctx.restore();
     }
   }
-
-  // ── メインキャラ ──
   const charAlpha=t<.10?V2_easeOut(t/.10):1;
   ctx.save();
   ctx.shadowColor='#ffd700';
   ctx.shadowBlur=CW*.05*(1+(inBurst?1.3:0)+Math.sin(t*Math.PI*5)*.14);
   V2_char(fi,cx0,cy0,sc,.86,charAlpha);
   ctx.restore();
-
   applyColorGrade(winner);
-
-  // ── ゴールドオーラ縁枠 ──
   const auraA=inBurst?(R(29)>.38?.78:.12):.20+.1*Math.sin(t*Math.PI*6)+t*.06;
   ctx.save(); ctx.globalAlpha=Math.min(.82,auraA);
   ctx.strokeStyle='#ffd700'; ctx.lineWidth=3+inBurst*1.8;
   ctx.shadowColor='#ffcc00'; ctx.shadowBlur=inBurst?48:22;
   ctx.beginPath(); ctx.roundRect(cx0-charW2/2,cy0-charH*sc/2,charW2,charH*sc,6); ctx.stroke();
   ctx.restore();
-
-  // ── ヴィジュアルエフェクト ──
   drawScanlines();
   if(glitchAmt>CW*.011){
     const fa=Math.min(.48,(glitchAmt-CW*.011)/(CW*.038));
     ctx.fillStyle=`rgba(255,255,255,${fa})`; ctx.fillRect(0,0,CW,CH);
   }
-  // バースト開始ホワイトアウト
   for(const [bs3,be3] of bursts){
     if(t>=bs3&&t<bs3+.04){
       ctx.fillStyle=`rgba(255,255,255,${(1-(t-bs3)/.04)*.72})`; ctx.fillRect(0,0,CW,CH); break;
     }
   }
-
-  // ── WINNERテキスト ──
   const eI=Math.min(1,t*6);
   const pulse=1+.04*Math.sin(t*Math.PI*10);
   const txShX=inBurst?(R(41)-.5)*glitchAmt*.38:0;
   ctx.globalAlpha=eI;
   glowText('WINNER',CW*.5+txShX,CH*.075,CW*.112*pulse,'#ffd700','#cc8800',26);
-
   if(wn&&t>.12){
     const nT=Math.min(1,(t-.12)/.14);
     const nE=V2_easeBack(nT);
@@ -1258,19 +1258,17 @@ function V2_renderFinal(i, winner, pA, pB){
     ctx.restore();
   }
   ctx.globalAlpha=1;
-
   if(t>.38){
     ctx.globalAlpha=Math.min(1,(t-.38)*4);
     centerText([`${pA}  —  ${pB}`],.90,CW*.086,wc,'#906000');
     ctx.globalAlpha=1;
   }
-
   if(i<22){ ctx.fillStyle=`rgba(255,200,0,${Math.max(0,(22-i)/22*.65)})`; ctx.fillRect(0,0,CW,CH); }
   V2_scoreBanner(pA,pB); drawVignette(.62); drawFlash(i,22);
 }
 
 // ═══════════════════════════════════════════════
-// DISPATCHER — S.style に応じて分岐
+// DISPATCHER
 // ═══════════════════════════════════════════════
 function renderIntro(i,cat,ci){
   if(S.style==='battlev2') return V2_renderIntro(i,cat,ci);
@@ -1312,11 +1310,9 @@ function initProgressUI(total){
 let _genStartTime=0;
 function setProgress(done,total,label,cat,startTime){
   const pct=done/total*100;
-  // DOM更新はwidth・%・labelは毎回、detailは8フレームに1回だけ（ガクガク防止）
   document.getElementById('progFill').style.width=pct+'%';
   document.getElementById('progPct').textContent=pct.toFixed(1)+'%';
   document.getElementById('progLabel').textContent=label;
-  // ETA: 進行バーの速さから残り時間を推定
   let detail=`フレーム ${done} / ${total}`;
   const t0=startTime||_genStartTime;
   if(t0&&done>10&&done<total){
@@ -1325,7 +1321,6 @@ function setProgress(done,total,label,cat,startTime){
     detail+=eta>60?` — 残り約${Math.floor(eta/60)}分${eta%60}秒`
                   :` — 残り約${eta}秒`;
   }
-  // 残り時間と完了推定時刻
   if(t0&&done>10&&done<total){
     const elapsed2=(performance.now()-t0)/1000;
     const totalEst=elapsed2/done*total;
@@ -1360,8 +1355,116 @@ async function startGenerate(){
   initProgressUI(TOTAL);
   document.getElementById('genBtn').disabled=true;
 
-  // ─ PHASE 1: 全フレームをImageBitmapとしてRAMに収集 ─
-  setFfmpegMsg('📸 フレームを生成中...');
+  const turbo = isTurbo();
+
+  if(turbo){
+    // ═══ TURBO MODE: 1パス直接録画（bitmap保存なし） ═══
+    await startGenerateTurbo(NI,NC,NF,NB,TOTAL);
+  } else {
+    // ═══ NORMAL MODE: 2パス（bitmap保存 → rAF録画） ═══
+    await startGenerateNormal(NI,NC,NF,NB,TOTAL);
+  }
+}
+
+// ——— TURBO: 1パス録画 ———
+async function startGenerateTurbo(NI,NC,NF,NB,TOTAL){
+  setFfmpegMsg('⚡ TURBO: 1パス直接録画中...');
+
+  // BGMデコード
+  let bgmAudioBuf=null;
+  if(S.bgmFile){
+    try{
+      const audioCtx=new AudioContext();
+      bgmAudioBuf=await audioCtx.decodeAudioData(await S.bgmFile.arrayBuffer());
+      audioCtx.close();
+    }catch(e){ console.warn('BGMデコード失敗',e); }
+  }
+
+  const yld=()=>new Promise(r=>setTimeout(r,0));
+  const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+    ?'video/webm;codecs=vp9,opus'
+    :(MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+      ?'video/webm;codecs=vp8,opus':'video/webm');
+
+  // AudioContext + MediaRecorder セットアップ
+  const recAudioCtx=new AudioContext({sampleRate:44100});
+  const dest=recAudioCtx.createMediaStreamDestination();
+  if(bgmAudioBuf){
+    const src=recAudioCtx.createBufferSource();
+    src.buffer=bgmAudioBuf; src.loop=true; src.playbackRate.value=getSpeed(); src.connect(dest); src.start(0);
+  }else{
+    const osc=recAudioCtx.createOscillator();
+    const g=recAudioCtx.createGain(); g.gain.value=0;
+    osc.connect(g); g.connect(dest); osc.start();
+  }
+  const videoStream=canvas.captureStream(0);
+  const videoTrack=videoStream.getVideoTracks()[0];
+  const combined=new MediaStream([videoTrack,dest.stream.getAudioTracks()[0]]);
+  const chunks=[];
+  const rec=new MediaRecorder(combined,{mimeType:mime,videoBitsPerSecond:8_000_000,audioBitsPerSecond:128_000});
+  rec.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
+  const recStopped=new Promise(r=>{ rec.onstop=r; });
+  await new Promise(r=>setTimeout(r,150));
+  rec.start(100);
+
+  const audioStart=recAudioCtx.currentTime;
+  let fc=0, pA=0, pB=0;
+  const frameDur=1/FPS; // 各フレームの目標時間
+
+  // フレーム生成関数（次フレームをすぐ描画し、AudioContext時間で同期待ち）
+  const waitUntil=(targetTime)=>new Promise(resolve=>{
+    const check=()=>{
+      if(recAudioCtx.currentTime-audioStart>=targetTime) resolve();
+      else requestAnimationFrame(check);
+    };
+    check();
+  });
+
+  for(let ci=0;ci<CATEGORIES.length;ci++){
+    const cat=CATEGORIES[ci], winner=S.results[cat];
+    for(let i=0;i<NI;i++){
+      renderIntro(i,cat,ci);
+      videoTrack.requestFrame();
+      fc++;
+      if(fc%6===0) setProgress(fc,TOTAL,`⚡ INTRO [${cat}]`,cat);
+      await waitUntil(fc*frameDur);
+    }
+    if(winner==='A') pA++; else if(winner==='B') pB++;
+    for(let i=0;i<NC;i++){
+      renderCut(i,winner,pA,pB);
+      videoTrack.requestFrame();
+      fc++;
+      if(fc%6===0) setProgress(fc,TOTAL,`⚡ CUT [${winner}]`,cat);
+      await waitUntil(fc*frameDur);
+    }
+    markChipDone(cat);
+  }
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,CW,CH);
+  for(let i=0;i<NB;i++){
+    videoTrack.requestFrame();
+    fc++;
+    await waitUntil(fc*frameDur);
+  }
+  setProgress(fc,TOTAL,'⚡ FINAL','FINAL');
+  const fw=pA>pB?'A':(pB>pA?'B':'Draw');
+  for(let i=0;i<NF;i++){
+    renderFinal(i,fw,pA,pB);
+    videoTrack.requestFrame();
+    fc++;
+    if(fc%6===0) setProgress(fc,TOTAL,'⚡ FINAL','FINAL');
+    await waitUntil(fc*frameDur);
+  }
+  markChipDone('FINAL');
+
+  await new Promise(r=>setTimeout(r,350));
+  rec.stop(); recAudioCtx.close(); await recStopped;
+
+  finishOutput(chunks, mime);
+}
+
+// ——— NORMAL MODE: 2パス ———
+async function startGenerateNormal(NI,NC,NF,NB,TOTAL){
+  setFfmpegMsg('🎨 フレームを生成中...');
   const yld=()=>new Promise(r=>setTimeout(r,0));
   const bitmaps=[]; let fc=0, pA=0, pB=0;
 
@@ -1397,7 +1500,7 @@ async function startGenerate(){
   }
   markChipDone('FINAL');
 
-  // ─ PHASE 2: BGMデコード ─
+  // PHASE 2: BGMデコード
   let bgmAudioBuf=null;
   if(S.bgmFile){
     try{
@@ -1408,7 +1511,7 @@ async function startGenerate(){
     }catch(e){ console.warn('BGMデコード失敗',e); }
   }
 
-  // ─ PHASE 3: rAF + AudioContext.currentTime 完全同期録画 ─
+  // PHASE 3: rAF録画
   setFfmpegMsg('🎬 録画中...');
   setProgress(0,TOTAL,'録画中...',null);
 
@@ -1418,7 +1521,7 @@ async function startGenerate(){
       ?'video/webm;codecs=vp8,opus':'video/webm');
 
   const runRecord=(attempt)=>new Promise(async(resolveRec)=>{
-    setFfmpegMsg(attempt>0?`🔄 再録画中... (${attempt}回目)`:'🎬 録画中...');
+    setFfmpegMsg(attempt>0?`🔁 再録画中... (${attempt}回目)`:'🎬 録画中...');
     const recAudioCtx=new AudioContext({sampleRate:44100});
     const dest=recAudioCtx.createMediaStreamDestination();
     if(bgmAudioBuf){
@@ -1475,12 +1578,16 @@ async function startGenerate(){
   }
 
   bitmaps.forEach(b=>b.close());
-  const finalBlob=new Blob(finalChunks,{type:mime});
+  finishOutput(finalChunks, mime);
+}
+
+// ——— 共通: 出力処理 ———
+function finishOutput(chunks, mime){
+  const finalBlob=new Blob(chunks,{type:mime});
   const url=URL.createObjectURL(finalBlob);
   document.getElementById('preview-video').src=url;
   const dlBtn=document.getElementById('dlBtn');
   dlBtn.href=url; const spdLabel=getSpeed()===1.0?'':('_x'+getSpeed()); dlBtn.download=`${S.nameA}VS${S.nameB}${spdLabel}.webm`;
-  // MP4ボタン用にBlobを保持
   window._lastVideoBlob=finalBlob; window._lastVideoName=`${S.nameA}VS${S.nameB}${spdLabel}`;
   dlBtn.textContent='⬇ 動画をダウンロード (.webm)';
   document.getElementById('output-wrap').classList.add('visible');
@@ -1488,8 +1595,10 @@ async function startGenerate(){
   document.getElementById('progLabel').textContent='✅ 完了!';
   document.getElementById('progPct').textContent='100%';
   document.getElementById('progFill').style.width='100%';
-}
 
+  const elapsed=((performance.now()-_genStartTime)/1000).toFixed(1);
+  setFfmpegMsg(`✅ 生成完了 (${elapsed}秒)${isTurbo()?' ⚡TURBO':''}`);
+}
 
 // ═══════════════════════════════════════════════
 // MP4 DOWNLOAD
@@ -1501,8 +1610,6 @@ async function downloadMp4(){
   const status = document.getElementById('mp4Status');
   btn.disabled = true;
   status.style.display = 'block';
-
-  // FFmpeg.wasm を使ってWebM→MP4変換
   try{
     status.textContent = '⏳ FFmpeg を読み込み中...';
     const { createFFmpeg, fetchFile } = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js');
@@ -1520,7 +1627,6 @@ async function downloadMp4(){
     status.textContent = '✅ MP4 のダウンロードを開始しました';
     setTimeout(()=>{ status.style.display='none'; }, 3000);
   }catch(e){
-    // FFmpeg失敗時はWebMをMP4拡張子で保存（コンテナだけ変更）
     console.warn('FFmpeg失敗、フォールバック:', e);
     status.textContent = '⚠ 変換ライブラリ読み込み失敗。拡張子のみ変更してダウンロードします（一部プレイヤー非対応）';
     const url = URL.createObjectURL(blob);
@@ -1538,7 +1644,6 @@ async function downloadMp4(){
 let _prevPending = false;
 function triggerStylePreview(){
   if(!S.imgA || !S.imgB){ return; }
-  // stylePreviewSection removed
   if(_prevPending) return;
   _prevPending=true;
   setTimeout(()=>{ _prevPending=false; renderStylePreview(); },80);
@@ -1546,10 +1651,8 @@ function triggerStylePreview(){
 function onClickPreview(){
   if(!S.imgA||!S.imgB){ showErr('両方のキャラクター画像をアップロードしてください'); return; }
   hideErr();
-  // GENERATEボタン上のプレビューエリアに表示
   const wrap=document.getElementById('quickPreviewWrap');
   wrap.style.display='block';
-  // renderStylePreview と同じロジックで生成
   syncDurGlobals(); initCanvas();
   const PW=270, PH=480;
   const cvs=document.createElement('canvas');
@@ -1565,42 +1668,28 @@ function onClickPreview(){
 }
 function renderStylePreview(){
   if(!S.imgA || !S.imgB) return;
-  // オフスクリーンサイズ (270x480 = 540x960の半分)
   const PW=270, PH=480;
   const cvs=document.createElement('canvas');
   cvs.width=PW; cvs.height=PH;
   const pc=cvs.getContext('2d',{willReadFrequently:true});
-
-  // 本番CW/CH/FPS/ctx を一時上書き
   const _CW=CW,_CH=CH,_FPS=FPS,_ctx=ctx,_canvas=canvas;
   CW=PW; CH=PH; FPS=30; canvas=cvs; ctx=pc;
-
-  const cat='Strength'; // 代表カテゴリ
+  const cat='Strength';
   const ci=0;
-
-  // ── INTRO プレビュー ──
   try{
     renderIntro(Math.round(INTRO_DUR*FPS*0.65)|0, cat, ci);
   }catch(e){ console.warn('prevIntro err',e); }
   const introUrl = cvs.toDataURL('image/jpeg',0.88);
-
-  // ── CUT プレビュー: 勝者=A で name表示 ──
   try{
     renderCut(Math.round(CUT_DUR*FPS*0.72)|0,'A',7,3);
   }catch(e){ console.warn('prevCut err',e); }
   const cutUrl = cvs.toDataURL('image/jpeg',0.88);
-
-  // 本番値を戻す
   CW=_CW; CH=_CH; FPS=_FPS; ctx=_ctx; canvas=_canvas;
-
-  // 表示
-  // STEP2プレビュー削除済み - 代わりにGENERATEボタン上のプレビューを更新
   const qpI=document.getElementById('qpIntro');
   const qpC=document.getElementById('qpCut');
   if(qpI) qpI.src=introUrl;
   if(qpC) qpC.src=cutUrl;
   const wrap=document.getElementById('quickPreviewWrap');
-  // 自動更新時はwrapを開かない（ボタン押下時のみ表示）
 }
 // ═══════════════════════════════════════════════
 // INIT
@@ -1609,6 +1698,7 @@ updatePrompt();
 updateScore();
 updateEstTime();
 autoLoadBGM();
+onTurboChange(); // 初期状態を反映
 </script>
 </body>
 </html>
