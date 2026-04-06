@@ -621,6 +621,7 @@ function updateSelCount(){const n=slots.filter(Boolean).length;document.getEleme
 let fighters=[],bActive=false,paused=false,trRunning=false,tto=null;
 let iMs=100,rMs=100;
 let roundNum=0,battleStats={};
+let pendingPowerUpIid=null; // パワーアップしたキャラが次ターン必ず攻撃
 
 function updateSpeed(v){iMs=Math.max(50,Math.round(parseFloat(v)*1000));}
 function updateResp(v){rMs=Math.max(0,Math.round(parseFloat(v)*1000));}
@@ -636,17 +637,20 @@ function launchBattle(){
 
 function buildFighters(placed){
   clearT();bActive=true;paused=false;trRunning=false;roundNum=0;finalPhase=0;
+  pendingPowerUpIid=null;
   battleStats={kills:{},damageDone:{},damageTaken:{},deathOrder:[],events:0};
   document.getElementById('winner-banner').style.display='none';
   document.getElementById('pause-btn').disabled=false;document.getElementById('pause-btn').textContent='⏸ 一時停止';
   document.getElementById('battle-log').innerHTML='';document.getElementById('round-counter').textContent='';
   terrainMap={};
-  if(document.getElementById('terrain-toggle')&&document.getElementById('terrain-toggle').checked){
-    const total=gCols*gRows;for(let i=0;i<total;i++){if(Math.random()<0.25){const types=['lava','heal','warp','bomb'];terrainMap[i]=types[Math.floor(Math.random()*types.length)];}}
-  }
   fighters=placed.map(s=>{const c=chars.find(x=>x.id===s.charId);if(!c)return null;
-    return{iid:s.iid,charId:c.id,name:c.name,emoji:c.emoji,imgSrc:c.imgSrc,hp:c.maxHp||100,maxHp:c.maxHp||100,atk:c.atk||20,dodgePct:c.dodgePct!==undefined?c.dodgePct:20,revivePct:c.revivePct!==undefined?c.revivePct:0,reviveHp:c.reviveHp!==undefined?c.reviveHp:30,alive:true,team:s.team||null,gridPos:slots.indexOf(s),sounds:JSON.parse(JSON.stringify(c.sounds)),confused:false,powerUp:1};
+    return{iid:s.iid,charId:c.id,name:c.name,emoji:c.emoji,imgSrc:c.imgSrc,hp:c.maxHp||100,maxHp:c.maxHp||100,atk:c.atk||20,dodgePct:c.dodgePct!==undefined?c.dodgePct:20,revivePct:c.revivePct!==undefined?c.revivePct:0,reviveHp:c.reviveHp!==undefined?c.reviveHp:30,alive:true,team:s.team||null,gridPos:slots.indexOf(s),sounds:JSON.parse(JSON.stringify(c.sounds)),confused:false,powerUp:1,terrain:null};
   }).filter(Boolean);
+  // 地形をキャラに紐付け
+  if(document.getElementById('terrain-toggle')&&document.getElementById('terrain-toggle').checked){
+    const types=['lava','heal','warp','bomb'];
+    fighters.forEach(f=>{if(Math.random()<0.25)f.terrain=types[Math.floor(Math.random()*types.length)];});
+  }
   fighters.forEach(f=>{battleStats.kills[f.iid]=0;battleStats.damageDone[f.iid]=0;battleStats.damageTaken[f.iid]=0;});
   renderArena();updateAliveCounter();
   doIntro().then(()=>{addLog('<span class="round-log">🔔 ━━━ ROUND 1 ━━━</span>');roundNum=1;document.getElementById('round-counter').textContent='ROUND 1';scheduleNext();});
@@ -693,7 +697,8 @@ async function evShuffle(){
   const shuffled=[...positions].sort(()=>Math.random()-.5);
   fighters.forEach((f,i)=>f.gridPos=shuffled[i]);
   shakeArena(true);renderArena();updateAliveCounter();
-  setTimeout(()=>resizeC(),100);
+  resizeC();
+  await wait(500);
   addLog('<span class="event-log">🔄 全員（生死問わず）の位置がシャッフルされた！</span>');
 }
 async function evBetray(){
@@ -707,8 +712,9 @@ async function evBetray(){
 async function evPowerUp(){
   const alive=fighters.filter(f=>f.alive);if(!alive.length)return;
   const target=alive[Math.floor(Math.random()*alive.length)];target.powerUp=2;
+  pendingPowerUpIid=target.iid;
   showDamagePopup(target.iid,'💪×2','heal');
-  addLog(`<span class="event-log">💪 ${target.name} の攻撃力が2倍になった！</span>`);
+  addLog(`<span class="event-log">💪 ${target.name} の攻撃力が2倍になった！次のターン優先攻撃！</span>`);
 }
 async function evHealAll(){
   fighters.filter(f=>f.alive).forEach(f=>{const heal=Math.floor(f.maxHp*0.2);f.hp=Math.min(f.maxHp,f.hp+heal);updateHp(f);showDamagePopup(f.iid,'+'+heal,'heal');});
@@ -793,7 +799,8 @@ async function evResurrect(){
 }
 async function applyTerrainEffects(){
   for(const f of fighters){
-    if(!f.alive)continue;const t=terrainMap[f.gridPos];if(!t||t==='normal')continue;
+    if(!f.alive||!f.terrain)continue;
+    const t=f.terrain;
     if(t==='lava'){const dmg=5;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg,'event-dmg');updateHp(f);if(f.hp<=0){await killWithExplosion(f);addLog(`<span class="event-log">🌋 ${f.name} が溶岩で焼かれた！</span>`);}}
     else if(t==='heal'){const heal=8;f.hp=Math.min(f.maxHp,f.hp+heal);showDamagePopup(f.iid,'+'+heal,'heal');updateHp(f);}
     else if(t==='warp'){
@@ -807,7 +814,7 @@ async function applyTerrainEffects(){
         addLog(`<span class="event-log">🌀 ${f.name} がワープした！</span>`);
       }
     }
-    else if(t==='bomb'){const dmg=50;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg+'💥','event-dmg');updateHp(f);shakeArena(false);delete terrainMap[f.gridPos];addLog(`<span class="event-log">💣 ${f.name} が爆弾を踏んだ！${dmg}ダメージ！</span>`);if(f.hp<=0){await killWithExplosion(f);}}
+    else if(t==='bomb'){const dmg=50;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg+'💥','event-dmg');updateHp(f);shakeArena(false);f.terrain=null;addLog(`<span class="event-log">💣 ${f.name} が爆弾を踏んだ！${dmg}ダメージ！</span>`);if(f.hp<=0){await killWithExplosion(f);}}
   }
 }
 
@@ -925,7 +932,7 @@ async function doTurn(){
     turnsPerRound=1;roundNum++;
     document.getElementById('round-counter').textContent='ROUND '+roundNum;
     addLog(`<span class="round-log">🔔 ━━━ ROUND ${roundNum} ━━━</span>`);
-    if(Object.keys(terrainMap).length>0){await applyTerrainEffects();if(checkWin())return;}
+    if(fighters.some(f=>f.terrain)){await applyTerrainEffects();if(checkWin())return;}
     fighters.forEach(f=>f.confused=false);
   }
 
@@ -935,7 +942,14 @@ async function doTurn(){
 
   checkFinalPhase();
 
-  const attacker=alive[Math.floor(Math.random()*alive.length)];
+  // パワーアップ済みキャラがいれば優先的に攻撃者にする
+  let attacker;
+  if(pendingPowerUpIid){
+    const powered=alive.find(f=>f.iid===pendingPowerUpIid);
+    if(powered){attacker=powered;}
+    pendingPowerUpIid=null;
+  }
+  if(!attacker)attacker=alive[Math.floor(Math.random()*alive.length)];
   let targets;
   if(attacker.confused){targets=alive.filter(f=>f.iid!==attacker.iid);}
   else if(attacker.team){targets=alive.filter(f=>f.iid!==attacker.iid&&f.team!==attacker.team);if(!targets.length)targets=alive.filter(f=>f.iid!==attacker.iid);}
@@ -973,8 +987,8 @@ async function doTurn(){
   battleStats.damageTaken[target.iid]=(battleStats.damageTaken[target.iid]||0)+dmg;
   const dc=document.getElementById('cell-'+target.iid);
   if(dc){dc.classList.add('cell-flash','cell-shake');setTimeout(()=>dc.classList.remove('cell-flash','cell-shake'),400);}
-  shakeArena(isCrit);updateHp(target);
-  showDamagePopup(target.iid,(isCrit?'💥':'')+ dmg,isCrit?'critical':'normal');
+  updateHp(target);
+  showDamagePopup(target.iid,(isCrit?'💥':'')+dmg,isCrit?'critical':'normal');
   if(isCrit)seCrit();else seHit();
 
   const tl=attacker.team?' ['+TEAM_NAMES[attacker.team]+']':'';
@@ -1040,10 +1054,10 @@ function renderArena(){
   arena.style.gridTemplateColumns=`repeat(${gCols},${cs}px)`;
   for(let i=0;i<total;i++){
     const f=fighters.find(x=>x.gridPos===i);
-    if(!f){const em=document.createElement('div');em.className='empty-cell';if(terrainMap[i]){const t=TERRAIN_TYPES.find(x=>x.type===terrainMap[i]);if(t)em.innerHTML=`<div style="text-align:center;font-size:20px;padding-top:30%;">${t.emoji}</div>`;}arena.appendChild(em);continue;}
+    if(!f){const em=document.createElement('div');em.className='empty-cell';arena.appendChild(em);continue;}
     const cell=document.createElement('div');cell.className='fighter-cell'+(f.alive?'':' dead-exploded');cell.id='cell-'+f.iid;
     if(f.team)cell.setAttribute('data-team',f.team);
-    const terr=terrainMap[f.gridPos];if(terr&&terr!=='normal')cell.classList.add('terrain-'+terr);
+    const terr=f.terrain;if(terr&&terr!=='normal')cell.classList.add('terrain-'+terr);
     if(f.imgSrc){const img=document.createElement('img');img.className='fighter-img';img.src=f.imgSrc;cell.appendChild(img);}
     else{const ph=document.createElement('div');ph.className='fighter-placeholder';ph.textContent=f.emoji;cell.appendChild(ph);}
     if(f.team){const tb=document.createElement('div');tb.className='fighter-team-badge';tb.style.background=TEAM_COLORS[f.team];tb.textContent=TEAM_NAMES[f.team];cell.appendChild(tb);}
