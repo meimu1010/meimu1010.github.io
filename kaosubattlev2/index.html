@@ -538,7 +538,7 @@ function buildCard(c){
   const h=document.createElement('span');h.className='char-img-hint';h.textContent='クリックで画像';ia.appendChild(h);ia.onclick=()=>ii.click();imgCol.appendChild(ia);
   if(c.imgSrc){const cb=document.createElement('button');cb.className='btn btn-secondary btn-xs';cb.style.width='100%';cb.textContent='画像削除';cb.onclick=()=>{c.imgSrc=null;save();renderSetup();};imgCol.appendChild(cb);}
   const urlBtn=document.createElement('button');urlBtn.className='btn btn-secondary btn-xs';urlBtn.style.width='100%';urlBtn.textContent='URLで指定';
-  urlBtn.onclick=()=>{const url=prompt('画像のURLを入力',c.imgSrc&&c.imgSrc.startsWith('http')?c.imgSrc:'');if(url===null)return;c.imgSrc=url.trim()||null;save();renderSetup();};imgCol.appendChild(urlBtn);top.appendChild(imgCol);
+  urlBtn.onclick=()=>{const url=prompt('画像のURLを入力してください\n\n推奨: https://imgur.com/ にアップロードした画像のURLを使うと\nLocalStorage容量を消費しません。',c.imgSrc&&c.imgSrc.startsWith('http')?c.imgSrc:'');if(url===null)return;c.imgSrc=url.trim()||null;save();renderSetup();};imgCol.appendChild(urlBtn);top.appendChild(imgCol);
   const rt=document.createElement('div');rt.className='char-right';fl(rt,'キャラクター名');
   const ni=inp(c.name,'char-name-input','text');ni.oninput=e=>{c.name=e.target.value;save();};rt.appendChild(ni);
   const sr=document.createElement('div');sr.className='stat-row';
