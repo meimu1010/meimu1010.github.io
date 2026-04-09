@@ -636,7 +636,7 @@ function launchBattle(){
 }
 
 function buildFighters(placed){
-  clearT();bActive=true;paused=false;trRunning=false;roundNum=0;finalPhase=0;
+  clearT();bActive=true;paused=false;trRunning=false;roundNum=0;finalPhase=0;turnsPerRound=0;
   pendingPowerUpIid=null;
   battleStats={kills:{},damageDone:{},damageTaken:{},deathOrder:[],events:0};
   document.getElementById('winner-banner').style.display='none';
@@ -914,15 +914,14 @@ function checkWin(){
 }
 
 /* ---- Final Phase ---- */
-let finalPhase=0;
 function checkFinalPhase(){
   const alive=fighters.filter(f=>f.alive).length;
-  if(alive<=3&&finalPhase<3){finalPhase=3;showEventBanner('🔥 FINAL 3 🔥','#ff4400',2000);addLog('<span class="final-log">🔥 FINAL 3 - 残り3体！</span>');}
   if(alive===2&&finalPhase<2){finalPhase=2;showEventBanner('⚡ FINAL BATTLE ⚡','#ffdd00',2500);addLog('<span class="final-log">⚡ FINAL BATTLE ⚡</span>');}
+  else if(alive===3&&finalPhase<3){finalPhase=3;showEventBanner('🔥 FINAL 3 🔥','#ff4400',2000);addLog('<span class="final-log">🔥 FINAL 3 - 残り3体！</span>');}
 }
 
 /* ---- Main Turn ---- */
-let turnInRound=0,turnsPerRound=0;
+let turnsPerRound=0;
 async function doTurn(){
   if(!bActive)return;if(checkWin())return;
   const alive=fighters.filter(f=>f.alive);if(alive.length<2)return;
@@ -1013,8 +1012,7 @@ async function doTurn(){
 
   // Revive check
   const revChance=(target.revivePct||0)/100;
-  const hasReviveVoice=target.sounds.revive&&target.sounds.revive.length>0;
-  if(revChance>0&&hasReviveVoice&&Math.random()<revChance){
+  if(revChance>0&&Math.random()<revChance){
     await wait(400);target.alive=true;target.hp=Math.max(1,target.reviveHp||30);
     const tdc=document.getElementById('cell-'+target.iid);
     if(tdc){tdc.classList.remove('dead-exploded');tdc.classList.add('cell-revive');setTimeout(()=>tdc.classList.remove('cell-revive'),800);}
