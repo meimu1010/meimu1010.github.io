@@ -104,12 +104,12 @@ header{display:none;}
 .sel-count{font-size:13px;color:var(--text-muted);font-weight:700;}
 
 /* ========== BATTLE ========== */
-#panel-battle{padding:10px 18px;}
-#battle-top-bar{text-align:center;margin-bottom:8px;}
-#battle-controls{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:6px;}
+#panel-battle{padding:14px 18px;}
+#battle-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:0;}
 .speed-label{font-size:13px;color:var(--text-muted);}
-#alive-counter{font-family:'DotGothic16',monospace;font-size:20px;color:var(--accent2);text-shadow:0 0 10px rgba(245,166,35,.5);min-height:24px;}
-#round-counter{font-family:'DotGothic16',monospace;font-size:15px;color:var(--accent3);text-shadow:0 0 8px rgba(0,210,255,.4);margin-bottom:2px;}
+#alive-counter{font-family:'DotGothic16',monospace;font-size:18px;color:var(--accent2);text-shadow:0 0 10px rgba(245,166,35,.5);white-space:nowrap;}
+#round-counter{font-family:'DotGothic16',monospace;font-size:14px;color:var(--accent3);text-shadow:0 0 8px rgba(0,210,255,.4);white-space:nowrap;}
+#battle-top-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px;}
 .battle-layout{display:flex;gap:16px;max-width:1400px;margin:0 auto;}
 .battle-main{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;}
 .battle-log-col{width:300px;flex-shrink:0;}
@@ -118,7 +118,7 @@ header{display:none;}
 #winner-stats{text-align:left;font-size:12px;color:var(--text-muted);margin:12px auto;max-width:400px;background:var(--surface2);border-radius:8px;padding:12px 16px;font-family:'DotGothic16',monospace;line-height:1.8;}
 #winner-stats .stat-highlight{color:var(--accent2);font-weight:700;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
-#arena-wrap{position:relative;margin-bottom:12px;width:100%;display:flex;justify-content:center;}
+#arena-wrap{position:relative;margin-bottom:0;}
 #arrow-canvas{position:absolute;top:0;left:0;pointer-events:none;z-index:10;}
 #arena{display:grid;gap:8px;justify-content:center;}
 
@@ -217,7 +217,7 @@ header{display:none;}
 
 /* Log */
 .log-col-title{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
-#battle-log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'DotGothic16',monospace;color:var(--text-muted);height:calc(100vh - 200px);max-height:700px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+#battle-log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'DotGothic16',monospace;color:var(--text-muted);height:calc(100vh - 120px);max-height:800px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
 .log-entry{color:var(--text);line-height:1.5;}
 .log-entry .atk{color:var(--accent);font-weight:700;}
 .log-entry .def{color:var(--accent3);font-weight:700;}
@@ -229,7 +229,7 @@ header{display:none;}
 .log-entry .round-log{color:var(--accent3);font-weight:700;font-size:13px;border-top:1px solid var(--border);padding-top:4px;margin-top:4px;}
 .log-entry .final-log{color:var(--accent);font-weight:900;font-size:14px;}
 .log-entry .multiply-log{color:#c77dff;font-weight:700;}
-.empty-cell{aspect-ratio:1;background:rgba(15,52,96,.3);border-radius:10px;border:1px dashed rgba(42,42,90,.5);}
+.empty-cell{background:rgba(15,52,96,.3);border-radius:10px;border:1px dashed rgba(42,42,90,.5);flex-shrink:0;}
 #storage-mode-bar{display:flex;align-items:center;gap:10px;margin-top:18px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;}
 
 @media(max-width:800px){.battle-layout{flex-direction:column;}.battle-log-col{width:100%;}#battle-log{max-height:250px;}.char-grid{grid-template-columns:1fr;}.pc{width:80px;height:80px;}}
@@ -310,7 +310,7 @@ header{display:none;}
 
 <!-- BATTLE -->
 <div class="panel" id="panel-battle">
-  <div id="battle-top-bar">
+  <div id="battle-top-row">
     <div id="battle-controls">
       <span class="speed-label">ターン間隔(秒)</span>
       <input type="number" id="speed-input" min="0" max="30" step="0.1" value="0.1" oninput="updateSpeed(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
@@ -318,9 +318,10 @@ header{display:none;}
       <input type="number" id="resp-input" min="0" max="30" step="0.1" value="0.1" oninput="updateResp(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
       <button class="btn btn-secondary btn-sm" id="pause-btn" onclick="togglePause()" disabled>⏸ 一時停止</button>
       <button class="btn btn-secondary btn-sm" onclick="endAndReturn()">終了</button>
+      <span style="width:1px;height:20px;background:var(--border2);flex-shrink:0;"></span>
+      <div id="round-counter"></div>
+      <div id="alive-counter"></div>
     </div>
-    <div id="round-counter"></div>
-    <div id="alive-counter"></div>
   </div>
   <div class="battle-layout">
     <div class="battle-main">
@@ -1049,13 +1050,22 @@ function shakeArena(big){const wrap=document.getElementById('arena-wrap');if(!wr
 ============================================================ */
 function renderArena(){
   const arena=document.getElementById('arena');arena.innerHTML='';const total=gCols*gRows;
-  const maxW=document.getElementById('arena-wrap').offsetWidth||700;
-  const available=Math.min(maxW,gCols<=2?400:gCols<=3?550:gCols<=4?700:gCols<=6?800:950);
+  // セルサイズをビューポートに合わせて算出
+  const vw=Math.min(window.innerWidth,document.documentElement.clientWidth);
+  const logW=300+16; // ログ列幅+gap
+  const panelPad=36;
+  const availableW=vw-logW-panelPad;
+  const maxByGrid=gCols<=2?360:gCols<=3?480:gCols<=4?600:gCols<=6?720:880;
+  const available=Math.min(availableW,maxByGrid);
   const cs=Math.floor((available-(gCols-1)*8)/gCols);
   arena.style.gridTemplateColumns=`repeat(${gCols},${cs}px)`;
+  // arena-wrapの幅をグリッドにフィット
+  const arenaWrap=document.getElementById('arena-wrap');
+  const totalW=cs*gCols+(gCols-1)*8;
+  arenaWrap.style.width=totalW+'px';
   for(let i=0;i<total;i++){
     const f=fighters.find(x=>x.gridPos===i);
-    if(!f){const em=document.createElement('div');em.className='empty-cell';arena.appendChild(em);continue;}
+    if(!f){const em=document.createElement('div');em.className='empty-cell';em.style.width=cs+'px';em.style.height=cs+'px';arena.appendChild(em);continue;}
     const cell=document.createElement('div');cell.className='fighter-cell'+(f.alive?'':' dead-exploded');cell.id='cell-'+f.iid;
     if(f.team)cell.setAttribute('data-team',f.team);
     const terr=f.terrain;if(terr&&terr!=='normal')cell.classList.add('terrain-'+terr);
