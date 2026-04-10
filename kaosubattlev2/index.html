@@ -104,11 +104,11 @@ header{display:none;}
 .sel-count{font-size:13px;color:var(--text-muted);font-weight:700;}
 
 /* ========== BATTLE ========== */
-#panel-battle{padding:10px 18px;display:flex;flex-direction:column;height:calc(100vh - 48px);box-sizing:border-box;overflow:hidden;}
-.battle-layout{display:flex;gap:16px;flex:1;min-height:0;}
+#panel-battle{padding:8px 18px 0;display:flex;flex-direction:column;height:calc(100vh - 48px);box-sizing:border-box;overflow:hidden;}
+.battle-layout{display:flex;gap:20px;flex:1;min-height:0;margin-top:8px;}
 .battle-main{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;}
-.battle-log-col{width:300px;flex-shrink:0;display:flex;flex-direction:column;}
-#battle-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;flex-shrink:0;}
+.battle-log-col{width:280px;flex-shrink:0;display:flex;flex-direction:column;padding-top:4px;}
+#battle-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:0;flex-shrink:0;}
 .speed-label{font-size:13px;color:var(--text-muted);}
 #alive-counter{font-family:'DotGothic16',monospace;font-size:18px;color:var(--accent2);text-shadow:0 0 10px rgba(245,166,35,.5);white-space:nowrap;}
 #round-counter{font-family:'DotGothic16',monospace;font-size:14px;color:var(--accent3);text-shadow:0 0 8px rgba(0,210,255,.4);white-space:nowrap;}
@@ -1051,9 +1051,10 @@ function renderArena(){
   const main=document.getElementById('battle-main');
   const tabH=document.querySelector('.tabs')?.offsetHeight||48;
   const ctrlH=document.getElementById('battle-controls')?.offsetHeight||44;
-  const pad=20;
-  const availH=window.innerHeight-tabH-ctrlH-pad;
-  const availW=main?main.offsetWidth-8:window.innerWidth-340;
+  const padH=28; // 縦の余裕（スクロールバー防止）
+  const padW=12;
+  const availH=window.innerHeight-tabH-ctrlH-padH;
+  const availW=main?main.offsetWidth-padW:window.innerWidth-340;
   const csByH=Math.floor((availH-(gRows-1)*8)/gRows);
   const csByW=Math.floor((availW-(gCols-1)*8)/gCols);
   const cs=Math.max(60,Math.min(csByH,csByW));
