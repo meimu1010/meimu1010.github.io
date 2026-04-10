@@ -140,11 +140,11 @@ header{display:none;}
 .fighter-cell[data-team="d"]{border-color:var(--td);}
 .fighter-img{width:100%;height:100%;object-fit:cover;display:block;border-radius:7px;}
 .fighter-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:42px;background:var(--surface2);}
-.fighter-name-tag{position:absolute;bottom:0;left:0;right:0;background:rgba(22,33,62,.92);text-align:center;font-size:10px;font-weight:700;padding:3px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);border-top:1px solid var(--border);border-radius:0 0 7px 7px;}
+.fighter-name-tag{position:absolute;bottom:0;left:0;right:0;background:rgba(22,33,62,.92);text-align:center;font-size:13px;font-weight:700;padding:5px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);border-top:1px solid var(--border);border-radius:0 0 7px 7px;}
 .fighter-cell.dead-exploded .fighter-name-tag{color:#444;}
 .dead-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:30px;background:rgba(0,0,0,.4);color:var(--accent);font-weight:900;text-shadow:0 0 10px rgba(233,69,96,.5);}
 .fighter-cell.dead-exploded .dead-overlay{display:flex;}
-.hp-strip{position:absolute;bottom:22px;left:3px;right:3px;height:6px;background:rgba(0,0,0,.3);border-radius:3px;overflow:hidden;}
+.hp-strip{position:absolute;bottom:28px;left:3px;right:3px;height:7px;background:rgba(0,0,0,.3);border-radius:3px;overflow:hidden;}
 .hp-fill{height:100%;background:var(--tc);transition:width .3s,background .3s;border-radius:3px;box-shadow:0 0 6px rgba(34,238,102,.4);}
 .fighter-team-badge{position:absolute;top:4px;left:4px;width:16px;height:16px;border-radius:50%;font-size:8px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;z-index:5;border:1px solid rgba(255,255,255,.3);}
 .terrain-indicator{position:absolute;top:4px;right:4px;font-size:14px;z-index:4;filter:drop-shadow(0 0 4px rgba(0,0,0,.5));}
@@ -217,7 +217,7 @@ header{display:none;}
 
 /* Log */
 .log-col-title{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
-#battle-log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'DotGothic16',monospace;color:var(--text-muted);flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:3px;max-height:100%;}
+#battle-log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;font-family:'DotGothic16',monospace;color:var(--text-muted);flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;max-height:100%;}
 .log-entry{color:var(--text);line-height:1.5;}
 .log-entry .atk{color:var(--accent);font-weight:700;}
 .log-entry .def{color:var(--accent3);font-weight:700;}
@@ -344,7 +344,7 @@ header{display:none;}
 ============================================================ */
 const SOUND_TYPES=[
   {key:'attack',label:'攻撃',ph:'「食らえ！」など'},
-  {key:'hit',label:'ヒット',ph:'「ぐはっ！」など'},
+  {key:'hit',label:'やられ',ph:'「ぐはっ！」など'},
   {key:'dodge',label:'回避(opt)',ph:'「甘いぜ！」など'},
   {key:'death',label:'死亡(opt)',ph:'「ばかなー…」など'},
   {key:'revive',label:'蘇生(opt)',ph:'「復活！」など'},
