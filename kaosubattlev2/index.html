@@ -241,6 +241,8 @@ header{display:none;}
   <div class="tab active" id="tab-setup" onclick="switchTab('setup')">キャラクター登録</div>
   <div class="tab" id="tab-select" onclick="switchTab('select')">配置モード</div>
   <div class="tab" id="tab-battle" onclick="switchTab('battle')">バトル</div>
+  <div style="flex:1;"></div>
+  <div class="tab" id="tab-help" onclick="openHelp()" style="color:var(--accent2);border-bottom-color:transparent;">❓ お困りですか？</div>
 </div>
 
 <!-- SETUP -->
@@ -1116,11 +1118,97 @@ function addLog(html){const log=document.getElementById('battle-log');const e=do
 /* ============================================================
    INIT
 ============================================================ */
+
+/* ============================================================
+   HELP / FAQ
+============================================================ */
+const FAQ = [
+  {
+    q: 'キャラクターの追加方法は？',
+    a: '「キャラクター登録」タブでプリセットから追加するか、「新しいキャラクターを追加」ボタンから自由に作れます。画像はクリックでアップロード、またはURLで指定できます。'
+  },
+  {
+    q: 'キャラにセリフ・音声を設定するには？',
+    a: '各キャラカードの「攻撃 / やられ / 回避 / 死亡 / 蘇生」タブからセリフを入力できます。音声ファイル（MP3など）もアップロード可能。音声がある場合は再生後に次のターンに進みます。'
+  },
+  {
+    q: 'バトルの開始方法は？',
+    a: '「配置モード」タブでキャラをグリッドに2人以上配置し、「🔥 バトル開始！」ボタンを押してください。'
+  },
+  {
+    q: 'グリッドサイズを変えるには？',
+    a: '配置モードの「グリッド」セレクトボックスで2×2〜8×8まで選べます。'
+  },
+  {
+    q: 'チーム戦にするには？',
+    a: '配置グリッドのキャラ左上のバッジをクリックするとチーム（A/B/C/D）を切り替えられます。同じチーム同士は攻撃しません。'
+  },
+  {
+    q: 'ランダムイベントを制限したい',
+    a: '配置モードの「発生イベント選択」でチェックを外すと、そのイベントはバトル中に発生しなくなります。'
+  },
+  {
+    q: '蘇生を設定するには？',
+    a: 'キャラ登録の「蘇生%」に0より大きい数値を入れると、倒れたときにその確率で復活します。「蘇生後HP」で復活時のHPも指定できます。'
+  },
+  {
+    q: '地形ギミックとは？',
+    a: '配置モードで「地形ギミック」をONにすると、キャラが溶岩・回復・ワープ・爆弾などの地形に配置されます。毎ラウンド地形効果が発動します。'
+  },
+  {
+    q: 'データが消えた / 保存されない',
+    a: 'データはブラウザのLocalStorageに保存されます。ブラウザのデータ削除やプライベートモードでは消える場合があります。大量のキャラ（特に画像付き）はIndexedDBへの切替をお勧めします（キャラ登録画面下部から切替可能）。'
+  },
+  {
+    q: 'キャラをエクスポート・インポートするには？',
+    a: 'キャラクター登録画面の「エクスポート」「インポート」ボタンからJSONファイルまたはクリップボードでデータを共有・移行できます。'
+  },
+  {
+    q: 'バトル中に速さを変えたい',
+    a: 'バトル画面上部の「ターン間隔(秒)」でターンの速さを、「セリフ待機(秒)」でセリフ表示の長さをリアルタイムで変更できます。'
+  },
+];
+
+function openHelp(){
+  const container = document.getElementById('help-faq');
+  container.innerHTML = '';
+  FAQ.forEach((item, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;';
+    const qBtn = document.createElement('button');
+    qBtn.style.cssText = 'width:100%;text-align:left;background:var(--surface2);border:none;padding:13px 16px;font-family:"M PLUS 1p",sans-serif;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;';
+    qBtn.innerHTML = '<span>Q. ' + item.q + '</span><span style="color:var(--accent2);font-size:16px;flex-shrink:0;">▾</span>';
+    const ans = document.createElement('div');
+    ans.style.cssText = 'display:none;padding:12px 16px;font-size:13px;color:var(--text-muted);line-height:1.8;background:var(--surface);border-top:1px solid var(--border);';
+    ans.textContent = 'A. ' + item.a;
+    qBtn.onclick = () => {
+      const open = ans.style.display === 'block';
+      ans.style.display = open ? 'none' : 'block';
+      qBtn.querySelector('span:last-child').textContent = open ? '▾' : '▴';
+    };
+    wrap.appendChild(qBtn);
+    wrap.appendChild(ans);
+    container.appendChild(wrap);
+  });
+  document.getElementById('help-modal').style.display = 'block';
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   renderPresets();renderSetup();initStorage();
   document.getElementById('add-char-card-btn').addEventListener('click',addBlankChar);
   window.addEventListener('resize',()=>{if(bActive)resizeC();});
 });
 </script>
+
+<!-- HELP MODAL -->
+<div id="help-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;overflow-y:auto;">
+  <div style="max-width:680px;margin:40px auto;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;position:relative;">
+    <button onclick="document.getElementById('help-modal').style.display='none'" style="position:absolute;top:16px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+    <h2 style="font-family:'DotGothic16',monospace;font-size:22px;color:var(--accent2);margin-bottom:6px;text-shadow:0 0 12px rgba(245,166,35,.4);">❓ お困りですか？</h2>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px;">カオスバトルの使い方・よくある質問をまとめました。</p>
+
+    <div id="help-faq"></div>
+  </div>
+</div>
 </body>
 </html>
