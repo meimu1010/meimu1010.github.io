@@ -107,7 +107,7 @@ header{display:none;}
 #panel-battle{padding:8px 0 0;flex-direction:column;height:calc(100vh - 48px);box-sizing:border-box;overflow:hidden;position:relative;}
 #battle-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0;padding:0 18px 8px;}
 .battle-layout{flex:1;min-height:0;position:relative;}
-.battle-main{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:60px;pointer-events:none;}
+.battle-main{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:20px;pointer-events:none;}
 #arena-wrap{pointer-events:all;}
 .battle-log-col{position:absolute;top:0;right:18px;bottom:0;width:280px;display:flex;flex-direction:column;}
 .speed-label{font-size:13px;color:var(--text-muted);}
@@ -150,7 +150,7 @@ header{display:none;}
 .terrain-indicator{position:absolute;top:4px;right:4px;font-size:14px;z-index:4;filter:drop-shadow(0 0 4px rgba(0,0,0,.5));}
 
 /* Speech Bubble */
-.speech-bubble{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);border:2px solid var(--accent);border-radius:10px;padding:7px 13px;font-size:16px;font-weight:700;color:#1a1a1a;z-index:100;pointer-events:none;box-shadow:0 2px 12px rgba(233,69,96,.3);max-width:160px;white-space:pre-wrap;text-align:center;animation:bubblePop .15s ease;word-break:break-all;}
+.speech-bubble{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);border:2px solid var(--accent);border-radius:10px;padding:5px 10px;font-size:12px;font-weight:700;color:#1a1a1a;z-index:100;pointer-events:none;box-shadow:0 2px 12px rgba(233,69,96,.3);max-width:160px;white-space:pre-wrap;text-align:center;animation:bubblePop .15s ease;word-break:break-all;}
 @keyframes bubblePop{from{transform:translateX(-50%) scale(.8);}to{transform:translateX(-50%) scale(1);}}
 .speech-bubble::after{content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--accent);}
 
@@ -1054,7 +1054,7 @@ function renderArena(){
   const vw=window.innerWidth;
   const vh=window.innerHeight;
   const logColW=280+18+16; // ログ幅+右margin+gap
-  const availH=vh-tabH-ctrlH-16;
+  const availH=vh-tabH-ctrlH-40; // 上下均等な余白になるよう調整
   const availW=vw-logColW*2; // 左右対称に除外してアリーナを真ん中に
   const csByH=Math.floor((availH-(gRows-1)*8)/gRows);
   const csByW=Math.floor((availW-(gCols-1)*8)/gCols);
