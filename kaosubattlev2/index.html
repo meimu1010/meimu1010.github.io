@@ -104,21 +104,20 @@ header{display:none;}
 .sel-count{font-size:13px;color:var(--text-muted);font-weight:700;}
 
 /* ========== BATTLE ========== */
-#panel-battle{padding:10px 18px;display:flex;flex-direction:column;height:calc(100vh - 48px);box-sizing:border-box;}
-#battle-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:0;}
+#panel-battle{padding:10px 18px;display:flex;flex-direction:column;height:calc(100vh - 48px);box-sizing:border-box;overflow:hidden;}
+.battle-layout{display:flex;gap:16px;flex:1;min-height:0;}
+.battle-main{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;}
+.battle-log-col{width:300px;flex-shrink:0;display:flex;flex-direction:column;}
+#battle-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;flex-shrink:0;}
 .speed-label{font-size:13px;color:var(--text-muted);}
 #alive-counter{font-family:'DotGothic16',monospace;font-size:18px;color:var(--accent2);text-shadow:0 0 10px rgba(245,166,35,.5);white-space:nowrap;}
 #round-counter{font-family:'DotGothic16',monospace;font-size:14px;color:var(--accent3);text-shadow:0 0 8px rgba(0,210,255,.4);white-space:nowrap;}
-#battle-top-row{flex-shrink:0;margin-bottom:8px;}
-.battle-layout{display:flex;gap:16px;flex:1;min-height:0;overflow:hidden;}
-.battle-main{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;}
-.battle-log-col{width:300px;flex-shrink:0;display:flex;flex-direction:column;}
-#winner-banner{background:var(--surface);border:2px solid var(--accent2);border-radius:12px;padding:24px;text-align:center;margin-bottom:14px;display:none;box-shadow:0 4px 30px rgba(245,166,35,.25);animation:fadeIn .5s ease;width:100%;max-width:600px;}
+#winner-banner{background:var(--surface);border:2px solid var(--accent2);border-radius:12px;padding:24px;text-align:center;margin-bottom:14px;display:none;box-shadow:0 4px 30px rgba(245,166,35,.25);animation:fadeIn .5s ease;}
 #winner-banner h2{font-size:26px;color:var(--accent2);font-family:'DotGothic16',monospace;margin-bottom:6px;text-shadow:0 0 20px rgba(245,166,35,.6);}
 #winner-stats{text-align:left;font-size:12px;color:var(--text-muted);margin:12px auto;max-width:400px;background:var(--surface2);border-radius:8px;padding:12px 16px;font-family:'DotGothic16',monospace;line-height:1.8;}
 #winner-stats .stat-highlight{color:var(--accent2);font-weight:700;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
-#arena-wrap{position:relative;}
+#arena-wrap{position:relative;margin-bottom:12px;}
 #arrow-canvas{position:absolute;top:0;left:0;pointer-events:none;z-index:10;}
 #arena{display:grid;gap:8px;justify-content:center;}
 
@@ -217,7 +216,7 @@ header{display:none;}
 
 /* Log */
 .log-col-title{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
-#battle-log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'DotGothic16',monospace;color:var(--text-muted);flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;min-height:0;}
+#battle-log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'DotGothic16',monospace;color:var(--text-muted);flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
 .log-entry{color:var(--text);line-height:1.5;}
 .log-entry .atk{color:var(--accent);font-weight:700;}
 .log-entry .def{color:var(--accent3);font-weight:700;}
@@ -310,18 +309,16 @@ header{display:none;}
 
 <!-- BATTLE -->
 <div class="panel" id="panel-battle">
-  <div id="battle-top-row">
-    <div id="battle-controls">
-      <span class="speed-label">ターン間隔(秒)</span>
-      <input type="number" id="speed-input" min="0" max="30" step="0.1" value="0.1" oninput="updateSpeed(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
-      <span class="speed-label">セリフ待機(秒)</span>
-      <input type="number" id="resp-input" min="0" max="30" step="0.1" value="0.1" oninput="updateResp(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
-      <button class="btn btn-secondary btn-sm" id="pause-btn" onclick="togglePause()" disabled>⏸ 一時停止</button>
-      <button class="btn btn-secondary btn-sm" onclick="endAndReturn()">終了</button>
-      <span style="width:1px;height:20px;background:var(--border2);flex-shrink:0;"></span>
-      <div id="round-counter"></div>
-      <div id="alive-counter"></div>
-    </div>
+  <div id="battle-controls">
+    <span class="speed-label">ターン間隔(秒)</span>
+    <input type="number" id="speed-input" min="0" max="30" step="0.1" value="0.1" oninput="updateSpeed(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
+    <span class="speed-label">セリフ待機(秒)</span>
+    <input type="number" id="resp-input" min="0" max="30" step="0.1" value="0.1" oninput="updateResp(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
+    <button class="btn btn-secondary btn-sm" id="pause-btn" onclick="togglePause()" disabled>⏸ 一時停止</button>
+    <button class="btn btn-secondary btn-sm" onclick="endAndReturn()">終了</button>
+    <span style="width:1px;height:20px;background:var(--border2);flex-shrink:0;margin:0 4px;"></span>
+    <div id="round-counter"></div>
+    <div id="alive-counter"></div>
   </div>
   <div class="battle-layout">
     <div class="battle-main" id="battle-main">
@@ -1050,19 +1047,20 @@ function shakeArena(big){const wrap=document.getElementById('arena-wrap');if(!wr
 ============================================================ */
 function renderArena(){
   const arena=document.getElementById('arena');arena.innerHTML='';const total=gCols*gRows;
-  // 利用可能な幅と高さの両方からセルサイズを算出し、小さい方を採用（スクロールなし自動フィット）
+  // 幅・高さ両方から最適セルサイズを算出（スクロールなし自動フィット）
+  const main=document.getElementById('battle-main');
   const tabH=document.querySelector('.tabs')?.offsetHeight||48;
-  const topRowH=document.getElementById('battle-top-row')?.offsetHeight||48;
+  const ctrlH=document.getElementById('battle-controls')?.offsetHeight||44;
   const pad=20;
-  const availableH=window.innerHeight-tabH-topRowH-pad;
-  const availableW=(document.getElementById('battle-main')?.offsetWidth||window.innerWidth-340)-8;
-  const csByH=Math.floor((availableH-(gRows-1)*8)/gRows);
-  const csByW=Math.floor((availableW-(gCols-1)*8)/gCols);
+  const availH=window.innerHeight-tabH-ctrlH-pad;
+  const availW=main?main.offsetWidth-8:window.innerWidth-340;
+  const csByH=Math.floor((availH-(gRows-1)*8)/gRows);
+  const csByW=Math.floor((availW-(gCols-1)*8)/gCols);
   const cs=Math.max(60,Math.min(csByH,csByW));
   arena.style.gridTemplateColumns=`repeat(${gCols},${cs}px)`;
   for(let i=0;i<total;i++){
     const f=fighters.find(x=>x.gridPos===i);
-    if(!f){const em=document.createElement('div');em.className='empty-cell';em.style.width=cs+'px';em.style.height=cs+'px';arena.appendChild(em);continue;}
+    if(!f){const em=document.createElement('div');em.className='empty-cell';em.style.cssText=`width:${cs}px;height:${cs}px;`;arena.appendChild(em);continue;}
     const cell=document.createElement('div');cell.className='fighter-cell'+(f.alive?'':' dead-exploded');cell.id='cell-'+f.iid;cell.style.width=cs+'px';cell.style.height=cs+'px';
     if(f.team)cell.setAttribute('data-team',f.team);
     const terr=f.terrain;if(terr&&terr!=='normal')cell.classList.add('terrain-'+terr);
@@ -1103,7 +1101,7 @@ function endBattle(winner,winTeam){
 /* ============================================================
    ARROW
 ============================================================ */
-function resizeC(){const w=document.getElementById('arena-wrap'),cv=document.getElementById('arrow-canvas');if(!w||!cv)return;const g=document.getElementById('arena');cv.width=g?g.offsetWidth:w.offsetWidth;cv.height=g?g.offsetHeight:w.offsetHeight;w.style.width=(g?g.offsetWidth:w.offsetWidth)+'px';w.style.height=(g?g.offsetHeight:w.offsetHeight)+'px';}
+function resizeC(){const g=document.getElementById('arena'),cv=document.getElementById('arrow-canvas'),w=document.getElementById('arena-wrap');if(!cv||!g)return;const gw=g.offsetWidth,gh=g.offsetHeight;cv.width=gw;cv.height=gh;if(w){w.style.width=gw+'px';w.style.height=gh+'px';}}
 function ctr(iid){const cell=document.getElementById('cell-'+iid),wrap=document.getElementById('arena-wrap');if(!cell||!wrap)return null;const cr=cell.getBoundingClientRect(),wr=wrap.getBoundingClientRect();return{x:cr.left-wr.left+cr.width/2,y:cr.top-wr.top+cr.height/2};}
 function drawArrow(fi,ti){const cv=document.getElementById('arrow-canvas'),ctx=cv.getContext('2d'),from=ctr(fi),to=ctr(ti);if(!from||!to)return;const ang=Math.atan2(to.y-from.y,to.x-from.x),hl=14;ctx.clearRect(0,0,cv.width,cv.height);ctx.save();ctx.strokeStyle='#e94560';ctx.lineWidth=3;ctx.shadowColor='rgba(233,69,96,.5)';ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();ctx.fillStyle='#e94560';ctx.beginPath();ctx.moveTo(to.x,to.y);ctx.lineTo(to.x-hl*Math.cos(ang-Math.PI/6),to.y-hl*Math.sin(ang-Math.PI/6));ctx.lineTo(to.x-hl*Math.cos(ang+Math.PI/6),to.y-hl*Math.sin(ang+Math.PI/6));ctx.closePath();ctx.fill();ctx.restore();}
 function clearArrow(){const cv=document.getElementById('arrow-canvas');if(cv)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);}
