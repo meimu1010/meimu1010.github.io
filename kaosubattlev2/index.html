@@ -104,11 +104,12 @@ header{display:none;}
 .sel-count{font-size:13px;color:var(--text-muted);font-weight:700;}
 
 /* ========== BATTLE ========== */
-#panel-battle{padding:8px 18px 0;flex-direction:column;height:calc(100vh - 48px);box-sizing:border-box;overflow:hidden;}
-.battle-layout{display:flex;gap:20px;flex:1;min-height:0;margin-top:8px;}
-.battle-main{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;}
-.battle-log-col{width:280px;flex-shrink:0;display:flex;flex-direction:column;padding-top:4px;}
-#battle-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:0;flex-shrink:0;}
+#panel-battle{padding:8px 0 0;flex-direction:column;height:calc(100vh - 48px);box-sizing:border-box;overflow:hidden;position:relative;}
+#battle-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0;padding:0 18px 8px;}
+.battle-layout{flex:1;min-height:0;position:relative;}
+.battle-main{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+#arena-wrap{pointer-events:all;}
+.battle-log-col{position:absolute;top:0;right:18px;bottom:0;width:280px;display:flex;flex-direction:column;}
 .speed-label{font-size:13px;color:var(--text-muted);}
 #alive-counter{font-family:'DotGothic16',monospace;font-size:18px;color:var(--accent2);text-shadow:0 0 10px rgba(245,166,35,.5);white-space:nowrap;}
 #round-counter{font-family:'DotGothic16',monospace;font-size:14px;color:var(--accent3);text-shadow:0 0 8px rgba(0,210,255,.4);white-space:nowrap;}
@@ -216,7 +217,7 @@ header{display:none;}
 
 /* Log */
 .log-col-title{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
-#battle-log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'DotGothic16',monospace;color:var(--text-muted);flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+#battle-log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:12px;font-family:'DotGothic16',monospace;color:var(--text-muted);flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:3px;max-height:100%;}
 .log-entry{color:var(--text);line-height:1.5;}
 .log-entry .atk{color:var(--accent);font-weight:700;}
 .log-entry .def{color:var(--accent3);font-weight:700;}
@@ -1047,14 +1048,14 @@ function shakeArena(big){const wrap=document.getElementById('arena-wrap');if(!wr
 ============================================================ */
 function renderArena(){
   const arena=document.getElementById('arena');arena.innerHTML='';const total=gCols*gRows;
-  // 幅・高さ両方から最適セルサイズを算出（スクロールなし自動フィット）
-  const main=document.getElementById('battle-main');
+  // 画面全体を基準にセルサイズ算出（アリーナは画面絶対中央）
   const tabH=document.querySelector('.tabs')?.offsetHeight||48;
   const ctrlH=document.getElementById('battle-controls')?.offsetHeight||44;
-  const padH=28; // 縦の余裕（スクロールバー防止）
-  const padW=12;
-  const availH=window.innerHeight-tabH-ctrlH-padH;
-  const availW=main?main.offsetWidth-padW:window.innerWidth-340;
+  const vw=window.innerWidth;
+  const vh=window.innerHeight;
+  const logColW=280+18+16; // ログ幅+右margin+gap
+  const availH=vh-tabH-ctrlH-16;
+  const availW=vw-logColW*2; // 左右対称に除外してアリーナを真ん中に
   const csByH=Math.floor((availH-(gRows-1)*8)/gRows);
   const csByW=Math.floor((availW-(gCols-1)*8)/gCols);
   const cs=Math.max(60,Math.min(csByH,csByW));
@@ -1102,7 +1103,7 @@ function endBattle(winner,winTeam){
 /* ============================================================
    ARROW
 ============================================================ */
-function resizeC(){const g=document.getElementById('arena'),cv=document.getElementById('arrow-canvas'),w=document.getElementById('arena-wrap');if(!cv||!g)return;const gw=g.offsetWidth,gh=g.offsetHeight;cv.width=gw;cv.height=gh;if(w){w.style.width=gw+'px';w.style.height=gh+'px';}}
+function resizeC(){const g=document.getElementById('arena'),cv=document.getElementById('arrow-canvas'),w=document.getElementById('arena-wrap');if(!cv||!g)return;const gw=g.scrollWidth,gh=g.scrollHeight;cv.width=gw;cv.height=gh;if(w){w.style.width=gw+'px';w.style.height=gh+'px';}}
 function ctr(iid){const cell=document.getElementById('cell-'+iid),wrap=document.getElementById('arena-wrap');if(!cell||!wrap)return null;const cr=cell.getBoundingClientRect(),wr=wrap.getBoundingClientRect();return{x:cr.left-wr.left+cr.width/2,y:cr.top-wr.top+cr.height/2};}
 function drawArrow(fi,ti){const cv=document.getElementById('arrow-canvas'),ctx=cv.getContext('2d'),from=ctr(fi),to=ctr(ti);if(!from||!to)return;const ang=Math.atan2(to.y-from.y,to.x-from.x),hl=14;ctx.clearRect(0,0,cv.width,cv.height);ctx.save();ctx.strokeStyle='#e94560';ctx.lineWidth=3;ctx.shadowColor='rgba(233,69,96,.5)';ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();ctx.fillStyle='#e94560';ctx.beginPath();ctx.moveTo(to.x,to.y);ctx.lineTo(to.x-hl*Math.cos(ang-Math.PI/6),to.y-hl*Math.sin(ang-Math.PI/6));ctx.lineTo(to.x-hl*Math.cos(ang+Math.PI/6),to.y-hl*Math.sin(ang+Math.PI/6));ctx.closePath();ctx.fill();ctx.restore();}
 function clearArrow(){const cv=document.getElementById('arrow-canvas');if(cv)cv.getContext('2d').clearRect(0,0,cv.width,cv.height);}
