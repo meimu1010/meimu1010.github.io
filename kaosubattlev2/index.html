@@ -113,9 +113,9 @@ header{display:none;}
 .speed-label{font-size:13px;color:var(--text-muted);}
 #alive-counter{font-family:'DotGothic16',monospace;font-size:18px;color:var(--accent2);text-shadow:0 0 10px rgba(245,166,35,.5);white-space:nowrap;}
 #round-counter{font-family:'DotGothic16',monospace;font-size:14px;color:var(--accent3);text-shadow:0 0 8px rgba(0,210,255,.4);white-space:nowrap;}
-#winner-banner{background:var(--surface);border:2px solid var(--accent2);border-radius:12px;padding:20px 16px;text-align:center;display:none;box-shadow:0 4px 30px rgba(245,166,35,.25);animation:fadeIn .5s ease;position:absolute;left:18px;top:50%;transform:translateY(-50%);width:240px;z-index:50;pointer-events:all;}
-#winner-banner h2{font-size:20px;color:var(--accent2);font-family:'DotGothic16',monospace;margin-bottom:4px;text-shadow:0 0 20px rgba(245,166,35,.6);}
-#winner-stats{text-align:left;font-size:11px;color:var(--text-muted);margin:10px auto 0;background:var(--surface2);border-radius:8px;padding:10px 12px;font-family:'DotGothic16',monospace;line-height:1.7;}
+#winner-banner{background:var(--surface);border:2px solid var(--accent2);border-radius:12px;padding:24px 20px;text-align:center;display:none;box-shadow:0 4px 30px rgba(245,166,35,.25);animation:fadeIn .5s ease;position:absolute;left:18px;top:50%;transform:translateY(-50%);width:300px;z-index:50;pointer-events:all;}
+#winner-banner h2{font-size:24px;color:var(--accent2);font-family:'DotGothic16',monospace;margin-bottom:6px;text-shadow:0 0 20px rgba(245,166,35,.6);}
+#winner-stats{text-align:left;font-size:12px;color:var(--text-muted);margin:12px auto 0;background:var(--surface2);border-radius:8px;padding:12px 14px;font-family:'DotGothic16',monospace;line-height:1.8;}
 #winner-stats .stat-highlight{color:var(--accent2);font-weight:700;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
 #arena-wrap{position:relative;margin-bottom:12px;}
@@ -1114,7 +1114,7 @@ function renderArena(){
   const vw=window.innerWidth;
   const vh=window.innerHeight;
   const logColW=280+18+16; // ログ幅+右margin+gap
-  const winnerW=240+18+16; // winner-banner幅+左margin+gap
+  const winnerW=300+18+16; // winner-banner幅+左margin+gap
   const availH=vh-tabH-ctrlH-40; // 上下均等な余白
   const availW=vw-logColW-winnerW; // 左:winner 右:ログ で除外してアリーナを真ん中に
   const csByH=Math.floor((availH-(gRows-1)*8)/gRows);
