@@ -235,26 +235,55 @@ header{display:none;}
 @media(max-width:800px){.battle-layout{flex-direction:column;}.battle-log-col{width:100%;}#battle-log{max-height:250px;}.char-grid{grid-template-columns:1fr;}.pc{width:80px;height:80px;}}
 
 /* ========== THEMES ========== */
-[data-theme="neon"]{
-  --bg:#0d0d0d;--surface:#111;--surface2:#1a1a1a;--border:#00ff88;--border2:#00cc66;
-  --accent:#ff0066;--accent2:#00ff88;--accent3:#00ccff;--text:#e0ffe0;--text-muted:#66aa66;--shadow:rgba(0,255,136,.15);
+/* ライトテーマ: 背景白・全体を明るく */
+[data-theme="light"]{
+  --bg:#f0f2f5;--surface:#ffffff;--surface2:#e8ecf2;--border:#c8d0dc;--border2:#a0aabb;
+  --accent:#d32f4a;--accent2:#e67e00;--accent3:#0077cc;--text:#1a1a2e;--text-muted:#5566788;--shadow:rgba(0,0,0,.12);
+  --ta:#d32f4a;--tb:#0077cc;--tc:#22aa44;--td:#8833cc;
 }
-[data-theme="sakura"]{
-  --bg:#1a0a12;--surface:#2a1020;--surface2:#3a1530;--border:#cc6688;--border2:#ee88aa;
-  --accent:#ff66aa;--accent2:#ffaacc;--accent3:#cc88ff;--text:#ffe0ee;--text-muted:#cc88aa;--shadow:rgba(255,100,150,.2);
-}
-[data-theme="ocean"]{
-  --bg:#020c1b;--surface:#0a1628;--surface2:#0d2040;--border:#1e4080;--border2:#2060c0;
-  --accent:#00aaff;--accent2:#00ddcc;--accent3:#88ddff;--text:#ccf0ff;--text-muted:#6699bb;--shadow:rgba(0,150,255,.2);
-}
-[data-theme="gold"]{
-  --bg:#0f0a00;--surface:#1a1200;--surface2:#261a00;--border:#604000;--border2:#886600;
-  --accent:#ffaa00;--accent2:#ffdd44;--accent3:#ffcc66;--text:#fff8e0;--text-muted:#aa8833;--shadow:rgba(255,170,0,.2);
-}
-[data-theme="mono"]{
-  --bg:#0a0a0a;--surface:#141414;--surface2:#1e1e1e;--border:#333;--border2:#444;
-  --accent:#ffffff;--accent2:#cccccc;--accent3:#aaaaaa;--text:#eeeeee;--text-muted:#666666;--shadow:rgba(255,255,255,.1);
-}
+[data-theme="light"] body{background:var(--bg);color:var(--text);}
+[data-theme="light"] .tabs{background:#fff;border-bottom:2px solid var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.1);}
+[data-theme="light"] .tabs-logo{color:var(--accent);border-right:1px solid var(--border);}
+[data-theme="light"] .tab{color:#556;}
+[data-theme="light"] .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+[data-theme="light"] .tab:hover:not(.active){color:var(--text);}
+[data-theme="light"] .char-card{background:#fff;border-color:var(--border);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+[data-theme="light"] .char-name-input{background:#f5f7fa;border-color:var(--border);color:var(--text);}
+[data-theme="light"] .char-name-input:focus{border-color:var(--accent3);}
+[data-theme="light"] .char-img-area{background:#e8ecf2;border-color:var(--border2);}
+[data-theme="light"] .info-bar{background:rgba(0,119,204,.07);border-color:rgba(0,119,204,.25);color:var(--accent3);}
+[data-theme="light"] .preset-btn{background:#f5f7fa;border-color:var(--border);color:#556;}
+[data-theme="light"] .preset-btn:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(230,126,0,.08);}
+[data-theme="light"] .pool-card{background:#fff;border-color:var(--border);}
+[data-theme="light"] .pool-card:hover{border-color:var(--accent3);background:rgba(0,119,204,.06);}
+[data-theme="light"] .pool-card-img{background:#e8ecf2;}
+[data-theme="light"] .pc{background:#e8ecf2;border-color:var(--border2);color:var(--border2);}
+[data-theme="light"] .pc.occupied{background:#fff;border-color:var(--border2);}
+[data-theme="light"] .pc-name{background:rgba(240,242,245,.92);color:var(--text);}
+[data-theme="light"] .btn-secondary{background:#e8ecf2;color:var(--text);border-color:var(--border2);}
+[data-theme="light"] .btn-secondary:hover{border-color:var(--accent3);color:var(--accent3);}
+[data-theme="light"] #battle-log{background:#fff;border-color:var(--border);}
+[data-theme="light"] .fighter-cell{background:#e8ecf2;border-color:var(--border2);}
+[data-theme="light"] .fighter-name-tag{background:rgba(240,242,245,.95);color:var(--text);border-top-color:var(--border);}
+[data-theme="light"] .empty-cell{background:rgba(200,208,220,.3);border-color:rgba(160,170,187,.4);}
+[data-theme="light"] #panel-setup,
+[data-theme="light"] #panel-select,
+[data-theme="light"] #panel-battle{background:var(--bg);}
+[data-theme="light"] .sounds-section{border-top-color:var(--border);}
+[data-theme="light"] .st-tab{background:#e8ecf2;border-color:var(--border);color:#556;}
+[data-theme="light"] .voice-item{background:#f5f7fa;border-color:var(--border);}
+[data-theme="light"] .voice-text-input{background:#fff;border-color:var(--border);color:var(--text);}
+[data-theme="light"] .snd-upload-btn{background:#fff;border-color:var(--border);color:#556;}
+[data-theme="light"] .add-char-card{border-color:var(--border2);color:#778;}
+[data-theme="light"] .add-char-card:hover{border-color:var(--accent3);color:var(--accent3);background:rgba(0,119,204,.04);}
+[data-theme="light"] #storage-mode-bar{background:#fff;border-color:var(--border);}
+[data-theme="light"] #winner-banner{background:#fff;border-color:var(--accent2);}
+[data-theme="light"] .log-entry{color:var(--text);}
+[data-theme="light"] .speech-bubble{background:rgba(255,255,255,.98);border-color:var(--accent);color:#1a1a2e;}
+[data-theme="light"] .grid-sel{background:#fff;border-color:var(--border);color:var(--text);}
+[data-theme="light"] #alive-counter{color:var(--accent2);}
+[data-theme="light"] #round-counter{color:var(--accent3);}
+[data-theme="light"] .fighter-cell.dead-exploded{background:#d8d8d8;border-color:#aaa;}
 </style>
 </head>
 <body>
@@ -1150,12 +1179,8 @@ function addLog(html){const log=document.getElementById('battle-log');const e=do
    THEME
 ============================================================ */
 const THEMES = [
-  {key:'default', name:'デフォルト', desc:'ダークネイビー', colors:['#1a1a2e','#e94560','#00d2ff']},
-  {key:'neon',    name:'ネオン',     desc:'ダークネオン',   colors:['#0d0d0d','#ff0066','#00ff88']},
-  {key:'sakura',  name:'サクラ',     desc:'ダークピンク',   colors:['#1a0a12','#ff66aa','#cc88ff']},
-  {key:'ocean',   name:'オーシャン', desc:'ディープブルー', colors:['#020c1b','#00aaff','#00ddcc']},
-  {key:'gold',    name:'ゴールド',   desc:'ダークゴールド', colors:['#0f0a00','#ffaa00','#ffdd44']},
-  {key:'mono',    name:'モノクロ',   desc:'グレースケール', colors:['#0a0a0a','#ffffff','#aaaaaa']},
+  {key:'default', name:'デフォルト', desc:'ダークネイビー（初期）', colors:['#1a1a2e','#e94560','#00d2ff']},
+  {key:'light',   name:'ライト',     desc:'明るい白ベース',         colors:['#f0f2f5','#d32f4a','#0077cc']},
 ];
 let currentTheme = localStorage.getItem('chaos_theme') || 'default';
 
