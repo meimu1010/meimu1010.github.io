@@ -310,6 +310,7 @@ header{display:none;}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
       <button class="btn btn-secondary btn-sm" onclick="showExportMenu(this)">📤 エクスポート ▾</button>
       <button class="btn btn-secondary btn-sm" onclick="showImportMenu(this)">📥 インポート ▾</button>
+      <button class="btn btn-info btn-sm" onclick="importHigurashi()">🎭 ひぐらしキャラを読み込む</button>
       <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importFile(this)">
     </div>
     <div class="sec-title">登録済みキャラクター</div>
@@ -1228,6 +1229,33 @@ function openThemePicker(){
     grid.appendChild(card);
   });
   document.getElementById('theme-modal').style.display = 'flex';
+}
+
+
+/* ============================================================
+   HIGURASHI PRESET IMPORT
+============================================================ */
+async function importHigurashi(){
+  try{
+    const res=await fetch('./higurashi.json');
+    if(!res.ok)throw new Error('ファイルが見つかりません ('+res.status+')');
+    const data=await res.json();
+    if(!Array.isArray(data))throw new Error('データ形式が不正です');
+    const mode=chars.length>0?confirm('現在のキャラクターを置き換えますか？\nOK=置き換え / キャンセル=追加'):true;
+    const maxId=chars.length?Math.max(...chars.map(c=>c.id)):0;
+    let newId=Math.max(maxId,nid)+1;
+    const imported=data.map(c=>({
+      ...c,id:newId++,
+      sounds:c.sounds||{attack:[],hit:[],dodge:[],death:[],revive:[]},
+      dodgePct:c.dodgePct??20,revivePct:c.revivePct??0,reviveHp:c.reviveHp??30
+    }));
+    if(mode)chars=imported;else chars=[...chars,...imported];
+    nid=Math.max(...chars.map(c=>c.id))+1;
+    save();renderSetup();
+    alert('✅ '+imported.length+'人のひぐらしキャラを読み込みました！');
+  }catch(e){
+    alert('❌ 読み込み失敗: '+e.message+'\n\nhigurashi.json がこのページと同じフォルダにあるか確認してください。');
+  }
 }
 
 /* ============================================================
