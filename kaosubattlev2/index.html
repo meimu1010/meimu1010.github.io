@@ -1211,6 +1211,7 @@ async function doMultiAttack(attacker, alive, atkV){
   const puMult=attacker.powerUp||1;if(puMult>1){showDamagePopup(attacker.iid,'💪 POWER UP! × ALL','heal');attacker.powerUp=1;}
 
   const deathQueue=[];
+  const hitSpeechQueue=[];
   for(const target of targets){
     // 回避判定
     const dodgeChance=(target.dodgePct!==undefined?target.dodgePct:20)/100;
@@ -1243,12 +1244,20 @@ async function doMultiAttack(attacker, alive, atkV){
       battleStats.kills[attacker.iid]=(battleStats.kills[attacker.iid]||0)+1;
       deathQueue.push(target);
     } else {
-      // やられセリフ：音量65%で再生（awaaitしない＝並行）
-      const hv=pickR(target.sounds.hit);if(hv&&(hv.text||hv.audio)){playVoiceVolume(hv,0.65);if(hv.text)showBubble(target.iid,hv.text,1000);}
+      // やられセリフをキューに積む（後でまとめてawait）
+      hitSpeechQueue.push({iid:target.iid,entry:pickR(target.sounds.hit)});
     }
   }
 
-  await wait(300);
+  // 全ターゲットのやられセリフ・音声を並行再生し、全部終わるまで待つ
+  if(hitSpeechQueue.length>0){
+    await Promise.all(hitSpeechQueue.map(({iid,entry})=>{
+      if(!entry||(entry.text===''&&!entry.audio))return Promise.resolve();
+      return speechWaitVolume(iid,entry,0.65);
+    }));
+  }
+
+  await wait(200);
   clearArrow();if(atkCell)atkCell.classList.remove('attacking');
 
   // 死亡処理を順次実行
@@ -1352,6 +1361,8 @@ async function doSingleAttack(attacker, alive){
    SPEECH/AUDIO
 ============================================================ */
 function speechWait(iid,entry){return new Promise(resolve=>{if(entry.text)showBubble(iid,entry.text,null);if(entry.audio){const a=new Audio(entry.audio);const done=()=>{removeBubble(iid);resolve();};a.onended=done;a.onerror=done;a.play().catch(()=>{removeBubble(iid);resolve();});}else{const dur=estimateDur(entry);setTimeout(()=>{removeBubble(iid);resolve();},dur);}});}
+// 音量指定付きspeechWait（複数攻撃のやられセリフ用）
+function speechWaitVolume(iid,entry,vol){return new Promise(resolve=>{if(entry.text)showBubble(iid,entry.text,null);if(entry.audio){const a=new Audio(entry.audio);a.volume=Math.max(0,Math.min(1,vol));const done=()=>{removeBubble(iid);resolve();};a.onended=done;a.onerror=done;a.play().catch(()=>{removeBubble(iid);resolve();});}else{const dur=estimateDur(entry);setTimeout(()=>{removeBubble(iid);resolve();},dur);}});}
 function playVoice(entry){if(entry.audio){const a=new Audio(entry.audio);a.play().catch(()=>{});}}
 function playVoiceVolume(entry,vol){
   if(entry.audio){const a=new Audio(entry.audio);a.volume=Math.max(0,Math.min(1,vol));a.play().catch(()=>{});}
