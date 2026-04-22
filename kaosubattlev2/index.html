@@ -696,7 +696,7 @@ function buildVI(c,tk,item,idx,refresh){
     mab.className='snd-play-btn';
     if(hasMulti){
       mab.style.cssText='border-color:var(--accent2);color:var(--accent2);background:rgba(245,166,35,.1);font-weight:700;';
-      mab.textContent=`🔥 適用済 ${item.multiAtk.prob}% / ${item.multiAtk.count===-1?'全員':item.multiAtk.count+'人'}`;
+      mab.textContent=`🔥 適用済 選択${item.multiAtk.prob}% / ${item.multiAtk.count===-1?'全員':item.multiAtk.count+'人'}`;
     } else {
       mab.textContent='🔥 複数攻撃';
     }
@@ -715,13 +715,13 @@ function openMultiAtkModal(item, onClose){
   box.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:360px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.5);';
 
   const title=document.createElement('div');title.style.cssText='font-family:"DotGothic16",monospace;font-size:16px;color:var(--accent2);margin-bottom:4px;font-weight:700;';title.textContent='🔥 複数攻撃オプション';box.appendChild(title);
-  const sub=document.createElement('div');sub.style.cssText='font-size:12px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;';sub.textContent='このセリフが選ばれたとき、設定した確率で複数の敵に同時攻撃します。';box.appendChild(sub);
+  const sub=document.createElement('div');sub.style.cssText='font-size:12px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;';sub.textContent='このセリフが選ばれる確率を設定します。選ばれると必ず複数攻撃を実行します。通常セリフは残りの確率で均等に選ばれます。';box.appendChild(sub);
 
   const hasMulti=item.multiAtk&&item.multiAtk.prob>0;
 
-  // 発生確率
+  // このセリフの発生確率
   const r1=document.createElement('div');r1.style.cssText='margin-bottom:14px;';
-  const l1=document.createElement('div');l1.style.cssText='font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;';l1.textContent='発生確率';r1.appendChild(l1);
+  const l1=document.createElement('div');l1.style.cssText='font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;';l1.textContent='このセリフが選ばれる確率';r1.appendChild(l1);
   const probWrap=document.createElement('div');probWrap.style.cssText='display:flex;align-items:center;gap:8px;';
   const probIn=document.createElement('input');probIn.type='number';probIn.min=1;probIn.max=100;probIn.value=hasMulti?item.multiAtk.prob:5;
   probIn.style.cssText='width:80px;padding:7px 10px;border:1px solid var(--border2);border-radius:6px;font-family:"M PLUS 1p",sans-serif;font-size:14px;background:var(--surface2);color:var(--text);outline:none;';
@@ -738,7 +738,7 @@ function openMultiAtkModal(item, onClose){
   cntIn.onfocus=()=>cntIn.style.borderColor='var(--accent3)';cntIn.onblur=()=>cntIn.style.borderColor='var(--border2)';
   const cSuffix=document.createElement('span');cSuffix.style.cssText='font-size:13px;color:var(--text-muted);';cSuffix.textContent='人　(-1 = 全員)';
   cntWrap.appendChild(cntIn);cntWrap.appendChild(cSuffix);r2.appendChild(cntWrap);
-  const hint=document.createElement('div');hint.style.cssText='font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.6;';hint.textContent='同じキャラへの重複攻撃は発生しません。このセリフ行が選ばれた時のみ有効です。';r2.appendChild(hint);box.appendChild(r2);
+  const hint=document.createElement('div');hint.style.cssText='font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.6;';hint.textContent='同じキャラへの重複攻撃は発生しません。複数の複数攻撃セリフがある場合、確率の合計が上限になります。';r2.appendChild(hint);box.appendChild(r2);
 
   // ボタン行
   const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;justify-content:space-between;align-items:center;';
@@ -1166,9 +1166,9 @@ async function doTurn(){
   }
   if(!attacker)attacker=alive[Math.floor(Math.random()*alive.length)];
 
-  // セリフ行の複数攻撃設定を確認（ランダムに選ばれたセリフ行にmultiAtkがある場合のみ）
-  const atkVCheck=pickR(attacker.sounds.attack);
-  const isMultiAtk=atkVCheck&&atkVCheck.multiAtk&&atkVCheck.multiAtk.prob>0&&Math.random()<(atkVCheck.multiAtk.prob/100);
+  // 攻撃セリフを重み付きで選択（multiAtk.probがあるセリフはその確率で選ばれやすい）
+  const atkVCheck=pickRWeighted(attacker.sounds.attack);
+  const isMultiAtk=!!(atkVCheck&&atkVCheck.multiAtk);
 
   if(isMultiAtk){
     await doMultiAttack(attacker,alive,atkVCheck);
@@ -1360,6 +1360,30 @@ function estimateDur(entry){return Math.max(800,(entry.text||'').length*80);}
 function showBubble(iid,text,dur){removeBubble(iid);const cell=document.getElementById('cell-'+iid);if(!cell)return;const b=document.createElement('div');b.className='speech-bubble';b.id='bubble-'+iid;b.textContent=text;cell.appendChild(b);if(dur)setTimeout(()=>removeBubble(iid),dur);}
 function removeBubble(iid){const b=document.getElementById('bubble-'+iid);if(b)b.remove();}
 function pickR(arr){if(!arr||!arr.length)return null;return arr[Math.floor(Math.random()*arr.length)];}
+// 重み付きランダム選択: multiAtk.prob があるセリフはその%を重みとして使用
+// 通常セリフ（multiAtkなし）は残りの確率を均等に分配
+function pickRWeighted(arr){
+  if(!arr||!arr.length)return null;
+  if(arr.length===1)return arr[0];
+  // multiAtkセリフの合計確率を計算
+  const multiItems=arr.filter(x=>x.multiAtk&&x.multiAtk.prob>0);
+  const normalItems=arr.filter(x=>!x.multiAtk||!x.multiAtk.prob);
+  const totalMultiProb=multiItems.reduce((s,x)=>s+x.multiAtk.prob,0);
+  // 全multiAtkの合計確率が100%超えたら正規化
+  const clampedMultiProb=Math.min(totalMultiProb,100);
+  const normalProb=100-clampedMultiProb; // 通常セリフに残る確率
+  const roll=Math.random()*100;
+  let cursor=0;
+  // まずmultiAtkセリフを判定
+  for(const item of multiItems){
+    const w=totalMultiProb>0?(item.multiAtk.prob/totalMultiProb)*clampedMultiProb:0;
+    cursor+=w;
+    if(roll<cursor)return item;
+  }
+  // 通常セリフをランダムに返す
+  if(normalItems.length===0)return multiItems[Math.floor(Math.random()*multiItems.length)];
+  return normalItems[Math.floor(Math.random()*normalItems.length)];
+}
 function wait(ms){return new Promise(r=>setTimeout(r,ms));}
 
 /* ============================================================
