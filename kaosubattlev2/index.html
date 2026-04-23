@@ -543,7 +543,7 @@ const TEAM_NAMES={a:'A',b:'B',c:'C',d:'D'};
 /* ============================================================
    EXPLOSION AUDIO - PRELOAD
 ============================================================ */
-const EXPLOSION_AUDIO_URL = 'https://files.catbox.moe/0xxxsv.mp3';
+const EXPLOSION_AUDIO_URL = 'https://files.catbox.moe/08ar6u.mp3';
 let explosionAudioBuffer = null;
 let explosionAudioCtx = null;
 
@@ -1657,6 +1657,131 @@ async function importHigurashi(){
   }catch(e){
     alert('❌ 読み込み失敗: '+e.message+'\n\nhigurashi.json がこのページと同じフォルダにあるか確認してください。');
   }
+}
+
+/* ============================================================
+   TUTORIAL
+============================================================ */
+const TUTORIAL_STEPS = [
+  {
+    icon: '🎮',
+    title: 'カオスバトルへようこそ！',
+    body: 'キャラクターを登録してグリッドに配置するだけで、AIが自動でバトルを進行します。<br><br>セリフ・音声・画像を設定して、カオスなバトルを楽しみましょう！<br>このチュートリアルでは基本的な使い方を順番に説明します。',
+  },
+  {
+    icon: '✏️',
+    title: 'STEP 1：キャラクターを登録する',
+    body: '<b>「キャラクター登録」タブ</b>を開き、「新しいキャラクターを追加」をクリックします。<br><br>設定できる項目：<br>・<b>名前・絵文字・画像</b><br>・<b>HP・攻撃力・回避%</b><br>・<b>蘇生%・蘇生後HP</b>（倒れた後に復活する確率）<br><br>画像は「URLで指定（推奨）」から imgur.com のURLを貼ると容量を節約できます。<br>形式例: <code style="background:rgba(255,255,255,.15);padding:1px 5px;border-radius:3px;">https://i.imgur.com/xxxxxx.png</code>',
+  },
+  {
+    icon: '💬',
+    title: 'STEP 2：セリフ・音声を設定する',
+    body: 'キャラカード内の<b>「攻撃 / やられ / 回避 / 死亡 / 蘇生」タブ</b>からセリフを登録します。<br><br>・テキストと音声ファイル（MP3等）を組み合わせて設定できます<br>・複数登録するとバトル中にランダムで使用されます<br>・音声がある場合は再生が終わるまで次のターンに進みません<br><br>「攻撃」タブの各セリフ行にある<b>「🔥 複数攻撃」ボタン</b>を押すと、そのセリフが選ばれたとき複数の敵に同時攻撃する設定ができます。',
+  },
+  {
+    icon: '⚔️',
+    title: 'STEP 3：配置してバトル開始！',
+    body: '<b>「配置モード」タブ</b>を開き、キャラをグリッドのマスに配置します。<br><br>・プールのキャラをクリック or ドラッグで配置<br>・左上のバッジをクリックして<b>チーム（A/B/C/D）</b>を設定するとチーム戦になります<br>・「地形ギミック」をONにすると溶岩・回復・ワープ・爆弾などのギミックが追加されます<br><br>2人以上配置したら<b>「🔥 バトル開始！」</b>を押すだけ！',
+  },
+  {
+    icon: '🎲',
+    title: 'STEP 4：ランダムイベント',
+    body: 'バトル中にさまざまなランダムイベントが発生します：<br><br>🔄 <b>シャッフル</b>：全員の位置が入れ替わる<br>💪 <b>パワーアップ</b>：誰かの攻撃力が2倍になる<br>💚 <b>回復の雨</b>：全員のHPが20%回復<br>👻 <b>増殖</b>：誰かがコピーされて出現<br>✨ <b>ランダム復活</b>：脱落者が復活<br>🤝 <b>裏切り</b>：誰かが別チームに移る（チーム戦のみ）<br><br>不要なイベントは配置モードの「発生イベント選択」でOFFにできます。',
+  },
+  {
+    icon: '💾',
+    title: 'STEP 5：データの保存・共有',
+    body: 'キャラクターデータは<b>ブラウザに自動保存</b>されます。<br><br>・<b>エクスポート</b>：JSONファイルやクリップボードに書き出し<br>・<b>インポート</b>：JSONファイルやクリップボードから読み込み<br><br>画像付きキャラが多い場合は「IndexedDB」への切替（登録画面下部）で容量を増やせます。<br><br>これでカオスバトルの基本はバッチリです！🎉<br>あとは好きなキャラを登録して遊んでみてください！',
+  },
+];
+
+function openTutorial() {
+  const existing = document.getElementById('__tutorial-modal');
+  if (existing) existing.remove();
+
+  let step = 0;
+
+  const modal = document.createElement('div');
+  modal.id = '__tutorial-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;display:flex;align-items:center;justify-content:center;';
+
+  const box = document.createElement('div');
+  box.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:30px 28px 24px;width:500px;max-width:94vw;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.5);';
+
+  // 閉じるボタン
+  const xBtn = document.createElement('button');
+  xBtn.style.cssText = 'position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;line-height:1;';
+  xBtn.textContent = '✕';
+  xBtn.onclick = () => modal.remove();
+  box.appendChild(xBtn);
+
+  // ステップインジケーター
+  const indicator = document.createElement('div');
+  indicator.style.cssText = 'display:flex;gap:6px;justify-content:center;margin-bottom:20px;';
+  box.appendChild(indicator);
+
+  // コンテンツエリア
+  const icon = document.createElement('div');
+  icon.style.cssText = 'font-size:48px;text-align:center;margin-bottom:12px;';
+  box.appendChild(icon);
+
+  const title = document.createElement('div');
+  title.style.cssText = 'font-family:"DotGothic16",monospace;font-size:18px;color:var(--accent2);text-align:center;margin-bottom:16px;text-shadow:0 0 10px rgba(245,166,35,.3);';
+  box.appendChild(title);
+
+  const body = document.createElement('div');
+  body.style.cssText = 'font-size:13px;color:var(--text-muted);line-height:1.9;margin-bottom:24px;';
+  box.appendChild(body);
+
+  // ナビゲーションボタン
+  const nav = document.createElement('div');
+  nav.style.cssText = 'display:flex;gap:10px;justify-content:space-between;align-items:center;';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'btn btn-secondary btn-sm';
+  prevBtn.textContent = '◀ 前へ';
+
+  const stepLabel = document.createElement('span');
+  stepLabel.style.cssText = 'font-size:12px;color:var(--text-muted);font-family:"DotGothic16",monospace;';
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'btn btn-primary btn-sm';
+
+  nav.appendChild(prevBtn);
+  nav.appendChild(stepLabel);
+  nav.appendChild(nextBtn);
+  box.appendChild(nav);
+
+  function render() {
+    const s = TUTORIAL_STEPS[step];
+    icon.textContent = s.icon;
+    title.textContent = s.title;
+    body.innerHTML = s.body;
+    stepLabel.textContent = (step + 1) + ' / ' + TUTORIAL_STEPS.length;
+    nextBtn.textContent = step === TUTORIAL_STEPS.length - 1 ? '✔ 閉じる' : '次へ ▶';
+    prevBtn.disabled = step === 0;
+    prevBtn.style.opacity = step === 0 ? '0.3' : '1';
+
+    // インジケーター更新
+    indicator.innerHTML = '';
+    TUTORIAL_STEPS.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${i === step ? 'var(--accent2)' : 'var(--border2)'};transition:background .2s;cursor:pointer;`;
+      dot.onclick = () => { step = i; render(); };
+      indicator.appendChild(dot);
+    });
+  }
+
+  prevBtn.onclick = () => { if (step > 0) { step--; render(); } };
+  nextBtn.onclick = () => {
+    if (step < TUTORIAL_STEPS.length - 1) { step++; render(); }
+    else modal.remove();
+  };
+
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  modal.appendChild(box);
+  document.body.appendChild(modal);
+  render();
 }
 
 /* ============================================================
