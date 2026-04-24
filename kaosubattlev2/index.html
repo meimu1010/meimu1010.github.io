@@ -809,7 +809,7 @@ function buildVI(c,tk,item,idx,refresh){
     fr.appendChild(mab);
   }
   left.appendChild(fr);vi.appendChild(left);
-  const db=document.createElement('button');db.className='voice-del-btn';db.textContent='✕';db.onclick=()=>{c.sounds[tk].splice(idx,1);save();refresh();};vi.appendChild(db);return vi;
+  const db=document.createElement('button');db.className='voice-del-btn';db.textContent='✕';db.onclick=()=>{if(!confirm('このセリフを削除しますか？'))return;c.sounds[tk].splice(idx,1);save();refresh();};vi.appendChild(db);return vi;
 }
 
 function openMultiAtkModal(item, onClose){
