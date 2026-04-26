@@ -586,7 +586,8 @@ let currentFile = null;
 
 // ── ffmpeg load ──────────────────────────────────────────────
 async function loadFFmpeg() {
-  const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm';
+  // シングルスレッド版を使用（github.ioのCOEP制限回避）
+  const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.12.9/dist/esm';
   ffmpeg.on('log', ({ message }) => appendLog(message));
   ffmpeg.on('progress', ({ progress }) => {
     const pct = Math.min(Math.round(progress * 100), 100);
