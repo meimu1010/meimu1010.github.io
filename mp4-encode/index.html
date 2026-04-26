@@ -2,6 +2,34 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<script>
+// coi-serviceworker inline: adds COOP/COEP headers via Service Worker for github.io
+if (typeof window !== "undefined") {
+  if (!window.crossOriginIsolated && !navigator.serviceWorker?.controller) {
+    const coiSw = `
+self.addEventListener("install",()=>self.skipWaiting());
+self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));
+self.addEventListener("fetch",e=>{
+  if(e.request.cache==="only-if-cached"&&e.request.mode!=="same-origin")return;
+  e.respondWith(
+    fetch(e.request).then(r=>{
+      if(r.status===0)return r;
+      const h=new Headers(r.headers);
+      h.set("Cross-Origin-Opener-Policy","same-origin");
+      h.set("Cross-Origin-Embedder-Policy","require-corp");
+      h.set("Cross-Origin-Resource-Policy","cross-origin");
+      return new Response(r.body,{status:r.status,statusText:r.statusText,headers:h});
+    })
+  );
+});`;
+    const blob = new Blob([coiSw], {type: "text/javascript"});
+    const url = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url, {scope: "./"}).then(reg => {
+      if (!window.crossOriginIsolated) location.reload();
+    });
+  }
+}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VideoRepack</title>
 <style>
@@ -586,8 +614,7 @@ let currentFile = null;
 
 // ── ffmpeg load ──────────────────────────────────────────────
 async function loadFFmpeg() {
-  // シングルスレッド版を使用（github.ioのCOEP制限回避）
-  const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.12.9/dist/esm';
+  const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm';
   ffmpeg.on('log', ({ message }) => appendLog(message));
   ffmpeg.on('progress', ({ progress }) => {
     const pct = Math.min(Math.round(progress * 100), 100);
