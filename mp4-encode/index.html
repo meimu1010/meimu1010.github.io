@@ -573,17 +573,18 @@
   <button id="download-btn">⬇ ダウンロード</button>
 </div>
 
-<script>
-// ── ffmpeg.wasm (v0.12) ─────────────────────────────────────
-const { FFmpeg } = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js');
-const { fetchFile, toBlobURL } = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/esm/index.js');
+<script type="module">
+import { FFmpeg } from 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js';
+import { fetchFile, toBlobURL } from 'https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/esm/index.js';
 
 const ffmpeg = new FFmpeg();
 let loaded = false;
 let outputBlob = null;
 let outputFilename = '';
 let startTime = 0;
+let currentFile = null;
 
+// ── ffmpeg load ──────────────────────────────────────────────
 async function loadFFmpeg() {
   const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm';
   ffmpeg.on('log', ({ message }) => appendLog(message));
@@ -606,19 +607,23 @@ loadFFmpeg().catch(e => {
   document.getElementById('encode-btn').textContent = '読み込み失敗 — リロードしてください';
 });
 
-// ── File ────────────────────────────────────────────────────
-let currentFile = null;
-
+// ── Helpers ──────────────────────────────────────────────────
 function formatBytes(b) {
-  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
-  return (b/(1024*1024)).toFixed(2) + ' MB';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+  return (b / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
 function setFile(file) {
   currentFile = file;
+  const dz = document.getElementById('dropzone');
+  dz.style.borderColor = 'var(--accent)';
+  dz.style.background = 'rgba(14,165,201,0.05)';
+  document.querySelector('.drop-icon').textContent = '✔';
+  document.querySelector('.drop-label').textContent = file.name;
+  document.querySelector('.drop-hint').textContent = formatBytes(file.size);
   const info = document.getElementById('file-info');
   info.style.display = 'block';
-  info.textContent = `▸ ${file.name}  (${formatBytes(file.size)})`;
+  info.textContent = '▸ ' + file.name + '  (' + formatBytes(file.size) + ')';
   if (loaded) {
     const btn = document.getElementById('encode-btn');
     btn.disabled = false;
@@ -626,29 +631,42 @@ function setFile(file) {
   }
 }
 
+function appendLog(msg) {
+  const log = document.getElementById('log');
+  log.textContent += msg + '\n';
+  log.scrollTop = log.scrollHeight;
+}
+
+// ── File input ───────────────────────────────────────────────
 const fileInput = document.getElementById('file-input');
-fileInput.addEventListener('change', e => {
-  if (e.target.files[0]) setFile(e.target.files[0]);
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) setFile(fileInput.files[0]);
 });
 
-const dz = document.getElementById('dropzone');
-// クリックでファイル選択ダイアログを開く
-dz.addEventListener('click', () => fileInput.click());
-document.getElementById('browse-btn').addEventListener('click', e => {
-  e.stopPropagation();
+document.getElementById('dropzone').addEventListener('click', () => {
   fileInput.click();
 });
 
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-dz.addEventListener('drop', e => {
+// ── Page-wide drag and drop ──────────────────────────────────
+document.addEventListener('dragenter', e => { e.preventDefault(); });
+document.addEventListener('dragover', e => {
   e.preventDefault();
-  dz.classList.remove('drag-over');
+  document.getElementById('dropzone').classList.add('drag-over');
+});
+document.addEventListener('dragleave', e => {
+  if (e.relatedTarget === null) {
+    document.getElementById('dropzone').classList.remove('drag-over');
+  }
+});
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('drag-over');
   const f = e.dataTransfer.files[0];
   if (f) setFile(f);
 });
 
-// ── Mode Tabs ───────────────────────────────────────────────
+// ── Mode Tabs ────────────────────────────────────────────────
 let currentMode = 'quality';
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -661,25 +679,16 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 // CRF display
-const crfInput = document.getElementById('crf');
-crfInput.addEventListener('input', () => {
-  document.getElementById('crf-val').textContent = crfInput.value;
+document.getElementById('crf').addEventListener('input', () => {
+  document.getElementById('crf-val').textContent = document.getElementById('crf').value;
 });
 
-// ── Log ─────────────────────────────────────────────────────
-function appendLog(msg) {
-  const log = document.getElementById('log');
-  log.textContent += msg + '\n';
-  log.scrollTop = log.scrollHeight;
-}
-
-// ── Encode ──────────────────────────────────────────────────
+// ── Encode ───────────────────────────────────────────────────
 document.getElementById('encode-btn').addEventListener('click', encode);
 
 async function encode() {
   if (!currentFile || !loaded) return;
 
-  // Reset UI
   document.getElementById('progress-card').style.display = 'block';
   document.getElementById('result-card').style.display = 'none';
   document.getElementById('log').textContent = '';
@@ -689,9 +698,11 @@ async function encode() {
   btn.textContent = '処理中...';
   startTime = Date.now();
 
-  const inName = 'input_' + Date.now() + '.' + currentFile.name.split('.').pop();
+  const ext = currentFile.name.split('.').pop() || 'mp4';
+  const inName = 'input.' + ext;
 
   try {
+    appendLog('ファイルを読み込み中...');
     await ffmpeg.writeFile(inName, await fetchFile(currentFile));
 
     let args = [];
@@ -707,18 +718,10 @@ async function encode() {
       const fmt = document.getElementById('format-quality').value;
       const audioSel = document.getElementById('audio-quality').value;
       outputFilename = 'output.' + fmt;
-
-      let audioArgs = [];
-      if (audioSel === 'copy') {
-        audioArgs = ['-c:a', 'copy'];
-      } else if (audioSel === 'aac') {
-        audioArgs = ['-c:a', 'aac', '-b:a', '128k'];
-      } else if (audioSel === 'aac192') {
-        audioArgs = ['-c:a', 'aac', '-b:a', '192k'];
-      } else if (audioSel === 'mp3') {
-        audioArgs = ['-c:a', 'libmp3lame', '-b:a', '128k'];
-      }
-
+      let audioArgs = audioSel === 'copy' ? ['-c:a', 'copy']
+        : audioSel === 'aac' ? ['-c:a', 'aac', '-b:a', '128k']
+        : audioSel === 'aac192' ? ['-c:a', 'aac', '-b:a', '192k']
+        : ['-c:a', 'libmp3lame', '-b:a', '128k'];
       args = ['-i', inName, '-c:v', codec, '-crf', crf, ...audioArgs, outputFilename];
 
     } else if (currentMode === 'samesize') {
@@ -727,38 +730,25 @@ async function encode() {
       const audioSel = document.getElementById('audio-samesize').value;
       outputFilename = 'output.' + fmt;
 
-      // Get duration via ffprobe-like approach: run ffmpeg and parse stderr
       appendLog('動画の長さを取得中...');
       let duration = null;
       const probeHandler = ({ message }) => {
         const m = message.match(/Duration:\s*(\d+):(\d+):([\d.]+)/);
-        if (m) {
-          duration = parseInt(m[1]) * 3600 + parseInt(m[2]) * 60 + parseFloat(m[3]);
-        }
+        if (m) duration = parseInt(m[1]) * 3600 + parseInt(m[2]) * 60 + parseFloat(m[3]);
       };
       ffmpeg.on('log', probeHandler);
-      try {
-        await ffmpeg.exec(['-i', inName, '-f', 'null', '-']);
-      } catch(e) { /* expected to fail */ }
+      try { await ffmpeg.exec(['-i', inName, '-f', 'null', '-']); } catch(e) {}
       ffmpeg.off('log', probeHandler);
 
       if (!duration || duration <= 0) {
-        // fallback: estimate from filesize assuming 1.5Mbps
         duration = currentFile.size / (1500 * 1024 / 8);
-        appendLog('長さ取得失敗。推定値を使用: ' + duration.toFixed(1) + 's');
+        appendLog('推定値: ' + duration.toFixed(1) + 's');
       } else {
-        appendLog('動画の長さ: ' + duration.toFixed(1) + 's');
+        appendLog('長さ: ' + duration.toFixed(1) + 's');
       }
-
-      const audioBitrate = audioSel === 'copy' ? 128 : 128; // 128kbps audio assumed
-      const totalBits = currentFile.size * 8;
-      const videoBitrate = Math.max(100, Math.round((totalBits / duration - audioBitrate * 1024) / 1000));
+      const videoBitrate = Math.max(100, Math.round((currentFile.size * 8 / duration - 128 * 1024) / 1000));
       appendLog('目標ビットレート: ' + videoBitrate + 'k');
-
-      let audioArgs = audioSel === 'copy'
-        ? ['-c:a', 'copy']
-        : ['-c:a', 'aac', '-b:a', '128k'];
-
+      const audioArgs = audioSel === 'copy' ? ['-c:a', 'copy'] : ['-c:a', 'aac', '-b:a', '128k'];
       args = ['-i', inName, '-c:v', codec, '-b:v', videoBitrate + 'k', ...audioArgs, outputFilename];
 
     } else if (currentMode === 'size') {
@@ -766,28 +756,10 @@ async function encode() {
       const codec = document.getElementById('codec-size').value;
       const fmt = document.getElementById('format-size').value;
       outputFilename = 'output.' + fmt;
-
-      // Estimate duration from file size heuristic — we'll just do 1-pass with calculated bitrate
-      // Rough: total_bits = targetMB * 8 * 1024 * 1024; audio ~128kbps
-      const totalBits = targetMB * 8 * 1024 * 1024;
-      // We'll get duration first with a probe
-      appendLog('Duration probe...');
-      // Use ffmpeg to write duration info – just run with -t 0 to get stream info
-      // Fallback: use a reasonable video bitrate and let user know
-      const audioBits = 128 * 1024; // 128kbps audio
-      // We can't easily get duration in ffmpeg.wasm without running, so we estimate:
-      // Use 2-pass encoding with a guessed bitrate (user can retry)
-      const guessDuration = currentFile.size / (1500 * 1024 / 8); // assume 1.5Mbps
-      const videoBitrate = Math.max(100, Math.round((totalBits / guessDuration - audioBits) / 1000));
-      appendLog(`推定ビットレート: ${videoBitrate}k (目標${targetMB}MB)`);
-
-      args = [
-        '-i', inName,
-        '-c:v', codec,
-        '-b:v', videoBitrate + 'k',
-        '-c:a', 'aac', '-b:a', '128k',
-        outputFilename
-      ];
+      const guessDuration = currentFile.size / (1500 * 1024 / 8);
+      const videoBitrate = Math.max(100, Math.round((targetMB * 8 * 1024 * 1024 / guessDuration - 128 * 1024) / 1000));
+      appendLog('推定ビットレート: ' + videoBitrate + 'k (目標' + targetMB + 'MB)');
+      args = ['-i', inName, '-c:v', codec, '-b:v', videoBitrate + 'k', '-c:a', 'aac', '-b:a', '128k', outputFilename];
     }
 
     appendLog('$ ffmpeg ' + args.join(' '));
@@ -795,22 +767,17 @@ async function encode() {
 
     const data = await ffmpeg.readFile(outputFilename);
     outputBlob = new Blob([data.buffer], { type: 'video/mp4' });
-
-    // Cleanup
     await ffmpeg.deleteFile(inName);
     await ffmpeg.deleteFile(outputFilename);
 
-    // Results
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     const ratio = ((outputBlob.size / currentFile.size) * 100).toFixed(1);
-
     document.getElementById('orig-size').textContent = formatBytes(currentFile.size);
     document.getElementById('out-size').textContent = formatBytes(outputBlob.size);
     document.getElementById('ratio').textContent = ratio + '%';
     document.getElementById('elapsed').textContent = elapsed + 's';
     document.getElementById('result-card').style.display = 'block';
     document.getElementById('progress-bar').style.width = '100%';
-
     btn.textContent = '▶ もう一度エンコード';
     btn.disabled = false;
 
@@ -824,11 +791,11 @@ async function encode() {
 // ── Download ─────────────────────────────────────────────────
 document.getElementById('download-btn').addEventListener('click', () => {
   if (!outputBlob) return;
-  const ext = outputFilename.split('.').pop();
+  const outExt = outputFilename.split('.').pop();
   const base = currentFile.name.replace(/\.[^.]+$/, '');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(outputBlob);
-  a.download = base + '_repacked.' + ext;
+  a.download = base + '_repacked.' + outExt;
   a.click();
 });
 </script>
