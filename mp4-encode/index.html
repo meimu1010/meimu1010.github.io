@@ -402,11 +402,11 @@
 <!-- Drop -->
 <div class="card">
   <div class="card-title">01 — ファイル選択</div>
+  <input type="file" id="file-input" accept="video/*" style="display:none">
   <div id="dropzone">
-    <input type="file" id="file-input" accept="video/*">
     <span class="drop-icon">⬆</span>
     <div class="drop-label">動画ファイルをドロップ</div>
-    <div class="drop-hint">または クリックして選択 / MP4, MOV, MKV, AVI ...</div>
+    <div class="drop-hint">または <span id="browse-btn" style="color:var(--accent);cursor:pointer;text-decoration:underline;font-weight:700;">クリックして選択</span> / MP4, MOV, MKV, AVI ...</div>
   </div>
   <div id="file-info"></div>
 </div>
@@ -626,18 +626,26 @@ function setFile(file) {
   }
 }
 
-document.getElementById('file-input').addEventListener('change', e => {
+const fileInput = document.getElementById('file-input');
+fileInput.addEventListener('change', e => {
   if (e.target.files[0]) setFile(e.target.files[0]);
 });
 
 const dz = document.getElementById('dropzone');
+// クリックでファイル選択ダイアログを開く
+dz.addEventListener('click', () => fileInput.click());
+document.getElementById('browse-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  fileInput.click();
+});
+
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
 dz.addEventListener('drop', e => {
   e.preventDefault();
   dz.classList.remove('drag-over');
   const f = e.dataTransfer.files[0];
-  if (f && f.type.startsWith('video/')) setFile(f);
+  if (f) setFile(f);
 });
 
 // ── Mode Tabs ───────────────────────────────────────────────
