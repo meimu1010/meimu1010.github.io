@@ -365,16 +365,16 @@
   <div class="header-inner">
     <div>
       <h1>Unicode Inspector</h1>
-      <div class="title-ja">文字　→　符号点　検字盤</div>
+      <div class="title-ja">文字　→　符号点</div>
     </div>
     <div class="stamp">Unicode 15.1</div>
   </div>
 </header>
 
 <div class="input-section">
-  <div class="input-label">▸ 解析する文字列を入力</div>
+  <div class="input-label">文字列を入力</div>
   <div class="input-row">
-    <input id="txt" type="text" placeholder="ここに文字を入力…" autocomplete="off" spellcheck="false" />
+    <input id="txt" type="text" placeholder="文字を入力…" autocomplete="off" spellcheck="false" />
     <button id="btn-clear">消去 ×</button>
   </div>
   <div class="meta-row">
@@ -395,9 +395,7 @@
 
 <footer>
   <span class="footer-text">Unicode Character Inspector</span>
-  <span class="footer-divider footer-text">／</span>
-  <span class="footer-text">1文字コピー対応</span>
-  <button id="copy-all-btn">全てコピー ↓</button>
+  <button id="copy-all-btn">全てコピー</button>
 </footer>
 
 <script>
@@ -638,7 +636,7 @@ function render(str) {
 function buildEmpty() {
   const d = document.createElement('div');
   d.id = 'empty';
-  d.innerHTML = '文字列を入力すると<br>ここに展開されます<small>— 1文字ずつ Unicode コードポイントを表示 —</small>';
+  d.textContent = '文字を入力してください';
   return d;
 }
 
@@ -671,7 +669,7 @@ document.getElementById('copy-all-btn').addEventListener('click', () => {
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
     const btn = document.getElementById('copy-all-btn');
     btn.textContent = '✓ コピー済';
-    setTimeout(() => { btn.textContent = '全てコピー ↓'; }, 1800);
+    setTimeout(() => { btn.textContent = '全てコピー'; }, 1800);
   });
 });
 
