@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unicode 検字盤</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=JetBrains+Mono:wght@400;600&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1208;
+    --ink-faint: #4a3f2f;
+    --ink-ghost: #8a7a64;
+    --paper: #f5f0e8;
+    --paper-warm: #ede6d5;
+    --paper-deep: #d8cdb8;
+    --red: #8b1a1a;
+    --red-light: #c0392b;
+    --gold: #b8860b;
+    --gold-light: #d4a017;
+    --rule: #c8bca8;
+    --rule-dark: #a09080;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Serif JP', serif;
+    min-height: 100vh;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 27px,
+        rgba(160,144,128,0.12) 27px,
+        rgba(160,144,128,0.12) 28px
+      );
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 2px solid var(--ink);
+    padding: 2rem 3rem 1.2rem;
+    position: relative;
+    background: var(--paper-warm);
+  }
+
+  header::after {
+    content: '';
+    display: block;
+    height: 1px;
+    background: var(--rule-dark);
+    margin-top: 6px;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  h1 {
+    font-family: 'IM Fell English', serif;
+    font-size: 2.2rem;
+    font-weight: 400;
+    letter-spacing: .04em;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .title-ja {
+    font-family: 'Noto Serif JP', serif;
+    font-size: .85rem;
+    color: var(--ink-faint);
+    letter-spacing: .15em;
+    padding-left: 2px;
+  }
+
+  .stamp {
+    margin-left: auto;
+    border: 2px solid var(--red);
+    padding: 4px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    color: var(--red);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    transform: rotate(-1.5deg);
+    display: inline-block;
+  }
+
+  /* ── INPUT AREA ── */
+  .input-section {
+    padding: 1.8rem 3rem 1.2rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper-warm);
+  }
+
+  .input-label {
+    font-size: .7rem;
+    letter-spacing: .2em;
+    color: var(--ink-ghost);
+    text-transform: uppercase;
+    margin-bottom: .5rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    border: 1.5px solid var(--ink);
+    border-radius: 0;
+    overflow: hidden;
+    max-width: 680px;
+  }
+
+  #txt {
+    flex: 1;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 1.1rem;
+    padding: .65rem 1rem;
+    border: none;
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+    min-width: 0;
+    line-height: 1.5;
+  }
+
+  #txt::placeholder {
+    color: var(--ink-ghost);
+    font-style: italic;
+  }
+
+  #btn-clear {
+    padding: 0 1.2rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+
+  #btn-clear:hover { background: var(--ink-faint); }
+
+  .meta-row {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: .6rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem;
+    color: var(--ink-ghost);
+  }
+
+  .meta-row span { display: flex; align-items: center; gap: .3rem; }
+  .meta-row strong { color: var(--ink-faint); }
+
+  /* ── GRID ── */
+  main {
+    padding: 1.8rem 3rem 3rem;
+  }
+
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: #fff;
+    border: 1px solid var(--rule-dark);
+    position: relative;
+    padding: 0;
+    transition: box-shadow .15s, border-color .15s;
+    overflow: hidden;
+  }
+
+  .card:hover {
+    border-color: var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    z-index: 1;
+  }
+
+  .card-index {
+    position: absolute;
+    top: 5px;
+    left: 7px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .6rem;
+    color: var(--ink-ghost);
+    line-height: 1;
+  }
+
+  .card-glyph {
+    font-size: 2.4rem;
+    text-align: center;
+    padding: 1rem .5rem .6rem;
+    color: var(--ink);
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--paper-deep);
+    background: var(--paper);
+    line-height: 1;
+  }
+
+  .card-glyph.ctrl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem;
+    color: var(--ink-ghost);
+  }
+
+  .card-info {
+    padding: .5rem .6rem .4rem;
+  }
+
+  .card-codepoint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--red);
+    letter-spacing: .04em;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .card-dec {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    color: var(--ink-ghost);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .card-name {
+    font-size: .6rem;
+    color: var(--ink-faint);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: .4rem;
+    letter-spacing: .02em;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+  }
+
+  .copy-btn {
+    width: 100%;
+    padding: 5px 0;
+    background: var(--paper-warm);
+    border: none;
+    border-top: 1px solid var(--paper-deep);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    color: var(--ink-faint);
+    letter-spacing: .08em;
+    transition: background .12s, color .12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .copy-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .copy-btn.copied {
+    background: var(--gold);
+    color: var(--paper);
+    border-color: var(--gold);
+  }
+
+  .copy-btn svg {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+  }
+
+  /* ── EMPTY STATE ── */
+  #empty {
+    grid-column: 1 / -1;
+    padding: 4rem 0;
+    text-align: center;
+    color: var(--ink-ghost);
+    font-style: italic;
+    font-size: .95rem;
+    letter-spacing: .08em;
+  }
+
+  #empty small {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    margin-top: .5rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  /* ── FOOTER RULE ── */
+  footer {
+    border-top: 2px solid var(--ink);
+    padding: .8rem 3rem;
+    background: var(--paper-warm);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  footer::before {
+    content: '';
+    display: block;
+    height: 1px;
+    background: var(--rule);
+    margin-bottom: 0;
+  }
+
+  .footer-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    color: var(--ink-ghost);
+    letter-spacing: .1em;
+  }
+
+  .footer-divider {
+    color: var(--rule-dark);
+  }
+
+  /* ── COPY ALL ── */
+  #copy-all-btn {
+    margin-left: auto;
+    padding: 5px 14px;
+    background: transparent;
+    border: 1px solid var(--ink-faint);
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem;
+    letter-spacing: .08em;
+    cursor: pointer;
+    transition: all .12s;
+  }
+
+  #copy-all-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>Unicode Inspector</h1>
+      <div class="title-ja">文字　→　符号点　検字盤</div>
+    </div>
+    <div class="stamp">Unicode 15.1</div>
+  </div>
+</header>
+
+<div class="input-section">
+  <div class="input-label">▸ 解析する文字列を入力</div>
+  <div class="input-row">
+    <input id="txt" type="text" placeholder="ここに文字を入力…" autocomplete="off" spellcheck="false" />
+    <button id="btn-clear">消去 ×</button>
+  </div>
+  <div class="meta-row">
+    <span>文字数: <strong id="cnt-char">0</strong></span>
+    <span>コードポイント: <strong id="cnt-cp">0</strong></span>
+    <span>バイト(UTF-8): <strong id="cnt-byte">0</strong></span>
+  </div>
+</div>
+
+<main>
+  <div id="grid">
+    <div id="empty">
+      文字列を入力すると<br>ここに展開されます
+      <small>— 1文字ずつ Unicode コードポイントを表示 —</small>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-text">Unicode Character Inspector</span>
+  <span class="footer-divider footer-text">／</span>
+  <span class="footer-text">1文字コピー対応</span>
+  <button id="copy-all-btn">全てコピー ↓</button>
+</footer>
+
+<script>
+// Unicode name table (extended)
+const NAMES = {
+  0x0009:'HORIZONTAL TAB',0x000A:'LINE FEED',0x000D:'CARRIAGE RETURN',
+  0x0020:'SPACE',0x0021:'EXCLAMATION MARK',0x0022:'QUOTATION MARK',
+  0x0023:'NUMBER SIGN',0x0024:'DOLLAR SIGN',0x0025:'PERCENT SIGN',
+  0x0026:'AMPERSAND',0x0027:'APOSTROPHE',0x0028:'LEFT PARENTHESIS',
+  0x0029:'RIGHT PARENTHESIS',0x002A:'ASTERISK',0x002B:'PLUS SIGN',
+  0x002C:'COMMA',0x002D:'HYPHEN-MINUS',0x002E:'FULL STOP',
+  0x002F:'SOLIDUS',0x0030:'DIGIT ZERO',0x0031:'DIGIT ONE',
+  0x0032:'DIGIT TWO',0x0033:'DIGIT THREE',0x0034:'DIGIT FOUR',
+  0x0035:'DIGIT FIVE',0x0036:'DIGIT SIX',0x0037:'DIGIT SEVEN',
+  0x0038:'DIGIT EIGHT',0x0039:'DIGIT NINE',0x003A:'COLON',
+  0x003B:'SEMICOLON',0x003C:'LESS-THAN SIGN',0x003D:'EQUALS SIGN',
+  0x003E:'GREATER-THAN SIGN',0x003F:'QUESTION MARK',0x0040:'COMMERCIAL AT',
+  0x0041:'LATIN CAPITAL A',0x0042:'LATIN CAPITAL B',0x0043:'LATIN CAPITAL C',
+  0x0044:'LATIN CAPITAL D',0x0045:'LATIN CAPITAL E',0x0046:'LATIN CAPITAL F',
+  0x0047:'LATIN CAPITAL G',0x0048:'LATIN CAPITAL H',0x0049:'LATIN CAPITAL I',
+  0x004A:'LATIN CAPITAL J',0x004B:'LATIN CAPITAL K',0x004C:'LATIN CAPITAL L',
+  0x004D:'LATIN CAPITAL M',0x004E:'LATIN CAPITAL N',0x004F:'LATIN CAPITAL O',
+  0x0050:'LATIN CAPITAL P',0x0051:'LATIN CAPITAL Q',0x0052:'LATIN CAPITAL R',
+  0x0053:'LATIN CAPITAL S',0x0054:'LATIN CAPITAL T',0x0055:'LATIN CAPITAL U',
+  0x0056:'LATIN CAPITAL V',0x0057:'LATIN CAPITAL W',0x0058:'LATIN CAPITAL X',
+  0x0059:'LATIN CAPITAL Y',0x005A:'LATIN CAPITAL Z',
+  0x005B:'LEFT SQUARE BRACKET',0x005C:'REVERSE SOLIDUS',0x005D:'RIGHT SQUARE BRACKET',
+  0x005E:'CIRCUMFLEX ACCENT',0x005F:'LOW LINE',0x0060:'GRAVE ACCENT',
+  0x0061:'LATIN SMALL A',0x0062:'LATIN SMALL B',0x0063:'LATIN SMALL C',
+  0x0064:'LATIN SMALL D',0x0065:'LATIN SMALL E',0x0066:'LATIN SMALL F',
+  0x0067:'LATIN SMALL G',0x0068:'LATIN SMALL H',0x0069:'LATIN SMALL I',
+  0x006A:'LATIN SMALL J',0x006B:'LATIN SMALL K',0x006C:'LATIN SMALL L',
+  0x006D:'LATIN SMALL M',0x006E:'LATIN SMALL N',0x006F:'LATIN SMALL O',
+  0x0070:'LATIN SMALL P',0x0071:'LATIN SMALL Q',0x0072:'LATIN SMALL R',
+  0x0073:'LATIN SMALL S',0x0074:'LATIN SMALL T',0x0075:'LATIN SMALL U',
+  0x0076:'LATIN SMALL V',0x0077:'LATIN SMALL W',0x0078:'LATIN SMALL X',
+  0x0079:'LATIN SMALL Y',0x007A:'LATIN SMALL Z',
+  0x007B:'LEFT CURLY BRACKET',0x007C:'VERTICAL LINE',0x007D:'RIGHT CURLY BRACKET',
+  0x007E:'TILDE',0x00A0:'NO-BREAK SPACE',0x00A5:'YEN SIGN',0x00AB:'LEFT GUILLEMET',
+  0x00BB:'RIGHT GUILLEMET',0x00D7:'MULTIPLICATION SIGN',0x00F7:'DIVISION SIGN',
+  0x2018:'LEFT SINGLE QUOTATION MARK',0x2019:'RIGHT SINGLE QUOTATION MARK',
+  0x201C:'LEFT DOUBLE QUOTATION MARK',0x201D:'RIGHT DOUBLE QUOTATION MARK',
+  0x2026:'HORIZONTAL ELLIPSIS',0x2014:'EM DASH',0x2013:'EN DASH',
+  0x2022:'BULLET',0x2192:'RIGHTWARDS ARROW',0x2190:'LEFTWARDS ARROW',
+  0x2191:'UPWARDS ARROW',0x2193:'DOWNWARDS ARROW',0x2260:'NOT EQUAL TO',
+  0x2264:'LESS-THAN OR EQUAL TO',0x2265:'GREATER-THAN OR EQUAL TO',
+  0x3000:'IDEOGRAPHIC SPACE',0x3001:'IDEOGRAPHIC COMMA',0x3002:'IDEOGRAPHIC FULL STOP',
+  0x300C:'LEFT CORNER BRACKET',0x300D:'RIGHT CORNER BRACKET',
+  0x300E:'LEFT WHITE CORNER BRACKET',0x300F:'RIGHT WHITE CORNER BRACKET',
+  0x3010:'LEFT BLACK LENTICULAR BRACKET',0x3011:'RIGHT BLACK LENTICULAR BRACKET',
+  0x3041:'HIRAGANA SMALL A',0x3042:'HIRAGANA A',0x3043:'HIRAGANA SMALL I',
+  0x3044:'HIRAGANA I',0x3045:'HIRAGANA SMALL U',0x3046:'HIRAGANA U',
+  0x3047:'HIRAGANA SMALL E',0x3048:'HIRAGANA E',0x3049:'HIRAGANA SMALL O',
+  0x304A:'HIRAGANA O',0x304B:'HIRAGANA KA',0x304C:'HIRAGANA GA',
+  0x304D:'HIRAGANA KI',0x304E:'HIRAGANA GI',0x304F:'HIRAGANA KU',
+  0x3050:'HIRAGANA GU',0x3051:'HIRAGANA KE',0x3052:'HIRAGANA GE',
+  0x3053:'HIRAGANA KO',0x3054:'HIRAGANA GO',0x3055:'HIRAGANA SA',
+  0x3056:'HIRAGANA ZA',0x3057:'HIRAGANA SI',0x3058:'HIRAGANA ZI',
+  0x3059:'HIRAGANA SU',0x305A:'HIRAGANA ZU',0x305B:'HIRAGANA SE',
+  0x305C:'HIRAGANA ZE',0x305D:'HIRAGANA SO',0x305E:'HIRAGANA ZO',
+  0x305F:'HIRAGANA TA',0x3060:'HIRAGANA DA',0x3061:'HIRAGANA TI',
+  0x3062:'HIRAGANA DI',0x3063:'HIRAGANA SMALL TU',0x3064:'HIRAGANA TU',
+  0x3065:'HIRAGANA DU',0x3066:'HIRAGANA TE',0x3067:'HIRAGANA DE',
+  0x3068:'HIRAGANA TO',0x3069:'HIRAGANA DO',0x306A:'HIRAGANA NA',
+  0x306B:'HIRAGANA NI',0x306C:'HIRAGANA NU',0x306D:'HIRAGANA NE',
+  0x306E:'HIRAGANA NO',0x306F:'HIRAGANA HA',0x3070:'HIRAGANA BA',
+  0x3071:'HIRAGANA PA',0x3072:'HIRAGANA HI',0x3073:'HIRAGANA BI',
+  0x3074:'HIRAGANA PI',0x3075:'HIRAGANA HU',0x3076:'HIRAGANA BU',
+  0x3077:'HIRAGANA PU',0x3078:'HIRAGANA HE',0x3079:'HIRAGANA BE',
+  0x307A:'HIRAGANA PE',0x307B:'HIRAGANA HO',0x307C:'HIRAGANA BO',
+  0x307D:'HIRAGANA PO',0x307E:'HIRAGANA MA',0x307F:'HIRAGANA MI',
+  0x3080:'HIRAGANA MU',0x3081:'HIRAGANA ME',0x3082:'HIRAGANA MO',
+  0x3083:'HIRAGANA SMALL YA',0x3084:'HIRAGANA YA',0x3085:'HIRAGANA SMALL YU',
+  0x3086:'HIRAGANA YU',0x3087:'HIRAGANA SMALL YO',0x3088:'HIRAGANA YO',
+  0x3089:'HIRAGANA RA',0x308A:'HIRAGANA RI',0x308B:'HIRAGANA RU',
+  0x308C:'HIRAGANA RE',0x308D:'HIRAGANA RO',0x308E:'HIRAGANA SMALL WA',
+  0x308F:'HIRAGANA WA',0x3090:'HIRAGANA WI',0x3091:'HIRAGANA WE',
+  0x3092:'HIRAGANA WO',0x3093:'HIRAGANA N',0x3094:'HIRAGANA VU',
+  0x30A1:'KATAKANA SMALL A',0x30A2:'KATAKANA A',0x30A3:'KATAKANA SMALL I',
+  0x30A4:'KATAKANA I',0x30A5:'KATAKANA SMALL U',0x30A6:'KATAKANA U',
+  0x30A7:'KATAKANA SMALL E',0x30A8:'KATAKANA E',0x30A9:'KATAKANA SMALL O',
+  0x30AA:'KATAKANA O',0x30AB:'KATAKANA KA',0x30AC:'KATAKANA GA',
+  0x30AD:'KATAKANA KI',0x30AE:'KATAKANA GI',0x30AF:'KATAKANA KU',
+  0x30B0:'KATAKANA GU',0x30B1:'KATAKANA KE',0x30B2:'KATAKANA GE',
+  0x30B3:'KATAKANA KO',0x30B4:'KATAKANA GO',0x30B5:'KATAKANA SA',
+  0x30B6:'KATAKANA ZA',0x30B7:'KATAKANA SI',0x30B8:'KATAKANA ZI',
+  0x30B9:'KATAKANA SU',0x30BA:'KATAKANA ZU',0x30BB:'KATAKANA SE',
+  0x30BC:'KATAKANA ZE',0x30BD:'KATAKANA SO',0x30BE:'KATAKANA ZO',
+  0x30BF:'KATAKANA TA',0x30C0:'KATAKANA DA',0x30C1:'KATAKANA TI',
+  0x30C2:'KATAKANA DI',0x30C3:'KATAKANA SMALL TU',0x30C4:'KATAKANA TU',
+  0x30C5:'KATAKANA DU',0x30C6:'KATAKANA TE',0x30C7:'KATAKANA DE',
+  0x30C8:'KATAKANA TO',0x30C9:'KATAKANA DO',0x30CA:'KATAKANA NA',
+  0x30CB:'KATAKANA NI',0x30CC:'KATAKANA NU',0x30CD:'KATAKANA NE',
+  0x30CE:'KATAKANA NO',0x30CF:'KATAKANA HA',0x30D0:'KATAKANA BA',
+  0x30D1:'KATAKANA PA',0x30D2:'KATAKANA HI',0x30D3:'KATAKANA BI',
+  0x30D4:'KATAKANA PI',0x30D5:'KATAKANA HU',0x30D6:'KATAKANA BU',
+  0x30D7:'KATAKANA PU',0x30D8:'KATAKANA HE',0x30D9:'KATAKANA BE',
+  0x30DA:'KATAKANA PE',0x30DB:'KATAKANA HO',0x30DC:'KATAKANA BO',
+  0x30DD:'KATAKANA PO',0x30DE:'KATAKANA MA',0x30DF:'KATAKANA MI',
+  0x30E0:'KATAKANA MU',0x30E1:'KATAKANA ME',0x30E2:'KATAKANA MO',
+  0x30E4:'KATAKANA YA',0x30E6:'KATAKANA YU',0x30E8:'KATAKANA YO',
+  0x30E9:'KATAKANA RA',0x30EA:'KATAKANA RI',0x30EB:'KATAKANA RU',
+  0x30EC:'KATAKANA RE',0x30ED:'KATAKANA RO',0x30EF:'KATAKANA WA',
+  0x30F2:'KATAKANA WO',0x30F3:'KATAKANA N',0x30F4:'KATAKANA VU',
+  0x30FC:'KATAKANA-HIRAGANA PROLONGED SOUND MARK',
+  0xFF01:'FULLWIDTH EXCLAMATION MARK',0xFF08:'FULLWIDTH LEFT PARENTHESIS',
+  0xFF09:'FULLWIDTH RIGHT PARENTHESIS',0xFF0C:'FULLWIDTH COMMA',
+  0xFF0E:'FULLWIDTH FULL STOP',0xFF1A:'FULLWIDTH COLON',
+  0xFF1F:'FULLWIDTH QUESTION MARK',0xFF21:'FULLWIDTH LATIN CAPITAL A',
+  0xFF41:'FULLWIDTH LATIN SMALL A',0xFF10:'FULLWIDTH DIGIT ZERO',
+};
+
+function getName(cp) {
+  if (NAMES[cp]) return NAMES[cp];
+  if (cp >= 0x4E00 && cp <= 0x9FFF) return 'CJK UNIFIED IDEOGRAPH';
+  if (cp >= 0xF900 && cp <= 0xFAFF) return 'CJK COMPATIBILITY IDEOGRAPH';
+  if (cp >= 0x20000 && cp <= 0x2A6DF) return 'CJK EXTENSION B';
+  if (cp >= 0x1F600 && cp <= 0x1F64F) return 'EMOTICONS';
+  if (cp >= 0x1F300 && cp <= 0x1F5FF) return 'MISC SYMBOLS & PICTOGRAPHS';
+  if (cp >= 0x1F900 && cp <= 0x1F9FF) return 'SUPPLEMENTAL SYMBOLS';
+  if (cp >= 0x0080 && cp <= 0x00FF) return 'LATIN-1 SUPPLEMENT';
+  if (cp >= 0x0100 && cp <= 0x017F) return 'LATIN EXTENDED-A';
+  if (cp >= 0x0400 && cp <= 0x04FF) return 'CYRILLIC';
+  if (cp >= 0x0600 && cp <= 0x06FF) return 'ARABIC';
+  if (cp >= 0x3400 && cp <= 0x4DBF) return 'CJK EXTENSION A';
+  if (cp >= 0xAC00 && cp <= 0xD7AF) return 'HANGUL SYLLABLE';
+  return 'UNKNOWN';
+}
+
+function toUtf8Bytes(cp) {
+  if (cp < 0x80) return 1;
+  if (cp < 0x800) return 2;
+  if (cp < 0x10000) return 3;
+  return 4;
+}
+
+function isControl(cp) {
+  return cp < 0x20 || (cp >= 0x7F && cp <= 0x9F);
+}
+
+function cpToHex(cp) {
+  return 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
+}
+
+const CTRL_LABELS = {
+  0x0009:'[TAB]',0x000A:'[LF]',0x000D:'[CR]',0x0020:'[SP]',0x00A0:'[NBSP]',
+};
+
+function getSegments(str) {
+  const segs = [];
+  const iter = str[Symbol.iterator]();
+  let i = 0;
+  for (const ch of str) {
+    segs.push({ char: ch, index: i });
+    i++;
+  }
+  return segs;
+}
+
+function render(str) {
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+
+  const segs = getSegments(str);
+
+  if (segs.length === 0) {
+    grid.innerHTML = '';
+    grid.appendChild(buildEmpty());
+    updateMeta(str);
+    return;
+  }
+
+  grid.innerHTML = '';
+
+  segs.forEach((seg, i) => {
+    const cp = seg.char.codePointAt(0);
+    const hex = cpToHex(cp);
+    const dec = cp;
+    const name = getName(cp);
+    const ctrl = isControl(cp);
+    const glyphLabel = ctrl ? (CTRL_LABELS[cp] || '[CTL]') : seg.char;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const idx = document.createElement('div');
+    idx.className = 'card-index';
+    idx.textContent = '#' + String(i + 1).padStart(2, '0');
+
+    const glyph = document.createElement('div');
+    glyph.className = 'card-glyph' + (ctrl ? ' ctrl' : '');
+    glyph.textContent = glyphLabel;
+
+    const info = document.createElement('div');
+    info.className = 'card-info';
+
+    const cpSpan = document.createElement('span');
+    cpSpan.className = 'card-codepoint';
+    cpSpan.textContent = hex;
+
+    const decSpan = document.createElement('span');
+    decSpan.className = 'card-dec';
+    decSpan.textContent = 'dec: ' + dec + '  utf8: ' + toUtf8Bytes(cp) + 'B';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'card-name';
+    nameSpan.title = name;
+    nameSpan.textContent = name;
+
+    info.appendChild(cpSpan);
+    info.appendChild(decSpan);
+    info.appendChild(nameSpan);
+
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.innerHTML = `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="7" height="8" rx="1"/><path d="M4 3V2a1 1 0 011-1h5a1 1 0 011 1v7a1 1 0 01-1 1H9"/></svg>コピー`;
+    btn.addEventListener('click', () => {
+      navigator.clipboard.writeText(seg.char).then(() => {
+        btn.textContent = '✓ コピー済';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="7" height="8" rx="1"/><path d="M4 3V2a1 1 0 011-1h5a1 1 0 011 1v7a1 1 0 01-1 1H9"/></svg>コピー`;
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+
+    card.appendChild(idx);
+    card.appendChild(glyph);
+    card.appendChild(info);
+    card.appendChild(btn);
+    grid.appendChild(card);
+  });
+
+  updateMeta(str);
+}
+
+function buildEmpty() {
+  const d = document.createElement('div');
+  d.id = 'empty';
+  d.innerHTML = '文字列を入力すると<br>ここに展開されます<small>— 1文字ずつ Unicode コードポイントを表示 —</small>';
+  return d;
+}
+
+function updateMeta(str) {
+  const segs = getSegments(str);
+  document.getElementById('cnt-char').textContent = str.length;
+  document.getElementById('cnt-cp').textContent = segs.length;
+  let bytes = 0;
+  for (const seg of segs) {
+    bytes += toUtf8Bytes(seg.char.codePointAt(0));
+  }
+  document.getElementById('cnt-byte').textContent = bytes;
+}
+
+const txt = document.getElementById('txt');
+txt.addEventListener('input', () => render(txt.value));
+document.getElementById('btn-clear').addEventListener('click', () => {
+  txt.value = '';
+  render('');
+  txt.focus();
+});
+document.getElementById('copy-all-btn').addEventListener('click', () => {
+  const str = txt.value;
+  if (!str) return;
+  const segs = getSegments(str);
+  const lines = segs.map((s, i) => {
+    const cp = s.char.codePointAt(0);
+    return `[#${String(i+1).padStart(2,'0')}] ${s.char}  ${cpToHex(cp)}  dec:${cp}  ${getName(cp)}`;
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.getElementById('copy-all-btn');
+    btn.textContent = '✓ コピー済';
+    setTimeout(() => { btn.textContent = '全てコピー ↓'; }, 1800);
+  });
+});
+
+render('');
+</script>
+</body>
+</html>
