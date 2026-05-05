@@ -76,6 +76,8 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 .style-card.sel .style-name{color:#fff}
 .style-desc{font-size:.72rem;color:#4a6a8a;margin-top:4px;line-height:1.45}
 .style-card.sel .style-desc{color:#6a9aaa}
+.style-card[data-style="battlev3"].sel{border-color:#ff1e64;background:rgba(255,30,100,.09);transform:translateY(-2px)}
+.style-card[data-style="battlev3"].sel .style-name{color:#ff1e64;text-shadow:0 0 22px rgba(255,30,100,.85)}
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
 .settings-grid label{display:flex;flex-direction:column;gap:5px;font-size:.8rem;color:#5a8aaa;letter-spacing:.12em;text-transform:uppercase}
 .settings-grid select{background:#0a121e;border:1px solid var(--border);color:#fff;padding:8px;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
@@ -193,6 +195,11 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       <span class="style-icon">🏆</span>
       <div class="style-name">BATTLE V2</div>
       <div class="style-desc">上下分割・キャラ大・ダーク＆ゴールド</div>
+    </div>
+    <div class="style-card" data-style="battlev3" onclick="selectStyle(this)">
+      <span class="style-icon">💥</span>
+      <div class="style-name">BATTLE V3</div>
+      <div class="style-desc">衝撃一撃・SMASH判定・映画的ショット切り替え</div>
     </div>
   </div>
 </div>
@@ -398,9 +405,8 @@ const S = {
 // STEP 1 — 画像
 // ═══════════════════════════════════════════════
 function extractNameFromFilename(filename){
-  let name = filename.replace(/\.[^/.]+$/, '');
-  name = name.replace(/[\s_-]*(copy|final|edit|\d+)$/i, '').trim();
-  return name;
+  // 拡張子のみを除去（末尾の数字や copy/final/edit などは保持）
+  return filename.replace(/\.[^/.]+$/, '').trim();
 }
 function loadCharImg(side, input){
   const file = input.files[0]; if(!file) return;
@@ -574,7 +580,7 @@ async function autoLoadBGM(){
     S.bgmFile=new File([await res.blob()],'bgm.mp3',{type:'audio/mpeg'});
     info.textContent='✅ bgm.mp3 を自動読み込み済み'; info.className='file-info ok';
   }catch(e){
-    info.textContent='⚠ bgm.mp3 が見つかりません — 上のボタンで手動選択してください';
+    info.textContent='⚠ bgm.mp3 が見つかりません — 下のボタンで手動選択してください';
     info.className='file-info'; info.style.color='#aa7020';
   }
 }
@@ -583,6 +589,7 @@ function loadBGM(input){
   S.bgmFile=file;
   const info=document.getElementById('bgmInfo');
   info.textContent=`✅ ${file.name}（手動選択）`; info.className='file-info ok';
+  info.style.color=''; // 自動読込失敗時のインライン色をリセット
 }
 
 // ═══════════════════════════════════════════════
@@ -904,6 +911,15 @@ function B_renderCut(i,winner,pA,pB){
     const wn=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
     centerText([wn],.88,CW*.062,wc,wc);
     const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
+    // スコア背景プレート
+    ctx.save();
+    const sPx=CW*.145, sText=`${pA}  -  ${pB}`;
+    ctx.font=`${sPx}px "Bebas Neue"`;
+    const stw=ctx.measureText(sText).width;
+    const spw=stw+CW*.06, sph=sPx*1.3, scy=CH*.12;
+    ctx.fillStyle='rgba(0,0,0,.55)';
+    ctx.beginPath(); ctx.roundRect(CW*.5-spw/2, scy-sph*.4, spw, sph, 5); ctx.fill();
+    ctx.restore();
     centerText([`${pA}  -  ${pB}`],.12,CW*.145,sc2,sc2);
     if(t<.9) drawGlitch(Math.max(0,4*(1-t*4)),i);
   }
@@ -1143,6 +1159,15 @@ function V2_renderCut(i, winner, pA, pB){
     ctx.restore();
   }
   const sc2=pA>pB?COLOR_A:(pB>pA?COLOR_B:'#ccc');
+  // スコア背景プレート
+  ctx.save();
+  const _sPx=CW*.12, _sText=`${pA}  —  ${pB}`;
+  ctx.font=`${_sPx}px "Bebas Neue"`;
+  const _stw=ctx.measureText(_sText).width;
+  const _spw=_stw+CW*.06, _sph=_sPx*1.3, _scy=CH*.1;
+  ctx.fillStyle='rgba(0,0,0,.55)';
+  ctx.beginPath(); ctx.roundRect(CW*.5-_spw/2, _scy-_sph*.4, _spw, _sph, 5); ctx.fill();
+  ctx.restore();
   centerText([`${pA}  —  ${pB}`], .1, CW*.12, sc2, sc2);
   if(i<7){ ctx.fillStyle=`rgba(255,220,0,${(7-i)/7*.32})`; ctx.fillRect(0,0,CW,CH); }
   V2_scoreBanner(pA,pB); drawVignette(.5); drawFlash(i,6);
@@ -1268,17 +1293,791 @@ function V2_renderFinal(i, winner, pA, pB){
 }
 
 // ═══════════════════════════════════════════════
+// STYLE: BATTLE V3 — TOP/BOTTOM IMPACT ENGINE
+// ═══════════════════════════════════════════════
+// コンセプト: 縦長画像に完全最適化した上下分割
+//   ・V2との差別化: 全てのテイスト・動き・色・タイミングが別物
+//   ・上(A)から落下 × 下(B)から上昇 → 中央で激突
+//   ・衝突ラインは水平だが「ジャギー型ノイズライン」でV2の直線と差別化
+//   ・カテゴリ名は画面を突き破るようなパンチ演出
+//   ・勝者: 敗者エリアを侵食して画面占領
+//   ・カラー: A=コールドホワイト×マゼンタ / B=コールドホワイト×シアン
+// ═══════════════════════════════════════════════
+
+// ── V3: イージング
+const V3_easeOut      = t => 1-(1-t)**4;
+const V3_easeOutCubic = t => 1-(1-t)**3;
+const V3_easeBack     = t => { const c=2.4; return 1+(c+1)*(t-1)**3+c*(t-1)**2; };
+const V3_easeElastic  = t => {
+  if(t===0||t===1) return t;
+  return Math.pow(2,-10*t)*Math.sin((t-.075)*(2*Math.PI)/.3)+1;
+};
+const V3_easeInExpo   = t => t===0?0:Math.pow(2,10*t-10);
+const V3_easeInQuad   = t => t*t;
+
+// ── V3: シード乱数
+function V3_hash(n){ let x=Math.sin(n*127.1+7391.3)*43758.5453; return x-Math.floor(x); }
+
+// ── V3: 定数
+const V3_CA = '#ff2060'; // Aカラー: マゼンタ
+const V3_CB = '#00d4ff'; // Bカラー: シアン
+const V3_CG = '#ffd700'; // ゴールド（WINNER用）
+
+// ── V3: キャラを上下エリアにcover描画
+// side:'A'=上半分, 'B'=下半分
+// splitY: 分割Y座標, alpha, offsetY: 上下スライド量
+function V3_drawCharArea(side, splitY, alpha, offsetY){
+  const img = side==='A' ? S.imgA : S.imgB;
+  if(!img || alpha<=0) return;
+  const isA = side==='A';
+  const areaY  = isA ? 0      : splitY;
+  const areaH  = isA ? splitY : CH-splitY;
+  const areaW  = CW;
+  if(areaH<2) return;
+
+  // cover: エリア全体をキャラで埋める（常にCW幅基準でスケール）
+  // areaHが小さくても画像が途切れず自然に見える
+  const scW  = areaW / img.width;
+  const scH  = areaH / img.height;
+  const sc   = Math.max(scW, scH);
+  const dw   = img.width*sc, dh = img.height*sc;
+  const dx   = (areaW-dw)/2;
+  // 顔が上にある前提で上寄せ（Aは上エリアの上端、Bは下エリアの上端＝splitY）
+  const dyBase = isA ? areaY : areaY;
+  const dy     = dyBase + (offsetY||0);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, areaY, areaW, areaH);
+  ctx.clip();
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(img, dx, dy, dw, dh);
+  ctx.restore();
+}
+
+// ── V3: ジャギー分割ライン（V2の直線と差別化）
+function V3_splitLine(splitY, glowColor, glowAmt, jagged){
+  ctx.save();
+  const amp = jagged||0;
+  const segs = 28;
+  ctx.beginPath();
+  for(let i=0;i<=segs;i++){
+    const x = (i/segs)*CW;
+    const y = splitY + (amp>0?(V3_hash(i*17+301)-.5)*amp*2:0);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle = glowColor||'#fff';
+  ctx.lineWidth   = 3;
+  ctx.shadowColor = glowColor||'#fff';
+  ctx.shadowBlur  = glowAmt||24;
+  ctx.stroke();
+  // 細いサブライン
+  ctx.lineWidth=.8; ctx.globalAlpha=.35; ctx.shadowBlur=(glowAmt||24)*.4;
+  ctx.beginPath();
+  for(let i=0;i<=segs;i++){
+    const x=(i/segs)*CW;
+    const y=splitY+(amp>0?(V3_hash(i*17+301)-.5)*amp*2:0)+6;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── V3: 暗幕オーバーレイ（各エリア）
+function V3_areaOverlay(splitY, alphaA, alphaB){
+  if(alphaA>0){
+    ctx.fillStyle=`rgba(2,1,8,${alphaA})`;
+    ctx.fillRect(0,0,CW,splitY);
+  }
+  if(alphaB>0){
+    ctx.fillStyle=`rgba(2,1,8,${alphaB})`;
+    ctx.fillRect(0,splitY,CW,CH-splitY);
+  }
+}
+
+// ── V3: エネルギー粒子
+function V3_particles(cx, cy, count, radius, t, c1, c2){
+  ctx.save();
+  for(let i=0;i<count;i++){
+    const angle=(i/count)*Math.PI*2+V3_hash(i*7)*.5;
+    const dist =radius*(0.3+V3_hash(i*3)*.7)*t;
+    const x=cx+Math.cos(angle)*dist, y=cy+Math.sin(angle)*dist;
+    const size=(3+V3_hash(i*11)*7)*(1-t*.7);
+    const alpha=(1-t)*(.5+V3_hash(i*5)*.5);
+    const col=V3_hash(i*13)>.5?(c1||'#ff3c00'):(c2||'#ffcc00');
+    ctx.globalAlpha=alpha; ctx.fillStyle=col;
+    ctx.shadowColor=col; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.arc(x,y,Math.max(.5,size),0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ── V3: 衝撃波リング
+function V3_ring(cx, cy, r, alpha, color, lw){
+  if(r<=0||alpha<=0) return;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle=color||'#fff'; ctx.lineWidth=lw||3;
+  ctx.globalAlpha=alpha; ctx.shadowColor=color||'#fff'; ctx.shadowBlur=20;
+  ctx.stroke(); ctx.restore();
+}
+
+// ── V3: 閃光ライン群
+function V3_flashLines(t, seed, color, cx, cy){
+  ctx.save();
+  const n=7+Math.floor(V3_hash(seed)*7);
+  for(let i=0;i<n;i++){
+    const angle=V3_hash(seed+i*7)*Math.PI*2;
+    const len=CW*(.15+V3_hash(seed+i*17)*.65);
+    const a=(1-t)*.85*(V3_hash(seed+i*5)*.5+.5);
+    ctx.globalAlpha=a;
+    ctx.strokeStyle=color||'#fff';
+    ctx.lineWidth=1+V3_hash(seed+i*2)*5;
+    ctx.shadowColor=color||'#fff'; ctx.shadowBlur=8;
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(angle)*len*.08, cy+Math.sin(angle)*len*.08);
+    ctx.lineTo(cx+Math.cos(angle)*len,     cy+Math.sin(angle)*len);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ── V3: テキスト（叩きつけ系 SMASH）
+function V3_text(text, cx, cy, px, fillColor, glowColor, alpha){
+  ctx.save();
+  ctx.globalAlpha=alpha??1;
+  ctx.font=`${px}px "Bebas Neue",Impact,sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor=glowColor||fillColor;
+  ctx.shadowBlur=32;
+  ctx.fillStyle=glowColor||fillColor; ctx.fillText(text,cx,cy);
+  ctx.shadowBlur=12;       ctx.fillText(text,cx,cy);
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(0,0,0,.9)'; ctx.lineWidth=px*.13; ctx.lineJoin='round';
+  ctx.strokeText(text,cx,cy);
+  ctx.fillStyle=fillColor; ctx.fillText(text,cx,cy);
+  ctx.restore();
+}
+
+// ── V3: カテゴリブロック（センター突き刺し型）
+// V2は横スライドバー。V3は画面中央から上下に広がるブロック
+function V3_catBlock(cat, t){
+  const ja   = (CAT_JA&&CAT_JA[cat])||'';
+  const en   = cat.toUpperCase();
+  const bh   = CH*.11;
+  const bw   = CW*.94;
+  const bx   = CW*.03;
+  const by   = CH*.5 - bh/2;
+
+  // スケールY展開（上下に広がる）
+  const scY  = V3_easeOut(t);
+
+  ctx.save();
+  ctx.translate(CW*.5, CH*.5);
+  ctx.scale(1, scY);
+  ctx.translate(-CW*.5, -CH*.5);
+
+  // 背景ブロック（ほぼ黒・右端が斜め）
+  ctx.fillStyle='rgba(0,0,0,.88)';
+  ctx.beginPath();
+  ctx.moveTo(bx,    by);
+  ctx.lineTo(bx+bw, by);
+  ctx.lineTo(bx+bw-18, by+bh);
+  ctx.lineTo(bx,    by+bh);
+  ctx.closePath();
+  ctx.fill();
+
+  // 左サイドバー マゼンタ
+  ctx.fillStyle=V3_CA;
+  ctx.shadowColor=V3_CA; ctx.shadowBlur=14;
+  ctx.fillRect(bx, by, 7, bh);
+
+  // 右サイドバー シアン
+  ctx.fillStyle=V3_CB;
+  ctx.shadowColor=V3_CB; ctx.shadowBlur=14;
+  ctx.fillRect(bx+bw-25, by, 7, bh);
+  ctx.shadowBlur=0;
+
+  // トップライン（グラデーション）
+  const lg=ctx.createLinearGradient(bx,0,bx+bw,0);
+  lg.addColorStop(0,V3_CA); lg.addColorStop(1,V3_CB);
+  ctx.strokeStyle=lg; ctx.lineWidth=1.8;
+  ctx.shadowColor='#fff'; ctx.shadowBlur=8;
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx+bw,by); ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(255,255,255,.1)'; ctx.lineWidth=.8;
+  ctx.beginPath(); ctx.moveTo(bx,by+bh); ctx.lineTo(bx+bw-18,by+bh); ctx.stroke();
+
+  // 日本語サブ
+  ctx.font=`600 ${CW*.026}px "Noto Sans JP",sans-serif`;
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(180,180,255,.75)'; ctx.shadowBlur=0;
+  ctx.fillText(ja, bx+18, by+bh*.3);
+
+  // カテゴリ名
+  ctx.font=`${Math.min(CW*.12, bw*.62)}px "Bebas Neue",sans-serif`;
+  ctx.fillStyle='#fff';
+  ctx.shadowColor='rgba(200,200,255,.6)'; ctx.shadowBlur=18;
+  ctx.fillText(en, bx+18, by+bh*.73);
+
+  ctx.restore();
+}
+
+// ── V3: スコアストライプ（底面）
+function V3_scoreBar(pA, pB){
+  const tot=pA+pB; if(!tot) return;
+  const sw=CW*.9, sx=CW*.05, sy=CH*.928, sh=CH*.013;
+  ctx.save();
+  ctx.fillStyle='rgba(255,255,255,.04)';
+  ctx.beginPath(); ctx.roundRect(sx,sy,sw,sh,4); ctx.fill();
+  const aw=sw*(pA/tot);
+  const gA=ctx.createLinearGradient(sx,0,sx+aw,0);
+  gA.addColorStop(0,V3_CA); gA.addColorStop(1,'#ff6090');
+  ctx.fillStyle=gA; ctx.shadowColor=V3_CA; ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.roundRect(sx,sy,aw,sh,4); ctx.fill();
+  const gB=ctx.createLinearGradient(sx+aw,0,sx+sw,0);
+  gB.addColorStop(0,'#0088ff'); gB.addColorStop(1,V3_CB);
+  ctx.fillStyle=gB; ctx.shadowColor=V3_CB; ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.roundRect(sx+aw,sy,sw-aw,sh,4); ctx.fill();
+  // スコア数字
+  ctx.font=`bold ${CW*.04}px Rajdhani,sans-serif`;
+  ctx.shadowBlur=6;
+  ctx.textAlign='left';  ctx.fillStyle=V3_CA; ctx.shadowColor=V3_CA;
+  ctx.fillText(String(pA), sx, sy-CH*.007);
+  ctx.textAlign='right'; ctx.fillStyle=V3_CB; ctx.shadowColor=V3_CB;
+  ctx.fillText(String(pB), sx+sw, sy-CH*.007);
+  ctx.restore();
+}
+
+// ── V3: プログレスドット（削除済み・呼び出し互換用空関数）
+function V3_dots(ci){ /* 非表示 */ }
+
+// ── V3: キャラ名プレート（上下エリア内 / 背景プレート付きで可読性向上）
+function V3_namePlate(side, alpha){
+  const name=(side==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
+  const color=side==='A'?V3_CA:V3_CB;
+  const px=CW*.042;
+  const y=side==='A' ? CH*.06 : CH*.96;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  // 背景プレート（半透明黒）— キャラ背景と差別化
+  ctx.font=`bold ${px}px "Bebas Neue",sans-serif`;
+  const tw=ctx.measureText(name).width;
+  const padX=CW*.025, padY=px*.35;
+  const plX=CW*.045, plY=y-px*.5-padY;
+  const plW=tw+CW*.04+padX*2, plH=px+padY*2;
+  ctx.fillStyle='rgba(0,0,0,.78)';
+  ctx.beginPath(); ctx.roundRect(plX,plY,plW,plH,4); ctx.fill();
+  // 色枠
+  ctx.strokeStyle=color; ctx.lineWidth=1.4;
+  ctx.shadowColor=color; ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.roundRect(plX,plY,plW,plH,4); ctx.stroke();
+  // 左側サイドバー
+  ctx.shadowBlur=12;
+  ctx.fillStyle=color;
+  ctx.fillRect(plX+padX*.45, y-(px*.5+4), CW*.012, px+8);
+  // テキスト
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.shadowBlur=14;
+  ctx.fillStyle=color; ctx.fillText(name, plX+padX+CW*.022, y);
+  ctx.restore();
+}
+
+// ────────────────────────────────────────
+// V3_renderIntro: イントロ
+// 演出: A(上)が下から落下, B(下)が上から上昇 → 中央激突 → カテゴリ名展開
+// ────────────────────────────────────────
+function V3_renderIntro(i, cat, ci){
+  const t=i/(INTRO_DUR*FPS);
+  const impT=0.36; // 激突タイミング
+
+  // ─ 背景（常時黒ベース）
+  ctx.fillStyle='#030108'; ctx.fillRect(0,0,CW,CH);
+
+  // ─ 分割Y（中央固定。激突後のみわずかに揺れる、入場中は揺れ禁止）
+  const shakeAmt=t>impT&&t<impT+.1?Math.max(0,16*(1-(t-impT)/.1)):0;
+  const shX=(V3_hash(i*7)-.5)*shakeAmt*.4;
+  const shY=(V3_hash(i*13)-.5)*shakeAmt;
+  // 入場中(t<impT)はCH*0.5に固定してガクつき防止
+  const splitY=CH*0.5+(t>=impT?shY:0);
+
+  // ─ キャラ登場（スライドイン）
+  // A: 画面上方向に高さ分オフセット→ 0に収束
+  const enterT=Math.min(1,t/impT);
+  const enterE=V3_easeOut(enterT);
+  const aOffset=(1-enterE)*(-CH*.55); // 上からfall
+  const bOffset=(1-enterE)*(CH*.55);  // 下からrise
+
+  // A面（上半分）
+  V3_drawCharArea('A', splitY, Math.min(1,enterT*2.5), aOffset);
+  // 暗幕（激突後は薄くして迫力UP）
+  const overlayA = t>impT ? 0.38 : 0.52;
+  ctx.fillStyle=`rgba(3,1,8,${overlayA})`;
+  ctx.fillRect(0,0,CW,splitY);
+
+  // B面（下半分）
+  V3_drawCharArea('B', splitY, Math.min(1,enterT*2.5), bOffset);
+  const overlayB = t>impT ? 0.38 : 0.52;
+  ctx.fillStyle=`rgba(3,1,8,${overlayB})`;
+  ctx.fillRect(0,splitY,CW,CH-splitY);
+
+  // ─ 激突エフェクト
+  if(t>=impT-0.02){
+    const et=Math.min(1,(t-impT+0.02)/.32);
+    const cx=CW*.5+shX, cy=splitY;
+
+    // 白フラッシュ
+    if(et<.16){
+      ctx.fillStyle=`rgba(255,255,255,${(1-et/.16)*.78})`;
+      ctx.fillRect(0,0,CW,CH);
+    }
+    // 衝撃波
+    V3_ring(cx,cy, et*CW*.7, Math.max(0,(1-et*1.4))*.7, '#fff', 3);
+    V3_ring(cx,cy, et*CW*.45, Math.max(0,(1-et*1.8))*.55, V3_CA, 5);
+    V3_ring(cx,cy, et*CW*.25, Math.max(0,(1-et*2.5))*.45, V3_CB, 7);
+    // 閃光ライン
+    if(et<.5) V3_flashLines(et*2, i+55, '#fff', cx, cy);
+    // 粒子
+    V3_particles(cx,cy,30,CW*.52,Math.min(1,et*1.5),V3_CA,V3_CB);
+  }
+
+  // ─ 分割ライン
+  const lineAlpha=Math.min(1,enterT*3);
+  if(lineAlpha>0){
+    ctx.save(); ctx.globalAlpha=lineAlpha;
+    V3_splitLine(splitY+shY,
+      t>impT?'#ffdd00':'rgba(255,255,255,.7)',
+      t>impT?40:18,
+      t>impT?Math.max(0,(1-(t-impT)/.4))*12:0
+    );
+    ctx.restore();
+  }
+
+  // ─ VS バッジ（激突後）
+  const vsT=Math.min(1,Math.max(0,(t-impT+.01)/.16));
+  if(vsT>0){
+    const vsE=V3_easeElastic(vsT);
+    ctx.save();
+    ctx.translate(CW*.5+shX, splitY+shY);
+    ctx.scale(vsE,vsE);
+    const r=CW*.065;
+    ctx.beginPath();
+    ctx.moveTo(0,-r*.7); ctx.lineTo(r*.5,0); ctx.lineTo(0,r*.7); ctx.lineTo(-r*.5,0);
+    ctx.closePath();
+    ctx.fillStyle='rgba(2,1,8,.96)';
+    const lg2=ctx.createLinearGradient(-r,0,r,0);
+    lg2.addColorStop(0,V3_CA); lg2.addColorStop(1,V3_CB);
+    ctx.strokeStyle=lg2; ctx.lineWidth=2.2;
+    ctx.shadowColor='#fff'; ctx.shadowBlur=20;
+    ctx.fill(); ctx.stroke();
+    ctx.font=`${CW*.048}px "Bebas Neue"`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='#ffdd00'; ctx.shadowBlur=16;
+    ctx.fillStyle='#ffd700'; ctx.fillText('VS',0,0);
+    ctx.restore();
+  }
+
+  // ─ カテゴリブロック（激突前から展開開始・余裕を持たせる）
+  const catT=Math.min(1,Math.max(0,(t-impT*.65)/.30));
+  if(catT>0) V3_catBlock(cat, catT);
+
+  // ─ キャラ名（カテゴリとほぼ同時）
+  const nameT=Math.min(1,Math.max(0,(t-impT*.7)/.25));
+  if(nameT>0){
+    V3_namePlate('A', V3_easeOut(nameT));
+    V3_namePlate('B', V3_easeOut(nameT));
+  }
+
+  V3_dots(ci);
+  drawVignette(.52);
+  drawFlash(i,5);
+  if(t<.06){ ctx.fillStyle=`rgba(0,0,0,${(1-t/.06)*.6})`; ctx.fillRect(0,0,CW,CH); }
+}
+
+// ────────────────────────────────────────
+// V3_renderCut: カット（勝敗判定）
+// 演出: チャージ → 一撃 → 勝者が敗者エリアを侵食
+// ────────────────────────────────────────
+function V3_renderCut(i, winner, pA, pB){
+  const t=i/(CUT_DUR*FPS);
+  const hitT=0.30;
+
+  ctx.fillStyle='#030108'; ctx.fillRect(0,0,CW,CH);
+
+  // シェイク
+  const shAmt=t>hitT&&t<hitT+.18?Math.max(0,22*(1-Math.min(1,(t-hitT)/.18))):0;
+  const shX=(V3_hash(i*3)-.5)*shAmt*.35;
+  const shY=(V3_hash(i*9)-.5)*shAmt;
+
+  if(winner==='Draw'){
+    // DRAW: 両エリアが均等にパルス
+    const pulse=.5+.5*Math.sin(t*Math.PI*5);
+    V3_drawCharArea('A', CH*.5, .65+pulse*.1, 0);
+    ctx.fillStyle='rgba(3,1,8,.50)'; ctx.fillRect(0,0,CW,CH*.5);
+    V3_drawCharArea('B', CH*.5, .65+pulse*.1, 0);
+    ctx.fillStyle='rgba(3,1,8,.50)'; ctx.fillRect(0,CH*.5,CW,CH*.5);
+    V3_splitLine(CH*.5,'rgba(255,255,255,.4)',12,pulse*6);
+    ctx.save(); ctx.globalAlpha=Math.min(1,t*2.8);
+    V3_text('DRAW', CW*.5, CH*.5, CW*.22, '#ccc','#888');
+    ctx.restore();
+    V3_scoreBar(pA,pB); drawVignette(.5); drawFlash(i,5); return;
+  }
+
+  const wc   = winner==='A'?V3_CA:V3_CB;
+  const wSide= winner;
+  const lSide= winner==='A'?'B':'A';
+
+  // ─ フェーズ0: チャージ（0〜hitT）
+  // 分割ラインが勝者側にジリジリ動く
+  const chargeT=Math.min(1,t/hitT);
+  const chargeE=V3_easeInExpo(Math.max(0,chargeT-.1)/.9);
+  // 分割Y: 中央から勝者側に最大CH*0.12押し込む
+  const pressDir=(winner==='A')?-1:1; // Aが勝ちなら上に押す(負方向)、Bが勝ちなら下
+  const splitPress=chargeE*CH*.13*pressDir;
+  const splitY=CH*.5+splitPress+shY;
+
+  if(t<=hitT){
+    const chargePulse=.5+.5*Math.sin(t*Math.PI*16);
+    // 勝者エリア（チャージグロー）
+    V3_drawCharArea(wSide, splitY, .72, 0);
+    const wAreaY=wSide==='A'?0:splitY;
+    const wAreaH=wSide==='A'?splitY:CH-splitY;
+    ctx.save();
+    ctx.fillStyle=wSide==='A'?`rgba(255,32,96,${.08+chargeE*.14*chargePulse})`
+                              :`rgba(0,212,255,${.08+chargeE*.14*chargePulse})`;
+    ctx.fillRect(0,wAreaY,CW,wAreaH);
+    ctx.restore();
+    // 暗幕
+    ctx.fillStyle=`rgba(3,1,8,${.42-chargeE*.1})`; ctx.fillRect(0,wAreaY,CW,wAreaH);
+
+    // 敗者エリア
+    V3_drawCharArea(lSide, splitY, .72-chargeE*.18, 0);
+    const lAreaY=lSide==='A'?0:splitY;
+    const lAreaH=lSide==='A'?splitY:CH-splitY;
+    ctx.fillStyle=`rgba(3,1,8,${.50+chargeE*.15})`; ctx.fillRect(0,lAreaY,CW,lAreaH);
+
+    // 分割ライン（チャージで輝度アップ）
+    V3_splitLine(splitY, wc, 16+chargeE*28, chargeE*8);
+
+    // チャージリング（低めの不透明度でキャラ顔を隠さない）
+    if(chargeT>.28){
+      const rT=(chargeT-.28)/.72;
+      const rMax=CW*.3, rMin=CW*.05;
+      const r=rMax-(rMax-rMin)*V3_easeOut(rT);
+      V3_ring(CW*.5, splitY, r, (.22+chargePulse*.18)*(1-chargeT*.2), wc, 1.6);
+    }
+    // チャージ中のWINSテキストは廃止（侵食フェーズで1本化）
+  }
+
+  // ─ フェーズ1: 一撃（hitT〜hitT+0.14）
+  else if(t<=hitT+.14){
+    const hp=(t-hitT)/.14;
+    const he=V3_easeOut(hp);
+    if(hp<.38){ ctx.fillStyle=`rgba(255,255,255,${(1-hp/.38)*.88})`; ctx.fillRect(0,0,CW,CH); }
+    // 両エリア（フラッシュ中は一瞬）
+    V3_drawCharArea(wSide, CH*.5, 1, 0);
+    ctx.fillStyle='rgba(3,1,8,.38)'; ctx.fillRect(0,wSide==='A'?0:CH*.5,CW,CH*.5);
+    V3_drawCharArea(lSide, CH*.5, 1-he*.2, 0);
+    ctx.fillStyle='rgba(3,1,8,.38)'; ctx.fillRect(0,lSide==='A'?0:CH*.5,CW,CH*.5);
+    V3_splitLine(CH*.5,'#fff',50+he*20,14*(1-he));
+    V3_ring(CW*.5,CH*.5,he*CW*.65,(1-he)*.9,'#fff',4+he*3);
+    V3_flashLines(hp,i+333,wc,CW*.5,CH*.5);
+    V3_particles(CW*.5,CH*.5,28,CW*.42,he,wc,'#ffdd00');
+  }
+
+  // ─ フェーズ2: 侵食（hitT+0.14〜）
+  else{
+    const bt=Math.min(1,(t-hitT-.14)/.72);
+    const be=V3_easeOut(bt);
+
+    // 勝者エリアが拡大（分割ラインが敗者側に押し込む）
+    const invasionDir=(winner==='A')?1:-1;
+    const invSplit=CH*.5+invasionDir*be*CH*.28+shY;
+    const clampedSplit=Math.max(CH*.12, Math.min(CH*.88, invSplit));
+
+    V3_drawCharArea(wSide, clampedSplit, 1, 0);
+    const wAreaY2=wSide==='A'?0:clampedSplit;
+    const wAreaH2=wSide==='A'?clampedSplit:CH-clampedSplit;
+    ctx.save();
+    ctx.fillStyle=wSide==='A'?`rgba(255,32,96,${.1+be*.08})`:`rgba(0,212,255,${.1+be*.08})`;
+    ctx.globalCompositeOperation='screen';
+    ctx.fillRect(0,wAreaY2,CW,wAreaH2);
+    ctx.restore();
+    ctx.fillStyle=`rgba(3,1,8,${.38-be*.05})`; ctx.fillRect(0,wAreaY2,CW,wAreaH2);
+
+    V3_drawCharArea(lSide, clampedSplit, 1-be*.35, 0);
+    const lAreaY2=lSide==='A'?0:clampedSplit;
+    const lAreaH2=lSide==='A'?clampedSplit:CH-clampedSplit;
+    ctx.fillStyle=`rgba(3,1,8,${.52+be*.22})`; ctx.fillRect(0,lAreaY2,CW,lAreaH2);
+
+    V3_splitLine(clampedSplit+shY, wc, 28+be*16, Math.max(0,(1-bt)*8));
+
+    // WINNER＋キャラ名（1か所に統合・背景グラデで可読性向上）
+    if(bt>.28){
+      const nt=Math.min(1,(bt-.28)/.3);
+      const ne=V3_easeBack(nt);
+      const wName=(winner==='A'?(S.nameA||'A'):(S.nameB||'B')).toUpperCase();
+      // Aが勝ち→勝者エリア(上)の上端付近、Bが勝ち→勝者エリア(下)の下端付近
+      const tyWin=winner==='A'?CH*.08:CH*.84;
+      const tyName=winner==='A'?CH*.155:CH*.775;
+      // 背景グラデーション（テキスト背面を暗くして背景と差別化）
+      ctx.save();
+      ctx.globalAlpha=Math.min(1,nt*1.6);
+      if(winner==='A'){
+        const grad=ctx.createLinearGradient(0,0,0,CH*.22);
+        grad.addColorStop(0,'rgba(0,0,0,.85)');
+        grad.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=grad; ctx.fillRect(0,0,CW,CH*.22);
+      } else {
+        const grad=ctx.createLinearGradient(0,CH*.78,0,CH);
+        grad.addColorStop(0,'rgba(0,0,0,0)');
+        grad.addColorStop(1,'rgba(0,0,0,.85)');
+        ctx.fillStyle=grad; ctx.fillRect(0,CH*.78,CW,CH*.22);
+      }
+      ctx.restore();
+      ctx.save();
+      ctx.translate(CW*.5+shX, tyWin); ctx.scale(ne,ne);
+      V3_text('WINNER',0,0,CW*.072,V3_CG,V3_CG);
+      ctx.restore();
+      ctx.save();
+      ctx.globalAlpha=Math.min(1,nt*2);
+      V3_text(wName, CW*.5+shX, tyName, CW*.052, wc, wc);
+      ctx.restore();
+    }
+
+    // スコア（背景プレート付きでキャラ顔に被らないように）
+    const sc2=pA>pB?V3_CA:(pB>pA?V3_CB:'#ccc');
+    ctx.save();
+    ctx.globalAlpha=Math.min(1,bt*2.5);
+    const scoreTy=winner==='A'?CH*.88:CH*.13;
+    const sPx=CW*.095, scoreText=`${pA} — ${pB}`;
+    ctx.font=`${sPx}px "Bebas Neue",Impact,sans-serif`;
+    const stw=ctx.measureText(scoreText).width;
+    const spw=stw+CW*.08, sph=sPx*1.35;
+    ctx.fillStyle='rgba(0,0,0,.62)';
+    ctx.beginPath(); ctx.roundRect(CW*.5-spw/2, scoreTy-sph*.5, spw, sph, 6); ctx.fill();
+    ctx.strokeStyle=sc2; ctx.lineWidth=1.2; ctx.globalAlpha=Math.min(.6,bt*2);
+    ctx.beginPath(); ctx.roundRect(CW*.5-spw/2, scoreTy-sph*.5, spw, sph, 6); ctx.stroke();
+    ctx.globalAlpha=Math.min(1,bt*2.5);
+    V3_text(scoreText, CW*.5, scoreTy, sPx, sc2, sc2);
+    ctx.restore();
+  }
+
+  V3_scoreBar(pA,pB);
+  drawVignette(.52);
+  drawFlash(i,5);
+}
+
+// ────────────────────────────────────────
+// V3_renderFinal: ファイナル
+// 演出: 勝者が画面を独占 → バーストパルス3回 → スコア
+// ────────────────────────────────────────
+function V3_renderFinal(i, winner, pA, pB){
+  const t=i/(FINAL_DUR*FPS);
+  const wc  =winner==='A'?V3_CA:(winner==='B'?V3_CB:'#ccc');
+  const fi  =winner==='A'?S.imgA:(winner==='B'?S.imgB:null);
+  const wn  =winner==='A'?(S.nameA||'A'):(winner==='B'?(S.nameB||'B'):null);
+
+  // ─ 背景
+  ctx.fillStyle='#020106'; ctx.fillRect(0,0,CW,CH);
+
+  // 放射グラデ
+  if(fi){
+    const rg=ctx.createRadialGradient(CW*.5,CH*.4,0,CW*.5,CH*.4,CH*.55);
+    rg.addColorStop(0, winner==='A'?'rgba(180,10,60,.32)':'rgba(0,100,180,.32)');
+    rg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=rg; ctx.fillRect(0,0,CW,CH);
+  }
+
+  // スキャングリッド（下から上に流れる）
+  ctx.save();
+  ctx.globalAlpha=Math.min(.05,t*.18);
+  ctx.strokeStyle=wc; ctx.lineWidth=.35;
+  for(let k=0;k<22;k++){
+    const py=((1-(t*.25)%1)+k/22)%1*CH;
+    ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(CW,py); ctx.stroke();
+  }
+  ctx.restore();
+
+  // ─ DRAW
+  if(!fi){
+    V3_drawCharArea('A',CH*.5,.85,0);
+    ctx.fillStyle='rgba(3,1,8,.45)'; ctx.fillRect(0,0,CW,CH*.5);
+    V3_drawCharArea('B',CH*.5,.85,0);
+    ctx.fillStyle='rgba(3,1,8,.45)'; ctx.fillRect(0,CH*.5,CW,CH*.5);
+    V3_splitLine(CH*.5,'rgba(255,255,255,.3)',10,0);
+    ctx.globalAlpha=Math.min(1,t*2.5);
+    V3_text('DRAW',CW*.5,CH*.5,CW*.22,'#ccc','#888');
+    ctx.globalAlpha=1;
+    V3_scoreBar(pA,pB); drawVignette(.55); drawFlash(i,22); return;
+  }
+
+  // ─ キャラ描画：幅基準でcover、上部テキスト領域の下からclipして表示
+  // どんなアスペクト比でも画面幅を最大限に使い空白を作らない
+  const charEnterT=Math.min(1,Math.max(0,(t-.04)/.28));
+  const charEnterE=V3_easeOut(charEnterT);
+
+  // バーストタイミング（3回）
+  const bursts=[.18,.48,.80];
+  const inBurst=bursts.some(b=>t>=b&&t<b+.1);
+  const burstIdx=bursts.findIndex(b=>t>=b&&t<b+.1);
+  const bT=inBurst?((t-bursts[burstIdx])/.1):0;
+
+  // 呼吸・パン
+  const breathe=t>.35?(.5+.5*Math.sin(t*Math.PI*2.6))*.014:0;
+  const finalSc=charEnterE*(1+breathe);
+  const panX=Math.sin(t*Math.PI*.7)*CW*.016*(charEnterT>.5?1:0);
+
+  // ─ 幅・高さ両方coverで黒空間ゼロ + 時間経過でゆっくりズームイン
+  const clipTop = CH*.19;
+  const clipBot = CH*.88;
+  const clipH   = clipBot - clipTop;
+  // 幅基準・高さ基準の両方を計算し、大きい方（cover）を採用
+  const coverSc = Math.max(CW / fi.width, clipH / fi.height);
+  // ズームイン：時間とともに1.0→1.12倍に拡大（中毒性のあるスロー演出）
+  const zoomSc  = 1.0 + Math.min(t, 1.0) * 0.12;
+  const charDW  = fi.width  * coverSc * zoomSc;
+  const charDH  = fi.height * coverSc * zoomSc;
+  const charCX  = CW * .5 + panX;
+  // Y: clip領域の中央（ズームは中央基点）
+  const charCY  = clipTop + clipH * .5;
+
+  // グリッチ（バースト時）
+  if(inBurst && charEnterE>.5){
+    const gAmt=Math.sin(bT*Math.PI)*CW*.022;
+    if(gAmt>CW*.006){
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, clipTop, CW, clipBot-clipTop); ctx.clip();
+      ctx.globalAlpha=.16;
+      ctx.translate(charCX, charCY); ctx.scale(finalSc,finalSc);
+      ctx.drawImage(fi,-charDW/2+gAmt,-charDH/2,charDW,charDH);
+      ctx.drawImage(fi,-charDW/2-gAmt,-charDH/2,charDW,charDH);
+      ctx.restore();
+    }
+  }
+
+  // キャラ本体（clipTopからclipBotの範囲でclip）
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, clipTop, CW, clipBot-clipTop); ctx.clip();
+  ctx.globalAlpha=charEnterE;
+  ctx.shadowColor=wc; ctx.shadowBlur=CW*(.06+.05*(inBurst?bT:0));
+  ctx.translate(charCX, charCY); ctx.scale(finalSc,finalSc);
+  ctx.drawImage(fi,-charDW/2,-charDH/2,charDW,charDH);
+  ctx.restore();
+
+  // 暗幕グラデ（テキスト領域をキャラの上に被せる）
+  const topG=ctx.createLinearGradient(0,0,0,clipTop+CH*.06);
+  topG.addColorStop(0,'rgba(2,1,6,.95)'); topG.addColorStop(1,'rgba(2,1,6,0)');
+  ctx.fillStyle=topG; ctx.fillRect(0,0,CW,clipTop+CH*.06);
+  const botG=ctx.createLinearGradient(0,clipBot-CH*.08,0,CH);
+  botG.addColorStop(0,'rgba(2,1,6,0)'); botG.addColorStop(1,'rgba(2,1,6,.96)');
+  ctx.fillStyle=botG; ctx.fillRect(0,clipBot-CH*.08,CW,CH-(clipBot-CH*.08));
+
+  // カラーグレード
+  ctx.save();
+  ctx.globalCompositeOperation='overlay';
+  ctx.globalAlpha=.14;
+  ctx.fillStyle=winner==='A'?'#ff1040':'#0044ff';
+  ctx.fillRect(0,0,CW,CH);
+  ctx.restore();
+
+  // サイバー外枠（clip領域に合わせた位置・サイズ）
+  if(charEnterT>.45){
+    const fa=Math.min(.55,(charEnterT-.45)/.55)*(.35+.28*Math.sin(t*Math.PI*4.5));
+    const margin=CW*.018;
+    const fx=margin, fy=clipTop+CH*.004;
+    const fw=CW-margin*2, fh=clipBot-clipTop-CH*.008;
+    ctx.save();
+    ctx.globalAlpha=fa*(1+(inBurst?bT*.5:0));
+    ctx.strokeStyle=wc; ctx.lineWidth=2+(inBurst?bT*2:0);
+    ctx.shadowColor=wc; ctx.shadowBlur=inBurst?40:18;
+    ctx.beginPath(); ctx.roundRect(fx,fy,fw,fh,4); ctx.stroke();
+    // コーナー強調
+    const cL=CW*.055;
+    ctx.lineWidth=3; ctx.globalAlpha=fa;
+    [[fx,fy,1,1],[fx+fw,fy,-1,1],[fx,fy+fh,1,-1],[fx+fw,fy+fh,-1,-1]].forEach(([x,y,dx,dy])=>{
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+dx*cL,y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+dy*cL); ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  // ─ バースト演出
+  if(inBurst && charEnterE>.3){
+    const bPeak=Math.sin(bT*Math.PI);
+    const bcx=charCX, bcy=clipTop+(clipBot-clipTop)*.4;
+    V3_particles(bcx,bcy,22,CW*.36,bPeak*.75,wc,'#ffdd00');
+    if(bPeak>.45) V3_ring(bcx,bcy,bPeak*CW*.4,bPeak*.38,wc,2);
+    const bf=Math.max(0,(1-bT/.08)*.58);
+    if(bf>0){ ctx.fillStyle=`rgba(255,255,255,${bf})`; ctx.fillRect(0,0,CW,CH); }
+  }
+
+  // ─ テキスト
+  const eI=Math.min(1,t*4.5);
+  const txtPulse=1+.045*Math.sin(t*Math.PI*7);
+  ctx.globalAlpha=eI;
+  V3_text('WINNER', CW*.5, CH*.065, CW*.1*txtPulse, V3_CG, '#aa6600');
+  if(t>.12&&wn){
+    const nT=Math.min(1,(t-.12)/.14);
+    const nE=V3_easeBack(nT);
+    ctx.save(); ctx.translate(CW*.5,CH*.13); ctx.scale(nE,nE);
+    V3_text(wn.toUpperCase(), 0,0, CW*.076*txtPulse, wc, wc);
+    ctx.restore();
+  }
+  ctx.globalAlpha=1;
+
+  // スコア（背景プレート付き・キャラ下・スコアバーの上に収まる位置）
+  if(t>.34){
+    const sc2=pA>pB?V3_CA:(pB>pA?V3_CB:'#ccc');
+    const sFa=Math.min(1,(t-.34)*3.5);
+    ctx.save();
+    ctx.globalAlpha=sFa;
+    const sPx=CW*.10, scoreText=`${pA}  —  ${pB}`;
+    ctx.font=`${sPx}px "Bebas Neue",Impact,sans-serif`;
+    const stw=ctx.measureText(scoreText).width;
+    const spw=stw+CW*.09, sph=sPx*1.4;
+    const scoreCY=CH*.895;
+    // 背景プレート（角丸・半透明黒）
+    ctx.fillStyle='rgba(0,0,0,.65)';
+    ctx.beginPath(); ctx.roundRect(CW*.5-spw/2, scoreCY-sph*.5, spw, sph, 7); ctx.fill();
+    // 色枠
+    ctx.strokeStyle=sc2; ctx.lineWidth=1.4; ctx.globalAlpha=sFa*.7;
+    ctx.shadowColor=sc2; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.roundRect(CW*.5-spw/2, scoreCY-sph*.5, spw, sph, 7); ctx.stroke();
+    ctx.shadowBlur=0; ctx.globalAlpha=sFa;
+    V3_text(scoreText, CW*.5, scoreCY, sPx, sc2, sc2);
+    ctx.restore();
+  }
+
+  // 底面カラーライン
+  ctx.save();
+  ctx.globalAlpha=.55+.2*Math.sin(t*Math.PI*2.8);
+  ctx.fillStyle=wc; ctx.shadowColor=wc; ctx.shadowBlur=14;
+  ctx.fillRect(0,CH*.966,CW,CH*.005);
+  ctx.restore();
+
+  drawScanlines();
+  V3_scoreBar(pA,pB);
+  drawVignette(.68);
+  drawFlash(i,22);
+  if(i<18){ ctx.fillStyle=`rgba(${winner==='A'?'255,32,96':'0,200,255'},${Math.max(0,(18-i)/18*.52)})`; ctx.fillRect(0,0,CW,CH); }
+}
+
+
 // DISPATCHER
 // ═══════════════════════════════════════════════
 function renderIntro(i,cat,ci){
+  if(S.style==='battlev3') return V3_renderIntro(i,cat,ci);
   if(S.style==='battlev2') return V2_renderIntro(i,cat,ci);
   return B_renderIntro(i,cat,ci);
 }
 function renderCut(i,winner,pA,pB){
+  if(S.style==='battlev3') return V3_renderCut(i,winner,pA,pB);
   if(S.style==='battlev2') return V2_renderCut(i,winner,pA,pB);
   return B_renderCut(i,winner,pA,pB);
 }
 function renderFinal(i,winner,pA,pB){
+  if(S.style==='battlev3') return V3_renderFinal(i,winner,pA,pB);
   if(S.style==='battlev2') return V2_renderFinal(i,winner,pA,pB);
   return B_renderFinal(i,winner,pA,pB);
 }
@@ -1317,14 +2116,11 @@ function setProgress(done,total,label,cat,startTime){
   const t0=startTime||_genStartTime;
   if(t0&&done>10&&done<total){
     const elapsed=(performance.now()-t0)/1000;
-    const eta=Math.round(elapsed/done*(total-done));
+    const totalEst=elapsed/done*total;
+    const eta=Math.round(totalEst-elapsed);
     detail+=eta>60?` — 残り約${Math.floor(eta/60)}分${eta%60}秒`
                   :` — 残り約${eta}秒`;
-  }
-  if(t0&&done>10&&done<total){
-    const elapsed2=(performance.now()-t0)/1000;
-    const totalEst=elapsed2/done*total;
-    const finAt=new Date(Date.now()+(totalEst-elapsed2)*1000);
+    const finAt=new Date(Date.now()+(totalEst-elapsed)*1000);
     const hh=finAt.getHours().toString().padStart(2,'0');
     const mm=finAt.getMinutes().toString().padStart(2,'0');
     const ss=finAt.getSeconds().toString().padStart(2,'0');
@@ -1380,7 +2176,6 @@ async function startGenerateTurbo(NI,NC,NF,NB,TOTAL){
     }catch(e){ console.warn('BGMデコード失敗',e); }
   }
 
-  const yld=()=>new Promise(r=>setTimeout(r,0));
   const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
     ?'video/webm;codecs=vp9,opus'
     :(MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
@@ -1582,13 +2377,20 @@ async function startGenerateNormal(NI,NC,NF,NB,TOTAL){
 }
 
 // ——— 共通: 出力処理 ———
+function sanitizeFilename(s){
+  // ファイル名として使えない文字を除去（Windows/Mac/Linux 共通の禁則文字対策）
+  return String(s||'').replace(/[\\/:*?"<>|\x00-\x1f]/g,'').replace(/\s+/g,' ').trim() || 'character';
+}
 function finishOutput(chunks, mime){
   const finalBlob=new Blob(chunks,{type:mime});
   const url=URL.createObjectURL(finalBlob);
   document.getElementById('preview-video').src=url;
   const dlBtn=document.getElementById('dlBtn');
-  dlBtn.href=url; const spdLabel=getSpeed()===1.0?'':('_x'+getSpeed()); dlBtn.download=`${S.nameA}VS${S.nameB}${spdLabel}.webm`;
-  window._lastVideoBlob=finalBlob; window._lastVideoName=`${S.nameA}VS${S.nameB}${spdLabel}`;
+  const safeA=sanitizeFilename(S.nameA), safeB=sanitizeFilename(S.nameB);
+  const spdLabel=getSpeed()===1.0?'':('_x'+getSpeed());
+  const baseName=`${safeA}VS${safeB}${spdLabel}`;
+  dlBtn.href=url; dlBtn.download=`${baseName}.webm`;
+  window._lastVideoBlob=finalBlob; window._lastVideoName=baseName;
   dlBtn.textContent='⬇ 動画をダウンロード (.webm)';
   document.getElementById('output-wrap').classList.add('visible');
   document.getElementById('genBtn').disabled=false;
@@ -1643,7 +2445,10 @@ async function downloadMp4(){
 // ═══════════════════════════════════════════════
 let _prevPending = false;
 function triggerStylePreview(){
-  if(!S.imgA || !S.imgB){ return; }
+  if(!S.imgA || !S.imgB) return;
+  // PREVIEW ボタンが押されてプレビュー枠が表示中の時のみ再生成（無駄処理防止）
+  const wrap=document.getElementById('quickPreviewWrap');
+  if(!wrap || wrap.style.display==='none' || wrap.style.display==='') return;
   if(_prevPending) return;
   _prevPending=true;
   setTimeout(()=>{ _prevPending=false; renderStylePreview(); },80);
@@ -1700,5 +2505,7 @@ updateEstTime();
 autoLoadBGM();
 onTurboChange(); // 初期状態を反映
 </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
