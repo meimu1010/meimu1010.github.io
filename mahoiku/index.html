@@ -17,6 +17,8 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        html, body { width: 100%; height: 100%; }
+
         body {
             background-color: var(--black);
             color: var(--pastel-pink);
@@ -74,6 +76,8 @@
             border-bottom: 1px solid rgba(255,20,147,0.4);
             font-size: 1rem;
             flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
         /* ======== チートUI ======== */
@@ -88,6 +92,7 @@
             font-size: 0.8rem;
             font-weight: bold;
             flex-shrink: 0;
+            flex-wrap: wrap;
         }
         #cheat-ui.active { display: flex; }
         .cheat-input {
@@ -120,6 +125,8 @@
             font-size: 1.1rem;
             line-height: 1.75;
             flex-shrink: 0;
+            overflow-y: auto;
+            max-height: 260px;
         }
 
         /* ======== 選択肢 ======== */
@@ -149,6 +156,10 @@
             font-size: 0.95rem;
             line-height: 1.4;
         }
+        .choice-btn:focus-visible {
+            outline: 2px solid var(--deep-pink);
+            outline-offset: 2px;
+        }
         .choice-btn:hover:not(:disabled) {
             background: var(--deep-pink);
             border-color: #fff;
@@ -161,6 +172,11 @@
             text-align: center !important;
             line-height: 1.3 !important;
         }
+        .cancel-btn {
+            background: rgba(60,60,60,0.6) !important;
+            color: #ccc !important;
+            grid-column: 1 / -1;
+        }
 
         /* ======== スピードバー ======== */
         #speed-ctrl {
@@ -172,6 +188,7 @@
             align-items: center;
             border-top: 1px solid #222;
             flex-shrink: 0;
+            flex-wrap: wrap;
         }
         .vol-slider {
             width: 70px; height: 4px; accent-color: var(--deep-pink); cursor: pointer; vertical-align: middle;
@@ -202,6 +219,12 @@
             margin-bottom: 4px;
             font-size: 0.8rem;
             padding: 2px 0;
+            gap: 6px;
+        }
+        .ranking-item .rank-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .ranking-item.player {
             color: #fff;
@@ -240,6 +263,7 @@
             padding: 5px 8px; cursor: pointer; font-size: 0.78rem; font-family: inherit; transition: background 0.15s;
         }
         .setup-btn:hover { background: rgba(255,20,147,0.3); }
+        .setup-btn:focus-visible { outline: 2px solid var(--deep-pink); outline-offset: 2px; }
         .setup-btn.active { background: var(--deep-pink); color: #fff; border-color: #fff; }
         .difficulty-btn { padding: 6px 12px; font-size: 0.85rem; margin: 0 4px; }
         .start-btn {
@@ -248,12 +272,18 @@
             text-shadow: 0 0 8px rgba(255,255,255,0.5); transition: box-shadow 0.2s;
         }
         .start-btn:hover { box-shadow: 0 0 20px rgba(255,20,147,0.8); }
+        .magic-preview {
+            margin-top: 8px; font-size: 0.8rem; color: var(--pastel-pink);
+            opacity: 0.9; min-height: 1.2em;
+        }
 
         /* ======== ファヴポップアップ ======== */
         #fav-popup {
-            position: absolute; top: 50%; left: 40%;
+            position: absolute;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 52%; background: rgba(5,0,8,0.97);
+            width: min(560px, 80%);
+            background: rgba(5,0,8,0.97);
             border: 2px dashed var(--pastel-pink);
             padding: 22px 24px; text-align: center;
             display: none; z-index: 150; line-height: 1.75; font-size: 1rem;
@@ -297,29 +327,47 @@
             40%     { transform:translate(2px,-2px);  filter:hue-rotate(-90deg); }
         }
         .glitch-anim { animation: glitch 0.2s linear infinite; }
+
+        /* ======== レスポンシブ ======== */
+        @media (max-width: 768px) {
+            #ranking-panel { width: 160px; padding: 8px; }
+            .ranking-item { font-size: 0.72rem; }
+            #message-window { font-size: 0.95rem; padding: 12px; }
+            .choice-btn { font-size: 0.85rem; padding: 8px 10px; }
+            #status-bar { font-size: 0.85rem; padding: 6px 10px; }
+            #setup-screen { padding: 20px 16px; }
+            .char-grid { grid-template-columns: repeat(2, 1fr); }
+            #choices-container.murder-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 520px) {
+            #game-body { flex-direction: column; }
+            #ranking-panel { width: 100%; max-height: 140px; border-top: 1px solid rgba(255,20,147,0.4); }
+            #game-main { border-right: none; }
+        }
     </style>
 </head>
 <body>
-<audio id="bgm-audio" src="bgm.mp3" loop></audio>
+<audio id="bgm-audio" src="bgm.mp3" loop preload="none"></audio>
 
-<div id="game-container">
-    <div class="scanlines"></div>
+<div id="game-container" role="application" aria-label="魔法少女育成計画ゲーム">
+    <div class="scanlines" aria-hidden="true"></div>
 
     <!-- セットアップ -->
     <div id="setup-screen">
         <h1>魔法少女育成計画<br>〜キャンディー争奪戦〜</h1>
         <div class="setup-group">
             <p>難易度を選択してぽん：</p>
-            <button class="setup-btn difficulty-btn" onclick="setDifficulty('easy',this)">イージー（激甘）</button>
-            <button class="setup-btn difficulty-btn active" onclick="setDifficulty('normal',this)">ノーマル</button>
-            <button class="setup-btn difficulty-btn" onclick="setDifficulty('hard',this)">ハード（絶望）</button>
-            <button class="setup-btn difficulty-btn" onclick="setDifficulty('veryhard',this)">ベリーハード（地獄）</button>
+            <button class="setup-btn difficulty-btn" data-diff="easy">イージー（激甘）</button>
+            <button class="setup-btn difficulty-btn active" data-diff="normal">ノーマル</button>
+            <button class="setup-btn difficulty-btn" data-diff="hard">ハード（絶望）</button>
+            <button class="setup-btn difficulty-btn" data-diff="veryhard">ベリーハード（地獄）</button>
         </div>
         <div class="setup-group">
             <p>操作する魔法少女を選んでぽん：</p>
-            <div id="char-selection" class="char-grid"></div>
+            <div id="char-selection" class="char-grid" role="radiogroup" aria-label="キャラクター選択"></div>
+            <div id="magic-preview" class="magic-preview" aria-live="polite"></div>
         </div>
-        <button class="start-btn" onclick="startGame()">契約するぽん！</button>
+        <button class="start-btn" id="start-btn">契約するぽん！</button>
     </div>
 
     <!-- ゲーム本体 -->
@@ -329,52 +377,54 @@
         <span>⏱ 第<strong id="week-display">1</strong>週 <strong id="day-display">月</strong>曜</span>
     </div>
 
-    <div id="cheat-ui">
+    <div id="cheat-ui" aria-label="チートUI">
         <span>[CHEAT]</span>
-        🍬<input type="number" id="cheat-candy" class="cheat-input" value="999">
-        <button class="cheat-btn" onclick="applyCandyCheat()">飴変更</button>
-        <button id="kill-cheat-btn" class="cheat-btn" onclick="toggleKillCheat()">殺害確定: OFF</button>
+        🍬<input type="number" id="cheat-candy" class="cheat-input" value="999" aria-label="飴の数">
+        <button class="cheat-btn" id="cheat-apply-btn">飴変更</button>
+        <button id="kill-cheat-btn" class="cheat-btn">殺害確定: OFF</button>
     </div>
 
     <div id="game-body">
         <div id="game-main">
             <div id="main-view">
-                <div id="message-window">…</div>
-                <div id="choices-container"></div>
+                <div id="message-window" aria-live="polite">…</div>
+                <div id="choices-container" role="group" aria-label="選択肢"></div>
             </div>
             <div id="speed-ctrl">
                 難易度: <span id="mode-display">NORMAL</span> |
-                <label><input type="checkbox" id="speed-toggle" onchange="toggleSpeed()"> 2倍速</label> |
-                <label><input type="checkbox" id="bgm-toggle" checked onchange="updateBGM()"> BGM</label>
-                <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.01" value="0.25" oninput="updateBGM()">
+                <label><input type="checkbox" id="speed-toggle"> 2倍速</label> |
+                <label><input type="checkbox" id="bgm-toggle" checked> BGM</label>
+                <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.01" value="0.25" aria-label="BGM音量">
             </div>
         </div>
-        <div id="ranking-panel">
+        <div id="ranking-panel" aria-label="ランキング">
             <div class="ranking-title">🍬 キャンディー所持数</div>
             <div id="ranking-list"></div>
         </div>
     </div>
 
     <!-- ファヴポップアップ -->
-    <div id="fav-popup">
-        <div class="fav-icon">🧚</div>
+    <div id="fav-popup" role="dialog" aria-labelledby="fav-message">
+        <div class="fav-icon" aria-hidden="true">🧚</div>
         <div id="fav-message"></div>
-        <button onclick="closeFav()">分かったぽん</button>
+        <button id="fav-close-btn">分かったぽん</button>
     </div>
 
     <!-- エンド画面 -->
-    <div id="end-screen">
+    <div id="end-screen" role="dialog" aria-labelledby="end-title">
         <div id="end-title"></div>
         <div id="end-body"></div>
-        <button class="restart-btn" onclick="location.reload()">タイトルに戻る</button>
+        <button class="restart-btn" id="restart-btn">タイトルに戻る</button>
     </div>
 </div>
 
 <script>
+'use strict';
+
 /* ============================================================
    定数
 ============================================================ */
-const DAYS         = ["月","火","水","木","金"];
+const DAYS          = ["月","火","水","木","金"];
 const DAYS_PER_WEEK = 5;
 const PLAYER_START  = 50;
 const NPC_START_MIN = 35;
@@ -412,7 +462,7 @@ const CHARACTER_LIST = [
 ];
 
 /* ============================================================
-   コモンイベント（原作アニメ雰囲気・全面再生成）
+   コモンイベント
 ============================================================ */
 const COMMON_EVENTS = [
     {
@@ -778,7 +828,7 @@ const COMMON_EVENTS = [
 ];
 
 /* ============================================================
-   キャラクターイベント（全面再生成・candyのみ）
+   キャラクターイベント
 ============================================================ */
 const MG_EVENTS = [
     // ── スノーホワイト ──
@@ -1200,9 +1250,13 @@ const state = {
     cheatClickCount: 0,
     cheatUnlocked: false,
     forceMurder: false,
-    isTyping: false
+    isTyping: false,
+    recentEvents: [],          // 同じイベントの直近連続を防ぐ履歴
+    favCallback: null,         // ファヴポップアップのコールバック（グローバル汚染回避）
+    typeTimer: null            // タイプライターのタイマーID
 };
 let npcList = [];
+const RECENT_EVENT_LIMIT = 8;
 
 /* ============================================================
    ユーティリティ
@@ -1218,64 +1272,132 @@ function shuffle(arr) {
     return a;
 }
 
+// HTMLタグを壊さずに文字を1文字ずつ追加するためのトークナイザ
+function tokenizeHTML(html) {
+    const tokens = [];
+    let i = 0;
+    while (i < html.length) {
+        if (html[i] === '<') {
+            const end = html.indexOf('>', i);
+            if (end === -1) { tokens.push(html.slice(i)); break; }
+            tokens.push(html.slice(i, end + 1));   // タグ全体を1トークン
+            i = end + 1;
+        } else if (html[i] === '&') {
+            const end = html.indexOf(';', i);
+            if (end !== -1 && end - i <= 8) {
+                tokens.push(html.slice(i, end + 1)); // 実体参照
+                i = end + 1;
+            } else {
+                tokens.push(html[i]);
+                i++;
+            }
+        } else {
+            tokens.push(html[i]);
+            i++;
+        }
+    }
+    return tokens;
+}
+
 /* ============================================================
    BGM
 ============================================================ */
 function updateBGM() {
     const audio = document.getElementById('bgm-audio');
-    const on  = document.getElementById('bgm-toggle').checked;
-    const vol = parseFloat(document.getElementById('vol-slider').value);
-    audio.volume = vol;
-    if (on) { audio.play().catch(() => {}); }
-    else    { audio.pause(); }
+    const on    = document.getElementById('bgm-toggle').checked;
+    const vol   = parseFloat(document.getElementById('vol-slider').value);
+    if (!audio) return;
+    audio.volume = isNaN(vol) ? 0.25 : vol;
+    if (on) {
+        const p = audio.play();
+        if (p && typeof p.catch === 'function') p.catch(() => { /* 自動再生抑止やファイル欠落を無視 */ });
+    } else {
+        audio.pause();
+    }
 }
 
 /* ============================================================
    セットアップ
 ============================================================ */
-window.onload = () => {
+window.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('char-selection');
     CHARACTER_LIST.forEach((c, i) => {
         const btn = document.createElement('button');
         btn.className = 'setup-btn';
         btn.textContent = c.name;
+        btn.setAttribute('role', 'radio');
+        btn.setAttribute('aria-checked', 'false');
         btn.onclick = () => selectChar(i, btn);
         grid.appendChild(btn);
     });
+    // ランダム初期選択
     const ri = rand(0, CHARACTER_LIST.length - 1);
     selectChar(ri, grid.children[ri]);
-};
+
+    // 難易度ボタン
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.addEventListener('click', () => setDifficulty(btn.dataset.diff, btn));
+    });
+
+    // 各種ボタン・入力イベント
+    document.getElementById('start-btn').addEventListener('click', startGame);
+    document.getElementById('speed-toggle').addEventListener('change', toggleSpeed);
+    document.getElementById('bgm-toggle').addEventListener('change', updateBGM);
+    document.getElementById('vol-slider').addEventListener('input', updateBGM);
+    document.getElementById('cheat-apply-btn').addEventListener('click', applyCandyCheat);
+    document.getElementById('kill-cheat-btn').addEventListener('click', toggleKillCheat);
+    document.getElementById('fav-close-btn').addEventListener('click', closeFav);
+    document.getElementById('restart-btn').addEventListener('click', () => location.reload());
+
+    // 隠しチート: タイトルロゴを連打で解放
+    const title = document.querySelector('#setup-screen h1');
+    if (title) {
+        title.addEventListener('click', () => {
+            state.cheatClickCount++;
+            if (state.cheatClickCount >= 5 && !state.cheatUnlocked) {
+                state.cheatUnlocked = true;
+                title.textContent = '🩸 CHEAT MODE UNLOCKED 🩸';
+                setTimeout(() => {
+                    title.innerHTML = '魔法少女育成計画<br>〜キャンディー争奪戦〜';
+                }, 1200);
+            }
+        });
+    }
+});
 
 function selectChar(idx, btn) {
-    document.querySelectorAll('#char-selection .setup-btn').forEach(b => b.classList.remove('active'));
+    if (!btn) return;
+    document.querySelectorAll('#char-selection .setup-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-checked', 'false');
+    });
     btn.classList.add('active');
+    btn.setAttribute('aria-checked', 'true');
     state.playerName = CHARACTER_LIST[idx].name;
     state.magicName  = CHARACTER_LIST[idx].magic;
+    const preview = document.getElementById('magic-preview');
+    if (preview) preview.textContent = `魔法: ${state.magicName}`;
 }
 
 function setDifficulty(diff, btn) {
+    if (!DIFF_NPC[diff]) return;
     document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.difficulty = diff;
     document.getElementById('mode-display').textContent = diff.toUpperCase();
-
-    if (diff === 'normal') {
-        state.cheatClickCount++;
-        if (state.cheatClickCount >= 5) {
-            state.cheatUnlocked = true;
-            alert("チートモードが解放されたぽん！");
-        }
-    } else {
-        state.cheatClickCount = 0;
-    }
 }
 
 function startGame() {
+    if (!state.playerName) {
+        alert('魔法少女を選んでぽん！');
+        return;
+    }
     document.getElementById('setup-screen').style.display = 'none';
     if (state.cheatUnlocked) {
         document.getElementById('cheat-ui').classList.add('active');
     }
     npcList = CHARACTER_LIST.filter(c => c.name !== state.playerName).map(c => c.name);
+    state.survivors = CHARACTER_LIST.length;
     npcList.forEach(name => { state.npcScores[name] = rand(NPC_START_MIN, NPC_START_MAX); });
 
     updateBGM();
@@ -1307,34 +1429,54 @@ function updateRanking() {
     const all = npcList.map(n => ({ name: n, candies: state.npcScores[n], isPlayer: false }));
     all.push({ name: state.playerName, candies: state.candies, isPlayer: true });
     all.sort((a, b) => b.candies - a.candies);
+
+    // 同点最下位対応：最下位の飴数と一致するものすべてを赤点滅
+    const lastCandy = all.length > 0 ? all[all.length - 1].candies : null;
+
     all.forEach((item, i) => {
-        const isLast = i === all.length - 1;
+        const isLast = item.candies === lastCandy && all.length > 1;
         const div = document.createElement('div');
         div.className = `ranking-item${item.isPlayer ? ' player' : ''}${isLast ? ' last-place' : ''}`;
-        div.innerHTML = `<span>${i + 1}. ${item.name}</span><span>${item.candies}🍬</span>`;
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'rank-name';
+        nameSpan.textContent = `${i + 1}. ${item.name}`;
+        const candySpan = document.createElement('span');
+        candySpan.textContent = `${item.candies}🍬`;
+        div.appendChild(nameSpan);
+        div.appendChild(candySpan);
         list.appendChild(div);
     });
 }
 
 /* ============================================================
-   タイプライター（タイプ中は選択肢を無効化）
+   タイプライター（HTMLタグ崩れ対策／タイプ中は選択肢無効化）
 ============================================================ */
 function typeWriter(html, elementId, callback) {
     const el = document.getElementById(elementId);
+    if (!el) { if (callback) callback(); return; }
+
+    // 進行中のタイプを中断
+    if (state.typeTimer) { clearTimeout(state.typeTimer); state.typeTimer = null; }
+
     el.innerHTML = '';
     state.isTyping = true;
     setChoicesEnabled(false);
 
-    const text = html;
+    const tokens = tokenizeHTML(html);
+    const speed  = Math.max(8, Math.round(28 / state.gameSpeed));
+    let buf = '';
     let i = 0;
-    const speed = Math.round(28 / state.gameSpeed);
 
     function type() {
-        if (i < text.length) {
-            el.innerHTML = text.substring(0, i + 1);
+        if (i < tokens.length) {
+            buf += tokens[i];
+            el.innerHTML = buf;
             i++;
-            setTimeout(type, speed);
+            // タグや実体参照は遅延ゼロで進める
+            const isTag = tokens[i - 1].length > 1;
+            state.typeTimer = setTimeout(type, isTag ? 0 : speed);
         } else {
+            state.typeTimer = null;
             state.isTyping = false;
             setChoicesEnabled(true);
             if (callback) callback();
@@ -1352,6 +1494,21 @@ function setChoicesEnabled(enabled) {
 /* ============================================================
    ターン処理
 ============================================================ */
+function pickEvent() {
+    const useCommon = Math.random() < 0.7;
+    const pool = useCommon ? COMMON_EVENTS : MG_EVENTS;
+    // 直近に出題したものを除外
+    const filtered = pool.filter(ev => !state.recentEvents.includes(ev.text));
+    const candidates = filtered.length > 0 ? filtered : pool;
+    const ev = candidates[Math.floor(Math.random() * candidates.length)];
+
+    state.recentEvents.push(ev.text);
+    if (state.recentEvents.length > RECENT_EVENT_LIMIT) {
+        state.recentEvents.shift();
+    }
+    return ev;
+}
+
 function startTurn() {
     if (state.isGameOver) return;
     if (state.dayIndex >= DAYS_PER_WEEK) { processFriday(); return; }
@@ -1361,11 +1518,11 @@ function startTurn() {
 
     // NPC飴獲得
     const [dMin, dMax] = DIFF_NPC[state.difficulty];
-    npcList.forEach(name => { state.npcScores[name] += rand(dMin, dMax); });
+    npcList.forEach(name => {
+        state.npcScores[name] = Math.max(0, state.npcScores[name] + rand(dMin, dMax));
+    });
 
-    // イベント抽選（コモン7割・MGイベント3割）
-    const pool = Math.random() < 0.7 ? COMMON_EVENTS : MG_EVENTS;
-    const ev   = pool[Math.floor(Math.random() * pool.length)];
+    const ev = pickEvent();
 
     clearChoices();
     typeWriter(ev.text, 'message-window', () => {
@@ -1385,7 +1542,7 @@ function handleChoice(choice) {
     }
 
     const gained = Math.round(choice.candy * mult);
-    state.candies += gained;
+    state.candies = Math.max(0, state.candies + gained); // 飴がマイナスにならないようにガード
     state.dayIndex++;
 
     if (gained < 0) flashRed();
@@ -1395,7 +1552,10 @@ function handleChoice(choice) {
     typeWriter(
         `${prefix}${choice.msg}<br><span style="color:${color}">（飴: ${sign}${gained}）</span>`,
         'message-window',
-        () => { setTimeout(startTurn, Math.round(1400 / state.gameSpeed)); }
+        () => {
+            const wait = Math.round(1400 / state.gameSpeed);
+            setTimeout(startTurn, wait);
+        }
     );
 }
 
@@ -1438,10 +1598,12 @@ function doFridayLogic() {
     // 残り2人以下でゲーム終了
     if (all.length <= 2) { endGameFinal(all); return; }
 
-    const victim = all[0];
+    // 同点最下位の場合はランダムで一人選出
+    const lowest = all[0].candies;
+    const lowestGroup = all.filter(x => x.candies === lowest);
+    const victim = lowestGroup[Math.floor(Math.random() * lowestGroup.length)];
 
     if (victim.isPlayer) {
-        // プレイヤーが最下位
         showFav(
             `第${state.week}週の集計が終わったぽん。<br>最下位は……【${state.playerName}】だぽん。<br>規定により消去するぽん。さよならぽん。`,
             () => gameOver('最下位消去')
@@ -1469,7 +1631,8 @@ function doFridayLogic() {
             );
         } else {
             const targets = remaining.filter(n => n !== killer);
-            const target  = targets[Math.floor(Math.random() * targets.length)];
+            if (targets.length === 0) { advanceWeek(baseMsg); return; }
+            const target = targets[Math.floor(Math.random() * targets.length)];
             executeMurder(killer, target, baseMsg);
         }
     } else {
@@ -1481,6 +1644,7 @@ function renderMurderTargetButtons(baseMsg) {
     const container = document.getElementById('choices-container');
     container.innerHTML = '';
     container.classList.add('murder-grid');
+
     npcList.forEach(targetName => {
         const btn = document.createElement('button');
         btn.className = 'choice-btn target-btn';
@@ -1491,6 +1655,17 @@ function renderMurderTargetButtons(baseMsg) {
         };
         container.appendChild(btn);
     });
+
+    // キャンセル（殺害しない）ボタン
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'choice-btn target-btn cancel-btn';
+    cancelBtn.textContent = '誰も殺さない（衝動を抑える）';
+    cancelBtn.onclick = () => {
+        container.classList.remove('murder-grid');
+        clearChoices();
+        advanceWeek(baseMsg + '<br>……君は黒い衝動を抑えこんだ。');
+    };
+    container.appendChild(cancelBtn);
 }
 
 function executeMurder(killer, target, baseMsg) {
@@ -1510,14 +1685,17 @@ function executeMurder(killer, target, baseMsg) {
         finalAll.push({ name: state.playerName, isPlayer: true, candies: state.candies });
         showFav(murderMsg + `<br>残りは${survivorsNow}名になったぽん。ここで終了だぽん。`, () => endGameFinal(finalAll));
     } else {
-        advanceWeek(murderMsg);
+        // NPCが殺害した場合、メッセージをきちんと表示してから次週へ
+        typeWriter(murderMsg, 'message-window', () => {
+            setTimeout(() => advanceWeek(`第${state.week}週は終了したぽん。`), Math.round(1800 / state.gameSpeed));
+        });
     }
 }
 
 function removeNpc(name) {
     npcList = npcList.filter(n => n !== name);
     delete state.npcScores[name];
-    state.survivors--;
+    state.survivors = Math.max(0, state.survivors - 1);
     updateUI();
     updateRanking();
 }
@@ -1549,7 +1727,7 @@ function endGameFinal(finalList) {
         'GAME END',
         `第${state.week}週をもってゲーム終了ぽん。<br>${endMsg}<br><br>
         最終キャンディー数: <strong>${state.candies}🍬</strong><br>
-        生存週数: <strong>${state.week - 1}週</strong>`
+        生存週数: <strong>${Math.max(0, state.week - 1)}週</strong>`
     );
 }
 
@@ -1562,20 +1740,22 @@ function gameOver(reason) {
         'SYSTEM PURGE',
         `${reasonText}<br>魔法少女としての記録は全て消去されます。<br><br>
         最終キャンディー数: <strong>${state.candies}🍬</strong><br>
-        生存週数: <strong>${state.week - 1}週</strong>`
+        生存週数: <strong>${Math.max(0, state.week - 1)}週</strong>`
     );
 }
 
 function showEndScreen(title, body) {
     const screen = document.getElementById('end-screen');
-    document.getElementById('end-title').innerHTML = title;
+    const titleEl = document.getElementById('end-title');
+    titleEl.innerHTML = title;
     document.getElementById('end-body').innerHTML  = body;
     screen.classList.add('visible');
     if (title === 'SYSTEM PURGE') {
-        document.getElementById('end-title').style.color = '#ff2222';
-        document.getElementById('end-title').classList.add('glitch-anim');
+        titleEl.style.color = '#ff2222';
+        titleEl.classList.add('glitch-anim');
     } else {
-        document.getElementById('end-title').style.color = 'var(--pastel-pink)';
+        titleEl.style.color = 'var(--pastel-pink)';
+        titleEl.classList.remove('glitch-anim');
     }
 }
 
@@ -1585,11 +1765,14 @@ function showEndScreen(title, body) {
 function showFav(msg, cb) {
     document.getElementById('fav-message').innerHTML = msg;
     document.getElementById('fav-popup').style.display = 'block';
-    window._favCb = cb;
+    state.favCallback = cb || null;
 }
+
 function closeFav() {
     document.getElementById('fav-popup').style.display = 'none';
-    if (window._favCb) { window._favCb(); window._favCb = null; }
+    const cb = state.favCallback;
+    state.favCallback = null;
+    if (cb) cb();
 }
 
 /* ============================================================
@@ -1608,10 +1791,16 @@ function flashRed() {
 function toggleSpeed() {
     state.gameSpeed = document.getElementById('speed-toggle').checked ? 2 : 1;
 }
+
 function applyCandyCheat() {
     const val = parseInt(document.getElementById('cheat-candy').value, 10);
-    if (!isNaN(val)) { state.candies = val; updateUI(); updateRanking(); }
+    if (!isNaN(val) && val >= 0) {
+        state.candies = val;
+        updateUI();
+        updateRanking();
+    }
 }
+
 function toggleKillCheat() {
     state.forceMurder = !state.forceMurder;
     const btn = document.getElementById('kill-cheat-btn');
