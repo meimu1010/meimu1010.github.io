@@ -478,9 +478,14 @@
 
       const result = code
         .split("\n")
-        .map(line => indent + line)
-        .join("\n");
+        .map(line => {
+          if (line.trim() === "") {
+            return line;
+          }
 
+          return indent + line;
+        })
+        .join("\n");
       outputCode.value = result;
     }
 
