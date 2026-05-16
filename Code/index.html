@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Indent Space Tool</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: rgba(255, 255, 255, 0.85);
+      --border: rgba(15, 23, 42, 0.08);
+
+      --text: #0f172a;
+      --muted: #64748b;
+
+      --primary: #6366f1;
+      --primary-2: #8b5cf6;
+
+      --success: #16a34a;
+
+      --shadow:
+        0 10px 30px rgba(15, 23, 42, 0.08),
+        0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+
+      font-family: "Inter", sans-serif;
+
+      background:
+        radial-gradient(circle at top left,
+          rgba(99, 102, 241, 0.12),
+          transparent 28%),
+
+        radial-gradient(circle at bottom right,
+          rgba(139, 92, 246, 0.10),
+          transparent 25%),
+
+        linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+
+      color: var(--text);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 32px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1300px;
+    }
+
+    .glass {
+      background: var(--card);
+
+      backdrop-filter: blur(20px);
+
+      border: 1px solid var(--border);
+
+      border-radius: 30px;
+
+      padding: 32px;
+
+      box-shadow: var(--shadow);
+    }
+
+    .header {
+      margin-bottom: 28px;
+    }
+
+    .title {
+      margin: 0;
+
+      font-size: clamp(2.2rem, 4vw, 3.5rem);
+
+      font-weight: 700;
+
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin-top: 12px;
+
+      color: var(--muted);
+
+      line-height: 1.8;
+
+      font-size: 15px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+
+      margin-bottom: 24px;
+    }
+
+    .control {
+      min-width: 220px;
+
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .control label {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+
+      padding: 15px 16px;
+
+      border-radius: 16px;
+
+      border: 1px solid rgba(15, 23, 42, 0.08);
+
+      background: rgba(255,255,255,0.9);
+
+      outline: none;
+
+      font-size: 15px;
+
+      transition: 0.2s ease;
+    }
+
+    input:focus {
+      border-color: rgba(99,102,241,0.45);
+
+      box-shadow:
+        0 0 0 5px rgba(99,102,241,0.10);
+    }
+
+    .editor-grid {
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 24px;
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+
+      font-size: 1rem;
+
+      font-weight: 700;
+    }
+
+    .badge {
+      padding: 7px 12px;
+
+      border-radius: 999px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary-2)
+        );
+
+      color: white;
+
+      font-size: 12px;
+
+      font-weight: 600;
+    }
+
+    textarea {
+      width: 100%;
+
+      min-height: 520px;
+
+      resize: vertical;
+
+      padding: 22px;
+
+      border-radius: 24px;
+
+      border: 1px solid rgba(15, 23, 42, 0.08);
+
+      background: rgba(255,255,255,0.82);
+
+      outline: none;
+
+      color: var(--text);
+
+      font-family: "JetBrains Mono", monospace;
+
+      font-size: 14px;
+
+      line-height: 1.8;
+
+      transition: 0.2s ease;
+    }
+
+    textarea:focus {
+      border-color: rgba(99,102,241,0.45);
+
+      box-shadow:
+        0 0 0 5px rgba(99,102,241,0.10);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+
+      gap: 14px;
+
+      margin-top: 24px;
+    }
+
+    button {
+      border: none;
+
+      border-radius: 16px;
+
+      padding: 15px 22px;
+
+      font-size: 15px;
+
+      font-weight: 700;
+
+      cursor: pointer;
+
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    .primary-btn {
+      background:
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary-2)
+        );
+
+      color: white;
+
+      box-shadow:
+        0 10px 24px rgba(99,102,241,0.20);
+    }
+
+    .secondary-btn {
+      background: white;
+
+      color: var(--text);
+
+      border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .copy-status {
+      display: flex;
+      align-items: center;
+
+      color: var(--success);
+
+      font-size: 14px;
+
+      font-weight: 600;
+
+      opacity: 0;
+
+      transition: 0.25s ease;
+    }
+
+    .copy-status.show {
+      opacity: 1;
+    }
+
+    .footer {
+      margin-top: 20px;
+
+      color: var(--muted);
+
+      font-size: 13px;
+    }
+
+    @media (max-width: 980px) {
+      .editor-grid {
+        grid-template-columns: 1fr;
+      }
+
+      textarea {
+        min-height: 320px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="glass">
+
+      <div class="header">
+        <h1 class="title">
+          Indent Space Tool
+        </h1>
+
+        <div class="subtitle">
+          Python / HTML / TypeScript などのコードへ、
+          指定した数のスペースを各行先頭へ追加。
+        </div>
+      </div>
+
+      <div class="toolbar">
+
+        <div class="control">
+          <label for="spaceCount">
+            スペース数
+          </label>
+
+          <input
+            id="spaceCount"
+            type="number"
+            min="1"
+            max="64"
+            value="4"
+          />
+        </div>
+
+      </div>
+
+      <div class="editor-grid">
+
+        <div class="panel">
+
+          <div class="panel-header">
+            <h2>Input</h2>
+            <div class="badge">Original</div>
+          </div>
+
+          <textarea
+            id="inputCode"
+            spellcheck="false"
+            placeholder="コードを貼り付け..."
+          >def hello():
+    print("Hello")</textarea>
+
+        </div>
+
+        <div class="panel">
+
+          <div class="panel-header">
+            <h2>Output</h2>
+            <div class="badge">Indented</div>
+          </div>
+
+          <textarea
+            id="outputCode"
+            readonly
+            spellcheck="false"
+          ></textarea>
+
+        </div>
+
+      </div>
+
+      <div class="actions">
+
+        <button
+          class="primary-btn"
+          id="applyButton"
+        >
+          インデント適用
+        </button>
+
+        <button
+          class="secondary-btn"
+          id="copyButton"
+        >
+          コピー
+        </button>
+
+        <button
+          class="secondary-btn"
+          id="clearButton"
+        >
+          クリア
+        </button>
+
+        <div
+          class="copy-status"
+          id="copyStatus"
+        >
+          Copied!
+        </div>
+
+      </div>
+
+      <div class="footer">
+        HTML単体動作 / 保存不要 / ローカル実行対応
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const inputCode =
+      document.getElementById("inputCode");
+
+    const outputCode =
+      document.getElementById("outputCode");
+
+    const spaceCount =
+      document.getElementById("spaceCount");
+
+    const applyButton =
+      document.getElementById("applyButton");
+
+    const copyButton =
+      document.getElementById("copyButton");
+
+    const clearButton =
+      document.getElementById("clearButton");
+
+    const copyStatus =
+      document.getElementById("copyStatus");
+
+    /**
+     * 各行へスペースインデントを追加
+     */
+    function applyIndent() {
+      const code = inputCode.value ?? "";
+
+      const count =
+        Number(spaceCount.value);
+
+      if (
+        !Number.isInteger(count) ||
+        count < 1
+      ) {
+        alert("スペース数が不正です");
+        return;
+      }
+
+      const indent =
+        " ".repeat(count);
+
+      const result = code
+        .split("\n")
+        .map(line => indent + line)
+        .join("\n");
+
+      outputCode.value = result;
+    }
+
+    /**
+     * 出力をコピー
+     */
+    async function copyOutput() {
+      try {
+        await navigator.clipboard.writeText(
+          outputCode.value
+        );
+
+        copyStatus.classList.add("show");
+
+        setTimeout(() => {
+          copyStatus.classList.remove("show");
+        }, 1600);
+
+      } catch (error) {
+        console.error(error);
+
+        alert("コピー失敗");
+      }
+    }
+
+    /**
+     * 入出力クリア
+     */
+    function clearAll() {
+      inputCode.value = "";
+      outputCode.value = "";
+    }
+
+    applyButton.addEventListener(
+      "click",
+      applyIndent
+    );
+
+    copyButton.addEventListener(
+      "click",
+      copyOutput
+    );
+
+    clearButton.addEventListener(
+      "click",
+      clearAll
+    );
+
+    // 初期表示
+    applyIndent();
+  </script>
+
+</body>
+</html>
