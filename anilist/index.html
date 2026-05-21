@@ -8,19 +8,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f5f5f0;
+    --bg: #faf8f3;
     --surface: #ffffff;
-    --surface2: #f0efe9;
-    --border: rgba(0,0,0,0.09);
-    --border2: rgba(0,0,0,0.15);
-    --accent: #0284c7;
-    --text: #18181b;
-    --muted: #71717a;
-    --spring: #16a34a;
-    --summer: #d97706;
-    --fall:   #b45309;
-    --winter: #1d4ed8;
-    --radius: 10px;
+    --surface2: #f3f1ea;
+    --border: #e5e2d8;
+    --border2: #d6d2c4;
+    --accent: #4a6fa5;
+    --accent-dark: #34547a;
+    --text: #2d2d2d;
+    --muted: #7a7568;
+    --spring: #4a8a3f;
+    --summer: #c87533;
+    --fall:   #9a5a2b;
+    --winter: #3a5a8a;
+    --radius: 6px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,56 +30,60 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Noto Sans JP', sans-serif;
-    font-weight: 300;
+    font-weight: 400;
     min-height: 100vh;
+    line-height: 1.6;
   }
 
   .container {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 36px 24px;
+    padding: 32px 24px 60px;
   }
 
   header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 32px;
+    gap: 12px;
+    margin-bottom: 28px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
   }
 
   .logo {
-    width: 40px; height: 40px;
+    width: 36px; height: 36px;
     background: var(--accent);
-    border-radius: 10px;
+    border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 14px; color: #fff; flex-shrink: 0;
+    font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0;
+    letter-spacing: 0.5px;
   }
 
-  .site-title { font-size: 19px; font-weight: 700; color: var(--text); }
+  .site-title { font-size: 18px; font-weight: 700; color: var(--text); }
   .site-title span { color: var(--accent); }
 
   /* Search */
   .search-section {
     background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 14px;
-    padding: 22px;
-    margin-bottom: 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
   }
 
-  .search-row { display: flex; gap: 10px; }
+  .search-row { display: flex; gap: 8px; }
 
   .search-row input {
     flex: 1;
-    background: var(--surface2);
+    background: #fff;
     border: 1px solid var(--border2);
     border-radius: var(--radius);
-    padding: 11px 14px;
+    padding: 10px 12px;
     color: var(--text);
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 14px;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.15s;
   }
   .search-row input:focus { border-color: var(--accent); }
   .search-row input::placeholder { color: var(--muted); }
@@ -87,16 +92,15 @@
     background: var(--accent);
     color: #fff; border: none;
     border-radius: var(--radius);
-    padding: 11px 22px;
+    padding: 10px 22px;
     font-family: 'Noto Sans JP', sans-serif;
     font-weight: 500; font-size: 14px;
     cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
+    transition: background 0.15s;
     white-space: nowrap;
   }
-  .btn-search:hover { opacity: 0.87; }
-  .btn-search:active { transform: scale(0.97); }
-  .btn-search:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-search:hover { background: var(--accent-dark); }
+  .btn-search:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .hint { margin-top: 10px; font-size: 12px; color: var(--muted); }
 
@@ -104,20 +108,23 @@
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 8px;
+    gap: 0;
     margin-top: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
   }
 
   .stat-card {
     background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px;
+    padding: 12px 10px;
     text-align: center;
+    border-right: 1px solid var(--border);
   }
+  .stat-card:last-child { border-right: none; }
 
-  .stat-num { font-size: 22px; font-weight: 700; color: var(--accent); line-height: 1; }
-  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .stat-num { font-size: 20px; font-weight: 700; color: var(--accent-dark); line-height: 1.2; }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
   /* Currently watching section */
   .watching-section { margin-bottom: 36px; }
@@ -126,49 +133,43 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 16px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--accent);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
   }
 
   .section-heading-text { font-size: 15px; font-weight: 700; color: var(--text); }
 
   .watching-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 0 3px rgba(34,197,94,0.2);
-    animation: pulse 1.8s ease-in-out infinite;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #5a9b4e;
     flex-shrink: 0;
   }
-  @keyframes pulse {
-    0%,100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
-    50%      { box-shadow: 0 0 0 6px rgba(34,197,94,0.07); }
-  }
 
-  .watching-count { font-size: 13px; color: var(--muted); }
+  .watching-count { font-size: 12px; color: var(--muted); margin-left: 4px; }
 
   /* Filters */
   .filters-bar {
     background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 28px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 24px;
     display: flex;
-    gap: 20px;
+    gap: 18px;
     flex-wrap: wrap;
     align-items: flex-end;
   }
 
-  .filter-group { display: flex; flex-direction: column; gap: 5px; }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
   .filter-group label { font-size: 11px; color: var(--muted); font-weight: 500; }
 
   .filter-group select {
-    background: var(--surface2);
+    background: #fff;
     border: 1px solid var(--border2);
-    border-radius: 8px;
+    border-radius: 4px;
     color: var(--text);
-    padding: 7px 10px;
+    padding: 6px 10px;
     font-size: 13px;
     font-family: 'Noto Sans JP', sans-serif;
     outline: none;
@@ -181,65 +182,63 @@
   .filter-result { margin-left: auto; font-size: 13px; color: var(--muted); padding-bottom: 2px; }
 
   /* Year block */
-  .year-block { margin-bottom: 44px; }
+  .year-block { margin-bottom: 40px; }
 
   .year-heading {
     display: flex;
     align-items: baseline;
     gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border2);
+    margin-bottom: 18px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
   }
 
-  .year-num { font-size: 26px; font-weight: 700; color: var(--text); }
-  .year-count-badge { font-size: 13px; color: var(--muted); font-weight: 300; }
+  .year-num { font-size: 24px; font-weight: 700; color: var(--text); }
+  .year-count-badge { font-size: 12px; color: var(--muted); font-weight: 400; }
 
   /* Season block */
-  .season-block { margin-bottom: 26px; }
+  .season-block { margin-bottom: 22px; }
 
   .season-header {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
   }
 
-  .season-pip { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .season-pip { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .pip-spring { background: var(--spring); }
   .pip-summer { background: var(--summer); }
   .pip-fall   { background: var(--fall); }
   .pip-winter { background: var(--winter); }
   .pip-unknown { background: var(--muted); }
 
-  .season-label { font-size: 14px; font-weight: 500; }
+  .season-label { font-size: 13px; font-weight: 500; }
   .season-label.spring { color: var(--spring); }
   .season-label.summer { color: var(--summer); }
   .season-label.fall   { color: var(--fall); }
   .season-label.winter { color: var(--winter); }
   .season-label.unknown { color: var(--muted); }
 
-  .season-line { flex: 1; height: 1px; background: var(--border2); }
+  .season-line { flex: 1; height: 1px; background: var(--border); }
   .season-count { font-size: 12px; color: var(--muted); }
 
   /* Anime grid */
   .anime-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
   }
 
   .anime-card {
     background: var(--surface);
-    border: 1px solid var(--border2);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
-    transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+    transition: border-color 0.15s;
     text-decoration: none;
     display: block;
     color: inherit;
   }
   .anime-card:hover {
     border-color: var(--accent);
-    transform: translateY(-3px);
-    box-shadow: 0 5px 16px rgba(0,0,0,0.09);
   }
 
   .anime-cover {
@@ -256,7 +255,7 @@
     font-size: 26px; color: var(--muted);
   }
 
-  .anime-body { padding: 8px 10px 10px; }
+  .anime-body { padding: 8px 9px 9px; }
 
   .anime-title {
     font-size: 11px; font-weight: 400; line-height: 1.45;
@@ -268,21 +267,35 @@
     margin-bottom: 5px;
   }
 
+  .anime-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .anime-year {
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
   .badge-status {
     display: inline-block;
-    font-size: 10px; padding: 2px 6px;
-    border-radius: 4px; font-weight: 500; line-height: 1.4;
+    font-size: 10px; padding: 1px 6px;
+    border-radius: 3px; font-weight: 500; line-height: 1.5;
+    border: 1px solid transparent;
   }
-  .badge-status-COMPLETED { background: #e0f2fe; color: #075985; }
-  .badge-status-CURRENT   { background: #dcfce7; color: #166534; }
-  .badge-status-PLANNING  { background: #ede9fe; color: #5b21b6; }
-  .badge-status-DROPPED   { background: #fee2e2; color: #991b1b; }
-  .badge-status-PAUSED    { background: #fef3c7; color: #92400e; }
+  .badge-status-COMPLETED { background: #eaf2f8; color: #2c5282; border-color: #cbdcec; }
+  .badge-status-CURRENT   { background: #ecf4e8; color: #3e6b34; border-color: #cfe2c4; }
+  .badge-status-PLANNING  { background: #efeae0; color: #6b5a2b; border-color: #ddd4bf; }
+  .badge-status-DROPPED   { background: #f4e6e3; color: #8a3a2f; border-color: #e0c8c2; }
+  .badge-status-PAUSED    { background: #f3ecdb; color: #7a5a1c; border-color: #ddd0aa; }
 
   /* Messages */
-  .msg-loading { text-align: center; padding: 60px; }
+  .msg-loading { text-align: center; padding: 50px; }
   .spinner {
-    width: 34px; height: 34px;
+    width: 30px; height: 30px;
     border: 2px solid var(--border2);
     border-top-color: var(--accent);
     border-radius: 50%;
@@ -291,9 +304,9 @@
   }
   .msg-loading p { color: var(--muted); font-size: 14px; }
   .msg-error {
-    background: #fee2e2; border: 1px solid #fca5a5;
+    background: #f4e6e3; border: 1px solid #e0c8c2;
     border-radius: var(--radius);
-    padding: 12px 16px; color: #991b1b; font-size: 14px; margin-bottom: 20px;
+    padding: 11px 14px; color: #8a3a2f; font-size: 13px; margin-bottom: 18px;
   }
   .msg-empty { text-align: center; padding: 50px; color: var(--muted); font-size: 14px; }
 
@@ -361,8 +374,8 @@
 </div>
 
 <script>
-// 冬→春→夏→秋 の順
-const SEASON_ORDER  = ['WINTER','SPRING','SUMMER','FALL'];
+// 表示順: 上から 秋 → 夏 → 春 → 冬（下が冬で終わる）
+const SEASON_ORDER  = ['FALL','SUMMER','SPRING','WINTER'];
 const SEASON_LABELS = { WINTER:'冬', SPRING:'春', SUMMER:'夏', FALL:'秋', UNKNOWN:'不明' };
 const SEASON_ICONS  = { WINTER:'❄️', SPRING:'🌸', SUMMER:'☀️', FALL:'🍂', UNKNOWN:'—' };
 const SEASON_CLASS  = { WINTER:'winter', SPRING:'spring', SUMMER:'summer', FALL:'fall', UNKNOWN:'unknown' };
@@ -497,7 +510,7 @@ function renderWatching() {
   const grid = document.getElementById('watchingGrid');
   if (list.length === 0) { sec.style.display = 'none'; return; }
   document.getElementById('watchingCount').textContent = `${list.length} 本`;
-  grid.innerHTML = list.map(e => renderCard(e)).join('');
+  grid.innerHTML = list.map(e => renderCard(e, true)).join('');
   sec.style.display = 'block';
 }
 
@@ -568,7 +581,7 @@ function renderAll() {
       </div>`;
 
     const seasonsInYear = Object.keys(byYear[year]);
-    // 冬→春→夏→秋 の順、最後に UNKNOWN
+    // 上から 秋→夏→春→冬、最後に UNKNOWN
     const orderedSeasons = [
       ...SEASON_ORDER.filter(s => seasonsInYear.includes(s)),
       ...(seasonsInYear.includes('UNKNOWN') ? ['UNKNOWN'] : [])
@@ -586,7 +599,7 @@ function renderAll() {
           <span class="season-count">${list.length} 本</span>
         </div>
         <div class="anime-grid">`;
-      for (const entry of list) html += renderCard(entry);
+      for (const entry of list) html += renderCard(entry, false);
       html += `</div></div>`;
     }
     html += `</div>`;
@@ -595,22 +608,30 @@ function renderAll() {
   document.getElementById('mainContent').innerHTML = html;
 }
 
-function renderCard(entry) {
+function renderCard(entry, showYear) {
   const media  = entry.media;
   const title  = media.title.native || media.title.romaji || '不明';
   const cover  = media.coverImage?.large;
   const status = entry.status;
   const url    = media.siteUrl || '#';
+  const year   = media.seasonYear || media.startDate?.year || null;
 
   const coverHtml = cover
     ? `<img class="anime-cover" src="${cover}" alt="" loading="lazy">`
     : `<div class="anime-cover-placeholder">🎬</div>`;
 
+  const yearHtml = (showYear && year)
+    ? `<span class="anime-year">${year}</span>`
+    : '';
+
   return `<a class="anime-card" href="${url}" target="_blank" rel="noopener">
     ${coverHtml}
     <div class="anime-body">
       <div class="anime-title">${esc(title)}</div>
-      <span class="badge-status badge-status-${status}">${STATUS_LABELS[status] || status}</span>
+      <div class="anime-meta">
+        <span class="badge-status badge-status-${status}">${STATUS_LABELS[status] || status}</span>
+        ${yearHtml}
+      </div>
     </div>
   </a>`;
 }
