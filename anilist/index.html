@@ -8,18 +8,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #12121a;
-    --surface2: #1a1a26;
-    --border: rgba(255,255,255,0.07);
-    --accent: #02A9FF;
-    --accent2: #7c3aed;
-    --text: #e8e8f0;
-    --muted: #6b6b80;
-    --spring: #4ade80;
-    --summer: #fb923c;
-    --fall: #f87171;
-    --winter: #60a5fa;
+    --bg: #f5f5f0;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: rgba(0,0,0,0.09);
+    --border2: rgba(0,0,0,0.15);
+    --accent: #0284c7;
+    --accent2: #6d28d9;
+    --text: #18181b;
+    --muted: #71717a;
+    --spring: #16a34a;
+    --summer: #d97706;
+    --fall:   #b45309;
+    --winter: #1d4ed8;
     --radius: 10px;
   }
 
@@ -34,14 +35,13 @@
     overflow-x: hidden;
   }
 
-  /* background grid */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     background-image:
-      linear-gradient(rgba(2,169,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(2,169,255,0.03) 1px, transparent 1px);
+      linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none;
     z-index: 0;
@@ -55,12 +55,11 @@
     padding: 40px 24px;
   }
 
-  /* Header */
   header {
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 48px;
+    margin-bottom: 40px;
   }
 
   .logo {
@@ -76,7 +75,6 @@
     font-size: 16px;
     color: #fff;
     flex-shrink: 0;
-    box-shadow: 0 0 30px rgba(2,169,255,0.3);
   }
 
   .site-title {
@@ -86,28 +84,23 @@
     letter-spacing: -0.5px;
     color: var(--text);
   }
-  .site-title span {
-    color: var(--accent);
-  }
+  .site-title span { color: var(--accent); }
 
   /* Search */
   .search-section {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border2);
     border-radius: 16px;
     padding: 28px;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
   }
 
-  .search-row {
-    display: flex;
-    gap: 10px;
-  }
+  .search-row { display: flex; gap: 10px; }
 
   .search-row input {
     flex: 1;
     background: var(--surface2);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border2);
     border-radius: var(--radius);
     padding: 12px 16px;
     color: var(--text);
@@ -121,7 +114,7 @@
 
   .btn-search {
     background: var(--accent);
-    color: #000;
+    color: #fff;
     border: none;
     border-radius: var(--radius);
     padding: 12px 24px;
@@ -140,9 +133,9 @@
   /* Stats */
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 10px;
-    margin-top: 24px;
+    margin-top: 20px;
   }
 
   .stat-card {
@@ -151,7 +144,6 @@
     border-radius: var(--radius);
     padding: 14px;
     text-align: center;
-    animation: fadeUp 0.4s ease both;
   }
 
   .stat-num {
@@ -165,7 +157,14 @@
     font-size: 11px;
     color: var(--muted);
     margin-top: 4px;
-    letter-spacing: 0.5px;
+  }
+
+  /* Hint */
+  .hint {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
   }
 
   /* Filters */
@@ -174,12 +173,12 @@
     gap: 10px;
     flex-wrap: wrap;
     align-items: center;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
   }
 
   .filters select {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border2);
     border-radius: 8px;
     color: var(--text);
     padding: 7px 12px;
@@ -187,9 +186,7 @@
     font-family: 'Noto Sans JP', sans-serif;
     outline: none;
     cursor: pointer;
-    transition: border-color 0.2s;
   }
-  .filters select:focus { border-color: var(--accent); }
   .filters label { font-size: 13px; color: var(--muted); }
 
   .filter-result {
@@ -199,41 +196,36 @@
   }
 
   /* Year block */
-  .year-block {
-    margin-bottom: 40px;
-    animation: fadeUp 0.5s ease both;
-  }
+  .year-block { margin-bottom: 48px; }
 
   .year-heading {
     display: flex;
-    align-items: baseline;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+    padding: 14px 20px;
+    background: var(--text);
+    border-radius: 12px;
   }
 
   .year-num {
     font-family: 'Syne', sans-serif;
-    font-size: 32px;
+    font-size: 42px;
     font-weight: 800;
-    color: var(--text);
-    letter-spacing: -1px;
+    color: #fff;
+    letter-spacing: -2px;
+    line-height: 1;
   }
 
   .year-count-badge {
-    font-size: 12px;
-    color: var(--muted);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 2px 10px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
   }
 
   /* Season block */
-  .season-block {
-    margin-bottom: 24px;
-  }
+  .season-block { margin-bottom: 28px; }
 
   .season-header {
     display: flex;
@@ -242,16 +234,23 @@
     margin-bottom: 12px;
   }
 
-  .season-icon {
-    font-size: 16px;
+  .season-pip {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
+  .pip-spring { background: var(--spring); }
+  .pip-summer { background: var(--summer); }
+  .pip-fall   { background: var(--fall); }
+  .pip-winter { background: var(--winter); }
+  .pip-unknown { background: var(--muted); }
 
   .season-label {
     font-family: 'Syne', sans-serif;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
   .season-label.spring { color: var(--spring); }
   .season-label.summer { color: var(--summer); }
@@ -259,16 +258,8 @@
   .season-label.winter { color: var(--winter); }
   .season-label.unknown { color: var(--muted); }
 
-  .season-line {
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  .season-count {
-    font-size: 12px;
-    color: var(--muted);
-  }
+  .season-line { flex: 1; height: 1px; background: var(--border2); }
+  .season-count { font-size: 12px; color: var(--muted); }
 
   /* Anime grid */
   .anime-grid {
@@ -279,19 +270,19 @@
 
   .anime-card {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border2);
     border-radius: var(--radius);
     overflow: hidden;
     cursor: pointer;
-    transition: border-color 0.2s, transform 0.2s;
-    animation: fadeUp 0.4s ease both;
+    transition: border-color 0.2s, transform 0.18s, box-shadow 0.18s;
     text-decoration: none;
     display: block;
     color: inherit;
   }
   .anime-card:hover {
-    border-color: rgba(2,169,255,0.4);
+    border-color: var(--accent);
     transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
   }
 
   .anime-cover {
@@ -313,9 +304,7 @@
     color: var(--muted);
   }
 
-  .anime-body {
-    padding: 8px 10px 10px;
-  }
+  .anime-body { padding: 8px 10px 10px; }
 
   .anime-title {
     font-size: 11px;
@@ -344,62 +333,44 @@
     line-height: 1.4;
   }
 
-  .badge-score-high  { background: rgba(74,222,128,0.15); color: var(--spring); }
-  .badge-score-mid   { background: rgba(251,146,60,0.15);  color: var(--summer); }
-  .badge-score-low   { background: rgba(248,113,113,0.15); color: var(--fall); }
+  .badge-score-high  { background: #dcfce7; color: #166534; }
+  .badge-score-mid   { background: #fef3c7; color: #92400e; }
+  .badge-score-low   { background: #fee2e2; color: #991b1b; }
   .badge-score-none  { background: var(--surface2); color: var(--muted); }
 
-  .badge-status-COMPLETED { background: rgba(2,169,255,0.12); color: var(--accent); }
-  .badge-status-CURRENT   { background: rgba(74,222,128,0.12); color: var(--spring); }
-  .badge-status-PLANNING  { background: rgba(124,58,237,0.15); color: #a78bfa; }
-  .badge-status-DROPPED   { background: rgba(248,113,113,0.12); color: var(--fall); }
-  .badge-status-PAUSED    { background: rgba(251,146,60,0.12); color: var(--summer); }
+  .badge-status-COMPLETED { background: #e0f2fe; color: #075985; }
+  .badge-status-CURRENT   { background: #dcfce7; color: #166534; }
+  .badge-status-PLANNING  { background: #ede9fe; color: #5b21b6; }
+  .badge-status-DROPPED   { background: #fee2e2; color: #991b1b; }
+  .badge-status-PAUSED    { background: #fef3c7; color: #92400e; }
 
   /* Status messages */
-  .msg-loading {
-    text-align: center;
-    padding: 60px;
-  }
-
+  .msg-loading { text-align: center; padding: 60px; }
   .spinner {
-    width: 40px;
-    height: 40px;
-    border: 2px solid var(--border);
+    width: 36px; height: 36px;
+    border: 2px solid var(--border2);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
-    margin: 0 auto 16px;
+    margin: 0 auto 14px;
   }
-
   .msg-loading p { color: var(--muted); font-size: 14px; }
 
   .msg-error {
-    background: rgba(248,113,113,0.1);
-    border: 1px solid rgba(248,113,113,0.3);
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
     border-radius: var(--radius);
-    padding: 16px 20px;
-    color: var(--fall);
+    padding: 14px 18px;
+    color: #991b1b;
     font-size: 14px;
     margin-bottom: 20px;
   }
 
-  .msg-empty {
-    text-align: center;
-    padding: 60px;
-    color: var(--muted);
-    font-size: 14px;
-  }
-
-  .hint {
-    margin-top: 14px;
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.6;
-  }
+  .msg-empty { text-align: center; padding: 60px; color: var(--muted); font-size: 14px; }
 
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 </style>
@@ -453,10 +424,12 @@
 </div>
 
 <script>
-const SEASON_ORDER = ['WINTER','SPRING','SUMMER','FALL'];
-const SEASON_LABELS = { WINTER:'冬', SPRING:'春', SUMMER:'夏', FALL:'秋', UNKNOWN:'不明' };
-const SEASON_ICONS  = { WINTER:'❄️', SPRING:'🌸', SUMMER:'☀️', FALL:'🍂', UNKNOWN:'—' };
-const SEASON_CLASS  = { WINTER:'winter', SPRING:'spring', SUMMER:'summer', FALL:'fall', UNKNOWN:'unknown' };
+// 春 → 夏 → 秋 → 冬 の順（下から冬）
+const SEASON_ORDER = ['SPRING','SUMMER','FALL','WINTER'];
+const SEASON_LABELS = { SPRING:'春', SUMMER:'夏', FALL:'秋', WINTER:'冬', UNKNOWN:'不明' };
+const SEASON_ICONS  = { SPRING:'🌸', SUMMER:'☀️', FALL:'🍂', WINTER:'❄️', UNKNOWN:'—' };
+const SEASON_CLASS  = { SPRING:'spring', SUMMER:'summer', FALL:'fall', WINTER:'winter', UNKNOWN:'unknown' };
+const SEASON_PIP    = { SPRING:'pip-spring', SUMMER:'pip-summer', FALL:'pip-fall', WINTER:'pip-winter', UNKNOWN:'pip-unknown' };
 
 const STATUS_LABELS = {
   COMPLETED:'完了', CURRENT:'視聴中', PLANNING:'予定',
@@ -477,7 +450,6 @@ async function fetchAll(username) {
           seasonYear season
           startDate { year month day }
           coverImage { medium }
-          episodes format
           siteUrl
         }
       }
@@ -493,8 +465,7 @@ async function fetchAll(username) {
     });
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
-      const msg = j.errors?.[0]?.message || res.statusText;
-      throw new Error(msg);
+      throw new Error(j.errors?.[0]?.message || res.statusText);
     }
     const json = await res.json();
     if (json.errors) throw new Error(json.errors[0].message);
@@ -511,9 +482,7 @@ function showError(msg) {
   box.textContent = '⚠ ' + msg;
   box.style.display = 'block';
 }
-function hideError() {
-  document.getElementById('errorBox').style.display = 'none';
-}
+function hideError() { document.getElementById('errorBox').style.display = 'none'; }
 function setLoading(on) {
   const btn = document.getElementById('searchBtn');
   btn.disabled = on;
@@ -525,18 +494,16 @@ async function loadUser() {
   if (!username) return;
   hideError();
   setLoading(true);
-  document.getElementById('mainContent').innerHTML = `
-    <div class="msg-loading">
-      <div class="spinner"></div>
-      <p>データ取得中...</p>
-    </div>`;
+  document.getElementById('mainContent').innerHTML =
+    `<div class="msg-loading"><div class="spinner"></div><p>データ取得中...</p></div>`;
   document.getElementById('statsGrid').style.display = 'none';
   document.getElementById('filtersRow').style.display = 'none';
 
   try {
     allEntries = await fetchAll(username);
     if (allEntries.length === 0) {
-      document.getElementById('mainContent').innerHTML = '<div class="msg-empty">アニメリストが空または非公開です。</div>';
+      document.getElementById('mainContent').innerHTML =
+        '<div class="msg-empty">アニメリストが空または非公開です。</div>';
       setLoading(false);
       return;
     }
@@ -552,12 +519,15 @@ async function loadUser() {
 }
 
 function updateStats() {
-  const total = allEntries.length;
+  const total     = allEntries.length;
   const completed = allEntries.filter(e => e.status === 'COMPLETED').length;
   const watching  = allEntries.filter(e => e.status === 'CURRENT').length;
   const scored    = allEntries.filter(e => e.score > 0);
-  const avgScore  = scored.length ? (scored.reduce((s,e) => s+e.score, 0) / scored.length).toFixed(1) : '—';
-  const years     = new Set(allEntries.map(e => e.media.seasonYear || e.media.startDate?.year).filter(Boolean)).size;
+  const avgScore  = scored.length
+    ? (scored.reduce((s,e) => s + e.score, 0) / scored.length).toFixed(1) : '—';
+  const years = new Set(
+    allEntries.map(e => e.media.seasonYear || e.media.startDate?.year).filter(Boolean)
+  ).size;
 
   document.getElementById('st-total').textContent     = total;
   document.getElementById('st-completed').textContent = completed;
@@ -579,34 +549,23 @@ function getFilteredEntries() {
   });
 }
 
-function getYear(e) {
-  return e.media.seasonYear || e.media.startDate?.year || null;
-}
-function getSeason(e) {
-  return e.media.season || 'UNKNOWN';
-}
-function getStartMonth(e) {
-  return e.media.startDate?.month || 99;
-}
-
 function renderAll() {
   const entries = getFilteredEntries();
   document.getElementById('filterResult').textContent = `${entries.length} 件表示`;
 
-  // Group by year → season → sort by start date
   const byYear = {};
   for (const e of entries) {
-    const y = getYear(e) || 'UNKNOWN';
-    const s = getSeason(e);
+    const y = e.media.seasonYear || e.media.startDate?.year || 'UNKNOWN';
+    const s = e.media.season || 'UNKNOWN';
     if (!byYear[y]) byYear[y] = {};
     if (!byYear[y][s]) byYear[y][s] = [];
     byYear[y][s].push(e);
   }
 
-  // Sort entries within each season by startDate month/day
+  // Sort within season by start date
   for (const y in byYear) {
     for (const s in byYear[y]) {
-      byYear[y][s].sort((a,b) => {
+      byYear[y][s].sort((a, b) => {
         const am = a.media.startDate?.month || 99, ad = a.media.startDate?.day || 99;
         const bm = b.media.startDate?.month || 99, bd = b.media.startDate?.day || 99;
         return am !== bm ? am - bm : ad - bd;
@@ -614,15 +573,16 @@ function renderAll() {
     }
   }
 
-  // Sort years descending, UNKNOWN at end
-  const years = Object.keys(byYear).sort((a,b) => {
+  // Years descending, UNKNOWN last
+  const years = Object.keys(byYear).sort((a, b) => {
     if (a === 'UNKNOWN') return 1;
     if (b === 'UNKNOWN') return -1;
-    return b - a;
+    return Number(b) - Number(a);
   });
 
   if (years.length === 0) {
-    document.getElementById('mainContent').innerHTML = '<div class="msg-empty">該当するアニメがありません。</div>';
+    document.getElementById('mainContent').innerHTML =
+      '<div class="msg-empty">該当するアニメがありません。</div>';
     return;
   }
 
@@ -635,25 +595,26 @@ function renderAll() {
         <div class="year-count-badge">${yearEntries.length} 本</div>
       </div>`;
 
-    // Season order: WINTER SPRING SUMMER FALL, then UNKNOWN
     const seasonsInYear = Object.keys(byYear[year]);
-    const orderedSeasons = [...SEASON_ORDER.filter(s => seasonsInYear.includes(s)),
-                            ...(seasonsInYear.includes('UNKNOWN') ? ['UNKNOWN'] : [])];
+    // 春→夏→秋→冬 の順、最後に UNKNOWN
+    const orderedSeasons = [
+      ...SEASON_ORDER.filter(s => seasonsInYear.includes(s)),
+      ...(seasonsInYear.includes('UNKNOWN') ? ['UNKNOWN'] : [])
+    ];
 
     for (const season of orderedSeasons) {
       const list = byYear[year][season];
-      const cls = SEASON_CLASS[season] || 'unknown';
+      const cls  = SEASON_CLASS[season] || 'unknown';
+      const pip  = SEASON_PIP[season]   || 'pip-unknown';
       html += `<div class="season-block">
         <div class="season-header">
-          <span class="season-icon">${SEASON_ICONS[season]}</span>
-          <span class="season-label ${cls}">${SEASON_LABELS[season]}</span>
+          <div class="season-pip ${pip}"></div>
+          <span class="season-label ${cls}">${SEASON_ICONS[season]} ${SEASON_LABELS[season]}</span>
           <div class="season-line"></div>
           <span class="season-count">${list.length} 本</span>
         </div>
         <div class="anime-grid">`;
-      for (const entry of list) {
-        html += renderCard(entry);
-      }
+      for (const entry of list) html += renderCard(entry);
       html += `</div></div>`;
     }
     html += `</div>`;
@@ -681,26 +642,22 @@ function renderCard(entry) {
     ? `<img class="anime-cover" src="${cover}" alt="" loading="lazy">`
     : `<div class="anime-cover-placeholder">🎬</div>`;
 
-  const scoreLbl = score > 0 ? score : '—';
-  const scoreCls = scoreBadgeClass(score);
-
   return `<a class="anime-card" href="${url}" target="_blank" rel="noopener">
     ${coverHtml}
     <div class="anime-body">
-      <div class="anime-title">${escHtml(title)}</div>
+      <div class="anime-title">${esc(title)}</div>
       <div class="anime-badges">
-        <span class="badge ${scoreCls}">★ ${scoreLbl}</span>
+        <span class="badge ${scoreBadgeClass(score)}">★ ${score > 0 ? score : '—'}</span>
         <span class="badge badge-status-${status}">${STATUS_LABELS[status] || status}</span>
       </div>
     </div>
   </a>`;
 }
 
-function escHtml(str) {
+function esc(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// Enter key support
 document.getElementById('userInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') loadUser();
 });
