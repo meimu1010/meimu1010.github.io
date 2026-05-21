@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AniList アニメ履歴ビューワー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: rgba(255,255,255,0.07);
+    --accent: #02A9FF;
+    --accent2: #7c3aed;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --spring: #4ade80;
+    --summer: #fb923c;
+    --fall: #f87171;
+    --winter: #60a5fa;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(2,169,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(2,169,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+
+  .logo {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 30px rgba(2,169,255,0.3);
+  }
+
+  .site-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .site-title span {
+    color: var(--accent);
+  }
+
+  /* Search */
+  .search-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 32px;
+  }
+
+  .search-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .search-row input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-row input:focus { border-color: var(--accent); }
+  .search-row input::placeholder { color: var(--muted); }
+
+  .btn-search {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: var(--radius);
+    padding: 12px 24px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn-search:hover { opacity: 0.85; }
+  .btn-search:active { transform: scale(0.97); }
+  .btn-search:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-lbl {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Filters */
+  .filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .filters select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 7px 12px;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .filters select:focus { border-color: var(--accent); }
+  .filters label { font-size: 13px; color: var(--muted); }
+
+  .filter-result {
+    margin-left: auto;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* Year block */
+  .year-block {
+    margin-bottom: 40px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .year-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .year-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -1px;
+  }
+
+  .year-count-badge {
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 10px;
+  }
+
+  /* Season block */
+  .season-block {
+    margin-bottom: 24px;
+  }
+
+  .season-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .season-icon {
+    font-size: 16px;
+  }
+
+  .season-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .season-label.spring { color: var(--spring); }
+  .season-label.summer { color: var(--summer); }
+  .season-label.fall   { color: var(--fall); }
+  .season-label.winter { color: var(--winter); }
+  .season-label.unknown { color: var(--muted); }
+
+  .season-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .season-count {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Anime grid */
+  .anime-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+  }
+
+  .anime-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    animation: fadeUp 0.4s ease both;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+  }
+  .anime-card:hover {
+    border-color: rgba(2,169,255,0.4);
+    transform: translateY(-3px);
+  }
+
+  .anime-cover {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    background: var(--surface2);
+    display: block;
+  }
+
+  .anime-cover-placeholder {
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: var(--muted);
+  }
+
+  .anime-body {
+    padding: 8px 10px 10px;
+  }
+
+  .anime-title {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--text);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    margin-bottom: 6px;
+  }
+
+  .anime-badges {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .badge-score-high  { background: rgba(74,222,128,0.15); color: var(--spring); }
+  .badge-score-mid   { background: rgba(251,146,60,0.15);  color: var(--summer); }
+  .badge-score-low   { background: rgba(248,113,113,0.15); color: var(--fall); }
+  .badge-score-none  { background: var(--surface2); color: var(--muted); }
+
+  .badge-status-COMPLETED { background: rgba(2,169,255,0.12); color: var(--accent); }
+  .badge-status-CURRENT   { background: rgba(74,222,128,0.12); color: var(--spring); }
+  .badge-status-PLANNING  { background: rgba(124,58,237,0.15); color: #a78bfa; }
+  .badge-status-DROPPED   { background: rgba(248,113,113,0.12); color: var(--fall); }
+  .badge-status-PAUSED    { background: rgba(251,146,60,0.12); color: var(--summer); }
+
+  /* Status messages */
+  .msg-loading {
+    text-align: center;
+    padding: 60px;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  .msg-loading p { color: var(--muted); font-size: 14px; }
+
+  .msg-error {
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    color: var(--fall);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .msg-empty {
+    text-align: center;
+    padding: 60px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .hint {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">AL</div>
+    <div class="site-title">Ani<span>List</span> 履歴ビューワー</div>
+  </header>
+
+  <div class="search-section">
+    <div class="search-row">
+      <input type="text" id="userInput" placeholder="AniList ユーザー名を入力..." />
+      <button class="btn-search" id="searchBtn" onclick="loadUser()">検索</button>
+    </div>
+    <p class="hint">※ AniListのユーザー名（例: <code style="color:var(--accent)">john_doe</code>）を入力してください。公開リストのみ取得できます。</p>
+    <div id="statsGrid" style="display:none" class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">合計本数</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-completed">0</div><div class="stat-lbl">完了</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-watching">0</div><div class="stat-lbl">視聴中</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-score">—</div><div class="stat-lbl">平均スコア</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-years">0</div><div class="stat-lbl">年数</div></div>
+    </div>
+  </div>
+
+  <div id="errorBox" style="display:none" class="msg-error"></div>
+
+  <div id="filtersRow" style="display:none" class="filters">
+    <label>ステータス</label>
+    <select id="statusFilter" onchange="renderAll()">
+      <option value="">すべて</option>
+      <option value="COMPLETED">完了</option>
+      <option value="CURRENT">視聴中</option>
+      <option value="PLANNING">予定</option>
+      <option value="DROPPED">中断</option>
+      <option value="PAUSED">一時停止</option>
+    </select>
+    <label>スコア</label>
+    <select id="scoreFilter" onchange="renderAll()">
+      <option value="">すべて</option>
+      <option value="high">高（7以上）</option>
+      <option value="mid">中（4〜6）</option>
+      <option value="low">低（1〜3）</option>
+      <option value="none">未評価</option>
+    </select>
+    <span class="filter-result" id="filterResult"></span>
+  </div>
+
+  <div id="mainContent"></div>
+</div>
+
+<script>
+const SEASON_ORDER = ['WINTER','SPRING','SUMMER','FALL'];
+const SEASON_LABELS = { WINTER:'冬', SPRING:'春', SUMMER:'夏', FALL:'秋', UNKNOWN:'不明' };
+const SEASON_ICONS  = { WINTER:'❄️', SPRING:'🌸', SUMMER:'☀️', FALL:'🍂', UNKNOWN:'—' };
+const SEASON_CLASS  = { WINTER:'winter', SPRING:'spring', SUMMER:'summer', FALL:'fall', UNKNOWN:'unknown' };
+
+const STATUS_LABELS = {
+  COMPLETED:'完了', CURRENT:'視聴中', PLANNING:'予定',
+  DROPPED:'中断', PAUSED:'一時停止'
+};
+
+let allEntries = [];
+
+async function fetchAll(username) {
+  const query = `
+  query($username: String, $page: Int) {
+    Page(page: $page, perPage: 50) {
+      pageInfo { hasNextPage }
+      mediaList(userName: $username, type: ANIME) {
+        status score(format: POINT_10)
+        media {
+          id title { romaji native }
+          seasonYear season
+          startDate { year month day }
+          coverImage { medium }
+          episodes format
+          siteUrl
+        }
+      }
+    }
+  }`;
+
+  let entries = [], page = 1;
+  while(true) {
+    const res = await fetch('https://graphql.anilist.co', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ query, variables: { username, page } })
+    });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      const msg = j.errors?.[0]?.message || res.statusText;
+      throw new Error(msg);
+    }
+    const json = await res.json();
+    if (json.errors) throw new Error(json.errors[0].message);
+    const pageData = json.data.Page;
+    entries.push(...pageData.mediaList);
+    if (!pageData.pageInfo.hasNextPage) break;
+    page++;
+  }
+  return entries;
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = '⚠ ' + msg;
+  box.style.display = 'block';
+}
+function hideError() {
+  document.getElementById('errorBox').style.display = 'none';
+}
+function setLoading(on) {
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = on;
+  btn.textContent = on ? '読み込み中...' : '検索';
+}
+
+async function loadUser() {
+  const username = document.getElementById('userInput').value.trim();
+  if (!username) return;
+  hideError();
+  setLoading(true);
+  document.getElementById('mainContent').innerHTML = `
+    <div class="msg-loading">
+      <div class="spinner"></div>
+      <p>データ取得中...</p>
+    </div>`;
+  document.getElementById('statsGrid').style.display = 'none';
+  document.getElementById('filtersRow').style.display = 'none';
+
+  try {
+    allEntries = await fetchAll(username);
+    if (allEntries.length === 0) {
+      document.getElementById('mainContent').innerHTML = '<div class="msg-empty">アニメリストが空または非公開です。</div>';
+      setLoading(false);
+      return;
+    }
+    updateStats();
+    document.getElementById('statsGrid').style.display = 'grid';
+    document.getElementById('filtersRow').style.display = 'flex';
+    renderAll();
+  } catch(e) {
+    document.getElementById('mainContent').innerHTML = '';
+    showError(e.message || 'データの取得に失敗しました。');
+  }
+  setLoading(false);
+}
+
+function updateStats() {
+  const total = allEntries.length;
+  const completed = allEntries.filter(e => e.status === 'COMPLETED').length;
+  const watching  = allEntries.filter(e => e.status === 'CURRENT').length;
+  const scored    = allEntries.filter(e => e.score > 0);
+  const avgScore  = scored.length ? (scored.reduce((s,e) => s+e.score, 0) / scored.length).toFixed(1) : '—';
+  const years     = new Set(allEntries.map(e => e.media.seasonYear || e.media.startDate?.year).filter(Boolean)).size;
+
+  document.getElementById('st-total').textContent     = total;
+  document.getElementById('st-completed').textContent = completed;
+  document.getElementById('st-watching').textContent  = watching;
+  document.getElementById('st-score').textContent     = avgScore;
+  document.getElementById('st-years').textContent     = years;
+}
+
+function getFilteredEntries() {
+  const sf = document.getElementById('statusFilter').value;
+  const sc = document.getElementById('scoreFilter').value;
+  return allEntries.filter(e => {
+    if (sf && e.status !== sf) return false;
+    if (sc === 'high' && !(e.score >= 7)) return false;
+    if (sc === 'mid'  && !(e.score >= 4 && e.score <= 6)) return false;
+    if (sc === 'low'  && !(e.score >= 1 && e.score <= 3)) return false;
+    if (sc === 'none' && e.score !== 0) return false;
+    return true;
+  });
+}
+
+function getYear(e) {
+  return e.media.seasonYear || e.media.startDate?.year || null;
+}
+function getSeason(e) {
+  return e.media.season || 'UNKNOWN';
+}
+function getStartMonth(e) {
+  return e.media.startDate?.month || 99;
+}
+
+function renderAll() {
+  const entries = getFilteredEntries();
+  document.getElementById('filterResult').textContent = `${entries.length} 件表示`;
+
+  // Group by year → season → sort by start date
+  const byYear = {};
+  for (const e of entries) {
+    const y = getYear(e) || 'UNKNOWN';
+    const s = getSeason(e);
+    if (!byYear[y]) byYear[y] = {};
+    if (!byYear[y][s]) byYear[y][s] = [];
+    byYear[y][s].push(e);
+  }
+
+  // Sort entries within each season by startDate month/day
+  for (const y in byYear) {
+    for (const s in byYear[y]) {
+      byYear[y][s].sort((a,b) => {
+        const am = a.media.startDate?.month || 99, ad = a.media.startDate?.day || 99;
+        const bm = b.media.startDate?.month || 99, bd = b.media.startDate?.day || 99;
+        return am !== bm ? am - bm : ad - bd;
+      });
+    }
+  }
+
+  // Sort years descending, UNKNOWN at end
+  const years = Object.keys(byYear).sort((a,b) => {
+    if (a === 'UNKNOWN') return 1;
+    if (b === 'UNKNOWN') return -1;
+    return b - a;
+  });
+
+  if (years.length === 0) {
+    document.getElementById('mainContent').innerHTML = '<div class="msg-empty">該当するアニメがありません。</div>';
+    return;
+  }
+
+  let html = '';
+  for (const year of years) {
+    const yearEntries = Object.values(byYear[year]).flat();
+    html += `<div class="year-block">
+      <div class="year-heading">
+        <div class="year-num">${year}</div>
+        <div class="year-count-badge">${yearEntries.length} 本</div>
+      </div>`;
+
+    // Season order: WINTER SPRING SUMMER FALL, then UNKNOWN
+    const seasonsInYear = Object.keys(byYear[year]);
+    const orderedSeasons = [...SEASON_ORDER.filter(s => seasonsInYear.includes(s)),
+                            ...(seasonsInYear.includes('UNKNOWN') ? ['UNKNOWN'] : [])];
+
+    for (const season of orderedSeasons) {
+      const list = byYear[year][season];
+      const cls = SEASON_CLASS[season] || 'unknown';
+      html += `<div class="season-block">
+        <div class="season-header">
+          <span class="season-icon">${SEASON_ICONS[season]}</span>
+          <span class="season-label ${cls}">${SEASON_LABELS[season]}</span>
+          <div class="season-line"></div>
+          <span class="season-count">${list.length} 本</span>
+        </div>
+        <div class="anime-grid">`;
+      for (const entry of list) {
+        html += renderCard(entry);
+      }
+      html += `</div></div>`;
+    }
+    html += `</div>`;
+  }
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function scoreBadgeClass(score) {
+  if (score >= 7) return 'badge-score-high';
+  if (score >= 4) return 'badge-score-mid';
+  if (score >= 1) return 'badge-score-low';
+  return 'badge-score-none';
+}
+
+function renderCard(entry) {
+  const media = entry.media;
+  const title = media.title.native || media.title.romaji || '不明';
+  const cover = media.coverImage?.medium;
+  const score = entry.score;
+  const status = entry.status;
+  const url = media.siteUrl || '#';
+
+  const coverHtml = cover
+    ? `<img class="anime-cover" src="${cover}" alt="" loading="lazy">`
+    : `<div class="anime-cover-placeholder">🎬</div>`;
+
+  const scoreLbl = score > 0 ? score : '—';
+  const scoreCls = scoreBadgeClass(score);
+
+  return `<a class="anime-card" href="${url}" target="_blank" rel="noopener">
+    ${coverHtml}
+    <div class="anime-body">
+      <div class="anime-title">${escHtml(title)}</div>
+      <div class="anime-badges">
+        <span class="badge ${scoreCls}">★ ${scoreLbl}</span>
+        <span class="badge badge-status-${status}">${STATUS_LABELS[status] || status}</span>
+      </div>
+    </div>
+  </a>`;
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Enter key support
+document.getElementById('userInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadUser();
+});
+</script>
+</body>
+</html>
