@@ -582,18 +582,40 @@ function switchTab(name) {
 }
 
 // ========== ANILIST API ==========
-async function gqlRequest(query, variables) {
-  const res = await fetch('https://graphql.anilist.co', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({ query, variables })
-  });
-  const json = await res.json();
-  if (json.errors) throw new Error(json.errors[0].message);
-  return json.data;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function gqlRequest(query, variables, retries = 5) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch('https://graphql.anilist.co', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ query, variables })
+    });
+
+    if (res.status === 429) {
+      // Respect Retry-After header if present, otherwise back off exponentially
+      const retryAfter = parseInt(res.headers.get('Retry-After') || '0', 10);
+      const wait = retryAfter > 0 ? retryAfter * 1000 : Math.min(2000 * Math.pow(2, attempt), 30000);
+      if (attempt < retries) {
+        await sleep(wait);
+        continue;
+      } else {
+        throw new Error('レート制限に達しました。しばらく待ってから再試行してください。');
+      }
+    }
+
+    const json = await res.json();
+    if (json.errors) throw new Error(json.errors[0].message);
+    return json.data;
+  }
 }
 
 // ========== ANIME LIST ==========
+function setLoadingMsg(msg) {
+  const el = document.querySelector('#mainContent .msg-loading p');
+  if (el) el.textContent = msg;
+}
+
 async function fetchAll(username) {
   const query = `
   query($username: String, $page: Int) {
@@ -613,10 +635,12 @@ async function fetchAll(username) {
   }`;
   let entries = [], page = 1;
   while (true) {
+    setLoadingMsg(`データ取得中... (${entries.length} 件取得済み)`);
     const data = await gqlRequest(query, { username, page });
     entries.push(...data.Page.mediaList);
     if (!data.Page.pageInfo.hasNextPage) break;
     page++;
+    await sleep(600);
   }
   return entries;
 }
@@ -954,12 +978,15 @@ async function loadVAResult(staff) {
     `<div class="msg-loading"><div class="spinner"></div><p>出演情報を取得中...</p></div>`;
 
   while (true) {
+    const vaLoadEl = document.querySelector('#vaContent .msg-loading p');
+    if (vaLoadEl) vaLoadEl.textContent = `出演情報を取得中... (${allEdges.length} 件取得済み)`;
     const data = await gqlRequest(query, { id: staff.id, page });
     const s = data.Staff;
     if (!staffInfo) staffInfo = s;
     allEdges.push(...s.characterMedia.edges);
     if (!s.characterMedia.pageInfo.hasNextPage) break;
     page++;
+    await sleep(600);
   }
 
   // Filter: only anime the user has in their list (excluding PLANNING)
