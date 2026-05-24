@@ -62,6 +62,36 @@
   .site-title { font-size: 18px; font-weight: 700; color: var(--text); }
   .site-title span { color: var(--accent); }
 
+  /* Tabs */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    padding: 10px 20px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
   /* Search */
   .search-section {
     background: var(--surface);
@@ -178,7 +208,6 @@
   }
 
   .genre-count-info { font-size: 11px; color: var(--accent); margin-top: 2px; min-height: 14px; }
-
   .filter-result { margin-left: auto; font-size: 13px; color: var(--muted); padding-bottom: 2px; }
 
   /* Year block */
@@ -237,9 +266,7 @@
     display: block;
     color: inherit;
   }
-  .anime-card:hover {
-    border-color: var(--accent);
-  }
+  .anime-card:hover { border-color: var(--accent); }
 
   .anime-cover {
     width: 100%; aspect-ratio: 3/4;
@@ -267,18 +294,8 @@
     margin-bottom: 5px;
   }
 
-  .anime-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  .anime-year {
-    font-size: 10px;
-    color: var(--muted);
-    font-weight: 500;
-  }
+  .anime-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .anime-year { font-size: 10px; color: var(--muted); font-weight: 500; }
 
   .badge-status {
     display: inline-block;
@@ -291,6 +308,154 @@
   .badge-status-PLANNING  { background: #efeae0; color: #6b5a2b; border-color: #ddd4bf; }
   .badge-status-DROPPED   { background: #f4e6e3; color: #8a3a2f; border-color: #e0c8c2; }
   .badge-status-PAUSED    { background: #f3ecdb; color: #7a5a1c; border-color: #ddd0aa; }
+
+  /* ===== VOICE ACTOR TAB ===== */
+  .va-search-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .va-hint { margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+  /* VA result header */
+  .va-result-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .va-avatar {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface2);
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .va-avatar-placeholder {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+  }
+
+  .va-info { flex: 1; min-width: 0; }
+  .va-name { font-size: 17px; font-weight: 700; color: var(--text); }
+  .va-name-native { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .va-stats-row { display: flex; gap: 16px; margin-top: 8px; }
+  .va-stat { font-size: 12px; color: var(--muted); }
+  .va-stat strong { color: var(--accent-dark); font-weight: 700; }
+
+  /* Character result grid */
+  .char-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+  }
+
+  .char-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    gap: 0;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s;
+  }
+  .char-card:hover { border-color: var(--accent); }
+
+  .char-cover {
+    width: 60px; flex-shrink: 0;
+    object-fit: cover;
+    background: var(--surface2);
+    display: block;
+    align-self: stretch;
+  }
+
+  .char-cover-placeholder {
+    width: 60px; flex-shrink: 0;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--muted);
+  }
+
+  .char-body {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    gap: 3px;
+  }
+
+  .char-name {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .char-role {
+    font-size: 11px; color: var(--muted);
+  }
+
+  .char-anime {
+    font-size: 11px; color: var(--accent);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+
+  .char-anime-year {
+    font-size: 10px; color: var(--muted);
+    margin-top: 1px;
+  }
+
+  /* Candidate list */
+  .va-candidates {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .va-candidate-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .va-candidate-item:last-child { border-bottom: none; }
+  .va-candidate-item:hover { background: var(--surface2); }
+
+  .va-cand-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%; object-fit: cover;
+    background: var(--surface2);
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .va-cand-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .va-cand-native { font-size: 12px; color: var(--muted); }
+
+  .va-section-title {
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 8px;
+  }
 
   /* Messages */
   .msg-loading { text-align: center; padding: 50px; }
@@ -320,70 +485,115 @@
     <div class="site-title">Ani<span>List</span> 履歴ビューワー</div>
   </header>
 
-  <div class="search-section">
-    <div class="search-row">
-      <input type="text" id="userInput" placeholder="AniList ユーザー名を入力..."/>
-      <button class="btn-search" id="searchBtn" onclick="loadUser()">検索</button>
-    </div>
-    <p class="hint">※ AniListのユーザー名を入力してください。公開リストのみ取得できます。</p>
-    <div id="statsGrid" style="display:none" class="stats-grid">
-      <div class="stat-card"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">合計本数</div></div>
-      <div class="stat-card"><div class="stat-num" id="st-completed">0</div><div class="stat-lbl">完了</div></div>
-      <div class="stat-card"><div class="stat-num" id="st-watching">0</div><div class="stat-lbl">視聴中</div></div>
-      <div class="stat-card"><div class="stat-num" id="st-score">—</div><div class="stat-lbl">Average Score</div></div>
-      <div class="stat-card"><div class="stat-num" id="st-years">0</div><div class="stat-lbl">年数</div></div>
-    </div>
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('list')">📋 アニメリスト</button>
+    <button class="tab-btn" onclick="switchTab('va')" id="vaTabBtn">🎙️ 声優検索</button>
   </div>
 
-  <div id="errorBox" style="display:none" class="msg-error"></div>
-
-  <!-- Currently Watching -->
-  <div id="watchingSection" style="display:none" class="watching-section">
-    <div class="section-heading">
-      <div class="watching-dot"></div>
-      <span class="section-heading-text">視聴中</span>
-      <span class="watching-count" id="watchingCount"></span>
+  <!-- ===== TAB: ANIME LIST ===== -->
+  <div class="tab-panel active" id="tab-list">
+    <div class="search-section">
+      <div class="search-row">
+        <input type="text" id="userInput" placeholder="AniList ユーザー名を入力..."/>
+        <button class="btn-search" id="searchBtn" onclick="loadUser()">検索</button>
+      </div>
+      <p class="hint">※ AniListのユーザー名を入力してください。公開リストのみ取得できます。</p>
+      <div id="statsGrid" style="display:none" class="stats-grid">
+        <div class="stat-card"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">合計本数</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-completed">0</div><div class="stat-lbl">完了</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-watching">0</div><div class="stat-lbl">視聴中</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-score">—</div><div class="stat-lbl">Average Score</div></div>
+        <div class="stat-card"><div class="stat-num" id="st-years">0</div><div class="stat-lbl">年数</div></div>
+      </div>
     </div>
-    <div class="anime-grid" id="watchingGrid"></div>
+
+    <div id="errorBox" style="display:none" class="msg-error"></div>
+
+    <div id="watchingSection" style="display:none" class="watching-section">
+      <div class="section-heading">
+        <div class="watching-dot"></div>
+        <span class="section-heading-text">視聴中</span>
+        <span class="watching-count" id="watchingCount"></span>
+      </div>
+      <div class="anime-grid" id="watchingGrid"></div>
+    </div>
+
+    <div id="filtersBar" style="display:none" class="filters-bar">
+      <div class="filter-group">
+        <label>ステータス</label>
+        <select id="statusFilter" onchange="renderAll()">
+          <option value="">すべて</option>
+          <option value="COMPLETED">完了</option>
+          <option value="CURRENT">視聴中</option>
+          <option value="PLANNING">予定</option>
+          <option value="DROPPED">中断</option>
+          <option value="PAUSED">一時停止</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>ジャンル</label>
+        <select id="genreFilter" onchange="renderAll()">
+          <option value="">すべて</option>
+        </select>
+        <div class="genre-count-info" id="genreCountInfo"></div>
+      </div>
+      <span class="filter-result" id="filterResult"></span>
+    </div>
+
+    <div id="mainContent"></div>
   </div>
 
-  <!-- Filters -->
-  <div id="filtersBar" style="display:none" class="filters-bar">
-    <div class="filter-group">
-      <label>ステータス</label>
-      <select id="statusFilter" onchange="renderAll()">
-        <option value="">すべて</option>
-        <option value="COMPLETED">完了</option>
-        <option value="CURRENT">視聴中</option>
-        <option value="PLANNING">予定</option>
-        <option value="DROPPED">中断</option>
-        <option value="PAUSED">一時停止</option>
-      </select>
+  <!-- ===== TAB: VOICE ACTOR ===== -->
+  <div class="tab-panel" id="tab-va">
+    <div class="va-search-section">
+      <div class="search-row">
+        <input type="text" id="vaInput" placeholder="声優名を入力（日本語・ローマ字可）..."/>
+        <button class="btn-search" id="vaSearchBtn" onclick="searchVA()">検索</button>
+      </div>
+      <p class="va-hint">※ アニメリストを先に読み込んでください。視聴済みアニメに出演しているキャラのみ表示します。</p>
     </div>
-    <div class="filter-group">
-      <label>ジャンル</label>
-      <select id="genreFilter" onchange="renderAll()">
-        <option value="">すべて</option>
-      </select>
-      <div class="genre-count-info" id="genreCountInfo"></div>
-    </div>
-    <span class="filter-result" id="filterResult"></span>
+
+    <div id="vaErrorBox" style="display:none" class="msg-error"></div>
+    <div id="vaContent"></div>
   </div>
 
-  <div id="mainContent"></div>
 </div>
 
 <script>
-// 表示順: 上から 秋 → 夏 → 春 → 冬（下が冬で終わる）
+// ========== CONSTANTS ==========
 const SEASON_ORDER  = ['FALL','SUMMER','SPRING','WINTER'];
 const SEASON_LABELS = { WINTER:'冬', SPRING:'春', SUMMER:'夏', FALL:'秋', UNKNOWN:'不明' };
 const SEASON_ICONS  = { WINTER:'❄️', SPRING:'🌸', SUMMER:'☀️', FALL:'🍂', UNKNOWN:'—' };
 const SEASON_CLASS  = { WINTER:'winter', SPRING:'spring', SUMMER:'summer', FALL:'fall', UNKNOWN:'unknown' };
 const SEASON_PIP    = { WINTER:'pip-winter', SPRING:'pip-spring', SUMMER:'pip-summer', FALL:'pip-fall', UNKNOWN:'pip-unknown' };
 const STATUS_LABELS = { COMPLETED:'完了', CURRENT:'視聴中', PLANNING:'予定', DROPPED:'中断', PAUSED:'一時停止' };
+const ROLE_LABELS   = { MAIN:'メイン', SUPPORTING:'サブ', BACKGROUND:'モブ' };
 
-let allEntries = [];
+let allEntries = [];   // anime list entries
+let mediaIdSet = new Set(); // set of media IDs from user's list (excluding PLANNING)
 
+// ========== TABS ==========
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ========== ANILIST API ==========
+async function gqlRequest(query, variables) {
+  const res = await fetch('https://graphql.anilist.co', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ query, variables })
+  });
+  const json = await res.json();
+  if (json.errors) throw new Error(json.errors[0].message);
+  return json.data;
+}
+
+// ========== ANIME LIST ==========
 async function fetchAll(username) {
   const query = `
   query($username: String, $page: Int) {
@@ -396,29 +606,16 @@ async function fetchAll(username) {
           seasonYear season
           startDate { year month day }
           coverImage { large }
-          genres
-          siteUrl
+          genres siteUrl
         }
       }
     }
   }`;
-
   let entries = [], page = 1;
   while (true) {
-    const res = await fetch('https://graphql.anilist.co', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ query, variables: { username, page } })
-    });
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      throw new Error(j.errors?.[0]?.message || res.statusText);
-    }
-    const json = await res.json();
-    if (json.errors) throw new Error(json.errors[0].message);
-    const pageData = json.data.Page;
-    entries.push(...pageData.mediaList);
-    if (!pageData.pageInfo.hasNextPage) break;
+    const data = await gqlRequest(query, { username, page });
+    entries.push(...data.Page.mediaList);
+    if (!data.Page.pageInfo.hasNextPage) break;
     page++;
   }
   return entries;
@@ -449,6 +646,12 @@ async function loadUser() {
 
   try {
     allEntries = await fetchAll(username);
+    // build mediaIdSet: all statuses except PLANNING (user has seen/is seeing these)
+    mediaIdSet = new Set(
+      allEntries
+        .filter(e => e.status !== 'PLANNING')
+        .map(e => e.media.id)
+    );
     if (allEntries.length === 0) {
       document.getElementById('mainContent').innerHTML =
         '<div class="msg-empty">アニメリストが空または非公開です。</div>';
@@ -478,7 +681,6 @@ function updateStats() {
   const years = new Set(
     allEntries.map(e => e.media.seasonYear || e.media.startDate?.year).filter(Boolean)
   ).size;
-
   document.getElementById('st-total').textContent     = total;
   document.getElementById('st-completed').textContent = completed;
   document.getElementById('st-watching').textContent  = watching;
@@ -488,11 +690,9 @@ function updateStats() {
 
 function buildGenreFilter() {
   const genreCount = {};
-  for (const e of allEntries) {
-    for (const g of (e.media.genres || [])) {
+  for (const e of allEntries)
+    for (const g of (e.media.genres || []))
       genreCount[g] = (genreCount[g] || 0) + 1;
-    }
-  }
   const sorted = Object.entries(genreCount).sort((a, b) => b[1] - a[1]);
   const sel = document.getElementById('genreFilter');
   sel.innerHTML = '<option value="">すべて</option>';
@@ -507,24 +707,20 @@ function buildGenreFilter() {
 function renderWatching() {
   const list = allEntries.filter(e => e.status === 'CURRENT');
   const sec  = document.getElementById('watchingSection');
-  const grid = document.getElementById('watchingGrid');
   if (list.length === 0) { sec.style.display = 'none'; return; }
   document.getElementById('watchingCount').textContent = `${list.length} 本`;
-  grid.innerHTML = list.map(e => renderCard(e, true)).join('');
+  document.getElementById('watchingGrid').innerHTML = list.map(e => renderCard(e, true)).join('');
   sec.style.display = 'block';
 }
 
 function getFilteredEntries() {
   const sf = document.getElementById('statusFilter').value;
   const gf = document.getElementById('genreFilter').value;
-
   const filtered = allEntries.filter(e => {
     if (sf && e.status !== sf) return false;
     if (gf && !(e.media.genres || []).includes(gf)) return false;
     return true;
   });
-
-  // ジャンル件数表示
   const infoEl = document.getElementById('genreCountInfo');
   if (gf) {
     const count = allEntries.filter(e => (e.media.genres || []).includes(gf)).length;
@@ -532,7 +728,6 @@ function getFilteredEntries() {
   } else {
     infoEl.textContent = '';
   }
-
   return filtered;
 }
 
@@ -548,16 +743,13 @@ function renderAll() {
     if (!byYear[y][s]) byYear[y][s] = [];
     byYear[y][s].push(e);
   }
-
-  for (const y in byYear) {
-    for (const s in byYear[y]) {
+  for (const y in byYear)
+    for (const s in byYear[y])
       byYear[y][s].sort((a, b) => {
         const am = a.media.startDate?.month || 99, ad = a.media.startDate?.day || 99;
         const bm = b.media.startDate?.month || 99, bd = b.media.startDate?.day || 99;
         return am !== bm ? am - bm : ad - bd;
       });
-    }
-  }
 
   const years = Object.keys(byYear).sort((a, b) => {
     if (a === 'UNKNOWN') return 1;
@@ -579,14 +771,11 @@ function renderAll() {
         <div class="year-num">${year}</div>
         <div class="year-count-badge">${yearEntries.length} 本</div>
       </div>`;
-
     const seasonsInYear = Object.keys(byYear[year]);
-    // 上から 秋→夏→春→冬、最後に UNKNOWN
     const orderedSeasons = [
       ...SEASON_ORDER.filter(s => seasonsInYear.includes(s)),
       ...(seasonsInYear.includes('UNKNOWN') ? ['UNKNOWN'] : [])
     ];
-
     for (const season of orderedSeasons) {
       const list = byYear[year][season];
       const cls  = SEASON_CLASS[season] || 'unknown';
@@ -604,7 +793,6 @@ function renderAll() {
     }
     html += `</div>`;
   }
-
   document.getElementById('mainContent').innerHTML = html;
 }
 
@@ -615,15 +803,10 @@ function renderCard(entry, showYear) {
   const status = entry.status;
   const url    = media.siteUrl || '#';
   const year   = media.seasonYear || media.startDate?.year || null;
-
   const coverHtml = cover
     ? `<img class="anime-cover" src="${cover}" alt="" loading="lazy">`
     : `<div class="anime-cover-placeholder">🎬</div>`;
-
-  const yearHtml = (showYear && year)
-    ? `<span class="anime-year">${year}</span>`
-    : '';
-
+  const yearHtml = (showYear && year) ? `<span class="anime-year">${year}</span>` : '';
   return `<a class="anime-card" href="${url}" target="_blank" rel="noopener">
     ${coverHtml}
     <div class="anime-body">
@@ -636,12 +819,241 @@ function renderCard(entry, showYear) {
   </a>`;
 }
 
+// ========== VOICE ACTOR ==========
+function showVAError(msg) {
+  const box = document.getElementById('vaErrorBox');
+  box.textContent = '⚠ ' + msg;
+  box.style.display = 'block';
+}
+function hideVAError() { document.getElementById('vaErrorBox').style.display = 'none'; }
+function setVALoading(on) {
+  const btn = document.getElementById('vaSearchBtn');
+  btn.disabled = on;
+  btn.textContent = on ? '検索中...' : '検索';
+}
+
+async function searchVA() {
+  const name = document.getElementById('vaInput').value.trim();
+  if (!name) return;
+  if (mediaIdSet.size === 0) {
+    showVAError('先にアニメリストタブでユーザー名を検索してください。');
+    return;
+  }
+  hideVAError();
+  setVALoading(true);
+  document.getElementById('vaContent').innerHTML =
+    `<div class="msg-loading"><div class="spinner"></div><p>声優を検索中...</p></div>`;
+
+  try {
+    // Step 1: search for staff by name
+    const searchData = await gqlRequest(`
+      query($search: String) {
+        Page(perPage: 8) {
+          staff(search: $search, isBirthday: false) {
+            id
+            name { full native }
+            image { medium }
+          }
+        }
+      }
+    `, { search: name });
+
+    const candidates = searchData.Page.staff;
+    if (candidates.length === 0) {
+      document.getElementById('vaContent').innerHTML =
+        '<div class="msg-empty">声優が見つかりませんでした。</div>';
+      setVALoading(false);
+      return;
+    }
+
+    if (candidates.length === 1) {
+      await loadVAResult(candidates[0]);
+    } else {
+      // Show candidate picker
+      showVACandidates(candidates);
+    }
+  } catch(e) {
+    document.getElementById('vaContent').innerHTML = '';
+    showVAError(e.message || '検索に失敗しました。');
+  }
+  setVALoading(false);
+}
+
+function showVACandidates(candidates) {
+  const items = candidates.map(s => {
+    const img = s.image?.medium
+      ? `<img class="va-cand-avatar" src="${s.image.medium}" alt="">`
+      : `<div class="va-cand-avatar" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>`;
+    const native = s.name.native ? `<div class="va-cand-native">${esc(s.name.native)}</div>` : '';
+    return `<div class="va-candidate-item" onclick="selectCandidate(${s.id})">
+      ${img}
+      <div>
+        <div class="va-cand-name">${esc(s.name.full || '')}</div>
+        ${native}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('vaContent').innerHTML = `
+    <p class="va-section-title">複数の候補が見つかりました。選択してください：</p>
+    <div class="va-candidates">${items}</div>
+  `;
+}
+
+// store candidates globally for click handler
+let _pendingCandidates = [];
+async function selectCandidate(id) {
+  setVALoading(true);
+  hideVAError();
+  document.getElementById('vaContent').innerHTML =
+    `<div class="msg-loading"><div class="spinner"></div><p>データ取得中...</p></div>`;
+  try {
+    // fetch minimal info to create the staff object
+    const data = await gqlRequest(`
+      query($id: Int) {
+        Staff(id: $id) {
+          id name { full native } image { medium }
+        }
+      }
+    `, { id });
+    await loadVAResult(data.Staff);
+  } catch(e) {
+    showVAError(e.message);
+  }
+  setVALoading(false);
+}
+
+async function loadVAResult(staff) {
+  // Fetch all character roles for this VA, paginated
+  const query = `
+    query($id: Int, $page: Int) {
+      Staff(id: $id) {
+        name { full native }
+        image { medium }
+        characterMedia(page: $page, perPage: 25, sort: START_DATE_DESC) {
+          pageInfo { hasNextPage }
+          edges {
+            characterRole
+            characters { id name { full } image { medium } }
+            node {
+              id
+              title { native romaji }
+              coverImage { large }
+              seasonYear
+              siteUrl
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  let allEdges = [], page = 1, staffInfo = null;
+
+  document.getElementById('vaContent').innerHTML =
+    `<div class="msg-loading"><div class="spinner"></div><p>出演情報を取得中...</p></div>`;
+
+  while (true) {
+    const data = await gqlRequest(query, { id: staff.id, page });
+    const s = data.Staff;
+    if (!staffInfo) staffInfo = s;
+    allEdges.push(...s.characterMedia.edges);
+    if (!s.characterMedia.pageInfo.hasNextPage) break;
+    page++;
+  }
+
+  // Filter: only anime the user has in their list (excluding PLANNING)
+  const matched = [];
+  for (const edge of allEdges) {
+    const mediaId = edge.node.id;
+    if (!mediaIdSet.has(mediaId)) continue;
+    for (const ch of (edge.characters || [])) {
+      matched.push({
+        character: ch,
+        role: edge.characterRole,
+        media: edge.node
+      });
+    }
+  }
+
+  // Build HTML
+  const name   = staffInfo.name.full || staff.name?.full || '';
+  const native = staffInfo.name.native || staff.name?.native || '';
+  const avatar = (staffInfo.image?.medium || staff.image?.medium);
+
+  const avatarHtml = avatar
+    ? `<img class="va-avatar" src="${avatar}" alt="">`
+    : `<div class="va-avatar-placeholder">👤</div>`;
+
+  // count unique anime
+  const uniqueAnime = new Set(matched.map(m => m.media.id)).size;
+
+  let html = `
+    <div class="va-result-header">
+      ${avatarHtml}
+      <div class="va-info">
+        <div class="va-name">${esc(name)}</div>
+        ${native ? `<div class="va-name-native">${esc(native)}</div>` : ''}
+        <div class="va-stats-row">
+          <div class="va-stat">あなたのリスト内出演: <strong>${matched.length} キャラ</strong></div>
+          <div class="va-stat">作品数: <strong>${uniqueAnime}</strong></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (matched.length === 0) {
+    html += `<div class="msg-empty">あなたの視聴リストに該当する出演キャラが見つかりませんでした。</div>`;
+  } else {
+    // Sort: MAIN first, then SUPPORTING, then by year desc
+    const roleOrder = { MAIN: 0, SUPPORTING: 1, BACKGROUND: 2 };
+    matched.sort((a, b) => {
+      const ro = (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9);
+      if (ro !== 0) return ro;
+      return (b.media.seasonYear || 0) - (a.media.seasonYear || 0);
+    });
+
+    html += `<div class="char-grid">`;
+    for (const m of matched) {
+      const chName  = m.character.name?.full || '不明';
+      const chImg   = m.character.image?.medium;
+      const anime   = m.media.title?.native || m.media.title?.romaji || '不明';
+      const year    = m.media.seasonYear || '';
+      const url     = m.media.siteUrl || '#';
+      const roleLabel = ROLE_LABELS[m.role] || m.role;
+
+      const chImgHtml = chImg
+        ? `<img class="char-cover" src="${chImg}" alt="">`
+        : `<div class="char-cover-placeholder">👤</div>`;
+
+      html += `<a class="char-card" href="${url}" target="_blank" rel="noopener">
+        ${chImgHtml}
+        <div class="char-body">
+          <div class="char-name">${esc(chName)}</div>
+          <div class="char-role">${roleLabel}</div>
+          <div class="char-anime">${esc(anime)}</div>
+          ${year ? `<div class="char-anime-year">${year}年</div>` : ''}
+        </div>
+      </a>`;
+    }
+    html += `</div>`;
+  }
+
+  document.getElementById('vaContent').innerHTML = html;
+}
+
+// ========== UTILITIES ==========
 function esc(str) {
+  if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// Enter key support
 document.getElementById('userInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') loadUser();
+});
+document.getElementById('vaInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchVA();
 });
 </script>
 </body>
