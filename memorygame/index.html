@@ -163,7 +163,7 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 
 /* Card flip */
 .gc{perspective:1000px;cursor:pointer;}
-.gc-inner{width:100%;position:relative;transform-style:preserve-3d;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);}
+.gc-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);}
 .gc.flipped .gc-inner,.gc.matched .gc-inner{transform:rotateY(180deg);}
 .gc.matched .gc-front{border-color:var(--success);box-shadow:0 0 10px rgba(46,139,63,0.35);}
 .gc.wrong .gc-front{border-color:var(--danger);}
@@ -473,14 +473,7 @@ async function loadCards() {
 }
 async function saveCards(cards) {
   if (storageMode==='idb'){await idbClear('cards');if(cards.length)await idbPutAll('cards',cards);}
-  else {
-    try{
-      localStorage.setItem(STORAGE_KEY,JSON.stringify(cards));
-    }catch(err){
-      toast('localStorageの容量が不足しています。IndexedDBへの切替を検討してください','error');
-      throw err;
-    }
-  }
+  else localStorage.setItem(STORAGE_KEY,JSON.stringify(cards));
 }
 
 async function toggleStorageMode() {
@@ -580,9 +573,9 @@ function makeImgEditor(canvasEl, wrapEl, onScaleChange, W, H) {
       i.onload=()=>{
         img=i;
         scale=Math.max(W/i.naturalWidth,H/i.naturalHeight);
-        tx=0;ty=0;clamp();draw();notify();res(true);
+        tx=0;ty=0;clamp();draw();notify();res();
       };
-      i.onerror=()=>{toast('画像の読み込みに失敗しました','error');res(false);};
+      i.onerror=()=>{toast('画像の読み込みに失敗しました','error');res();};
       i.src=src;
     });
   }
@@ -598,49 +591,36 @@ function makeImgEditor(canvasEl, wrapEl, onScaleChange, W, H) {
   function getScalePct(){return Math.round(scale*100);}
 
   // Mouse
-  const onWrapMouseDown=e=>{if(!img)return;dragging=true;lastX=e.clientX;lastY=e.clientY;e.preventDefault();};
-  const onWinMouseMove=e=>{if(!dragging)return;tx+=e.clientX-lastX;ty+=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;clamp();draw();};
-  const onWinMouseUp=()=>dragging=false;
-  wrapEl.addEventListener('mousedown',onWrapMouseDown);
-  window.addEventListener('mousemove',onWinMouseMove);
-  window.addEventListener('mouseup',onWinMouseUp);
-  const onWheel=e=>{
+  wrapEl.addEventListener('mousedown',e=>{if(!img)return;dragging=true;lastX=e.clientX;lastY=e.clientY;e.preventDefault();});
+  window.addEventListener('mousemove',e=>{if(!dragging)return;tx+=e.clientX-lastX;ty+=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;clamp();draw();});
+  window.addEventListener('mouseup',()=>dragging=false);
+  wrapEl.addEventListener('wheel',e=>{
     e.preventDefault();
     const r=wrapEl.getBoundingClientRect();
+    // 1% per wheel notch (deltaY is typically ±100 for one notch)
     const notches=e.deltaY/100;
     setZoom(scale-notches*0.01,e.clientX-r.left,e.clientY-r.top);
-  };
-  wrapEl.addEventListener('wheel',onWheel,{passive:false});
+  },{passive:false});
   // Touch
-  const onTouchStart=e=>{
+  wrapEl.addEventListener('touchstart',e=>{
     if(!img)return;
     if(e.touches.length===1){dragging=true;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;}
     else if(e.touches.length===2){dragging=false;pinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
     e.preventDefault();
-  };
-  const onTouchMove=e=>{
+  },{passive:false});
+  wrapEl.addEventListener('touchmove',e=>{
     if(!img)return;
     if(e.touches.length===1&&dragging){tx+=e.touches[0].clientX-lastX;ty+=e.touches[0].clientY-lastY;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;clamp();draw();}
     else if(e.touches.length===2&&pinchDist!==null){
       const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-      const rect=wrapEl.getBoundingClientRect();
-      const mid={x:(e.touches[0].clientX+e.touches[1].clientX)/2-rect.left,y:(e.touches[0].clientY+e.touches[1].clientY)/2-rect.top};
+      const mid={x:(e.touches[0].clientX+e.touches[1].clientX)/2-wrapEl.getBoundingClientRect().left,y:(e.touches[0].clientY+e.touches[1].clientY)/2-wrapEl.getBoundingClientRect().top};
       setZoom(scale*(d/pinchDist),mid.x,mid.y);pinchDist=d;
     }
     e.preventDefault();
-  };
-  const onTouchEnd=()=>{dragging=false;pinchDist=null;};
-  wrapEl.addEventListener('touchstart',onTouchStart,{passive:false});
-  wrapEl.addEventListener('touchmove',onTouchMove,{passive:false});
-  wrapEl.addEventListener('touchend',onTouchEnd);
+  },{passive:false});
+  wrapEl.addEventListener('touchend',()=>{dragging=false;pinchDist=null;});
 
-  // Cleanup to avoid leaking window listeners when editor is recreated
-  function destroy(){
-    window.removeEventListener('mousemove',onWinMouseMove);
-    window.removeEventListener('mouseup',onWinMouseUp);
-  }
-
-  return{loadImage,setZoom,resetTransform,exportDataUrl,hasImage,getScalePct,destroy};
+  return{loadImage,setZoom,resetTransform,exportDataUrl,hasImage,getScalePct};
 }
 
 // ============================================================
@@ -662,17 +642,15 @@ function editorLoadUrl(){
   const url=document.getElementById('cardUrl').value.trim();
   if(!url)return;
   initFrontEditor();
-  frontEditor.loadImage(url).then(ok=>{
-    if(ok){
-      document.getElementById('frontPlaceholder').style.display='none';
-      document.getElementById('frontControls').style.display='flex';
-    }
+  frontEditor.loadImage(url).then(()=>{
+    document.getElementById('frontPlaceholder').style.display='none';
+    document.getElementById('frontControls').style.display='flex';
   });
 }
 function editorLoadFile(input){
   const file=input.files[0];if(!file)return;
   const r=new FileReader();
-  r.onload=e=>{document.getElementById('cardUrl').value='';initFrontEditor();frontEditor.loadImage(e.target.result).then(ok=>{if(ok){document.getElementById('frontPlaceholder').style.display='none';document.getElementById('frontControls').style.display='flex';}});};
+  r.onload=e=>{document.getElementById('cardUrl').value='';initFrontEditor();frontEditor.loadImage(e.target.result).then(()=>{document.getElementById('frontPlaceholder').style.display='none';document.getElementById('frontControls').style.display='flex';});};
   r.readAsDataURL(file);
 }
 function onZoomInputChange(){
@@ -699,9 +677,7 @@ async function saveCard(){
   const cards=await loadCards();
   const id=Date.now().toString()+Math.floor(Math.random()*1000);
   cards.push({id,name,image:dataUrl});
-  try{
-    await saveCards(cards);
-  }catch{return;}
+  await saveCards(cards);
   toast(`「${name}」を保存しました`,'success');
   clearEditor();
 }
@@ -709,7 +685,6 @@ function clearEditor(){
   document.getElementById('cardName').value='';
   document.getElementById('cardUrl').value='';
   document.getElementById('fileInput').value='';
-  if(frontEditor&&frontEditor.destroy)frontEditor.destroy();
   frontEditor=null;
   const c=document.getElementById('frontCanvas');
   c.getContext('2d').clearRect(0,0,c.width,c.height);
@@ -731,12 +706,12 @@ async function renderLibrary(){
     return;
   }
   grid.innerHTML=cards.map((c,i)=>`
-    <div class="card-item" data-id="${escAttr(c.id)}" data-idx="${i}">
+    <div class="card-item" data-id="${c.id}" data-idx="${i}">
       <div class="select-check">✓</div>
-      <img src="${escAttr(c.image)}" loading="lazy" onerror="this.style.opacity='0.3'" draggable="false">
+      <img src="${c.image}" loading="lazy" onerror="this.style.opacity='0.3'" draggable="false">
       <div class="card-item-name">${escHtml(c.name)}</div>
       <div class="card-item-actions">
-        <button class="card-action-btn" onclick="openEditModal('${escAttr(c.id)}',event)">✏️ 編集</button>
+        <button class="card-action-btn" onclick="openEditModal('${c.id}',event)">✏️ 編集</button>
       </div>
     </div>`).join('');
 
@@ -754,24 +729,21 @@ function updateSelectedCount(){
 // ============================================================
 // CARD ITEM EVENTS (select + long-press drag)
 // ============================================================
-let dragState=null; // {id, ghost, sourceEl, offX, offY, currentTarget}
+let dragState=null; // {sourceId, ghost, sourceEl, origIdx}
 
 function setupCardItemEvents(el){
   let pressTimer=null;
   let pressStartX=0, pressStartY=0;
+  let didDrag=false;
 
   function startPress(x,y){
-    pressStartX=x; pressStartY=y;
-    el.classList.add('pressing');
+    pressStartX=x; pressStartY=y; didDrag=false;
     pressTimer=setTimeout(()=>{
-      pressTimer=null;
-      el.classList.remove('pressing');
       beginDrag(el,x,y);
     },500);
   }
   function cancelPress(){
     clearTimeout(pressTimer); pressTimer=null;
-    el.classList.remove('pressing');
   }
 
   // Mouse
@@ -785,9 +757,7 @@ function setupCardItemEvents(el){
     if(Math.hypot(e.clientX-pressStartX,e.clientY-pressStartY)>8)cancelPress();
   });
   el.addEventListener('mouseup',e=>{
-    // ドラッグ中は window mouseup(endDrag) が処理するためここでは何もしない
-    if(dragState)return;
-    if(pressTimer){cancelPress();handleCardClick(el,e);}
+    if(pressTimer){cancelPress();if(!didDrag)handleCardClick(el,e);}
   });
   el.addEventListener('mouseleave',()=>{if(pressTimer&&!dragState)cancelPress();});
 
@@ -836,13 +806,12 @@ function beginDrag(sourceEl, startX, startY){
   ghost.style.top=(startY-offY)+'px';
 
   sourceEl.classList.add('drag-placeholder');
+  dragState={id, ghost, sourceEl, offX, offY, currentTarget:null};
+  didDrag=true;
 
-  // Desktop drag move/up handlers (stored so we can remove them in endDrag)
+  // Mousemove / mouseup for desktop drag
   function onMove(e){moveDrag(e.clientX,e.clientY);}
-  function onUp(){endDrag();}
-
-  dragState={id, ghost, sourceEl, offX, offY, currentTarget:null, onMove, onUp};
-
+  function onUp(){endDrag();window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);}
   window.addEventListener('mousemove',onMove);
   window.addEventListener('mouseup',onUp);
 }
@@ -854,9 +823,9 @@ function moveDrag(x,y){
   ghost.style.top=(y-offY)+'px';
 
   // Find target card under cursor
-  ghost.style.display='none';
+  ghost.style.pointerEvents='none';
   const under=document.elementFromPoint(x,y);
-  ghost.style.display='';
+  ghost.style.pointerEvents='';
   const target=under?.closest('.card-item:not(.drag-placeholder)');
 
   document.querySelectorAll('.card-item').forEach(el=>{el.classList.remove('drag-over-before','drag-over-after');});
@@ -872,28 +841,27 @@ function moveDrag(x,y){
 
 async function endDrag(){
   if(!dragState)return;
-  const {id,ghost,sourceEl,currentTarget,onMove,onUp}=dragState;
+  const {id,ghost,sourceEl,currentTarget}=dragState;
   dragState=null;
-
-  window.removeEventListener('mousemove',onMove);
-  window.removeEventListener('mouseup',onUp);
 
   ghost.remove();
   sourceEl.classList.remove('drag-placeholder');
-  const insertAfter=currentTarget?currentTarget.classList.contains('drag-over-after'):false;
   document.querySelectorAll('.card-item').forEach(el=>el.classList.remove('drag-over-before','drag-over-after'));
 
   if(currentTarget&&currentTarget.dataset.id!==id){
     const targetId=currentTarget.dataset.id;
     const cards=await loadCards();
     const fromIdx=cards.findIndex(c=>c.id===id);
-    const targetExists=cards.findIndex(c=>c.id===targetId);
-    if(fromIdx!==-1&&targetExists!==-1){
+    let toIdx=cards.findIndex(c=>c.id===targetId);
+    if(fromIdx!==-1&&toIdx!==-1){
+      const r=currentTarget.getBoundingClientRect();
+      // We compare ghost final position to decide before/after
+      const insertAfter=currentTarget.classList.contains('drag-over-after');
       const [moved]=cards.splice(fromIdx,1);
       let newTo=cards.findIndex(c=>c.id===targetId);
       if(insertAfter)newTo++;
       cards.splice(newTo,0,moved);
-      try{await saveCards(cards);}catch{}
+      await saveCards(cards);
     }
   }
   renderLibrary();
@@ -919,7 +887,6 @@ async function openEditModal(id, e){
   document.getElementById('editModal').classList.remove('hidden');
 
   // init editor with smaller card size (140x196 = same ratio 63.5:88.9)
-  if(editEditor&&editEditor.destroy)editEditor.destroy();
   editEditor=makeImgEditor(
     document.getElementById('editFrontCanvas'),
     document.getElementById('editCanvas'),
@@ -931,7 +898,6 @@ async function openEditModal(id, e){
 
 function closeEditModal(){
   document.getElementById('editModal').classList.add('hidden');
-  if(editEditor&&editEditor.destroy)editEditor.destroy();
   editEditor=null; editCardId=null;
 }
 
@@ -970,9 +936,7 @@ async function saveEditCard(){
   const idx=cards.findIndex(c=>c.id===editCardId);
   if(idx===-1){toast('カードが見つかりません','error');return;}
   cards[idx]={...cards[idx],name,image:dataUrl};
-  try{
-    await saveCards(cards);
-  }catch{return;}
+  await saveCards(cards);
   await updateStorageBar();
   toast(`「${name}」を更新しました`,'success');
   closeEditModal();
@@ -987,7 +951,7 @@ async function deleteSelected(){
   if(!confirm(`${selectedIds.size}枚のカードを削除しますか？`))return;
   const count=selectedIds.size;
   const cards=(await loadCards()).filter(c=>!selectedIds.has(c.id));
-  try{await saveCards(cards);}catch{return;}
+  await saveCards(cards);
   await updateStorageBar();
   toast(`${count}枚を削除しました`);
   renderLibrary();
@@ -1015,17 +979,16 @@ async function doImport(){
   let imported;
   try{imported=JSON.parse(raw);if(!Array.isArray(imported))throw new Error();}
   catch{toast('JSONの形式が正しくありません','error');return;}
-  const valid=imported.filter(c=>c&&c.name&&c.image);
+  const valid=imported.filter(c=>c.name&&c.image);
   if(!valid.length){toast('有効なカードがありません','error');return;}
   const cards=await loadCards();
   const existingIds=new Set(cards.map(c=>c.id));
   let added=0;
   valid.forEach(c=>{
     let id=c.id;if(!id||existingIds.has(id))id=Date.now().toString()+Math.floor(Math.random()*10000);
-    cards.push({id,name:String(c.name),image:String(c.image)});existingIds.add(id);added++;
+    cards.push({id,name:c.name,image:c.image});existingIds.add(id);added++;
   });
-  try{await saveCards(cards);}catch{return;}
-  await updateStorageBar();
+  await saveCards(cards);await updateStorageBar();
   closeImportModal();toast(`${added}枚をインポートしました`,'success');renderLibrary();
 }
 
@@ -1043,9 +1006,9 @@ async function renderGamePicker(){
   const picker=document.getElementById('gameCardPicker');
   if(!cards.length){picker.innerHTML=`<div class="empty" style="grid-column:1/-1;padding:20px"><p>カードがありません</p></div>`;return;}
   picker.innerHTML=cards.map(c=>`
-    <div class="card-item" data-id="${escAttr(c.id)}" onclick="toggleGamePick(this,'${escAttr(c.id)}')">
+    <div class="card-item" data-id="${c.id}" onclick="toggleGamePick(this,'${c.id}')">
       <div class="select-check">✓</div>
-      <img src="${escAttr(c.image)}" loading="lazy">
+      <img src="${c.image}" loading="lazy">
       <div class="card-item-name">${escHtml(c.name)}</div>
     </div>`).join('');
 }
@@ -1059,7 +1022,6 @@ async function startGame(){
   const allCards=await loadCards();
   if(!allCards.length){toast('先にカードを作成してください','error');return;}
   let pool=gamePickerSelected.size>0?allCards.filter(c=>gamePickerSelected.has(c.id)):[...allCards];
-  if(!pool.length){toast('使用できるカードがありません','error');return;}
   if(pool.length<diff.pairs){
     const orig=[...pool];let ci=1;
     while(pool.length<diff.pairs){orig.forEach(c=>{if(pool.length<diff.pairs)pool.push({...c,id:c.id+'_c'+ci,name:c.name+' ('+(ci+1)+')'});});ci++;}
@@ -1131,31 +1093,13 @@ function renderBoard(deck,diff){
   board.style.width=`${cw*diff.cols+gap*(diff.cols-1)}px`;
 
   board.innerHTML=deck.map((c,i)=>`
-    <div class="gc" data-idx="${i}" onclick="flipCard(${i})" style="width:${cw}px;">
-      <div class="gc-inner" style="padding-bottom:${88.9/63.5*100}%;">
+    <div class="gc" data-idx="${i}" onclick="flipCard(${i})" style="width:${cw}px;height:${ch}px;">
+      <div class="gc-inner">
         <div class="gc-back"><div class="gc-back-default"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color:var(--accent)"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div></div>
-        <div class="gc-front"><img src="${escAttr(c.image)}" loading="lazy"><div class="gc-label">${escHtml(c.name)}</div></div>
+        <div class="gc-front"><img src="${c.image}" loading="lazy"><div class="gc-label">${escHtml(c.name)}</div></div>
       </div>
     </div>`).join('');
 }
-
-// Recompute board layout on window resize (debounced)
-let resizeTimer=null;
-window.addEventListener('resize',()=>{
-  if(!gameState)return;
-  if(document.getElementById('gameBoard').style.display==='none')return;
-  clearTimeout(resizeTimer);
-  resizeTimer=setTimeout(()=>{
-    // Re-layout while preserving flipped/matched visual state
-    const flippedSet=new Set(gameState.flipped);
-    renderBoard(gameState.deck,gameState.diff);
-    document.querySelectorAll('#board .gc').forEach(el=>{
-      const idx=parseInt(el.dataset.idx);
-      if(gameState.matched.has(idx))el.classList.add('matched');
-      else if(flippedSet.has(idx))el.classList.add('flipped');
-    });
-  },200);
-});
 
 function flipCard(idx){
   if(!gameState||gameState.locked)return;
@@ -1208,7 +1152,6 @@ function flipCard(idx){
 }
 function showResult(win){
   clearInterval(gameTimer);
-  if(!gameState)return;
   const m=Math.floor(gameSeconds/60),s=gameSeconds%60;
   document.getElementById('resultTitle').textContent=win?'🎉 クリア！':'⏰ タイムアップ';
   document.getElementById('resultBody').textContent=win?`手数: ${gameState.moves}回　時間: ${m}:${s.toString().padStart(2,'0')}`:`ペア: ${gameState.pairs}/${gameState.diff.pairs}　手数: ${gameState.moves}回`;
@@ -1226,13 +1169,22 @@ function backToSetup(){
 // ============================================================
 function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function escAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 // ============================================================
 // INIT
 // ============================================================
 updateStorageToggleBtn();
 showHome();
+
+// ============================================================
+// CHEAT HOOK — expose internals for userscripts
+// ============================================================
+window.__memGame = {
+  getState: () => gameState,
+  flip: (idx) => flipCard(idx),
+  getDeck: () => gameState ? gameState.deck : null,
+  getMatched: () => gameState ? gameState.matched : null,
+};
 </script>
 </body>
 </html>
