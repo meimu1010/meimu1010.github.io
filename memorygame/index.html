@@ -51,6 +51,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 .tab-btn:hover:not(.active){color:var(--text);}
 .page{display:none;padding:20px;max-width:1100px;margin:0 auto;}
+#tab-game{max-width:100%;padding:20px;}
 .page.active{display:block;}
 
 /* HOME */
@@ -87,11 +88,13 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:focus{border-col
 .img-editor-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;}
 
 /* ZOOM CONTROLS */
-.zoom-controls{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap;}
-.zoom-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);width:32px;height:32px;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);transition:all 0.2s;flex-shrink:0;line-height:1;}
+.zoom-controls{display:flex;align-items:center;gap:6px;margin-top:10px;}
+.zoom-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);width:34px;height:34px;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);transition:all 0.2s;flex-shrink:0;line-height:1;font-weight:300;}
 .zoom-btn:hover{border-color:var(--accent);color:var(--accent);}
-.zoom-input{width:68px;padding:6px 8px;font-size:13px;margin-bottom:0;text-align:center;}
-.zoom-unit{font-size:13px;color:var(--muted);margin-left:-4px;}
+.zoom-input-wrap{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color 0.2s;}
+.zoom-input-wrap:focus-within{border-color:var(--accent);}
+.zoom-input{width:54px;padding:6px 6px 6px 10px;font-size:13px;margin-bottom:0;text-align:right;background:transparent;border:none;outline:none;}
+.zoom-unit{font-size:13px;color:var(--muted);padding-right:8px;}
 
 /* UPLOAD AREA */
 .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:14px;color:var(--muted);}
@@ -150,13 +153,13 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:focus{border-col
 .card-selector-label{font-size:13px;color:var(--muted);margin-bottom:8px;text-align:left;}
 
 /* GAME BOARD */
-.game-board-wrap{min-height:60vh;position:relative;}
+.game-board-wrap{position:relative;}
 .game-hud{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
 .hud-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:7px 14px;font-size:13px;box-shadow:var(--shadow);}
 .hud-stat span{color:var(--accent);font-weight:700;font-size:18px;margin-left:6px;}
 .timer-bar-wrap{background:var(--surface2);border-radius:4px;height:4px;overflow:hidden;flex:1;min-width:80px;}
 .timer-bar{height:100%;background:var(--accent);transition:width 0.5s linear,background 0.5s;border-radius:4px;}
-.game-board{display:grid;gap:8px;width:100%;}
+.game-board{display:grid;gap:8px;justify-content:center;margin:0 auto;}
 
 /* Card flip */
 .gc{perspective:1000px;cursor:pointer;}
@@ -293,8 +296,10 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:focus{border-col
       </div>
       <div class="zoom-controls" id="frontControls" style="display:none;">
         <button class="zoom-btn" onpointerdown="startZoomHold(-1)" onpointerup="stopZoomHold()" onpointerleave="stopZoomHold()">−</button>
-        <input type="number" class="zoom-input" id="frontZoomInput" value="100" min="10" max="1000" step="1" oninput="onZoomInputChange()" onchange="onZoomInputChange()">
-        <span class="zoom-unit">%</span>
+        <div class="zoom-input-wrap">
+          <input type="number" class="zoom-input" id="frontZoomInput" value="100" min="10" max="1000" step="1" oninput="onZoomInputChange()" onchange="onZoomInputChange()">
+          <span class="zoom-unit">%</span>
+        </div>
         <button class="zoom-btn" onpointerdown="startZoomHold(1)" onpointerup="stopZoomHold()" onpointerleave="stopZoomHold()">＋</button>
         <button class="btn" onclick="editorResetTransform()" style="font-size:12px;padding:5px 10px;">リセット</button>
       </div>
@@ -387,8 +392,10 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:focus{border-col
         </div>
         <div class="zoom-controls">
           <button class="zoom-btn" onpointerdown="startEditZoomHold(-1)" onpointerup="stopEditZoomHold()" onpointerleave="stopEditZoomHold()">−</button>
-          <input type="number" class="zoom-input" id="editZoomInput" value="100" min="10" max="1000" step="1" oninput="onEditZoomInputChange()" onchange="onEditZoomInputChange()">
-          <span class="zoom-unit">%</span>
+          <div class="zoom-input-wrap">
+            <input type="number" class="zoom-input" id="editZoomInput" value="100" min="10" max="1000" step="1" oninput="onEditZoomInputChange()" onchange="onEditZoomInputChange()">
+            <span class="zoom-unit">%</span>
+          </div>
           <button class="zoom-btn" onpointerdown="startEditZoomHold(1)" onpointerup="stopEditZoomHold()" onpointerleave="stopEditZoomHold()">＋</button>
           <button class="btn" onclick="editResetTransform()" style="font-size:12px;padding:5px 10px;">リセット</button>
         </div>
@@ -580,7 +587,9 @@ function makeImgEditor(canvasEl, wrapEl, onScaleChange) {
   wrapEl.addEventListener('wheel',e=>{
     e.preventDefault();
     const r=wrapEl.getBoundingClientRect();
-    setZoom(scale+(e.deltaY>0?-0.05:0.05),e.clientX-r.left,e.clientY-r.top);
+    // 1% per wheel notch (deltaY is typically ±100 for one notch)
+    const notches=e.deltaY/100;
+    setZoom(scale-notches*0.01,e.clientX-r.left,e.clientY-r.top);
   },{passive:false});
   // Touch
   wrapEl.addEventListener('touchstart',e=>{
@@ -1043,16 +1052,35 @@ async function startGame(){
 function renderBoard(deck,diff){
   const board=document.getElementById('board');
   const boardWrap=document.getElementById('gameBoard');
-  const availW=boardWrap.clientWidth||window.innerWidth-40;
-  const availH=window.innerHeight-200;
+  const hud=boardWrap.querySelector('.game-hud');
+
+  // Measure available space accurately
+  const pageEl=document.getElementById('tab-game');
+  const pagePad=40; // 20px each side
+  const availW=(pageEl.clientWidth||window.innerWidth)-pagePad;
+  const hudH=hud?hud.offsetHeight+16:70;
+  // Use viewport height minus topbar(63) + tabs(45) + page padding(20) + hud
+  const availH=window.innerHeight-63-45-20-hudH-8;
+
   const rows=Math.ceil(deck.length/diff.cols);
-  const gap=8;
+  const gap=6;
+
+  // Fit by width
   let cw=Math.floor((availW-gap*(diff.cols-1))/diff.cols);
   let ch=Math.round(cw*88.9/63.5);
+  // Fit by height
   const neededH=rows*ch+(rows-1)*gap;
-  if(neededH>availH){ch=Math.floor((availH-gap*(rows-1))/rows);cw=Math.round(ch*63.5/88.9);}
-  cw=Math.max(40,cw);ch=Math.round(cw*88.9/63.5);
+  if(neededH>availH){
+    ch=Math.floor((availH-(rows-1)*gap)/rows);
+    cw=Math.round(ch*63.5/88.9);
+  }
+  // Clamp: never smaller than 50px wide, never larger than 180px
+  cw=Math.max(50,Math.min(180,cw));
+  ch=Math.round(cw*88.9/63.5);
+
   board.style.gridTemplateColumns=`repeat(${diff.cols},${cw}px)`;
+  board.style.width=`${cw*diff.cols+gap*(diff.cols-1)}px`;
+
   board.innerHTML=deck.map((c,i)=>`
     <div class="gc" data-idx="${i}" onclick="flipCard(${i})" style="width:${cw}px;">
       <div class="gc-inner" style="padding-bottom:${88.9/63.5*100}%;">
