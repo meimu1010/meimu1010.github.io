@@ -343,10 +343,10 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
         <div class="diff-icon">🌱</div><div class="diff-name">初級</div><div class="diff-desc">8ペア（16枚）</div>
       </div>
       <div class="diff-card" data-diff="normal" onclick="selectDiff(this)">
-        <div class="diff-icon">⚔️</div><div class="diff-name">中級</div><div class="diff-desc">15ペア（30枚）</div>
+        <div class="diff-icon">⚔️</div><div class="diff-name">中級</div><div class="diff-desc">15ペア（30枚）6列</div>
       </div>
       <div class="diff-card" data-diff="hard" onclick="selectDiff(this)">
-        <div class="diff-icon">💀</div><div class="diff-name">上級</div><div class="diff-desc">24ペア（48枚）</div>
+        <div class="diff-icon">💀</div><div class="diff-name">上級</div><div class="diff-desc">24ペア（48枚）8列</div>
       </div>
     </div>
     <p class="card-selector-label">使用するカードを選択（未選択の場合は全カードからランダム）</p>
@@ -995,7 +995,7 @@ async function doImport(){
 // ============================================================
 // GAME
 // ============================================================
-const DIFF={easy:{pairs:8,cols:4},normal:{pairs:15,cols:5},hard:{pairs:24,cols:6}};
+const DIFF={easy:{pairs:8,cols:4},normal:{pairs:15,cols:6},hard:{pairs:24,cols:8}};
 let selectedDiff='easy',gamePickerSelected=new Set(),gameState=null,gameTimer=null,gameSeconds=0,timeLimit=0;
 
 function selectDiff(el){document.querySelectorAll('.diff-card').forEach(d=>d.classList.remove('active'));el.classList.add('active');selectedDiff=el.dataset.diff;}
