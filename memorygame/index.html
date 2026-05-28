@@ -83,7 +83,7 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:focus{border-col
 .btn-success:hover{background:var(--success);color:#fff;}
 
 /* IMAGE EDITOR CANVAS */
-.img-editor-wrap{position:relative;width:var(--card-w-px);height:var(--card-h-px);border-radius:var(--card-radius);border:2px solid var(--border);overflow:hidden;background:var(--card-bg);cursor:grab;touch-action:none;user-select:none;flex-shrink:0;}
+.img-editor-wrap{position:relative;width:180px;height:252px;border-radius:var(--card-radius);border:2px solid var(--border);overflow:hidden;background:var(--card-bg);cursor:grab;touch-action:none;user-select:none;flex-shrink:0;}
 .img-editor-wrap:active{cursor:grabbing;}
 .img-editor-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;}
 
@@ -204,8 +204,19 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:focus{border-col
 .import-area:focus{border-color:var(--accent);}
 
 /* EDIT MODAL */
-.edit-modal-layout{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+.edit-modal-layout{display:flex;gap:20px;align-items:flex-start;}
 .edit-modal-preview{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;}
+.edit-card-wrap{position:relative;width:140px;height:196px;border-radius:var(--card-radius);border:2px solid var(--border);overflow:hidden;background:var(--card-bg);cursor:grab;touch-action:none;user-select:none;}
+.edit-card-wrap:active{cursor:grabbing;}
+.edit-card-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;}
+.edit-zoom-controls{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;}
+.edit-zoom-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);width:28px;height:28px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);transition:all 0.2s;flex-shrink:0;line-height:1;}
+.edit-zoom-btn:hover{border-color:var(--accent);color:var(--accent);}
+.edit-zoom-input-wrap{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.edit-zoom-input-wrap:focus-within{border-color:var(--accent);}
+.edit-zoom-input{width:44px;padding:4px 4px 4px 8px;font-size:12px;margin-bottom:0;text-align:right;background:transparent;border:none;outline:none;color:var(--text);}
+.edit-zoom-unit{font-size:12px;color:var(--muted);padding-right:6px;}
+.edit-modal-fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:0;}
 
 /* Long-press indicator ring */
 .card-item.pressing::after{
@@ -224,7 +235,6 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:focus{border-col
 @media(max-width:800px){
   .home-hero h1{font-size:30px;}
   .game-board{gap:5px;}
-  .edit-modal-layout{flex-direction:column;}
 }
 </style>
 </head>
@@ -384,31 +394,31 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:focus{border-col
   <div class="modal">
     <h3>✏️ カードを編集</h3>
     <div class="edit-modal-layout">
-      <!-- preview + zoom -->
+      <!-- left: preview + zoom -->
       <div class="edit-modal-preview">
-        <div style="font-size:12px;color:var(--muted);">プレビュー</div>
-        <div class="img-editor-wrap" id="editCanvas">
+        <div style="font-size:11px;color:var(--muted);">プレビュー</div>
+        <div class="edit-card-wrap" id="editCanvas">
           <canvas id="editFrontCanvas"></canvas>
         </div>
-        <div class="zoom-controls">
-          <button class="zoom-btn" onpointerdown="startEditZoomHold(-1)" onpointerup="stopEditZoomHold()" onpointerleave="stopEditZoomHold()">−</button>
-          <div class="zoom-input-wrap">
-            <input type="number" class="zoom-input" id="editZoomInput" value="100" min="10" max="1000" step="1" oninput="onEditZoomInputChange()" onchange="onEditZoomInputChange()">
-            <span class="zoom-unit">%</span>
+        <div class="edit-zoom-controls">
+          <button class="edit-zoom-btn" onpointerdown="startEditZoomHold(-1)" onpointerup="stopEditZoomHold()" onpointerleave="stopEditZoomHold()">−</button>
+          <div class="edit-zoom-input-wrap">
+            <input type="number" class="edit-zoom-input" id="editZoomInput" value="100" min="10" max="1000" step="1" oninput="onEditZoomInputChange()" onchange="onEditZoomInputChange()">
+            <span class="edit-zoom-unit">%</span>
           </div>
-          <button class="zoom-btn" onpointerdown="startEditZoomHold(1)" onpointerup="stopEditZoomHold()" onpointerleave="stopEditZoomHold()">＋</button>
-          <button class="btn" onclick="editResetTransform()" style="font-size:12px;padding:5px 10px;">リセット</button>
+          <button class="edit-zoom-btn" onpointerdown="startEditZoomHold(1)" onpointerup="stopEditZoomHold()" onpointerleave="stopEditZoomHold()">＋</button>
         </div>
+        <button class="btn" onclick="editResetTransform()" style="font-size:11px;padding:4px 10px;width:100%;">↺ リセット</button>
       </div>
-      <!-- fields -->
-      <div style="flex:1;min-width:200px;">
+      <!-- right: fields -->
+      <div class="edit-modal-fields">
         <label>カード名</label>
         <input type="text" id="editCardName" placeholder="カード名" maxlength="30">
         <label>新しい画像URL（変更する場合）</label>
         <input type="url" id="editCardUrl" placeholder="https://i.imgur.com/..." oninput="editLoadUrl()">
         <div class="upload-area" onclick="document.getElementById('editFileInput').click()">
           <input type="file" id="editFileInput" accept="image/*" onchange="editLoadFile(this)">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto;display:block;opacity:0.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto;display:block;opacity:0.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <p>クリックして新しい画像をアップロード</p>
         </div>
       </div>
@@ -534,8 +544,8 @@ function toast(msg,type=''){
 // ============================================================
 // IMAGE EDITOR FACTORY
 // ============================================================
-function makeImgEditor(canvasEl, wrapEl, onScaleChange) {
-  const W=180,H=252;
+function makeImgEditor(canvasEl, wrapEl, onScaleChange, W, H) {
+  W = W||180; H = H||252;
   canvasEl.width=W; canvasEl.height=H;
   const ctx=canvasEl.getContext('2d');
   let img=null, tx=0, ty=0, scale=1;
@@ -876,11 +886,12 @@ async function openEditModal(id, e){
   document.getElementById('editFileInput').value='';
   document.getElementById('editModal').classList.remove('hidden');
 
-  // init editor
+  // init editor with smaller card size (140x196 = same ratio 63.5:88.9)
   editEditor=makeImgEditor(
     document.getElementById('editFrontCanvas'),
     document.getElementById('editCanvas'),
-    pct=>{document.getElementById('editZoomInput').value=pct;}
+    pct=>{document.getElementById('editZoomInput').value=pct;},
+    140, 196
   );
   await editEditor.loadImage(card.image);
 }
