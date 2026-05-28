@@ -1103,26 +1103,50 @@ function renderBoard(deck,diff){
 
 function flipCard(idx){
   if(!gameState||gameState.locked)return;
-  if(gameState.matched.has(idx)||gameState.flipped.includes(idx)||gameState.flipped.length>=2)return;
+  // DOM-authoritative check: reject if visually already flipped or matched
   const el=document.querySelector(`[data-idx="${idx}"]`);
-  el.classList.add('flipped');gameState.flipped.push(idx);
+  if(!el)return;
+  if(el.classList.contains('flipped')||el.classList.contains('matched'))return;
+  if(gameState.matched.has(idx))return;
+  if(gameState.flipped.length>=2)return;
+
+  el.classList.add('flipped');
+  gameState.flipped.push(idx);
+
   if(gameState.flipped.length===2){
-    gameState.moves++;document.getElementById('hudMoves').textContent=gameState.moves;gameState.locked=true;
-    const[a,b]=gameState.flipped;const ca=gameState.deck[a],cb=gameState.deck[b];
+    // Lock immediately before any async, preventing double-click race
+    gameState.locked=true;
+    gameState.moves++;
+    document.getElementById('hudMoves').textContent=gameState.moves;
+    const[a,b]=gameState.flipped;
+    const ca=gameState.deck[a],cb=gameState.deck[b];
     if(ca._mk===cb._mk&&a!==b){
       setTimeout(()=>{
-        document.querySelector(`[data-idx="${a}"]`).classList.add('matched');
-        document.querySelector(`[data-idx="${b}"]`).classList.add('matched');
+        if(!gameState)return;
+        const ea=document.querySelector(`[data-idx="${a}"]`);
+        const eb=document.querySelector(`[data-idx="${b}"]`);
+        if(ea)ea.classList.add('matched');
+        if(eb)eb.classList.add('matched');
         gameState.matched.add(a);gameState.matched.add(b);
-        gameState.pairs++;document.getElementById('hudPairs').textContent=gameState.pairs;
+        gameState.pairs++;
+        document.getElementById('hudPairs').textContent=gameState.pairs;
         gameState.flipped=[];gameState.locked=false;
         if(gameState.pairs===gameState.diff.pairs){clearInterval(gameTimer);setTimeout(()=>showResult(true),600);}
       },600);
     }else{
       setTimeout(()=>{
-        [a,b].forEach(n=>{const e2=document.querySelector(`[data-idx="${n}"]`);if(e2){e2.classList.add('wrong');setTimeout(()=>e2.classList.remove('flipped','wrong'),400);}});
-        gameState.flipped=[];gameState.locked=false;
-      },1000);
+        if(!gameState)return;
+        const ea=document.querySelector(`[data-idx="${a}"]`);
+        const eb=document.querySelector(`[data-idx="${b}"]`);
+        if(ea)ea.classList.add('wrong');
+        if(eb)eb.classList.add('wrong');
+        // Unlock only AFTER DOM is fully reset — never before
+        setTimeout(()=>{
+          if(ea)ea.classList.remove('flipped','wrong');
+          if(eb)eb.classList.remove('flipped','wrong');
+          if(gameState){gameState.flipped=[];gameState.locked=false;}
+        },380);
+      },900);
     }
   }
 }
