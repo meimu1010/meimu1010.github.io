@@ -380,7 +380,17 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 <div class="modal-bg hidden" id="importModal">
   <div class="modal">
     <h3>カードをインポート</h3>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">エクスポートしたJSONを貼り付けてください</p>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">JSONファイルを選択するか、テキストを貼り付けてください</p>
+    <div class="upload-area" onclick="document.getElementById('importFileInput').click()" style="margin-bottom:12px;">
+      <input type="file" id="importFileInput" accept=".json,application/json" onchange="importFromFile(this)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto;display:block;opacity:0.6"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <p>クリックしてJSONファイルを選択</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+      <span style="font-size:12px;color:var(--muted);">または直接貼り付け</span>
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+    </div>
     <textarea class="import-area" id="importText" placeholder='[{"name":"...","image":"..."}]'></textarea>
     <div class="modal-footer">
       <button class="btn" onclick="closeImportModal()">キャンセル</button>
@@ -973,7 +983,22 @@ function doExportJSON(cards,label){
   toast(`${cards.length}枚をエクスポートしました`,'success');
 }
 function openImportModal(){document.getElementById('importModal').classList.remove('hidden');}
-function closeImportModal(){document.getElementById('importModal').classList.add('hidden');document.getElementById('importText').value='';}
+function closeImportModal(){
+  document.getElementById('importModal').classList.add('hidden');
+  document.getElementById('importText').value='';
+  document.getElementById('importFileInput').value='';
+}
+function importFromFile(input){
+  const file=input.files[0];
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    document.getElementById('importText').value=e.target.result;
+    toast(`「${file.name}」を読み込みました`);
+  };
+  r.onerror=()=>toast('ファイルの読み込みに失敗しました','error');
+  r.readAsText(file,'utf-8');
+}
 async function doImport(){
   const raw=document.getElementById('importText').value.trim();
   let imported;
