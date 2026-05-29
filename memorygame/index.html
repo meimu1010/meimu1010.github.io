@@ -162,16 +162,16 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 .game-board{display:grid;gap:8px;justify-content:center;margin:0 auto;}
 
 /* Card flip */
-.gc{perspective:1000px;cursor:pointer;}
-.gc-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);}
+.gc{cursor:pointer;position:relative;}
+.gc-inner{position:absolute;top:0;left:0;width:100%;height:100%;transform-style:preserve-3d;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);}
 .gc.flipped .gc-inner,.gc.matched .gc-inner{transform:rotateY(180deg);}
 .gc.matched .gc-front{border-color:var(--success);box-shadow:0 0 10px rgba(46,139,63,0.35);}
 .gc.wrong .gc-front{border-color:var(--danger);}
-.gc-front,.gc-back{border-radius:var(--card-radius);overflow:hidden;position:absolute;top:0;left:0;width:100%;height:100%;backface-visibility:hidden;border:2px solid var(--border);}
-.gc-front{transform:rotateY(180deg);background:var(--card-bg);}
+.gc-front,.gc-back{border-radius:var(--card-radius);position:absolute;top:0;left:0;width:100%;height:100%;-webkit-backface-visibility:hidden;backface-visibility:hidden;border:2px solid var(--border);}
+.gc-front{transform:rotateY(180deg);background:var(--card-bg);overflow:hidden;}
 .gc-front img{width:100%;height:calc(100% - 26px);object-fit:cover;display:block;}
 .gc-front .gc-label{height:26px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text);background:var(--surface);padding:0 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.gc-back{display:flex;align-items:center;justify-content:center;border-color:var(--accent);background:linear-gradient(135deg,var(--back-grad-1) 0%,var(--back-grad-2) 100%);}
+.gc-back{display:flex;align-items:center;justify-content:center;border-color:var(--accent);background:linear-gradient(135deg,var(--back-grad-1) 0%,var(--back-grad-2) 100%);overflow:hidden;}
 .gc-back-default{width:80%;height:80%;border:1px solid var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0.6;}
 
 /* RESULT OVERLAY */
@@ -1093,7 +1093,7 @@ function renderBoard(deck,diff){
   board.style.width=`${cw*diff.cols+gap*(diff.cols-1)}px`;
 
   board.innerHTML=deck.map((c,i)=>`
-    <div class="gc" data-idx="${i}" onclick="flipCard(${i})" style="width:${cw}px;height:${ch}px;">
+    <div class="gc" data-idx="${i}" onclick="flipCard(${i})" style="width:${cw}px;height:${ch}px;position:relative;">
       <div class="gc-inner">
         <div class="gc-back"><div class="gc-back-default"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color:var(--accent)"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div></div>
         <div class="gc-front"><img src="${c.image}" loading="lazy"><div class="gc-label">${escHtml(c.name)}</div></div>
