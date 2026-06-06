@@ -3,464 +3,485 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unicode 検字盤</title>
+<title>Unicode Inspector</title>
 <style>
   :root {
-    --bg-primary: #f8f9fa;
-    --bg-surface: #ffffff;
-    --text-primary: #202124;
-    --text-secondary: #5f6368;
-    --text-muted: #9aa0a6;
-    --border-light: #dadce0;
-    --border-medium: #c4c7c5;
-    --accent-blue: #1a73e8;
-    --accent-blue-hover: #1557b0;
-    --accent-red: #ea4335;
-    --accent-red-light: #fce8e6;
-    --accent-red-border: #f28b82;
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
-    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --bg: #f5f4f0;
+    --bg2: #ffffff;
+    --bg3: #eeecea;
+    --bg4: #e4e2de;
+    --border: #dddbd6;
+    --border2: #c8c5bf;
+    --text: #1a1916;
+    --text2: #5a5750;
+    --text3: #9a9790;
+    --accent: #5046e4;
+    --accent2: #6c62f0;
+    --accent-glow: rgba(80,70,228,0.10);
+
+    /* category colors */
+    --col-hiragana: #1a8c5e;
+    --col-katakana: #1478a0;
+    --col-alpha: #1a1916;
+    --col-digit: #1a1916;
+    --col-kanji: #6040c0;
+    --col-symbol: #1a1916;
+    --col-rare: #d41000;
+    --col-warn: #c47000;
+
+    --glow-hiragana: rgba(26,140,94,0.08);
+    --glow-katakana: rgba(20,120,160,0.08);
+    --glow-alpha: rgba(26,25,22,0.03);
+    --glow-digit: rgba(26,25,22,0.03);
+    --glow-kanji: rgba(96,64,192,0.08);
+    --glow-symbol: rgba(26,25,22,0.03);
+    --glow-rare: rgba(212,16,0,0.10);
+    --glow-warn: rgba(196,112,0,0.10);
   }
 
-  * { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
-  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+                 "Yu Gothic UI", "Yu Gothic", "Meiryo UI", "Meiryo", "Segoe UI", sans-serif;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    line-height: 1.5;
+  }
+
+  /* ── SUBTLE LIGHT TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse at 15% 50%, rgba(80,70,228,0.04) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 15%, rgba(26,140,94,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
   }
 
   /* ── HEADER ── */
   header {
-    background: var(--bg-surface);
-    padding: 1.25rem 2rem;
-    border-bottom: 1px solid var(--border-light);
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
+    padding: 2rem 2.5rem 1.4rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(80,70,228,0.04) 0%, transparent 100%);
+    position: relative;
+    flex-shrink: 0;
   }
 
-  .header-content {
+  .header-top {
     display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: .8rem;
+  }
+
+  .logo-mark {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: -.02em;
+    background: var(--accent-glow);
+    flex-shrink: 0;
   }
 
   h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--text-primary);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: var(--text);
+    line-height: 1;
   }
 
-  .subtitle {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+  h1 span {
+    color: var(--text3);
     font-weight: 400;
+    font-size: .75rem;
+    letter-spacing: .06em;
+    margin-left: .6rem;
+    vertical-align: middle;
   }
 
-  .controls {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: 20px;
-    font-size: 0.875rem;
-    color: var(--text-primary);
-  }
-
-  /* ── TOGGLE SWITCH ── */
-  .switch {
-    position: relative;
-    width: 36px;
-    height: 20px;
-  }
-
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: var(--border-medium);
-    transition: var(--transition);
-    border-radius: 20px;
-  }
-
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
-    transition: var(--transition);
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  }
-
-  input:checked + .slider {
-    background-color: var(--accent-red);
-  }
-
-  input:checked + .slider:before {
-    transform: translateX(16px);
+  .version-badge {
+    margin-left: auto;
+    padding: 3px 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 100px;
+    font-size: .65rem;
+    color: var(--text3);
+    letter-spacing: .1em;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
   }
 
   /* ── INPUT SECTION ── */
   .input-section {
-    padding: 1.5rem 2rem;
-    background: var(--bg-surface);
-    border-bottom: 1px solid var(--border-light);
+    padding: 1.5rem 2.5rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
   }
 
-  .input-container {
+  .input-wrap {
+    position: relative;
     display: flex;
-    gap: 0.75rem;
+    align-items: stretch;
+    gap: 0;
+    border: 1.5px solid var(--border2);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg2);
+    transition: border-color .15s, box-shadow .15s;
     max-width: 800px;
-    margin-bottom: 0.75rem;
+  }
+
+  .input-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
   }
 
   #txt {
     flex: 1;
-    font-size: 1.1rem;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
+    background: #fff;
+    border: none;
     outline: none;
-    transition: var(--transition);
+    color: var(--text);
     font-family: inherit;
-    background: var(--bg-surface);
+    font-size: 1.05rem;
+    padding: .75rem 1.1rem;
+    min-width: 0;
+    line-height: 1.5;
   }
 
-  #txt:focus {
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
-  }
-
-  #txt::placeholder {
-    color: var(--text-muted);
-  }
+  #txt::placeholder { color: var(--text3); }
 
   #btn-clear {
-    padding: 0 1.25rem;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
+    padding: 0 1.1rem;
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--border);
+    color: var(--text3);
     cursor: pointer;
-    font-weight: 500;
-    transition: var(--transition);
+    font-family: inherit;
+    font-size: .75rem;
+    letter-spacing: .05em;
     white-space: nowrap;
+    transition: color .15s, background .15s;
   }
 
-  #btn-clear:hover {
-    background: var(--border-light);
-    border-color: var(--border-medium);
-  }
+  #btn-clear:hover { color: var(--text); background: var(--bg3); }
 
-  .meta-info {
+  .meta-strip {
     display: flex;
     gap: 1.5rem;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
-    flex-wrap: wrap;
+    margin-top: .65rem;
+    font-size: .7rem;
+    color: var(--text3);
+    font-variant-numeric: tabular-nums;
   }
 
-  .meta-info strong {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
+  .meta-strip .val { color: var(--text2); font-weight: 600; margin-left: .2rem; }
 
-  /* ── MAIN CONTENT ── */
+  /* ── MAIN GRID ── */
   main {
-    padding: 2rem;
     flex: 1;
+    padding: 1.5rem 2.5rem 3rem;
+    overflow-y: auto;
   }
 
   #grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
   }
 
-  /* ── CHARACTER CARDS ── */
+  /* ── CARD ── */
   .card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
     overflow: hidden;
-    transition: var(--transition);
     display: flex;
     flex-direction: column;
-    box-shadow: var(--shadow-sm);
+    transition: transform .12s, box-shadow .12s, border-color .12s;
+    position: relative;
   }
 
   .card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--border-medium);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+    border-color: var(--border2);
+    z-index: 1;
   }
 
-  .card.rare-highlight {
-    background-color: var(--accent-red-light);
-    border-color: var(--accent-red-border);
+  /* category accent line at top */
+  .card::before {
+    content: '';
+    display: block;
+    height: 3px;
+    background: var(--cat-color, var(--border));
+    opacity: .35;
+    flex-shrink: 0;
+    transition: opacity .2s;
   }
 
-  .card.rare-highlight:hover {
-    border-color: var(--accent-red);
-  }
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
-    background: var(--bg-primary);
-    border-bottom: 1px solid var(--border-light);
-    font-family: ui-monospace, monospace;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-  }
-
-  .card.rare-highlight .card-header {
-    background: rgba(234, 67, 53, 0.05);
-    border-bottom-color: var(--accent-red-border);
+  /* when highlight is on, warn/rare cards get a stronger accent line */
+  body.hl-on .card[data-cat="warn"]::before,
+  body.hl-on .card[data-cat="rare"]::before {
+    opacity: 1;
   }
 
   .card-index {
-    font-weight: 600;
-  }
-
-  .card-bytes {
-    color: var(--text-muted);
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: .58rem;
+    color: var(--text3);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
   }
 
   .card-glyph {
-    font-size: 2.25rem;
-    text-align: center;
-    padding: 1.25rem 0.5rem;
-    color: var(--text-primary);
+    min-height: 72px;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 80px;
+    font-size: 2.2rem;
+    color: var(--cat-color, var(--text));
+    background: var(--cat-glow, transparent);
+    padding: .8rem .4rem .5rem;
     line-height: 1;
-    background: var(--bg-surface);
-  }
-
-  .card.rare-highlight .card-glyph {
-    color: var(--accent-red);
-    background: var(--accent-red-light);
+    border-bottom: 1px solid var(--border);
+    transition: background .2s, color .2s;
   }
 
   .card-glyph.ctrl {
-    font-family: ui-monospace, monospace;
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    font-weight: 600;
+    font-size: .72rem;
+    color: var(--text3);
+    letter-spacing: .06em;
   }
 
   .card-info {
-    padding: 0.75rem;
-    border-top: 1px solid var(--border-light);
-    background: var(--bg-surface);
-    flex: 1;
-  }
-
-  .card.rare-highlight .card-info {
-    background: var(--accent-red-light);
-    border-top-color: var(--accent-red-border);
+    padding: .5rem .65rem .35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
   }
 
   .card-codepoint {
-    font-family: ui-monospace, monospace;
-    font-size: 0.875rem;
+    font-size: .82rem;
     font-weight: 700;
-    color: var(--accent-blue);
-    display: block;
-    margin-bottom: 0.25rem;
+    color: var(--cat-color, var(--accent2));
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .02em;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
   }
 
-  .card.rare-highlight .card-codepoint {
-    color: var(--accent-red);
-  }
-
-  .card-decimal {
-    font-family: ui-monospace, monospace;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    display: block;
-    margin-bottom: 0.25rem;
+  .card-dec {
+    font-size: .62rem;
+    color: var(--text3);
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
   }
 
   .card-name {
-    font-size: 0.7rem;
-    color: var(--text-secondary);
-    display: block;
+    font-size: .6rem;
+    color: var(--text3);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-top: 2px;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: .04em;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
+  }
+
+  .card-cat {
+    font-size: .58rem;
+    color: var(--cat-color, var(--text3));
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-top: 2px;
+    opacity: .8;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
   }
 
   .copy-btn {
     width: 100%;
-    padding: 0.625rem 0;
-    background: var(--bg-primary);
+    padding: 5px 0;
+    background: transparent;
     border: none;
-    border-top: 1px solid var(--border-light);
+    border-top: 1px solid var(--border);
+    color: var(--text3);
     cursor: pointer;
-    font-size: 0.8rem;
-    color: var(--text-primary);
-    transition: var(--transition);
-    font-weight: 500;
+    font-family: inherit;
+    font-size: .62rem;
+    letter-spacing: .06em;
+    transition: background .12s, color .12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
   }
 
-  .card.rare-highlight .copy-btn {
-    border-top-color: var(--accent-red-border);
-    background: rgba(234, 67, 53, 0.05);
-  }
+  .copy-btn:hover { background: var(--bg4); color: var(--text); }
+  .copy-btn.copied { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-  .copy-btn:hover {
-    background: var(--accent-blue);
-    color: white;
-  }
-
-  .card.rare-highlight .copy-btn:hover {
-    background: var(--accent-red);
-    color: white;
-  }
-
-  .copy-btn.copied {
-    background: #34a853;
-    color: white;
-  }
+  /* ── HIDDEN CARD (filtered) ── */
+  .card.hidden { display: none; }
 
   /* ── EMPTY STATE ── */
-  #empty {
+  .empty-state {
     grid-column: 1 / -1;
-    padding: 4rem 0;
+    padding: 5rem 0;
     text-align: center;
-    color: var(--text-muted);
-    font-size: 1rem;
+    color: var(--text3);
+  }
+
+  .empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: .4;
+  }
+
+  .empty-text {
+    font-size: .9rem;
+    letter-spacing: .04em;
+    margin-bottom: .4rem;
+  }
+
+  .empty-sub {
+    font-size: .7rem;
+    letter-spacing: .08em;
   }
 
   /* ── FOOTER ── */
   footer {
-    background: var(--bg-surface);
-    border-top: 1px solid var(--border-light);
-    padding: 1rem 2rem;
+    border-top: 1px solid var(--border);
+    padding: .8rem 2.5rem;
+    background: var(--bg2);
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: .7rem;
+    flex-shrink: 0;
     flex-wrap: wrap;
-    gap: 1rem;
   }
 
   .footer-info {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+    font-size: .65rem;
+    color: var(--text3);
+    letter-spacing: .06em;
+  }
+
+  /* ── HIGHLIGHT TOGGLE BUTTON (header) ── */
+  #btn-highlight {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    padding: 5px 13px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border2);
+    background: var(--bg3);
+    color: var(--text2);
+    font-family: inherit;
+    font-size: .7rem;
+    letter-spacing: .04em;
+    cursor: pointer;
+    transition: all .18s;
+    user-select: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  #btn-highlight .hl-dots {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+
+  #btn-highlight .hl-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    opacity: .3;
+    transition: opacity .18s;
+  }
+
+  #btn-highlight.on .hl-dot { opacity: 1; }
+
+  #btn-highlight.on {
+    border-color: var(--border2);
+    background: var(--bg2);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   }
 
   #copy-all-btn {
-    padding: 0.5rem 1rem;
-    background: var(--accent-blue);
-    color: white;
-    border: none;
-    border-radius: var(--radius-sm);
+    margin-left: auto;
+    padding: 6px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text2);
+    font-family: inherit;
+    font-size: .68rem;
+    letter-spacing: .06em;
     cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: var(--transition);
+    transition: all .12s;
   }
 
-  #copy-all-btn:hover {
-    background: var(--accent-blue-hover);
-  }
+  #copy-all-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-  /* ── RESPONSIVE ── */
-  @media (max-width: 768px) {
-    header {
-      padding: 1rem;
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .input-section {
-      padding: 1rem;
-    }
-
-    main {
-      padding: 1rem;
-    }
-
-    #grid {
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 0.75rem;
-    }
-
-    .meta-info {
-      font-size: 0.8rem;
-    }
-  }
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="header-content">
-    <h1>Unicode Inspector</h1>
-    <span class="subtitle">文字 → 符号点</span>
-  </div>
-  <div class="controls">
-    <label class="switch">
-      <input type="checkbox" id="toggle-rare">
-      <span class="slider"></span>
-    </label>
-    <span>レア文字をハイライト</span>
+  <div class="header-top">
+    <div class="logo-mark">U+</div>
+    <div>
+      <h1>Unicode Inspector <span>文字符号点ビューア</span></h1>
+    </div>
+    <button id="btn-highlight">
+      <span class="hl-dots">
+        <span class="hl-dot" style="background:#c47000"></span>
+        <span class="hl-dot" style="background:#d41000"></span>
+      </span>
+      ハイライト
+    </button>
+    <div class="version-badge">Unicode 15.1</div>
   </div>
 </header>
 
 <div class="input-section">
-  <div class="input-container">
-    <input id="txt" type="text" placeholder="文字を入力してください..." autocomplete="off" spellcheck="false" />
-    <button id="btn-clear">クリア</button>
+  <div class="input-wrap">
+    <input id="txt" type="text" placeholder="文字を入力… 例: あいうえお ABC 123 漢字 🎉" autocomplete="off" spellcheck="false" />
+    <button id="btn-clear">消去 ×</button>
   </div>
-  <div class="meta-info">
-    <span>文字数: <strong id="cnt-char">0</strong></span>
-    <span>コードポイント: <strong id="cnt-cp">0</strong></span>
-    <span>UTF-8バイト: <strong id="cnt-byte">0</strong></span>
-    <span>レア文字: <strong id="cnt-rare">0</strong></span>
+  <div class="meta-strip">
+    <span>文字数<span class="val" id="cnt-char">0</span></span>
+    <span>コードポイント<span class="val" id="cnt-cp">0</span></span>
+    <span>UTF-8バイト<span class="val" id="cnt-byte">0</span></span>
   </div>
 </div>
 
 <main>
   <div id="grid">
-    <div id="empty">文字列を入力するとここに展開されます</div>
+    <div class="empty-state">
+      <div class="empty-icon">⌨</div>
+      <div class="empty-text">文字列を入力してください</div>
+      <div class="empty-sub">1文字ずつ Unicode コードポイントを表示します</div>
+    </div>
   </div>
 </main>
 
@@ -470,295 +491,330 @@
 </footer>
 
 <script>
-// Unicode文字名データベース（基本的なもの）
-const UNICODE_NAMES = {
-  0x0009:'HORIZONTAL TAB', 0x000A:'LINE FEED', 0x000D:'CARRIAGE RETURN',
-  0x0020:'SPACE', 0x0021:'EXCLAMATION MARK', 0x0022:'QUOTATION MARK',
-  0x0023:'NUMBER SIGN', 0x0024:'DOLLAR SIGN', 0x0025:'PERCENT SIGN',
-  0x0026:'AMPERSAND', 0x0027:'APOSTROPHE', 0x0028:'LEFT PARENTHESIS',
-  0x0029:'RIGHT PARENTHESIS', 0x002A:'ASTERISK', 0x002B:'PLUS SIGN',
-  0x002C:'COMMA', 0x002D:'HYPHEN-MINUS', 0x002E:'FULL STOP',
-  0x002F:'SOLIDUS', 0x003A:'COLON', 0x003B:'SEMICOLON',
-  0x003C:'LESS-THAN SIGN', 0x003D:'EQUALS SIGN', 0x003E:'GREATER-THAN SIGN',
-  0x003F:'QUESTION MARK', 0x0040:'COMMERCIAL AT',
-  0x005B:'LEFT SQUARE BRACKET', 0x005C:'REVERSE SOLIDUS', 0x005D:'RIGHT SQUARE BRACKET',
-  0x005E:'CIRCUMFLEX ACCENT', 0x005F:'LOW LINE', 0x0060:'GRAVE ACCENT',
-  0x007B:'LEFT CURLY BRACKET', 0x007C:'VERTICAL LINE', 0x007D:'RIGHT CURLY BRACKET',
-  0x007E:'TILDE', 0x00A0:'NO-BREAK SPACE', 0x00A5:'YEN SIGN',
-  0x3000:'IDEOGRAPHIC SPACE', 0x3001:'IDEOGRAPHIC COMMA', 0x3002:'IDEOGRAPHIC FULL STOP',
-  0x300C:'LEFT CORNER BRACKET', 0x300D:'RIGHT CORNER BRACKET',
+// ── UNICODE NAME TABLE ──
+const NAMES = {
+  0x0009:'HORIZONTAL TAB',0x000A:'LINE FEED',0x000D:'CARRIAGE RETURN',
+  0x0020:'SPACE',0x0021:'EXCLAMATION MARK',0x0022:'QUOTATION MARK',
+  0x0023:'NUMBER SIGN',0x0024:'DOLLAR SIGN',0x0025:'PERCENT SIGN',
+  0x0026:'AMPERSAND',0x0027:'APOSTROPHE',0x0028:'LEFT PARENTHESIS',
+  0x0029:'RIGHT PARENTHESIS',0x002A:'ASTERISK',0x002B:'PLUS SIGN',
+  0x002C:'COMMA',0x002D:'HYPHEN-MINUS',0x002E:'FULL STOP',
+  0x002F:'SOLIDUS',0x0030:'DIGIT ZERO',0x0031:'DIGIT ONE',
+  0x0032:'DIGIT TWO',0x0033:'DIGIT THREE',0x0034:'DIGIT FOUR',
+  0x0035:'DIGIT FIVE',0x0036:'DIGIT SIX',0x0037:'DIGIT SEVEN',
+  0x0038:'DIGIT EIGHT',0x0039:'DIGIT NINE',0x003A:'COLON',
+  0x003B:'SEMICOLON',0x003C:'LESS-THAN SIGN',0x003D:'EQUALS SIGN',
+  0x003E:'GREATER-THAN SIGN',0x003F:'QUESTION MARK',0x0040:'COMMERCIAL AT',
+  0x0041:'LATIN CAPITAL A',0x0042:'LATIN CAPITAL B',0x0043:'LATIN CAPITAL C',
+  0x0044:'LATIN CAPITAL D',0x0045:'LATIN CAPITAL E',0x0046:'LATIN CAPITAL F',
+  0x0047:'LATIN CAPITAL G',0x0048:'LATIN CAPITAL H',0x0049:'LATIN CAPITAL I',
+  0x004A:'LATIN CAPITAL J',0x004B:'LATIN CAPITAL K',0x004C:'LATIN CAPITAL L',
+  0x004D:'LATIN CAPITAL M',0x004E:'LATIN CAPITAL N',0x004F:'LATIN CAPITAL O',
+  0x0050:'LATIN CAPITAL P',0x0051:'LATIN CAPITAL Q',0x0052:'LATIN CAPITAL R',
+  0x0053:'LATIN CAPITAL S',0x0054:'LATIN CAPITAL T',0x0055:'LATIN CAPITAL U',
+  0x0056:'LATIN CAPITAL V',0x0057:'LATIN CAPITAL W',0x0058:'LATIN CAPITAL X',
+  0x0059:'LATIN CAPITAL Y',0x005A:'LATIN CAPITAL Z',
+  0x005B:'LEFT SQUARE BRACKET',0x005C:'REVERSE SOLIDUS',0x005D:'RIGHT SQUARE BRACKET',
+  0x005E:'CIRCUMFLEX ACCENT',0x005F:'LOW LINE',0x0060:'GRAVE ACCENT',
+  0x0061:'LATIN SMALL A',0x0062:'LATIN SMALL B',0x0063:'LATIN SMALL C',
+  0x0064:'LATIN SMALL D',0x0065:'LATIN SMALL E',0x0066:'LATIN SMALL F',
+  0x0067:'LATIN SMALL G',0x0068:'LATIN SMALL H',0x0069:'LATIN SMALL I',
+  0x006A:'LATIN SMALL J',0x006B:'LATIN SMALL K',0x006C:'LATIN SMALL L',
+  0x006D:'LATIN SMALL M',0x006E:'LATIN SMALL N',0x006F:'LATIN SMALL O',
+  0x0070:'LATIN SMALL P',0x0071:'LATIN SMALL Q',0x0072:'LATIN SMALL R',
+  0x0073:'LATIN SMALL S',0x0074:'LATIN SMALL T',0x0075:'LATIN SMALL U',
+  0x0076:'LATIN SMALL V',0x0077:'LATIN SMALL W',0x0078:'LATIN SMALL X',
+  0x0079:'LATIN SMALL Y',0x007A:'LATIN SMALL Z',
+  0x007B:'LEFT CURLY BRACKET',0x007C:'VERTICAL LINE',0x007D:'RIGHT CURLY BRACKET',
+  0x007E:'TILDE',0x00A0:'NO-BREAK SPACE',0x00A5:'YEN SIGN',
+  0x00AB:'LEFT GUILLEMET',0x00BB:'RIGHT GUILLEMET',
+  0x00D7:'MULTIPLICATION SIGN',0x00F7:'DIVISION SIGN',
+  0x2018:'LEFT SINGLE QUOTATION MARK',0x2019:'RIGHT SINGLE QUOTATION MARK',
+  0x201C:'LEFT DOUBLE QUOTATION MARK',0x201D:'RIGHT DOUBLE QUOTATION MARK',
+  0x2026:'HORIZONTAL ELLIPSIS',0x2014:'EM DASH',0x2013:'EN DASH',
+  0x2022:'BULLET',0x2192:'RIGHTWARDS ARROW',0x2190:'LEFTWARDS ARROW',
+  0x2191:'UPWARDS ARROW',0x2193:'DOWNWARDS ARROW',
+  0x2260:'NOT EQUAL TO',0x2264:'LESS-THAN OR EQUAL TO',0x2265:'GREATER-THAN OR EQUAL TO',
+  0x3000:'IDEOGRAPHIC SPACE',0x3001:'IDEOGRAPHIC COMMA',0x3002:'IDEOGRAPHIC FULL STOP',
+  0x300C:'LEFT CORNER BRACKET',0x300D:'RIGHT CORNER BRACKET',
+  0x300E:'LEFT WHITE CORNER BRACKET',0x300F:'RIGHT WHITE CORNER BRACKET',
+  0x3010:'LEFT BLACK LENTICULAR BRACKET',0x3011:'RIGHT BLACK LENTICULAR BRACKET',
   0x30FC:'KATAKANA-HIRAGANA PROLONGED SOUND MARK',
+  0xFF01:'FULLWIDTH EXCLAMATION MARK',0xFF08:'FULLWIDTH LEFT PARENTHESIS',
+  0xFF09:'FULLWIDTH RIGHT PARENTHESIS',0xFF0C:'FULLWIDTH COMMA',
+  0xFF0E:'FULLWIDTH FULL STOP',0xFF1A:'FULLWIDTH COLON',
+  0xFF1F:'FULLWIDTH QUESTION MARK',
 };
 
-// 制御文字ラベル
-const CONTROL_LABELS = {
-  0x0009:'[TAB]', 0x000A:'[LF]', 0x000D:'[CR]', 
-  0x0020:'[SP]', 0x00A0:'[NBSP]',
+function getName(cp) {
+  if (NAMES[cp]) return NAMES[cp];
+  if (cp >= 0x3041 && cp <= 0x3096) {
+    const HNAMES = ['SMALL A','A','SMALL I','I','SMALL U','U','SMALL E','E','SMALL O','O',
+      'KA','GA','KI','GI','KU','GU','KE','GE','KO','GO','SA','ZA','SI','ZI','SU','ZU',
+      'SE','ZE','SO','ZO','TA','DA','TI','DI','SMALL TU','TU','DU','TE','DE','TO','DO',
+      'NA','NI','NU','NE','NO','HA','BA','PA','HI','BI','PI','HU','BU','PU','HE','BE',
+      'PE','HO','BO','PO','MA','MI','MU','ME','MO','SMALL YA','YA','SMALL YU','YU',
+      'SMALL YO','YO','RA','RI','RU','RE','RO','SMALL WA','WA','WI','WE','WO','N','VU'];
+    const idx = cp - 0x3041;
+    return 'HIRAGANA ' + (HNAMES[idx] || '');
+  }
+  if (cp >= 0x30A1 && cp <= 0x30FF) {
+    const KNAMES = ['SMALL A','A','SMALL I','I','SMALL U','U','SMALL E','E','SMALL O','O',
+      'KA','GA','KI','GI','KU','GU','KE','GE','KO','GO','SA','ZA','SI','ZI','SU','ZU',
+      'SE','ZE','SO','ZO','TA','DA','TI','DI','SMALL TU','TU','DU','TE','DE','TO','DO',
+      'NA','NI','NU','NE','NO','HA','BA','PA','HI','BI','PI','HU','BU','PU','HE','BE',
+      'PE','HO','BO','PO','MA','MI','MU','ME','MO','SMALL YA','YA','SMALL YU','YU',
+      'SMALL YO','YO','RA','RI','RU','RE','RO','SMALL WA','WA','WI','WE','WO','N','VU',
+      '','','','','','','','','','','','','PROLONGED SOUND MARK','ITERATION MARK','VOICED ITERATION MARK'];
+    const idx = cp - 0x30A1;
+    return 'KATAKANA ' + (KNAMES[idx] || '');
+  }
+  if (cp >= 0xFF65 && cp <= 0xFF9F) return 'HALFWIDTH KATAKANA';
+  if (cp >= 0xFF10 && cp <= 0xFF19) return 'FULLWIDTH DIGIT ' + String.fromCodePoint(cp - 0xFF10 + 0x30);
+  if (cp >= 0xFF21 && cp <= 0xFF3A) return 'FULLWIDTH LATIN CAPITAL ' + String.fromCodePoint(cp - 0xFF21 + 0x41);
+  if (cp >= 0xFF41 && cp <= 0xFF5A) return 'FULLWIDTH LATIN SMALL ' + String.fromCodePoint(cp - 0xFF41 + 0x61);
+  if (cp >= 0x4E00 && cp <= 0x9FFF) return 'CJK UNIFIED IDEOGRAPH';
+  if (cp >= 0xF900 && cp <= 0xFAFF) return 'CJK COMPATIBILITY IDEOGRAPH';
+  if (cp >= 0x20000 && cp <= 0x2A6DF) return 'CJK EXTENSION B';
+  if (cp >= 0x3400 && cp <= 0x4DBF) return 'CJK EXTENSION A';
+  if (cp >= 0x1F600 && cp <= 0x1F64F) return 'EMOTICONS';
+  if (cp >= 0x1F300 && cp <= 0x1F5FF) return 'MISC SYMBOLS & PICTOGRAPHS';
+  if (cp >= 0x1F900 && cp <= 0x1F9FF) return 'SUPPLEMENTAL SYMBOLS';
+  if (cp >= 0x0080 && cp <= 0x00FF) return 'LATIN-1 SUPPLEMENT';
+  if (cp >= 0x0100 && cp <= 0x017F) return 'LATIN EXTENDED-A';
+  if (cp >= 0x0400 && cp <= 0x04FF) return 'CYRILLIC';
+  if (cp >= 0x0600 && cp <= 0x06FF) return 'ARABIC';
+  if (cp >= 0xAC00 && cp <= 0xD7AF) return 'HANGUL SYLLABLE';
+  return 'UNKNOWN';
+}
+
+// ── CATEGORY CLASSIFIER ──
+// Returns: 'hiragana' | 'katakana' | 'alpha' | 'digit' | 'kanji' | 'symbol' | 'warn' | 'rare'
+function getCategory(cp) {
+  // ひらがな (通常)
+  if (cp >= 0x3041 && cp <= 0x3096) return 'hiragana';
+  // カタカナ (全角、通常)
+  if (cp >= 0x30A1 && cp <= 0x30FF) return 'katakana';
+  // 英字 ASCII
+  if ((cp >= 0x0041 && cp <= 0x005A) || (cp >= 0x0061 && cp <= 0x007A)) return 'alpha';
+  // 数字 ASCII
+  if (cp >= 0x0030 && cp <= 0x0039) return 'digit';
+  // 漢字
+  if ((cp >= 0x4E00 && cp <= 0x9FFF) ||
+      (cp >= 0x3400 && cp <= 0x4DBF) ||
+      (cp >= 0xF900 && cp <= 0xFAFF) ||
+      (cp >= 0x20000 && cp <= 0x2A6DF)) return 'kanji';
+  // 半角カタカナ → 黄 (warn)
+  if (cp >= 0xFF65 && cp <= 0xFF9F) return 'warn';
+  // 全角英字 → 黄 (warn)
+  if ((cp >= 0xFF21 && cp <= 0xFF3A) || (cp >= 0xFF41 && cp <= 0xFF5A)) return 'warn';
+  // 全角数字 → 黄 (warn)
+  if (cp >= 0xFF10 && cp <= 0xFF19) return 'warn';
+  // 全角記号類（FF01–FF60）→ 黄 (warn)
+  if (cp >= 0xFF01 && cp <= 0xFF60) return 'warn';
+  // ASCII 記号・スペース・制御
+  if (cp <= 0x007E) return 'symbol';
+  // 日本語句読点・括弧類
+  if ((cp >= 0x3000 && cp <= 0x303F) || (cp >= 0xFE30 && cp <= 0xFE4F)) return 'symbol';
+  // Latin-1 (normal diacritics)
+  if (cp >= 0x00C0 && cp <= 0x00FF) return 'alpha';
+  // その他 → rare (赤)
+  return 'rare';
+}
+
+const CAT_LABELS = {
+  hiragana: 'ひらがな',
+  katakana: 'カタカナ',
+  alpha:    '英字',
+  digit:    '数字',
+  kanji:    '漢字',
+  symbol:   '記号',
+  warn:     '全角/半角',
+  rare:     'その他',
 };
 
-/**
- * 一般的な文字かどうかを判定
- * true: ひらがな・カタカナ・英数字・常用漢字・基本記号
- * false: それ以外（レア文字）
- */
-function isCommonCharacter(codePoint) {
-  // 基本ASCII文字（英数字・基本記号）
-  if (codePoint >= 0x0020 && codePoint <= 0x007E) return true;
-  
-  // 改行・タブ（よく使う制御文字）
-  if ([0x0009, 0x000A, 0x000D].includes(codePoint)) return true;
-  
-  // ひらがな
-  if (codePoint >= 0x3040 && codePoint <= 0x309F) return true;
-  
-  // カタカナ
-  if (codePoint >= 0x30A0 && codePoint <= 0x30FF) return true;
-  
-  // CJK統合漢字（常用漢字を含む一般的な漢字範囲）
-  if (codePoint >= 0x4E00 && codePoint <= 0x9FFF) return true;
-  
-  // 全角英数字・記号
-  if (codePoint >= 0xFF01 && codePoint <= 0xFF5E) return true;
-  
-  // 日本語句読点・記号
-  if (codePoint >= 0x3000 && codePoint <= 0x303F) return true;
-  
-  // よく使う記号類
-  const commonSymbols = [
-    0x00A0, 0x00A5, 0x2013, 0x2014, 0x2018, 0x2019, 
-    0x201C, 0x201D, 0x2022, 0x2026, 0x2190, 0x2191, 
-    0x2192, 0x2193, 0x2260, 0x2264, 0x2265
-  ];
-  if (commonSymbols.includes(codePoint)) return true;
-  
-  return false;
-}
+const CAT_CSS_VARS = {
+  hiragana: { color: 'var(--col-hiragana)', glow: 'var(--glow-hiragana)' },
+  katakana: { color: 'var(--col-katakana)', glow: 'var(--glow-katakana)' },
+  alpha:    { color: 'var(--col-alpha)',     glow: 'var(--glow-alpha)'    },
+  digit:    { color: 'var(--col-digit)',     glow: 'var(--glow-digit)'    },
+  kanji:    { color: 'var(--col-kanji)',     glow: 'var(--glow-kanji)'    },
+  symbol:   { color: 'var(--col-symbol)',    glow: 'var(--glow-symbol)'   },
+  warn:     { color: 'var(--col-warn)',      glow: 'var(--glow-warn)'     },
+  rare:     { color: 'var(--col-rare)',      glow: 'var(--glow-rare)'     },
+};
 
-/**
- * Unicode文字名を取得
- */
-function getCharacterName(codePoint) {
-  if (UNICODE_NAMES[codePoint]) {
-    return UNICODE_NAMES[codePoint];
-  }
-  
-  // 数字
-  if (codePoint >= 0x0030 && codePoint <= 0x0039) {
-    return `DIGIT ${String.fromCodePoint(codePoint)}`;
-  }
-  
-  // 英大文字
-  if (codePoint >= 0x0041 && codePoint <= 0x005A) {
-    return `LATIN CAPITAL LETTER ${String.fromCodePoint(codePoint)}`;
-  }
-  
-  // 英小文字
-  if (codePoint >= 0x0061 && codePoint <= 0x007A) {
-    return `LATIN SMALL LETTER ${String.fromCodePoint(codePoint).toUpperCase()}`;
-  }
-  
-  // ひらがな
-  if (codePoint >= 0x3040 && codePoint <= 0x309F) {
-    return 'HIRAGANA';
-  }
-  
-  // カタカナ
-  if (codePoint >= 0x30A0 && codePoint <= 0x30FF) {
-    return 'KATAKANA';
-  }
-  
-  // CJK漢字
-  if (codePoint >= 0x4E00 && codePoint <= 0x9FFF) {
-    return 'CJK UNIFIED IDEOGRAPH';
-  }
-  
-  // 絵文字
-  if (codePoint >= 0x1F600 && codePoint <= 0x1F64F) {
-    return 'EMOTICON';
-  }
-  
-  if (codePoint >= 0x1F300 && codePoint <= 0x1F5FF) {
-    return 'MISC SYMBOL';
-  }
-  
-  return 'UNKNOWN CHARACTER';
-}
-
-/**
- * UTF-8バイト数を計算
- */
-function calculateUtf8Bytes(codePoint) {
-  if (codePoint < 0x80) return 1;
-  if (codePoint < 0x800) return 2;
-  if (codePoint < 0x10000) return 3;
+function toUtf8Bytes(cp) {
+  if (cp < 0x80) return 1;
+  if (cp < 0x800) return 2;
+  if (cp < 0x10000) return 3;
   return 4;
 }
 
-/**
- * 制御文字かどうかを判定
- */
-function isControlCharacter(codePoint) {
-  return codePoint < 0x20 || (codePoint >= 0x7F && codePoint <= 0x9F);
+function isControl(cp) {
+  return cp < 0x20 || (cp >= 0x7F && cp <= 0x9F);
 }
 
-/**
- * コードポイントを16進表記に変換
- */
-function formatCodePoint(codePoint) {
-  return 'U+' + codePoint.toString(16).toUpperCase().padStart(4, '0');
+function cpToHex(cp) {
+  return 'U+' + cp.toString(16).toUpperCase().padStart(cp > 0xFFFF ? 5 : 4, '0');
 }
 
-/**
- * 文字列をセグメントに分割
- */
-function segmentString(str) {
-  const segments = [];
-  let index = 0;
-  for (const char of str) {
-    segments.push({ char, index });
-    index++;
-  }
-  return segments;
+const CTRL_LABELS = {
+  0x0009:'[TAB]',0x000A:'[LF]',0x000D:'[CR]',0x0020:'[SP]',0x00A0:'[NBSP]',0x3000:'[IDSP]',
+};
+
+function getSegments(str) {
+  const segs = [];
+  for (const ch of str) segs.push(ch);
+  return segs;
 }
 
-/**
- * メイン描画関数
- */
-function renderCharacters() {
-  const inputText = document.getElementById('txt').value;
+// ── HIGHLIGHT STATE ──
+// warn/rare は OFF がデフォルト。ONのときだけカード色を付ける
+const hlState = { warn: false, rare: false };
+
+function getCssVars(cat) {
+  const NEUTRAL = { color: 'var(--text)', glow: 'transparent' };
+  if (cat === 'warn' && !hlState.warn) return NEUTRAL;
+  if (cat === 'rare' && !hlState.rare) return NEUTRAL;
+  return CAT_CSS_VARS[cat];
+}
+
+function refreshHighlight() {
+  document.querySelectorAll('.card[data-cat]').forEach(card => {
+    const cat = card.dataset.cat;
+    const vars = getCssVars(cat);
+    card.style.setProperty('--cat-color', vars.color);
+    card.style.setProperty('--cat-glow', vars.glow);
+    // グリフの色も更新
+    const glyph = card.querySelector('.card-glyph');
+    if (glyph) glyph.style.color = vars.color;
+    const cp_el = card.querySelector('.card-codepoint');
+    if (cp_el) cp_el.style.color = vars.color;
+    const cat_el = card.querySelector('.card-cat');
+    if (cat_el) cat_el.style.color = vars.color;
+  });
+}
+
+function render(str) {
   const grid = document.getElementById('grid');
-  const highlightEnabled = document.getElementById('toggle-rare').checked;
-  
-  const segments = segmentString(inputText);
-  
-  if (segments.length === 0) {
-    grid.innerHTML = '<div id="empty">文字列を入力するとここに展開されます</div>';
-    updateMetaInfo(inputText);
+  const segs = getSegments(str);
+
+  if (segs.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⌨</div>
+        <div class="empty-text">文字列を入力してください</div>
+        <div class="empty-sub">1文字ずつ Unicode コードポイントを表示します</div>
+      </div>`;
+    updateMeta(str);
     return;
   }
-  
+
   grid.innerHTML = '';
-  
-  segments.forEach((segment, index) => {
-    const codePoint = segment.char.codePointAt(0);
-    const isControl = isControlCharacter(codePoint);
-    const isRare = !isCommonCharacter(codePoint);
-    const displayChar = isControl ? 
-      (CONTROL_LABELS[codePoint] || '[CTRL]') : 
-      segment.char;
-    
-    // カード要素作成
+
+  segs.forEach((ch, i) => {
+    const cp = ch.codePointAt(0);
+    const hex = cpToHex(cp);
+    const dec = cp;
+    const name = getName(cp);
+    const cat = getCategory(cp);
+    const ctrl = isControl(cp);
+    const glyphLabel = ctrl ? (CTRL_LABELS[cp] || '[CTL]') : ch;
+    const cssVars = getCssVars(cat);
+
     const card = document.createElement('div');
     card.className = 'card';
-    if (highlightEnabled && isRare) {
-      card.classList.add('rare-highlight');
-    }
-    
-    // ヘッダー部分
-    const header = document.createElement('div');
-    header.className = 'card-header';
-    header.innerHTML = `
-      <span class="card-index">#${String(index + 1).padStart(2, '0')}</span>
-      <span class="card-bytes">${calculateUtf8Bytes(codePoint)}B</span>
-    `;
-    
-    // 文字表示部分
-    const glyph = document.createElement('div');
-    glyph.className = 'card-glyph' + (isControl ? ' ctrl' : '');
-    glyph.textContent = displayChar;
-    
-    // 情報部分
-    const info = document.createElement('div');
-    info.className = 'card-info';
-    info.innerHTML = `
-      <span class="card-codepoint">${formatCodePoint(codePoint)}</span>
-      <span class="card-decimal">Dec: ${codePoint}</span>
-      <span class="card-name">${getCharacterName(codePoint)}</span>
-    `;
-    
-    // コピーボタン
-    const copyButton = document.createElement('button');
-    copyButton.className = 'copy-btn';
-    copyButton.textContent = 'コピー';
-    copyButton.addEventListener('click', () => {
-      navigator.clipboard.writeText(segment.char).then(() => {
-        copyButton.textContent = 'コピー完了!';
-        copyButton.classList.add('copied');
+    card.dataset.cat = cat;
+    card.style.setProperty('--cat-color', cssVars.color);
+    card.style.setProperty('--cat-glow', cssVars.glow);
+
+    card.innerHTML = `
+      <div class="card-index">#${String(i + 1).padStart(2, '0')}</div>
+      <div class="card-glyph${ctrl ? ' ctrl' : ''}" style="color:${cssVars.color}">${ctrl ? escHtml(glyphLabel) : escHtml(ch)}</div>
+      <div class="card-info">
+        <span class="card-codepoint" style="color:${cssVars.color}">${hex}</span>
+        <span class="card-dec">dec: ${dec} · utf8: ${toUtf8Bytes(cp)}B</span>
+        <span class="card-name" title="${escHtml(name)}">${escHtml(name)}</span>
+        <span class="card-cat" style="color:${cssVars.color}">${CAT_LABELS[cat]}</span>
+      </div>
+      <button class="copy-btn">
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="1" y="3" width="7" height="8" rx="1"/>
+          <path d="M4 3V2a1 1 0 011-1h5a1 1 0 011 1v7a1 1 0 01-1 1H9"/>
+        </svg>
+        コピー
+      </button>`;
+
+    card.querySelector('.copy-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(ch).then(() => {
+        const btn = card.querySelector('.copy-btn');
+        btn.textContent = '✓ コピー済';
+        btn.classList.add('copied');
         setTimeout(() => {
-          copyButton.textContent = 'コピー';
-          copyButton.classList.remove('copied');
+          btn.innerHTML = `<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="7" height="8" rx="1"/><path d="M4 3V2a1 1 0 011-1h5a1 1 0 011 1v7a1 1 0 01-1 1H9"/></svg>コピー`;
+          btn.classList.remove('copied');
         }, 1500);
       });
     });
-    
-    // カード組み立て
-    card.appendChild(header);
-    card.appendChild(glyph);
-    card.appendChild(info);
-    card.appendChild(copyButton);
+
     grid.appendChild(card);
   });
-  
-  updateMetaInfo(inputText);
+
+  updateMeta(str);
 }
 
-/**
- * メタ情報を更新
- */
-function updateMetaInfo(text) {
-  const segments = segmentString(text);
-  
-  document.getElementById('cnt-char').textContent = text.length;
-  document.getElementById('cnt-cp').textContent = segments.length;
-  
-  let totalBytes = 0;
-  let rareCount = 0;
-  
-  for (const segment of segments) {
-    const codePoint = segment.char.codePointAt(0);
-    totalBytes += calculateUtf8Bytes(codePoint);
-    if (!isCommonCharacter(codePoint)) {
-      rareCount++;
-    }
-  }
-  
-  document.getElementById('cnt-byte').textContent = totalBytes;
-  document.getElementById('cnt-rare').textContent = rareCount;
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// イベントリスナー設定
-document.getElementById('txt').addEventListener('input', renderCharacters);
-document.getElementById('toggle-rare').addEventListener('change', renderCharacters);
+function updateMeta(str) {
+  const segs = getSegments(str);
+  document.getElementById('cnt-char').textContent = str.length;
+  document.getElementById('cnt-cp').textContent = segs.length;
+  let bytes = 0;
+  for (const ch of segs) bytes += toUtf8Bytes(ch.codePointAt(0));
+  document.getElementById('cnt-byte').textContent = bytes;
+}
+
+// ── HIGHLIGHT BUTTON ──
+let hlOn = false;
+const btnHl = document.getElementById('btn-highlight');
+btnHl.addEventListener('click', () => {
+  hlOn = !hlOn;
+  hlState.warn = hlOn;
+  hlState.rare = hlOn;
+  btnHl.classList.toggle('on', hlOn);
+  document.body.classList.toggle('hl-on', hlOn);
+  refreshHighlight();
+});
+
+// ── INPUT ──
+const txt = document.getElementById('txt');
+txt.addEventListener('input', () => render(txt.value));
 
 document.getElementById('btn-clear').addEventListener('click', () => {
-  document.getElementById('txt').value = '';
-  renderCharacters();
-  document.getElementById('txt').focus();
+  txt.value = '';
+  render('');
+  txt.focus();
 });
 
 document.getElementById('copy-all-btn').addEventListener('click', () => {
-  const text = document.getElementById('txt').value;
-  if (!text) return;
-  
-  const segments = segmentString(text);
-  const lines = segments.map((segment, index) => {
-    const codePoint = segment.char.codePointAt(0);
-    const isRare = !isCommonCharacter(codePoint) ? ' [RARE]' : '';
-    return `[#${String(index + 1).padStart(2, '0')}] ${segment.char}  ${formatCodePoint(codePoint)}  dec:${codePoint}  ${getCharacterName(codePoint)}${isRare}`;
+  const str = txt.value;
+  if (!str) return;
+  const segs = getSegments(str);
+  const lines = segs.map((ch, i) => {
+    const cp = ch.codePointAt(0);
+    return `[#${String(i+1).padStart(2,'0')}] ${ch}  ${cpToHex(cp)}  dec:${cp}  ${getName(cp)}  [${CAT_LABELS[getCategory(cp)]}]`;
   });
-  
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
-    const button = document.getElementById('copy-all-btn');
-    const originalText = button.textContent;
-    button.textContent = 'コピー完了!';
-    setTimeout(() => {
-      button.textContent = originalText;
-    }, 1800);
+    const btn = document.getElementById('copy-all-btn');
+    btn.textContent = '✓ コピー済';
+    setTimeout(() => { btn.textContent = '全てコピー'; }, 1800);
   });
 });
 
-// 初期描画
-renderCharacters();
+render('');
 </script>
 </body>
 </html>
