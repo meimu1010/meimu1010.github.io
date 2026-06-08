@@ -2,8 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Image Viewer</title>
 
 <style>
@@ -11,59 +10,44 @@
     box-sizing:border-box;
 }
 
-html,
-body{
+html,body{
     margin:0;
     width:100%;
     height:100%;
     overflow:hidden;
-
     background:#f5f5f7;
-
-    font-family:
-        "Segoe UI",
-        "Yu Gothic UI",
-        sans-serif;
+    font-family:"Segoe UI","Yu Gothic UI",sans-serif;
 }
 
 #app{
+    width:100%;
     height:100%;
     display:flex;
     flex-direction:column;
 }
 
 header{
-    background:#ffffff;
-    border-bottom:1px solid #e7e7e7;
-
-    padding:14px 18px;
-
     display:flex;
     gap:10px;
     align-items:center;
+    padding:14px 18px;
 
-    box-shadow:0 2px 12px rgba(0,0,0,.04);
+    background:#fff;
+    border-bottom:1px solid #e5e5e5;
+    box-shadow:0 2px 10px rgba(0,0,0,.05);
 
     z-index:10;
 }
 
 #imageUrl{
     flex:1;
-
     height:42px;
 
-    border:1px solid #dcdcdc;
+    border:1px solid #d7d7d7;
     border-radius:12px;
 
     padding:0 14px;
-
     font-size:14px;
-
-    outline:none;
-}
-
-#imageUrl:focus{
-    border-color:#0078d4;
 }
 
 button{
@@ -72,43 +56,35 @@ button{
     border:none;
     border-radius:12px;
 
-    padding:0 16px;
-
     background:#0078d4;
     color:#fff;
 
+    padding:0 16px;
     cursor:pointer;
-
-    font-size:14px;
 }
 
 button:hover{
     filter:brightness(1.05);
 }
 
-input[type=file]{
-    max-width:180px;
-}
-
 #status{
     min-width:90px;
     text-align:center;
-    color:#666;
     font-weight:600;
+    color:#555;
 }
 
 #viewer{
-    flex:1;
-
     position:relative;
+    flex:1;
 
     overflow:hidden;
 
     background:
         radial-gradient(
             circle at center,
-            #ffffff 0%,
-            #efefef 100%
+            #ffffff,
+            #ededed
         );
 
     cursor:grab;
@@ -121,34 +97,32 @@ input[type=file]{
 #dropText{
     position:absolute;
 
-    top:50%;
     left:50%;
+    top:50%;
 
     transform:translate(-50%,-50%);
 
-    color:#999;
-    font-size:18px;
-
+    color:#888;
+    text-align:center;
     pointer-events:none;
 }
 
 #image{
     position:absolute;
 
-    top:50%;
     left:50%;
-
-    transform-origin:center center;
+    top:50%;
 
     max-width:none;
+    max-height:none;
+
+    display:none;
 
     user-select:none;
     -webkit-user-drag:none;
-
-    display:none;
 }
 
-#toolbarBottom{
+#floatingTools{
     position:absolute;
 
     right:20px;
@@ -159,9 +133,9 @@ input[type=file]{
 
     background:#fff;
 
-    border-radius:16px;
-
     padding:10px;
+
+    border-radius:16px;
 
     box-shadow:
         0 10px 30px rgba(0,0,0,.12);
@@ -172,17 +146,17 @@ input[type=file]{
     height:42px;
 
     border:none;
-
     border-radius:10px;
 
     background:#f2f2f2;
     color:#222;
 
     font-size:20px;
+    cursor:pointer;
 }
 
 .toolBtn:hover{
-    background:#e8e8e8;
+    background:#e5e5e5;
 }
 </style>
 </head>
@@ -194,11 +168,12 @@ input[type=file]{
 
 <input
     id="imageUrl"
-    placeholder="画像URLを貼り付け"
+    type="text"
+    placeholder="画像URLを入力"
 />
 
 <button id="loadBtn">
-    読み込み
+読み込み
 </button>
 
 <input
@@ -208,7 +183,7 @@ input[type=file]{
 />
 
 <div id="status">
-    100%
+100%
 </div>
 
 </header>
@@ -216,23 +191,35 @@ input[type=file]{
 <div id="viewer">
 
 <div id="dropText">
-    画像をドラッグ＆ドロップ<br>
-    またはURLを入力
+画像をドラッグ＆ドロップ<br>
+または Ctrl+V
 </div>
 
-<img id="image" draggable="false">
+<img
+    id="image"
+    draggable="false"
+>
 
-<div id="toolbarBottom">
+<div id="floatingTools">
 
-<button class="toolBtn" id="zoomIn">
+<button
+    class="toolBtn"
+    id="zoomIn"
+>
 +
 </button>
 
-<button class="toolBtn" id="zoomOut">
+<button
+    class="toolBtn"
+    id="zoomOut"
+>
 −
 </button>
 
-<button class="toolBtn" id="resetBtn">
+<button
+    class="toolBtn"
+    id="resetBtn"
+>
 ⌂
 </button>
 
@@ -249,6 +236,8 @@ const statusText = document.getElementById("status");
 const dropText = document.getElementById("dropText");
 
 let scale = 1;
+let fitScale = 1;
+
 let posX = 0;
 let posY = 0;
 
@@ -258,15 +247,40 @@ let dragStartX = 0;
 let dragStartY = 0;
 
 function updateTransform(){
+
     image.style.transform =
-        `translate(${posX}px,${posY}px) scale(${scale})`;
+        `translate(-50%, -50%) translate(${posX}px, ${posY}px) scale(${scale})`;
 
     statusText.textContent =
         Math.round(scale * 100) + "%";
 }
 
 function resetView(){
-    scale = 1;
+
+    scale = fitScale;
+
+    posX = 0;
+    posY = 0;
+
+    updateTransform();
+}
+
+function calculateFitScale(){
+
+    const vw = viewer.clientWidth;
+    const vh = viewer.clientHeight;
+
+    const iw = image.naturalWidth;
+    const ih = image.naturalHeight;
+
+    fitScale = Math.min(
+        vw / iw,
+        vh / ih,
+        1
+    );
+
+    scale = fitScale;
+
     posX = 0;
     posY = 0;
 
@@ -274,12 +288,17 @@ function resetView(){
 }
 
 function showImage(src){
+
+    image.onload = () => {
+
+        image.style.display = "block";
+
+        dropText.style.display = "none";
+
+        calculateFitScale();
+    };
+
     image.src = src;
-    image.style.display = "block";
-
-    dropText.style.display = "none";
-
-    resetView();
 }
 
 document
@@ -311,9 +330,7 @@ document
 
     reader.onload = ()=>{
 
-        showImage(
-            reader.result
-        );
+        showImage(reader.result);
     };
 
     reader.readAsDataURL(file);
@@ -325,19 +342,17 @@ viewer.addEventListener(
 
         e.preventDefault();
 
-        const factor = 1.1;
-
         if(e.deltaY < 0){
-            scale *= factor;
-        }else{
-            scale /= factor;
+            scale *= 1.1;
+        }
+        else{
+            scale /= 1.1;
         }
 
-        scale =
-            Math.max(
-                0.05,
-                Math.min(scale,50)
-            );
+        scale = Math.max(
+            0.05,
+            Math.min(scale,50)
+        );
 
         updateTransform();
     },
@@ -429,7 +444,6 @@ document
 viewer.addEventListener(
     "dragover",
     (e)=>{
-
         e.preventDefault();
     }
 );
@@ -441,7 +455,7 @@ viewer.addEventListener(
         e.preventDefault();
 
         const file =
-            e.dataTransfer.files[0];
+            e.dataTransfer.files?.[0];
 
         if(!file) return;
 
@@ -458,14 +472,10 @@ viewer.addEventListener(
 
         reader.onload = ()=>{
 
-            showImage(
-                reader.result
-            );
+            showImage(reader.result);
         };
 
-        reader.readAsDataURL(
-            file
-        );
+        reader.readAsDataURL(file);
     }
 );
 
@@ -474,11 +484,9 @@ document.addEventListener(
     (e)=>{
 
         const items =
-            e.clipboardData.items;
+            e.clipboardData?.items || [];
 
-        for(
-            const item of items
-        ){
+        for(const item of items){
 
             if(
                 item.type.startsWith(
@@ -489,20 +497,19 @@ document.addEventListener(
                 const file =
                     item.getAsFile();
 
+                if(!file) continue;
+
                 const reader =
                     new FileReader();
 
-                reader.onload =
-                    ()=>{
+                reader.onload = ()=>{
 
                     showImage(
                         reader.result
                     );
                 };
 
-                reader.readAsDataURL(
-                    file
-                );
+                reader.readAsDataURL(file);
 
                 break;
             }
@@ -510,9 +517,22 @@ document.addEventListener(
     }
 );
 
+window.addEventListener(
+    "resize",
+    ()=>{
+
+        if(
+            image.src &&
+            image.naturalWidth
+        ){
+            calculateFitScale();
+        }
+    }
+);
+
 image.addEventListener(
     "dragstart",
-    e=>e.preventDefault()
+    e => e.preventDefault()
 );
 </script>
 
