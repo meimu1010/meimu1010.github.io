@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Image Viewer</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+
+    background:#f5f5f7;
+
+    font-family:
+        "Segoe UI",
+        "Yu Gothic UI",
+        sans-serif;
+}
+
+#app{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+}
+
+header{
+    background:#ffffff;
+    border-bottom:1px solid #e7e7e7;
+
+    padding:14px 18px;
+
+    display:flex;
+    gap:10px;
+    align-items:center;
+
+    box-shadow:0 2px 12px rgba(0,0,0,.04);
+
+    z-index:10;
+}
+
+#imageUrl{
+    flex:1;
+
+    height:42px;
+
+    border:1px solid #dcdcdc;
+    border-radius:12px;
+
+    padding:0 14px;
+
+    font-size:14px;
+
+    outline:none;
+}
+
+#imageUrl:focus{
+    border-color:#0078d4;
+}
+
+button{
+    height:42px;
+
+    border:none;
+    border-radius:12px;
+
+    padding:0 16px;
+
+    background:#0078d4;
+    color:#fff;
+
+    cursor:pointer;
+
+    font-size:14px;
+}
+
+button:hover{
+    filter:brightness(1.05);
+}
+
+input[type=file]{
+    max-width:180px;
+}
+
+#status{
+    min-width:90px;
+    text-align:center;
+    color:#666;
+    font-weight:600;
+}
+
+#viewer{
+    flex:1;
+
+    position:relative;
+
+    overflow:hidden;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #ffffff 0%,
+            #efefef 100%
+        );
+
+    cursor:grab;
+}
+
+#viewer.dragging{
+    cursor:grabbing;
+}
+
+#dropText{
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%,-50%);
+
+    color:#999;
+    font-size:18px;
+
+    pointer-events:none;
+}
+
+#image{
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    transform-origin:center center;
+
+    max-width:none;
+
+    user-select:none;
+    -webkit-user-drag:none;
+
+    display:none;
+}
+
+#toolbarBottom{
+    position:absolute;
+
+    right:20px;
+    bottom:20px;
+
+    display:flex;
+    gap:10px;
+
+    background:#fff;
+
+    border-radius:16px;
+
+    padding:10px;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.12);
+}
+
+.toolBtn{
+    width:42px;
+    height:42px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#f2f2f2;
+    color:#222;
+
+    font-size:20px;
+}
+
+.toolBtn:hover{
+    background:#e8e8e8;
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+<header>
+
+<input
+    id="imageUrl"
+    placeholder="画像URLを貼り付け"
+/>
+
+<button id="loadBtn">
+    読み込み
+</button>
+
+<input
+    id="fileInput"
+    type="file"
+    accept="image/*"
+/>
+
+<div id="status">
+    100%
+</div>
+
+</header>
+
+<div id="viewer">
+
+<div id="dropText">
+    画像をドラッグ＆ドロップ<br>
+    またはURLを入力
+</div>
+
+<img id="image" draggable="false">
+
+<div id="toolbarBottom">
+
+<button class="toolBtn" id="zoomIn">
++
+</button>
+
+<button class="toolBtn" id="zoomOut">
+−
+</button>
+
+<button class="toolBtn" id="resetBtn">
+⌂
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+const viewer = document.getElementById("viewer");
+const image = document.getElementById("image");
+const statusText = document.getElementById("status");
+const dropText = document.getElementById("dropText");
+
+let scale = 1;
+let posX = 0;
+let posY = 0;
+
+let dragging = false;
+
+let dragStartX = 0;
+let dragStartY = 0;
+
+function updateTransform(){
+    image.style.transform =
+        `translate(${posX}px,${posY}px) scale(${scale})`;
+
+    statusText.textContent =
+        Math.round(scale * 100) + "%";
+}
+
+function resetView(){
+    scale = 1;
+    posX = 0;
+    posY = 0;
+
+    updateTransform();
+}
+
+function showImage(src){
+    image.src = src;
+    image.style.display = "block";
+
+    dropText.style.display = "none";
+
+    resetView();
+}
+
+document
+.getElementById("loadBtn")
+.addEventListener("click",()=>{
+
+    const url =
+        document
+        .getElementById("imageUrl")
+        .value
+        .trim();
+
+    if(!url) return;
+
+    showImage(url);
+});
+
+document
+.getElementById("fileInput")
+.addEventListener("change",(e)=>{
+
+    const file =
+        e.target.files?.[0];
+
+    if(!file) return;
+
+    const reader =
+        new FileReader();
+
+    reader.onload = ()=>{
+
+        showImage(
+            reader.result
+        );
+    };
+
+    reader.readAsDataURL(file);
+});
+
+viewer.addEventListener(
+    "wheel",
+    (e)=>{
+
+        e.preventDefault();
+
+        const factor = 1.1;
+
+        if(e.deltaY < 0){
+            scale *= factor;
+        }else{
+            scale /= factor;
+        }
+
+        scale =
+            Math.max(
+                0.05,
+                Math.min(scale,50)
+            );
+
+        updateTransform();
+    },
+    {passive:false}
+);
+
+viewer.addEventListener(
+    "mousedown",
+    (e)=>{
+
+        dragging = true;
+
+        viewer.classList.add(
+            "dragging"
+        );
+
+        dragStartX =
+            e.clientX - posX;
+
+        dragStartY =
+            e.clientY - posY;
+    }
+);
+
+window.addEventListener(
+    "mousemove",
+    (e)=>{
+
+        if(!dragging) return;
+
+        posX =
+            e.clientX -
+            dragStartX;
+
+        posY =
+            e.clientY -
+            dragStartY;
+
+        updateTransform();
+    }
+);
+
+window.addEventListener(
+    "mouseup",
+    ()=>{
+
+        dragging = false;
+
+        viewer.classList.remove(
+            "dragging"
+        );
+    }
+);
+
+viewer.addEventListener(
+    "dblclick",
+    resetView
+);
+
+document
+.getElementById("zoomIn")
+.addEventListener(
+    "click",
+    ()=>{
+
+        scale *= 1.2;
+        updateTransform();
+    }
+);
+
+document
+.getElementById("zoomOut")
+.addEventListener(
+    "click",
+    ()=>{
+
+        scale /= 1.2;
+        updateTransform();
+    }
+);
+
+document
+.getElementById("resetBtn")
+.addEventListener(
+    "click",
+    resetView
+);
+
+viewer.addEventListener(
+    "dragover",
+    (e)=>{
+
+        e.preventDefault();
+    }
+);
+
+viewer.addEventListener(
+    "drop",
+    (e)=>{
+
+        e.preventDefault();
+
+        const file =
+            e.dataTransfer.files[0];
+
+        if(!file) return;
+
+        if(
+            !file.type.startsWith(
+                "image/"
+            )
+        ){
+            return;
+        }
+
+        const reader =
+            new FileReader();
+
+        reader.onload = ()=>{
+
+            showImage(
+                reader.result
+            );
+        };
+
+        reader.readAsDataURL(
+            file
+        );
+    }
+);
+
+document.addEventListener(
+    "paste",
+    (e)=>{
+
+        const items =
+            e.clipboardData.items;
+
+        for(
+            const item of items
+        ){
+
+            if(
+                item.type.startsWith(
+                    "image/"
+                )
+            ){
+
+                const file =
+                    item.getAsFile();
+
+                const reader =
+                    new FileReader();
+
+                reader.onload =
+                    ()=>{
+
+                    showImage(
+                        reader.result
+                    );
+                };
+
+                reader.readAsDataURL(
+                    file
+                );
+
+                break;
+            }
+        }
+    }
+);
+
+image.addEventListener(
+    "dragstart",
+    e=>e.preventDefault()
+);
+</script>
+
+</body>
+</html>
