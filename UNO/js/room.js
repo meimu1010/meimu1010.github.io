@@ -1,21 +1,17 @@
 /**
- * room.js - Online room management
- * Host/client architecture via PeerJS
+ * room.js — オンラインルーム管理 (PeerJS Host/Client)
  */
 
 import { peerManager } from './peer.js';
 import {
   createGameState, initGame, playCard, playerDraw,
-  getTopCard, serializeStateForPlayer, getPlayableCards,
-  drawFromDeck, advanceTurn
+  getTopCard, serializeStateForPlayer, drawFromDeck
 } from './game.js';
 import {
-  showToast, renderLobbyPlayers, updateTurnIndicator,
-  updateDirectionIndicator, updateDeckCount, updateDrawStack,
-  renderOpponentPanel, renderHand, updateDiscardDisplay,
-  renderResults, showActionOverlay, showUnoButton
+  renderHand, updateDiscard, updateTurn, updateDeckCount, updateDrawStack,
+  updateDirectionArrow, layoutOpponents, renderResults, showAction,
+  showUnoBtn, toast, renderLobbyPlayers, animatePlayCard, animateDrawCard, launchConfetti
 } from './ui.js';
-
 import { aiChooseCard } from './ai.js';
 
 function showScreen(name) {
@@ -25,538 +21,382 @@ function showScreen(name) {
 }
 
 // ================================================================
-// MODULE STATE
+// 状態
 // ================================================================
-
-/** @type {import('./game.js').GameState|null} */
-let gameState = null;
-
-/** My player */
-let myPlayer = { id: '', name: '', peerId: '' };
-
-/** Pending wild card awaiting color */
-let pendingWildCardId = null;
-
-/** UNO penalty timers: playerId -> timeoutId */
-const unoPenaltyTimers = new Map();
-
-/** AI turn timer */
-let aiTurnTimer = null;
-
-/** Current serialized view state (client side) */
-let viewState = null;
-
-/** Cached players for result display (client) */
+let gameState   = null;
+let myPlayer    = { id:'', name:'', peerId:'' };
+let pendingWild = null;
+let viewState   = null;
 let cachedPlayers = [];
+let aiTimer     = null;
+const unoTimers = new Map();
+
+const THINK = { easy:{min:1000,max:2200}, normal:{min:1600,max:3000}, hard:{min:2200,max:4200} };
 
 // ================================================================
-// HOST: ROOM CREATION
+// HOST — ルーム作成
 // ================================================================
-
-/**
- * Create a room as host
- * @param {string} playerName
- * @param {string} roomName
- * @param {number} maxP
- * @returns {Promise<string>} roomId
- */
 export async function hostCreateRoom(playerName, roomName, maxP) {
   const max = Math.max(2, Math.min(4, maxP));
   await peerManager.init();
   peerManager.becomeHost();
 
   const peerId = peerManager.myPeerId;
-  myPlayer = { id: peerId, name: playerName, peerId };
+  myPlayer = { id:peerId, name:playerName, peerId };
 
-  // Use peerId as room ID (clients connect directly)
-  const roomId = peerId.slice(0, 6).toUpperCase();
+  const roomId = peerId.slice(0,6).toUpperCase();
   gameState = createGameState(roomId, roomName, peerId, max);
-  gameState.players.push({ id: peerId, name: playerName, hand: [], isAI: false, saidUno: false });
+  gameState.players.push({ id:peerId, name:playerName, hand:[], isAI:false, saidUno:false });
 
-  peerManager.onMessage = handleHostMessage;
-  peerManager.onPeerConnected = (pid) => console.log('[Room] Client connected:', pid);
-  peerManager.onPeerDisconnected = handlePeerDisconnected;
-
+  peerManager.onMessage          = handleHostMsg;
+  peerManager.onPeerConnected    = pid => console.log('[Room] connected:', pid);
+  peerManager.onPeerDisconnected = handleDisconnect;
   return roomId;
 }
 
 // ================================================================
-// HOST: MESSAGE HANDLER
+// HOST — メッセージ処理
 // ================================================================
-
-function handleHostMessage(fromPeerId, msg) {
+function handleHostMsg(fromPeer, msg) {
   if (!gameState) return;
-
   switch (msg.type) {
 
     case 'join': {
-      if (gameState.gameStarted) {
-        peerManager.sendTo(fromPeerId, { type: 'error', message: 'ゲームはすでに開始されています' });
-        return;
-      }
-      if (gameState.players.length >= gameState.maxPlayers) {
-        peerManager.sendTo(fromPeerId, { type: 'error', message: 'ルームが満員です' });
-        return;
-      }
-      gameState.players.push({
-        id: fromPeerId,
-        name: msg.playerName || 'Player',
-        hand: [], isAI: false, saidUno: false
-      });
-      broadcastLobbyState();
+      if (gameState.gameStarted) { peerManager.sendTo(fromPeer,{type:'error',message:'ゲームは開始済みです'}); return; }
+      if (gameState.players.length >= gameState.maxPlayers) { peerManager.sendTo(fromPeer,{type:'error',message:'満員です'}); return; }
+      gameState.players.push({ id:fromPeer, name:msg.playerName||'Player', hand:[], isAI:false, saidUno:false });
+      broadcastLobby();
       break;
     }
-
     case 'playCard': {
-      if (!gameState.gameStarted || gameState.gameOver) return;
-      // Validate it's this player's turn
-      const idx = gameState.players.findIndex(p => p.id === fromPeerId);
-      if (idx !== gameState.currentTurn) return;
-      hostProcessPlay(fromPeerId, msg.cardId, msg.chosenColor || null);
+      if (!gameState.gameStarted||gameState.gameOver) return;
+      if (gameState.players[gameState.currentTurn]?.id !== fromPeer) return;
+      hostPlay(fromPeer, msg.cardId, msg.chosenColor||null);
       break;
     }
-
     case 'drawCard': {
-      if (!gameState.gameStarted || gameState.gameOver) return;
-      const idx = gameState.players.findIndex(p => p.id === fromPeerId);
-      if (idx !== gameState.currentTurn) return;
-      hostProcessDraw(fromPeerId);
+      if (!gameState.gameStarted||gameState.gameOver) return;
+      if (gameState.players[gameState.currentTurn]?.id !== fromPeer) return;
+      hostDraw(fromPeer);
       break;
     }
-
     case 'uno': {
-      hostProcessUno(fromPeerId);
-      break;
-    }
-
-    case 'requestState': {
-      sendStateTo(fromPeerId);
+      hostUno(fromPeer);
       break;
     }
   }
 }
 
 // ================================================================
-// HOST: GAME ACTIONS
+// HOST — ゲームアクション
 // ================================================================
-
-function hostProcessPlay(playerId, cardId, chosenColor) {
+function hostPlay(pid, cardId, color) {
   if (!gameState) return;
-  const result = playCard(gameState, playerId, cardId, chosenColor);
-  if (!result.success) return;
+  const res = playCard(gameState, pid, cardId, color);
+  if (!res.success) return;
 
   const top = getTopCard(gameState);
   if (top && top.type !== 'number') {
-    const labels = { skip: 'SKIP!', reverse: 'REVERSE!', draw2: '+2!', wild4: '+4!' };
-    const text = labels[top.type];
-    if (text) {
-      peerManager.broadcast({ type: 'action', text });
-      showActionOverlay(text);
-    }
+    const m={skip:'SKIP!',reverse:'REVERSE!',draw2:'+2!',wild4:'+4!'};
+    const t=m[top.type]; if(t){ peerManager.broadcast({type:'action',text:t}); showAction(t); }
   }
+  clearUnoTimer(pid);
+  const p = gameState.players.find(pl=>pl.id===pid);
+  if (p?.hand.length===1&&!p.saidUno) startUnoTimer(pid);
 
-  clearUnoTimer(playerId);
-
-  const player = gameState.players.find(p => p.id === playerId);
-  if (player && player.hand.length === 1 && !player.saidUno) {
-    startUnoTimer(playerId);
-  }
-
-  if (gameState.gameOver) {
-    endGame();
-  } else {
-    dobroadcastGameState();
-    setTimeout(checkAndRunAI, 400);
-  }
+  if (gameState.gameOver) { endGame(); return; }
+  broadcastState();
+  setTimeout(checkAI, 400);
 }
 
-function hostProcessDraw(playerId) {
+function hostDraw(pid) {
   if (!gameState) return;
-  playerDraw(gameState, playerId);
-  dobroadcastGameState();
-  setTimeout(checkAndRunAI, 400);
+  playerDraw(gameState, pid);
+  broadcastState();
+  setTimeout(checkAI, 400);
 }
 
-function hostProcessUno(playerId) {
+function hostUno(pid) {
   if (!gameState) return;
-  const player = gameState.players.find(p => p.id === playerId);
-  if (!player || player.hand.length !== 1) return;
-  player.saidUno = true;
-  clearUnoTimer(playerId);
-  peerManager.broadcast({ type: 'unoAnnounce', playerName: player.name });
-  showToast(`${player.name} が UNO!`, 'warn');
-  dobroadcastGameState();
+  const p = gameState.players.find(pl=>pl.id===pid);
+  if (!p||p.hand.length!==1) return;
+  p.saidUno=true; clearUnoTimer(pid);
+  peerManager.broadcast({type:'unoAnnounce',playerName:p.name});
+  toast(`${p.name} が UNO!`,'warn');
+  broadcastState();
 }
 
 // ================================================================
-// HOST: DISCONNECT
+// HOST — UNO タイマー
 // ================================================================
-
-function handlePeerDisconnected(peerId) {
-  if (!gameState) return;
-  const idx = gameState.players.findIndex(p => p.id === peerId);
-  if (idx < 0) return;
-
-  if (!gameState.gameStarted) {
-    gameState.players.splice(idx, 1);
-    broadcastLobbyState();
-  } else {
-    const player = gameState.players[idx];
-    player.isAI = true;
-    player.difficulty = 'normal';
-    player.name = player.name + ' (AI)';
-    showToast(`${player.name} が切断されました。AIが引き継ぎます`, 'warn');
-    dobroadcastGameState();
-    setTimeout(checkAndRunAI, 500);
-  }
-}
-
-// ================================================================
-// HOST: UNO PENALTY TIMERS
-// ================================================================
-
-function startUnoTimer(playerId) {
-  clearUnoTimer(playerId);
-  const t = setTimeout(() => {
-    if (!gameState) return;
-    const p = gameState.players.find(pl => pl.id === playerId);
-    if (p && p.hand.length === 1 && !p.saidUno) {
-      for (let i = 0; i < 2; i++) {
-        const c = drawFromDeck(gameState);
-        if (c) p.hand.push(c);
-      }
-      showToast(`${p.name} はUNO宣言を忘れてペナルティ (2枚ドロー)!`, 'warn');
-      dobroadcastGameState();
+function startUnoTimer(pid) {
+  clearUnoTimer(pid);
+  const t=setTimeout(()=>{
+    if(!gameState) return;
+    const p=gameState.players.find(pl=>pl.id===pid);
+    if(p&&p.hand.length===1&&!p.saidUno){
+      for(let i=0;i<2;i++){const c=drawFromDeck(gameState);if(c)p.hand.push(c);}
+      toast(`${p.name} UNO宣言忘れ —ペナルティ2枚`,'warn');
+      broadcastState();
     }
   }, 5000);
-  unoPenaltyTimers.set(playerId, t);
+  unoTimers.set(pid,t);
 }
-
-function clearUnoTimer(playerId) {
-  const t = unoPenaltyTimers.get(playerId);
-  if (t !== undefined) { clearTimeout(t); unoPenaltyTimers.delete(playerId); }
-}
+function clearUnoTimer(pid) { const t=unoTimers.get(pid); if(t!==undefined){clearTimeout(t);unoTimers.delete(pid);} }
 
 // ================================================================
-// HOST: BROADCAST
+// HOST — 切断対応
 // ================================================================
-
-function broadcastLobbyState() {
+function handleDisconnect(peerId) {
   if (!gameState) return;
-  const data = {
-    type: 'lobbyState',
-    roomId: gameState.roomId,
-    hostId: gameState.hostId,
-    players: gameState.players.map(p => ({ id: p.id, name: p.name })),
-    maxPlayers: gameState.maxPlayers
-  };
-  peerManager.broadcast(data);
-  updateLobbyUI(data);
-}
-
-function sendStateTo(peerId) {
-  if (!gameState) return;
-  const s = serializeStateForPlayer(gameState, peerId);
-  peerManager.sendTo(peerId, { type: 'gameState', state: s });
-}
-
-function dobroadcastGameState() {
-  if (!gameState) return;
-  // Host updates its own UI
-  const mySerial = serializeStateForPlayer(gameState, myPlayer.id);
-  updateGameUI(mySerial);
-  // Each client gets their personalized state
-  for (const p of gameState.players) {
-    if (p.id !== myPlayer.id && !p.isAI) {
-      const s = serializeStateForPlayer(gameState, p.id);
-      peerManager.sendTo(p.id, { type: 'gameState', state: s });
-    }
+  const idx = gameState.players.findIndex(p=>p.id===peerId);
+  if (idx<0) return;
+  if (!gameState.gameStarted) {
+    gameState.players.splice(idx,1);
+    broadcastLobby();
+  } else {
+    const p=gameState.players[idx];
+    p.isAI=true; p.difficulty='normal'; p.name+=' (AI)';
+    toast(`${p.name}が切断。AIが引き継ぎます`,'warn');
+    broadcastState();
+    setTimeout(checkAI,500);
   }
 }
 
-// Re-export for external use
-export { dobroadcastGameState as broadcastGameState };
+// ================================================================
+// HOST — ブロードキャスト
+// ================================================================
+function broadcastLobby() {
+  if (!gameState) return;
+  const d={type:'lobbyState',roomId:gameState.roomId,hostId:gameState.hostId,
+    players:gameState.players.map(p=>({id:p.id,name:p.name})),maxPlayers:gameState.maxPlayers};
+  peerManager.broadcast(d);
+  updateLobbyUI(d);
+}
+
+function broadcastState() {
+  if (!gameState) return;
+  // Host自身のUI
+  updateGameUI(serializeStateForPlayer(gameState, myPlayer.id));
+  // 各クライアントへ個別配信
+  for (const p of gameState.players) {
+    if (p.id!==myPlayer.id && !p.isAI) {
+      peerManager.sendTo(p.id, {type:'gameState', state:serializeStateForPlayer(gameState,p.id)});
+    }
+  }
+}
+export { broadcastState as broadcastGameState };
 
 function endGame() {
   if (!gameState) return;
-  peerManager.broadcast({ type: 'gameOver', rankings: gameState.rankings,
-    players: gameState.players.map(p => ({ id: p.id, name: p.name, isAI: p.isAI })) });
-  showGameResults(gameState.rankings, gameState.players, myPlayer.id);
+  peerManager.broadcast({type:'gameOver', rankings:gameState.rankings,
+    players:gameState.players.map(p=>({id:p.id,name:p.name,isAI:p.isAI}))});
+  showResult(gameState.rankings, gameState.players, myPlayer.id);
 }
 
 // ================================================================
-// CLIENT: JOIN
+// CLIENT — 接続
 // ================================================================
-
 export async function clientJoinRoom(playerName, hostPeerId) {
   await peerManager.init();
-  myPlayer = { id: peerManager.myPeerId, name: playerName, peerId: peerManager.myPeerId };
-  peerManager.onMessage = handleClientMessage;
-  peerManager.onPeerDisconnected = (pid) => {
-    if (pid === hostPeerId) showToast('ホストが切断されました', 'error');
-  };
+  myPlayer = { id:peerManager.myPeerId, name:playerName, peerId:peerManager.myPeerId };
+  peerManager.onMessage = handleClientMsg;
+  peerManager.onPeerDisconnected = pid => { if(pid===hostPeerId) toast('ホストが切断されました','error'); };
   await peerManager.connectToHost(hostPeerId);
-  peerManager.sendToHost({ type: 'join', playerName });
+  peerManager.sendToHost({type:'join', playerName});
 }
 
 // ================================================================
-// CLIENT: MESSAGE HANDLER
+// CLIENT — メッセージ処理
 // ================================================================
-
-function handleClientMessage(fromPeerId, msg) {
+function handleClientMsg(fromPeer, msg) {
   switch (msg.type) {
     case 'lobbyState':
       updateLobbyUI(msg);
-      if (!document.getElementById('screen-lobby')?.classList.contains('active')) {
-        showScreen('lobby');
-      }
+      if (!document.getElementById('screen-lobby')?.classList.contains('active')) showScreen('lobby');
       break;
     case 'gameStarting':
-      showScreen('game');
-      break;
+      showScreen('game'); break;
     case 'gameState':
-      viewState = msg.state;
-      cachedPlayers = msg.state.players.map(p => ({ id: p.id, name: p.name, isAI: p.isAI, hand: p.hand || [] }));
+      viewState=msg.state;
+      cachedPlayers=msg.state.players.map(p=>({id:p.id,name:p.name,isAI:p.isAI,hand:p.hand||[]}));
       updateGameUI(msg.state);
       break;
     case 'action':
-      showActionOverlay(msg.text);
-      break;
+      showAction(msg.text); break;
     case 'unoAnnounce':
-      showToast(`${msg.playerName} が UNO!`, 'warn');
-      break;
+      toast(`${msg.playerName} が UNO!`,'warn'); break;
     case 'gameOver':
-      cachedPlayers = msg.players || cachedPlayers;
-      showGameResults(msg.rankings, cachedPlayers, myPlayer.id);
-      break;
+      cachedPlayers=msg.players||cachedPlayers;
+      showResult(msg.rankings,cachedPlayers,myPlayer.id); break;
     case 'error':
-      showToast(msg.message, 'error');
-      break;
+      toast(msg.message,'error'); break;
   }
 }
 
 // ================================================================
-// GAME START (HOST ONLY)
+// ゲーム開始 (HOST のみ)
 // ================================================================
-
 export function startOnlineGame() {
-  if (!gameState) return;
-  if (gameState.players.length < 2) { showToast('最低2人必要です', 'error'); return; }
-  if (gameState.gameStarted) return;
-
+  if (!gameState||gameState.players.length<2||gameState.gameStarted) return;
   initGame(gameState);
-  peerManager.broadcast({ type: 'gameStarting' });
+  peerManager.broadcast({type:'gameStarting'});
   showScreen('game');
-  dobroadcastGameState();
-  setTimeout(checkAndRunAI, 600);
+  broadcastState();
+  setTimeout(checkAI,600);
 }
 
 // ================================================================
-// GAME ACTIONS (called from main.js)
+// ゲームアクション (クライアントから)
 // ================================================================
-
 export function onPlayCard(card) {
-  if (peerManager.isHost) {
-    hostProcessPlay(myPlayer.id, card.id, card.chosenColor || null);
-  } else {
-    peerManager.sendToHost({ type: 'playCard', cardId: card.id, chosenColor: card.chosenColor || null });
-  }
+  if (peerManager.isHost) hostPlay(myPlayer.id, card.id, card.chosenColor||null);
+  else peerManager.sendToHost({type:'playCard',cardId:card.id,chosenColor:card.chosenColor||null});
 }
-
 export function onDrawCard() {
-  if (peerManager.isHost) {
-    hostProcessDraw(myPlayer.id);
-  } else {
-    peerManager.sendToHost({ type: 'drawCard' });
-  }
+  if (peerManager.isHost) hostDraw(myPlayer.id);
+  else peerManager.sendToHost({type:'drawCard'});
 }
-
 export function onDeclareUno() {
-  if (peerManager.isHost) {
-    hostProcessUno(myPlayer.id);
-  } else {
-    peerManager.sendToHost({ type: 'uno' });
-  }
-  showToast('UNO! 🎉', 'success');
+  if (peerManager.isHost) hostUno(myPlayer.id);
+  else peerManager.sendToHost({type:'uno'});
+  toast('UNO! 🎉','success');
 }
-
 export function onColorSelected(color) {
-  document.getElementById('color-picker').style.display = 'none';
-  if (!pendingWildCardId) return;
-  if (peerManager.isHost) {
-    hostProcessPlay(myPlayer.id, pendingWildCardId, color);
-  } else {
-    peerManager.sendToHost({ type: 'playCard', cardId: pendingWildCardId, chosenColor: color });
-  }
-  pendingWildCardId = null;
+  document.getElementById('color-picker').style.display='none';
+  if (!pendingWild) return;
+  const id=pendingWild; pendingWild=null;
+  if (peerManager.isHost) hostPlay(myPlayer.id,id,color);
+  else peerManager.sendToHost({type:'playCard',cardId:id,chosenColor:color});
 }
-
-export function requestWildColor(card) {
-  pendingWildCardId = card.id;
-  document.getElementById('color-picker').style.display = 'flex';
+export function requestWild(card) {
+  pendingWild=card.id;
+  document.getElementById('color-picker').style.display='flex';
 }
 
 // ================================================================
-// UI UPDATES
+// UI 更新 — ロビー
 // ================================================================
-
 function updateLobbyUI(data) {
-  const roomIdEl = document.getElementById('display-room-id');
-  if (roomIdEl) roomIdEl.textContent = data.roomId || '------';
+  const re=document.getElementById('display-room-id'); if(re) re.textContent=data.roomId||'------';
+  const ie=document.getElementById('invite-url');
+  if(ie) ie.value=`${location.origin}${location.pathname}?room=${data.hostId}`;
+  const me=document.getElementById('max-player-count'); if(me) me.textContent=data.maxPlayers;
 
-  const inviteUrlEl = document.getElementById('invite-url');
-  if (inviteUrlEl) {
-    const hostId = data.hostId;
-    inviteUrlEl.value = `${location.origin}${location.pathname}?room=${hostId}`;
-  }
+  renderLobbyPlayers(data.players,data.maxPlayers,data.hostId);
 
-  const maxEl = document.getElementById('max-player-count');
-  if (maxEl) maxEl.textContent = data.maxPlayers;
-
-  renderLobbyPlayers(data.players, data.maxPlayers, data.hostId);
-
-  const startBtn = document.getElementById('start-game-btn');
-  const waitMsg = document.getElementById('waiting-message');
-
-  if (peerManager.isHost) {
-    if (startBtn) startBtn.style.display = data.players.length >= 2 ? 'block' : 'none';
-    if (waitMsg) waitMsg.style.display = 'none';
+  const sb=document.getElementById('start-game-btn');
+  const wm=document.getElementById('waiting-message');
+  if(peerManager.isHost){
+    if(sb) sb.style.display=data.players.length>=2?'block':'none';
+    if(wm) wm.style.display='none';
   } else {
-    if (startBtn) startBtn.style.display = 'none';
-    if (waitMsg) waitMsg.style.display = 'block';
+    if(sb) sb.style.display='none';
+    if(wm) wm.style.display='block';
   }
 }
 
+// ================================================================
+// UI 更新 — ゲーム画面
+// ================================================================
 export function updateGameUI(state) {
   if (!state) return;
-
-  const me = state.players.find(p => p.id === myPlayer.id);
+  const me=state.players.find(p=>p.id===myPlayer.id);
   if (!me) return;
 
-  const isMyTurn = state.players[state.currentTurn]?.id === myPlayer.id;
-  const top = state.topCard;
+  const isMine=state.players[state.currentTurn]?.id===myPlayer.id;
+  const top=state.topCard;
 
-  // Opponents
-  const opArea = document.getElementById('opponents-area');
-  if (opArea) {
-    opArea.innerHTML = '';
-    state.players.forEach((p, i) => {
-      if (p.id === myPlayer.id) return;
-      opArea.appendChild(renderOpponentPanel(p, i === state.currentTurn));
-    });
-  }
+  // 相手パネル配置
+  const myIdx=state.players.findIndex(p=>p.id===myPlayer.id);
+  const opps=[];
+  for(let i=1;i<state.players.length;i++) opps.push(state.players[(myIdx+i)%state.players.length]);
+  layoutOpponents(opps, state.currentTurn, state.players);
 
-  updateDiscardDisplay(top);
-  updateDeckCount(state.deckCount || 0);
-  updateDrawStack(state.drawStack || 0);
-  updateDirectionIndicator(state.direction || 1);
+  updateDiscard(top);
+  updateDeckCount(state.deckCount||0);
+  updateDrawStack(state.drawStack||0);
+  updateDirectionArrow(state.direction||1, state.players, myPlayer.id, state.currentTurn);
+  updateTurn(state.players[state.currentTurn]?.name||'?', isMine);
 
-  const cur = state.players[state.currentTurn];
-  updateTurnIndicator(cur?.name || '?', isMyTurn);
+  const hand=me.hand||[];
+  renderHand(hand, top, state.drawStack||0, isMine, onlineCardClick);
 
-  const myHand = me.hand || [];
-  renderHand(myHand, top, state.drawStack || 0, isMyTurn, handleOnlineCardClick);
+  const nn=document.getElementById('my-name-display'); if(nn) nn.textContent=me.name;
+  showUnoBtn(isMine&&hand.length===1&&!me.saidUno);
 
-  const myNameEl = document.getElementById('my-name-display');
-  if (myNameEl) myNameEl.textContent = me.name;
-
-  showUnoButton(isMyTurn && myHand.length === 1 && !me.saidUno);
-
-  const drawPile = document.getElementById('draw-pile');
-  if (drawPile) {
-    drawPile.style.opacity = isMyTurn ? '1' : '0.6';
-    drawPile.style.cursor = isMyTurn ? 'pointer' : 'not-allowed';
-  }
+  const dp=document.getElementById('draw-pile');
+  if(dp){dp.style.opacity=isMine?'1':'.65';dp.style.cursor=isMine?'pointer':'not-allowed';}
 }
 
-function handleOnlineCardClick(card) {
-  const curState = viewState || (gameState ? serializeStateForPlayer(gameState, myPlayer.id) : null);
-  if (!curState) return;
-  if (curState.players[curState.currentTurn]?.id !== myPlayer.id) {
-    showToast('あなたのターンではありません', 'warn'); return;
-  }
-  if (card.type === 'wild' || card.type === 'wild4') {
-    requestWildColor(card);
-  } else {
-    onPlayCard(card);
+function onlineCardClick(card) {
+  const s=viewState||(gameState?serializeStateForPlayer(gameState,myPlayer.id):null);
+  if(!s) return;
+  if(s.players[s.currentTurn]?.id!==myPlayer.id){ toast('あなたのターンではありません','warn'); return; }
+  if(card.type==='wild'||card.type==='wild4') requestWild(card);
+  else {
+    const el=document.querySelector(`[data-card-id="${card.id}"]`);
+    animatePlayCard(el,card,()=>onPlayCard(card));
   }
 }
 
 // ================================================================
-// AI (HOST SIDE)
+// HOST — AI ターン
 // ================================================================
-
-function checkAndRunAI() {
-  if (!peerManager.isHost || !gameState || gameState.gameOver) return;
-  const cur = gameState.players[gameState.currentTurn];
-  if (!cur?.isAI) return;
-  clearTimeout(aiTurnTimer);
-  aiTurnTimer = setTimeout(() => runAITurn(cur), 900 + Math.random() * 700);
+function checkAI() {
+  if(!peerManager.isHost||!gameState||gameState.gameOver) return;
+  const cur=gameState.players[gameState.currentTurn];
+  if(!cur?.isAI) return;
+  clearTimeout(aiTimer);
+  const t=THINK[cur.difficulty||'normal'];
+  aiTimer=setTimeout(()=>runAI(cur), t.min+Math.random()*(t.max-t.min));
 }
 
-function runAITurn(aiPlayer) {
-  if (!gameState || gameState.gameOver) return;
-  if (gameState.players[gameState.currentTurn].id !== aiPlayer.id) return;
+function runAI(aiPlayer) {
+  if(!gameState||gameState.gameOver) return;
+  if(gameState.players[gameState.currentTurn].id!==aiPlayer.id) return;
 
-  const { card, chosenColor } = aiChooseCard(aiPlayer, gameState, aiPlayer.difficulty || 'normal');
-
-  if (card) {
-    if (aiPlayer.hand.length === 2 && !aiPlayer.saidUno) {
-      aiPlayer.saidUno = true;
-      showToast(`${aiPlayer.name} が UNO!`, 'warn');
-    }
-    const result = playCard(gameState, aiPlayer.id, card.id, chosenColor || null);
-    if (result.success) {
-      const top = getTopCard(gameState);
-      if (top && top.type !== 'number') {
-        const labels = { skip: 'SKIP!', reverse: 'REVERSE!', draw2: '+2!', wild4: '+4!' };
-        const text = labels[top.type];
-        if (text) { peerManager.broadcast({ type: 'action', text }); showActionOverlay(text); }
+  const {card,chosenColor}=aiChooseCard(aiPlayer,gameState,aiPlayer.difficulty||'normal');
+  if(card){
+    if(aiPlayer.hand.length===2&&!aiPlayer.saidUno){ aiPlayer.saidUno=true; toast(`${aiPlayer.name} が UNO!`,'warn'); }
+    const res=playCard(gameState,aiPlayer.id,card.id,chosenColor||null);
+    if(res.success){
+      const top=getTopCard(gameState);
+      if(top&&top.type!=='number'){
+        const m={skip:'SKIP!',reverse:'REVERSE!',draw2:'+2!',wild4:'+4!'};
+        const t=m[top.type]; if(t){peerManager.broadcast({type:'action',text:t});showAction(t);}
       }
-    } else {
-      playerDraw(gameState, aiPlayer.id);
-    }
-  } else {
-    playerDraw(gameState, aiPlayer.id);
-  }
+    } else playerDraw(gameState,aiPlayer.id);
+  } else playerDraw(gameState,aiPlayer.id);
 
-  if (gameState.gameOver) {
-    endGame(); return;
-  }
-  dobroadcastGameState();
-  setTimeout(checkAndRunAI, 300);
+  if(gameState.gameOver){endGame();return;}
+  broadcastState();
+  setTimeout(checkAI,300);
 }
 
 // ================================================================
-// RESULTS
+// 結果
 // ================================================================
-
-function showGameResults(rankings, players, myId) {
-  renderResults(rankings, players, myId);
-  const titleEl = document.getElementById('result-title');
-  const winner = players.find(p => p.id === rankings[0]);
-  if (titleEl && winner) {
-    titleEl.textContent = winner.id === myId ? '🎉 あなたの勝利!' : `${winner.name} の勝利!`;
-  }
-  const btn = document.getElementById('play-again-btn');
-  if (btn) btn.style.display = peerManager.isHost ? 'block' : 'none';
+function showResult(rankings, players, myId) {
+  renderResults(rankings,players,myId);
+  const w=players.find(p=>p.id===rankings[0]);
+  const t=document.getElementById('result-title');
+  if(t&&w) t.textContent=w.id===myId?'🎉 あなたの勝利!':`${w.name} の勝利!`;
+  if(w?.id===myId){ const {launchConfetti}=require_ui(); launchConfetti(); }
+  const btn=document.getElementById('play-again-btn');
+  if(btn) btn.style.display=peerManager.isHost?'block':'none';
   showScreen('result');
 }
+function require_ui(){ return {launchConfetti}; }
 
 // ================================================================
-// RESET
+// リセット
 // ================================================================
-
 export function resetRoomState() {
-  gameState = null;
-  myPlayer = { id: '', name: '', peerId: '' };
-  pendingWildCardId = null;
-  viewState = null;
-  cachedPlayers = [];
-  unoPenaltyTimers.forEach(t => clearTimeout(t));
-  unoPenaltyTimers.clear();
-  clearTimeout(aiTurnTimer);
+  gameState=null; myPlayer={id:'',name:'',peerId:''};
+  pendingWild=null; viewState=null; cachedPlayers=[];
+  unoTimers.forEach(t=>clearTimeout(t)); unoTimers.clear();
+  clearTimeout(aiTimer);
   peerManager.destroy();
 }
-
 export function getMyPlayer() { return myPlayer; }

@@ -1,341 +1,336 @@
 /**
- * ui.js - UI rendering and animation
+ * ui.js — レンダリング・アニメーション
  */
 
-/**
- * Get display label for a card
- * @param {import('./game.js').Card} card
- * @returns {string}
- */
 export function cardLabel(card) {
   if (!card) return '?';
-  switch (card.type) {
-    case 'number':  return String(card.value);
-    case 'skip':    return '⊘';
-    case 'reverse': return '⇄';
-    case 'draw2':   return '+2';
-    case 'wild':    return '★';
-    case 'wild4':   return '+4';
-    default:        return '?';
-  }
+  const m = {number:String(card.value),skip:'⊘',reverse:'⇄',draw2:'+2',wild:'★',wild4:'+4'};
+  return m[card.type] ?? '?';
+}
+export function cardColor(card) {
+  return card?.chosenColor || card?.color || 'wild';
 }
 
-/**
- * Get effective display color for a card
- * @param {import('./game.js').Card} card
- * @returns {string}
- */
-export function cardDisplayColor(card) {
-  if (!card) return 'wild';
-  if (card.chosenColor) return card.chosenColor;
-  return card.color;
-}
-
-/**
- * Render a card element for the player's hand
- * @param {import('./game.js').Card} card
- * @param {boolean} playable
- * @param {Function} onClick
- * @returns {HTMLElement}
- */
-export function renderCard(card, playable, onClick) {
+/* ===================== カード要素 ===================== */
+export function makeCard(card, playable, onClick) {
   const el = document.createElement('div');
-  const color = cardDisplayColor(card);
-  el.className = `card card-${color}${playable ? '' : ' not-playable'}`;
+  el.className = `card card-${cardColor(card)}${playable ? '' : ' not-playable'}`;
   el.dataset.cardId = card.id;
-
-  const label = cardLabel(card);
-  el.innerHTML = `
-    <span class="card-corner top-left">${label}</span>
-    <div class="card-inner">
-      <span class="card-value">${label}</span>
-    </div>
-    <span class="card-corner bot-right">${label}</span>
-  `;
-
-  if (playable && onClick) {
-    el.addEventListener('click', () => onClick(card));
-  }
+  const lbl = cardLabel(card);
+  el.innerHTML = `<span class="card-corner tl">${lbl}</span><div class="card-inner"><span class="card-value">${lbl}</span></div><span class="card-corner br">${lbl}</span>`;
+  if (playable && onClick) el.addEventListener('click', () => onClick(card));
   return el;
 }
 
-/**
- * Render a discard pile card (larger display)
- * @param {import('./game.js').Card} card
- * @returns {HTMLElement}
- */
-export function renderDiscardCard(card) {
+export function makeDiscardCard(card) {
   const el = document.createElement('div');
-  const color = cardDisplayColor(card);
-  el.className = `discard-card card-${color}`;
-  const label = cardLabel(card);
-  el.innerHTML = `
-    <span class="card-corner top-left">${label}</span>
-    <div class="card-inner">
-      <span class="card-value">${label}</span>
-    </div>
-    <span class="card-corner bot-right">${label}</span>
-  `;
+  el.className = `discard-card card-${cardColor(card)}`;
+  const lbl = cardLabel(card);
+  el.innerHTML = `<span class="card-corner tl">${lbl}</span><div class="card-inner"><span class="card-value">${lbl}</span></div><span class="card-corner br">${lbl}</span>`;
   return el;
 }
 
-/**
- * Render opponent mini-panel
- * @param {Object} player - serialized player data
- * @param {boolean} isCurrentTurn
- * @returns {HTMLElement}
- */
-export function renderOpponentPanel(player, isCurrentTurn) {
+/* ===================== 相手パネル ===================== */
+export function makeOppPanel(player, isActive) {
   const el = document.createElement('div');
-  el.className = `opponent-panel${isCurrentTurn ? ' active-turn' : ''}`;
-  el.id = `opponent-${player.id}`;
+  el.className = `opp-panel${isActive ? ' my-turn-active' : ''}`;
+  el.id = `opp-${player.id}`;
 
-  const handCount = player.handCount || 0;
-  const miniCards = Math.min(handCount, 7);
-  const handHTML = Array.from({ length: miniCards }, () => '<div class="mini-card"></div>').join('');
+  const count = player.handCount ?? player.hand?.length ?? 0;
+  const show  = Math.min(count, 12);
+  const cards = Array.from({length: show}, () => `<div class="opp-card"></div>`).join('');
 
   el.innerHTML = `
-    ${player.isAI ? '<div class="ai-badge">🤖</div>' : ''}
-    <div class="player-slot-icon">${player.isAI ? '🤖' : '👤'}</div>
-    <div class="opponent-name">${escapeHtml(player.name)}</div>
-    <div class="opponent-hand">${handHTML}</div>
-    <div class="opponent-card-count">${handCount}枚</div>
-    ${player.saidUno && handCount === 1 ? '<div style="color:#fdd835;font-size:11px;font-weight:800;">UNO!</div>' : ''}
-  `;
+    ${player.isAI ? '<div class="opp-ai-dot">🤖</div>' : ''}
+    <div class="opp-panel-name">${esc(player.name)}</div>
+    <div class="opp-cards">${cards}</div>
+    <div class="opp-panel-count">${count}枚</div>
+    ${player.saidUno && count === 1 ? '<div class="opp-uno-tag">UNO!</div>' : ''}`;
   return el;
 }
 
 /**
- * Update the hand container with new cards
- * @param {import('./game.js').Card[]} hand
- * @param {import('./game.js').Card|null} topCard
- * @param {number} drawStack
- * @param {boolean} isMyTurn
- * @param {Function} onCardClick
+ * 人数に応じてゾーン配置
+ * 2人: 上1人
+ * 3人: 左1人 + 右1人
+ * 4人: 左1人 + 上1人 + 右1人
  */
-export function renderHand(hand, topCard, drawStack, isMyTurn, onCardClick) {
-  const container = document.getElementById('my-hand');
-  if (!container) return;
+export function layoutOpponents(opponents, currentTurnIdx, allPlayers) {
+  const top   = document.getElementById('zone-top');
+  const left  = document.getElementById('zone-left');
+  const right = document.getElementById('zone-right');
+  if (!top || !left || !right) return;
+  top.innerHTML = left.innerHTML = right.innerHTML = '';
 
-  const existingIds = new Set([...container.querySelectorAll('.card')].map(el => el.dataset.cardId));
-  const newIds = new Set(hand.map(c => c.id));
+  const n      = opponents.length;
+  const active = (p) => allPlayers[currentTurnIdx]?.id === p.id;
 
-  // Remove cards no longer in hand
-  for (const el of [...container.querySelectorAll('.card')]) {
-    if (!newIds.has(el.dataset.cardId)) el.remove();
+  if (n === 1) {
+    top.appendChild(makeOppPanel(opponents[0], active(opponents[0])));
+  } else if (n === 2) {
+    left.appendChild(makeOppPanel(opponents[0], active(opponents[0])));
+    right.appendChild(makeOppPanel(opponents[1], active(opponents[1])));
+  } else if (n === 3) {
+    left.appendChild(makeOppPanel(opponents[0], active(opponents[0])));
+    top.appendChild(makeOppPanel(opponents[1], active(opponents[1])));
+    right.appendChild(makeOppPanel(opponents[2], active(opponents[2])));
   }
-
-  // Add/update cards
-  hand.forEach((card, i) => {
-    const playable = isMyTurn && topCard ? require_canPlay(card, topCard, drawStack) : false;
-    const existing = container.querySelector(`[data-card-id="${card.id}"]`);
-    if (!existing) {
-      const el = renderCard(card, playable, isMyTurn ? onCardClick : null);
-      if (!existingIds.has(card.id)) el.classList.add('card-drawn');
-      container.appendChild(el);
-    } else {
-      // Update playable state
-      existing.className = `card card-${cardDisplayColor(card)}${playable ? '' : ' not-playable'}`;
-      // Re-bind click
-      const newEl = renderCard(card, playable, isMyTurn ? onCardClick : null);
-      existing.replaceWith(newEl);
-    }
-  });
-
-  document.getElementById('my-card-count').textContent = hand.length;
 }
 
-// Local canPlay to avoid circular import
-function require_canPlay(card, top, drawStack) {
+/* ===================== 手札レンダリング ===================== */
+function localCanPlay(card, top, drawStack) {
   if (!top) return true;
   if (drawStack > 0) {
-    if (top.type === 'draw2') return card.type === 'draw2';
-    if (top.type === 'wild4') return card.type === 'wild4';
+    if (top.type === 'draw2')  return card.type === 'draw2';
+    if (top.type === 'wild4')  return card.type === 'wild4';
     return false;
   }
-  const effectiveColor = top.chosenColor || top.color;
+  const eff = top.chosenColor || top.color;
   if (card.type === 'wild' || card.type === 'wild4') return true;
-  if (card.color === effectiveColor) return true;
+  if (card.color === eff) return true;
   if (card.type === top.type && card.type !== 'number') return true;
   if (card.type === 'number' && top.type === 'number' && card.value === top.value) return true;
   return false;
 }
 
-/**
- * Update discard pile display
- * @param {import('./game.js').Card|null} card
- */
-export function updateDiscardDisplay(card) {
+export function renderHand(hand, topCard, drawStack, isMyTurn, onCardClick) {
+  const box = document.getElementById('my-hand');
+  if (!box) return;
+
+  const hadIds = new Set([...box.querySelectorAll('.card')].map(e => e.dataset.cardId));
+  const nowIds = new Set(hand.map(c => c.id));
+
+  // 削除
+  [...box.querySelectorAll('.card')].forEach(el => { if (!nowIds.has(el.dataset.cardId)) el.remove(); });
+
+  // 追加・更新
+  hand.forEach(card => {
+    const playable = isMyTurn && topCard ? localCanPlay(card, topCard, drawStack) : false;
+    const existing = box.querySelector(`[data-card-id="${card.id}"]`);
+    const newEl    = makeCard(card, playable, isMyTurn ? onCardClick : null);
+    if (!existing) {
+      if (!hadIds.has(card.id)) newEl.classList.add('card-new');
+      box.appendChild(newEl);
+    } else {
+      existing.replaceWith(newEl);
+    }
+  });
+
+  const badge = document.getElementById('my-card-count');
+  if (badge) badge.textContent = hand.length;
+}
+
+/* ===================== 捨て札更新 ===================== */
+export function updateDiscard(card) {
   const el = document.getElementById('discard-pile');
   if (!el) return;
   el.innerHTML = '';
   if (card) {
-    el.appendChild(renderDiscardCard(card));
+    const dc = makeDiscardCard(card);
+    dc.classList.add('discard-new');
+    el.appendChild(dc);
   } else {
-    el.innerHTML = '<div class="empty-pile">捨て札</div>';
+    el.innerHTML = '<div class="empty-pile-hint">捨て札</div>';
   }
 }
 
-/**
- * Show a toast notification
- * @param {string} message
- * @param {'info'|'success'|'warn'|'error'} type
- */
-export function showToast(message, type = 'info') {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
-}
-
-/**
- * Show an action overlay animation (e.g. "SKIP!", "REVERSE!")
- * @param {string} text
- */
-export function showActionOverlay(text) {
-  const overlay = document.getElementById('action-overlay');
-  const textEl = document.getElementById('action-text');
-  if (!overlay || !textEl) return;
-  textEl.textContent = text;
-  overlay.style.display = 'flex';
-  textEl.style.animation = 'none';
-  requestAnimationFrame(() => {
-    textEl.style.animation = 'actionAnim 1.5s ease-in-out forwards';
-  });
-  setTimeout(() => { overlay.style.display = 'none'; }, 1500);
-}
-
-/**
- * Show/hide UNO button
- * @param {boolean} show
- */
-export function showUnoButton(show) {
-  const btn = document.getElementById('uno-btn');
-  if (btn) btn.style.display = show ? 'block' : 'none';
-}
-
-/**
- * Update turn indicator text
- * @param {string} name
- * @param {boolean} isMe
- */
-export function updateTurnIndicator(name, isMe) {
+/* ===================== ゲーム情報 ===================== */
+export function updateTurn(name, isMe) {
   const el = document.getElementById('turn-indicator');
   if (!el) return;
-  el.textContent = isMe ? 'あなたのターン' : `${name} のターン`;
-  el.style.color = isMe ? '#fdd835' : '#aaa';
+  el.textContent = isMe ? '🟡 あなたのターン' : `${name} のターン`;
+  el.style.color = isMe ? 'var(--gold)' : 'var(--text-dim)';
 }
 
-/**
- * Update direction indicator
- * @param {number} direction - 1 or -1
- */
-export function updateDirectionIndicator(direction) {
-  const el = document.getElementById('direction-indicator');
-  if (el) el.textContent = direction === 1 ? '→' : '←';
-}
-
-/**
- * Update deck count
- * @param {number} count
- */
-export function updateDeckCount(count) {
+export function updateDeckCount(n) {
   const el = document.getElementById('draw-count');
-  if (el) el.textContent = `${count}枚`;
+  if (el) el.textContent = `${n}枚`;
 }
 
-/**
- * Update draw stack display
- * @param {number} stack
- */
-export function updateDrawStack(stack) {
+export function updateDrawStack(n) {
   const el = document.getElementById('draw-stack-display');
-  const count = document.getElementById('draw-stack-count');
-  if (!el || !count) return;
-  if (stack > 0) {
-    el.style.display = 'block';
-    count.textContent = stack;
-  } else {
-    el.style.display = 'none';
-  }
+  const ct = document.getElementById('draw-stack-count');
+  if (!el || !ct) return;
+  el.style.display = n > 0 ? 'block' : 'none';
+  ct.textContent = n;
 }
 
 /**
- * Render result/ranking screen
- * @param {string[]} rankings - player ids in order
- * @param {import('./game.js').Player[]} players
- * @param {string} myId
+ * 向き矢印 SVG を描画
+ * direction: 1=時計回り, -1=反時計回り
+ * players: 全プレイヤー配列, myId: 自分のID
+ * currentTurn: 現在ターンの index
  */
+export function updateDirectionArrow(direction, players, myId, currentTurn) {
+  const svg = document.getElementById('dir-svg');
+  if (!svg) return;
+
+  const cx = 30, cy = 30, r = 22;
+  const n  = players.filter(p => !p.hand || p.hand.length > 0 || true).length; // 全員
+  // 時計回り = 矢印が右回り
+  const arrowPath = direction === 1
+    ? `M${cx+r},${cy} A${r},${r} 0 1,1 ${cx + r * Math.cos(2.8)},${cy + r * Math.sin(2.8)}`
+    : `M${cx+r},${cy} A${r},${r} 0 1,0 ${cx + r * Math.cos(2.8)},${cy - r * Math.sin(2.8)}`;
+
+  const arrowTip = direction === 1
+    ? `M${cx + r * Math.cos(2.8)},${cy + r * Math.sin(2.8)} l4,-8 l-8,2z`
+    : `M${cx + r * Math.cos(2.8)},${cy - r * Math.sin(2.8)} l4,8 l-8,-2z`;
+
+  svg.innerHTML = `
+    <path d="${arrowPath}" fill="none" stroke="rgba(255,215,0,0.5)" stroke-width="3" stroke-linecap="round"/>
+    <path d="${arrowTip}" fill="rgba(255,215,0,0.7)"/>
+    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="10" fill="rgba(255,215,0,0.6)" font-family="Bebas Neue">${direction===1?'CW':'CCW'}</text>`;
+}
+
+export function showUnoBtn(show) {
+  const b = document.getElementById('uno-btn');
+  if (b) b.style.display = show ? 'block' : 'none';
+}
+
+/* ===================== カード出し演出 (手札→捨て札) ===================== */
+export function animatePlayCard(fromEl, card, onDone) {
+  const discardArea = document.getElementById('discard-pile');
+  const layer       = document.getElementById('anim-layer');
+  if (!discardArea || !layer || !fromEl) { if (onDone) onDone(); return; }
+
+  const fr = fromEl.getBoundingClientRect();
+  const tr = discardArea.getBoundingClientRect();
+
+  const fly = document.createElement('div');
+  fly.className = `fly-card card-${cardColor(card)}`;
+  fly.style.cssText = `left:${fr.left}px;top:${fr.top}px;`;
+  const lbl = cardLabel(card);
+  fly.innerHTML = `<div class="fly-card-inner"><span class="fly-card-value">${lbl}</span></div>`;
+  layer.appendChild(fly);
+
+  // 元カードを隠す
+  fromEl.style.opacity = '0';
+  fromEl.style.pointerEvents = 'none';
+
+  // Web Animations API で飛ばす
+  const toX = tr.left - fr.left;
+  const toY = tr.top  - fr.top;
+  const rot = (Math.random() * 22 - 11).toFixed(1);
+
+  fly.animate([
+    { transform: `translate(0,0) scale(1) rotate(0deg)`,         opacity: 1 },
+    { transform: `translate(${toX*.55}px,${toY*.4}px) scale(1.22) rotate(${rot}deg)`, opacity: 1, offset: .55 },
+    { transform: `translate(${toX}px,${toY}px) scale(0.96) rotate(0deg)`,            opacity: .85 }
+  ], { duration: 420, easing: 'cubic-bezier(.25,.8,.35,1)', fill: 'forwards' })
+    .onfinish = () => { fly.remove(); if (onDone) onDone(); };
+}
+
+/* ===================== 山札から引くアニメ (山札→手札) ===================== */
+export function animateDrawCard(onDone) {
+  const drawPile = document.getElementById('draw-pile');
+  const handBox  = document.getElementById('my-hand');
+  const layer    = document.getElementById('anim-layer');
+  if (!drawPile || !handBox || !layer) { if (onDone) onDone(); return; }
+
+  const fr = drawPile.getBoundingClientRect();
+  const tr = handBox.getBoundingClientRect();
+
+  const fly = document.createElement('div');
+  fly.className = 'draw-fly';
+  fly.style.cssText = `left:${fr.left}px;top:${fr.top}px;width:${fr.width}px;height:${fr.height}px;border-radius:10px;`;
+  layer.appendChild(fly);
+
+  const toX = tr.left + tr.width / 2 - fr.left - fr.width / 2;
+  const toY = tr.top  - fr.top;
+
+  fly.animate([
+    { transform: `translate(0,0) scale(1)`,                   opacity: 1 },
+    { transform: `translate(${toX*.4}px,${toY*.3}px) scale(1.1)`, opacity: 1, offset: .4 },
+    { transform: `translate(${toX}px,${toY}px) scale(.92)`,  opacity: .7 }
+  ], { duration: 380, easing: 'cubic-bezier(.3,.8,.4,1)', fill: 'forwards' })
+    .onfinish = () => { fly.remove(); if (onDone) onDone(); };
+}
+
+/* ===================== トースト ===================== */
+export function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  if (!c) return;
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+/* ===================== アクションオーバーレイ ===================== */
+export function showAction(text) {
+  const ov = document.getElementById('action-overlay');
+  const tx = document.getElementById('action-text');
+  if (!ov || !tx) return;
+  tx.textContent = text;
+  ov.style.display = 'flex';
+  tx.style.animation = 'none';
+  requestAnimationFrame(() => { tx.style.animation = 'actionPop 1.6s ease-in-out forwards'; });
+  setTimeout(() => { ov.style.display = 'none'; }, 1600);
+}
+
+/* ===================== 結果 ===================== */
 export function renderResults(rankings, players, myId) {
   const list = document.getElementById('ranking-list');
   if (!list) return;
   list.innerHTML = '';
-
-  const medals = ['🥇', '🥈', '🥉', '4位'];
-  rankings.forEach((playerId, i) => {
-    const player = players.find(p => p.id === playerId);
-    if (!player) return;
+  const medals = ['🥇','🥈','🥉','4位'];
+  rankings.forEach((pid, i) => {
+    const p = players.find(pl => pl.id === pid);
+    if (!p) return;
     const el = document.createElement('div');
     el.className = 'rank-item';
-    el.innerHTML = `
-      <div class="rank-num">${medals[i] || `${i+1}位`}</div>
-      <div class="rank-name">
-        ${escapeHtml(player.name)}
-        ${playerId === myId ? '<span class="rank-you">YOU</span>' : ''}
-      </div>
-      ${player.isAI ? '<div>🤖</div>' : ''}
-    `;
+    el.innerHTML = `<div class="rank-medal">${medals[i]||`${i+1}`}</div><div class="rank-name">${esc(p.name)}${pid===myId?'<span class="rank-you">YOU</span>':''}</div>${p.isAI?'<div>🤖</div>':''}`;
     list.appendChild(el);
   });
 }
 
-/**
- * Escape HTML for safe insertion
- * @param {string} str
- * @returns {string}
- */
-export function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+/* 紙吹雪 */
+export function launchConfetti() {
+  const c   = document.getElementById('confetti-container');
+  if (!c) return;
+  const clrs = ['#ffd700','#e94560','#1E88E5','#43A047','#ff6b6b','#fff176'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      background:${clrs[Math.floor(Math.random()*clrs.length)]};
+      animation-duration:${2.2+Math.random()*2.5}s;
+      animation-delay:${Math.random()*1.5}s;
+      width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;
+      border-radius:${Math.random()>.5?'50%':'2px'};
+    `;
+    c.appendChild(p);
+  }
+  setTimeout(() => c.innerHTML = '', 6000);
 }
 
-/**
- * Render player slots in lobby
- * @param {Array} players
- * @param {number} maxPlayers
- * @param {string} hostId
- */
+/* ===================== ロビー ===================== */
 export function renderLobbyPlayers(players, maxPlayers, hostId) {
   const grid = document.getElementById('players-grid');
   if (!grid) return;
   grid.innerHTML = '';
-
   for (let i = 0; i < maxPlayers; i++) {
-    const player = players[i];
+    const p  = players[i];
     const el = document.createElement('div');
-    el.className = `player-slot${player ? ' filled' : ''}${player && player.id === hostId ? ' host' : ''}`;
-    if (player) {
+    const isHost = p && p.id === hostId;
+    el.className = `player-slot${p ? ' filled' : ''}${isHost ? ' is-host' : ''}`;
+    if (p) {
       el.innerHTML = `
-        <div class="player-slot-icon">👤</div>
-        <div class="player-slot-name">${escapeHtml(player.name)}</div>
-        ${player.id === hostId ? '<div class="player-slot-tag">HOST</div>' : ''}
-      `;
+        ${isHost ? '<div class="player-slot-role">HOST</div>' : ''}
+        <div class="player-slot-icon">${isHost ? '👑' : '👤'}</div>
+        <div class="player-slot-name">${esc(p.name)}</div>`;
     } else {
-      el.innerHTML = `
-        <div class="player-slot-icon" style="opacity:0.3">⋯</div>
-        <div class="player-slot-name" style="color:var(--text-dim)">待機中</div>
-      `;
+      el.innerHTML = `<div class="player-slot-icon" style="opacity:.25">・・・</div><div class="player-slot-name" style="color:var(--text-dim)">待機中</div>`;
     }
     grid.appendChild(el);
   }
-
-  const countEl = document.getElementById('player-count');
-  if (countEl) countEl.textContent = players.length;
+  const ce = document.getElementById('player-count');
+  if (ce) ce.textContent = players.length;
 }
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+export { esc as escapeHtml };

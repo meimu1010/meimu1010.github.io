@@ -12,264 +12,270 @@
 </head>
 <body>
 
-  <!-- ===== TITLE SCREEN ===== -->
-  <div id="screen-title" class="screen active">
-    <div class="title-bg">
-      <div class="floating-card card-red">7</div>
-      <div class="floating-card card-blue">+2</div>
-      <div class="floating-card card-green">⊘</div>
-      <div class="floating-card card-yellow">⇄</div>
-      <div class="floating-card card-wild">★</div>
+<!-- ===== TITLE ===== -->
+<div id="screen-title" class="screen active">
+  <div class="title-bg">
+    <div class="float-card fc-red">7</div>
+    <div class="float-card fc-blue">+2</div>
+    <div class="float-card fc-green">⊘</div>
+    <div class="float-card fc-yellow">⇄</div>
+    <div class="float-card fc-wild">★</div>
+  </div>
+  <div class="title-content">
+    <div class="title-logo">
+      <span class="logo-u">U</span><span class="logo-n">N</span><span class="logo-o">O</span>
+      <div class="logo-sub">ONLINE</div>
     </div>
-    <div class="title-content">
-      <div class="title-logo">
-        <span class="logo-u">U</span><span class="logo-n">N</span><span class="logo-o">O</span>
-        <div class="logo-sub">ONLINE</div>
+    <button class="btn btn-primary btn-xl" onclick="showScreen('mode-select')">
+      <span>ゲームを始める</span><div class="btn-shine"></div>
+    </button>
+  </div>
+</div>
+
+<!-- ===== MODE SELECT ===== -->
+<div id="screen-mode-select" class="screen">
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('title')">← 戻る</button>
+    <h2>モード選択</h2>
+  </div>
+  <div class="mode-cards">
+    <div class="mode-card" onclick="showScreen('ai-setup')">
+      <div class="mode-icon">🤖</div>
+      <h3>AI対戦</h3><p>コンピューターと対戦</p>
+      <div class="mode-badge">1人プレイ</div>
+    </div>
+    <div class="mode-card" onclick="showScreen('online-select')">
+      <div class="mode-icon">🌐</div>
+      <h3>オンライン対戦</h3><p>フレンドと対戦</p>
+      <div class="mode-badge">2〜4人</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AI SETUP ===== -->
+<div id="screen-ai-setup" class="screen">
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('mode-select')">← 戻る</button>
+    <h2>AI対戦設定</h2>
+  </div>
+  <div class="setup-form">
+    <div class="form-group">
+      <label>プレイヤー名</label>
+      <input type="text" id="ai-player-name" placeholder="あなたの名前" maxlength="12">
+    </div>
+    <div class="form-group">
+      <label>AI人数</label>
+      <div class="number-picker">
+        <button onclick="adjustAICount(-1)">−</button>
+        <span id="ai-count">3</span>
+        <button onclick="adjustAICount(1)">＋</button>
       </div>
-      <div class="title-buttons">
-        <button class="btn btn-primary btn-xl" onclick="showScreen('mode-select')">
-          <span>ゲームを始める</span>
-          <div class="btn-shine"></div>
-        </button>
+    </div>
+    <div class="form-group">
+      <label>難易度</label>
+      <div class="difficulty-select">
+        <button class="diff-btn active" data-diff="easy"   onclick="selectDifficulty(this)">Easy</button>
+        <button class="diff-btn"        data-diff="normal" onclick="selectDifficulty(this)">Normal</button>
+        <button class="diff-btn"        data-diff="hard"   onclick="selectDifficulty(this)">Hard</button>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="startAIGame()">ゲーム開始</button>
+  </div>
+</div>
+
+<!-- ===== ONLINE SELECT ===== -->
+<div id="screen-online-select" class="screen">
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('mode-select')">← 戻る</button>
+    <h2>オンライン対戦</h2>
+  </div>
+  <div class="mode-cards">
+    <div class="mode-card" onclick="showScreen('create-room')">
+      <div class="mode-icon">🏠</div>
+      <h3>ルーム作成</h3><p>フレンドを招待して対戦</p>
+    </div>
+    <div class="mode-card" onclick="showScreen('join-room')">
+      <div class="mode-icon">🚪</div>
+      <h3>ルーム参加</h3><p>ルームIDで参加</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CREATE ROOM ===== -->
+<div id="screen-create-room" class="screen">
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('online-select')">← 戻る</button>
+    <h2>ルーム作成</h2>
+  </div>
+  <div class="setup-form">
+    <div class="form-group">
+      <label>プレイヤー名</label>
+      <input type="text" id="host-player-name" placeholder="あなたの名前" maxlength="12">
+    </div>
+    <div class="form-group">
+      <label>ルーム名</label>
+      <input type="text" id="room-name-input" placeholder="ルーム名" maxlength="20" value="UNO Room">
+    </div>
+    <div class="form-group">
+      <label>最大人数</label>
+      <div class="number-picker">
+        <button onclick="adjustMaxPlayers(-1)">−</button>
+        <span id="max-players-display">4</span>
+        <button onclick="adjustMaxPlayers(1)">＋</button>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="createRoom()">ルームを作成</button>
+    <div id="create-room-status" class="status-message"></div>
+  </div>
+</div>
+
+<!-- ===== JOIN ROOM ===== -->
+<div id="screen-join-room" class="screen">
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('online-select')">← 戻る</button>
+    <h2>ルーム参加</h2>
+  </div>
+  <div class="setup-form">
+    <div class="form-group">
+      <label>プレイヤー名</label>
+      <input type="text" id="join-player-name" placeholder="あなたの名前" maxlength="12">
+    </div>
+    <div class="form-group">
+      <label>ルームID <span style="font-size:11px;opacity:0.6">(招待URLの ?room= 以降)</span></label>
+      <input type="text" id="room-id-input" placeholder="ホストのPeer ID" style="font-size:13px">
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="joinRoom()">参加する</button>
+    <div id="join-room-status" class="status-message"></div>
+  </div>
+</div>
+
+<!-- ===== LOBBY ===== -->
+<div id="screen-lobby" class="screen">
+  <div class="screen-header">
+    <button class="btn-back" onclick="leaveLobby()">← 退出</button>
+    <h2>ロビー</h2>
+  </div>
+  <div class="lobby-container">
+    <div class="lobby-info-card">
+      <div class="lobby-row">
+        <div class="lobby-field">
+          <div class="lobby-field-label">ルームID</div>
+          <div class="room-id-big" id="display-room-id">------</div>
+        </div>
+        <button class="btn-copy" onclick="copyRoomId()">📋 コピー</button>
+      </div>
+      <div class="lobby-row">
+        <div class="lobby-field" style="flex:1;min-width:0">
+          <div class="lobby-field-label">招待URL</div>
+          <input type="text" id="invite-url" class="invite-input" readonly>
+        </div>
+        <button class="btn-copy" onclick="copyInviteUrl()">📋 コピー</button>
+      </div>
+    </div>
+    <div class="lobby-players-card">
+      <div class="lobby-players-header">
+        参加者 <span id="player-count">0</span>/<span id="max-player-count">4</span>
+      </div>
+      <div id="players-grid"></div>
+    </div>
+    <div id="lobby-actions">
+      <button class="btn btn-primary btn-lg" id="start-game-btn" onclick="startOnlineGame()" style="display:none">🎮 ゲーム開始</button>
+      <p id="waiting-message" class="waiting-text">ホストがゲームを開始するまでお待ちください</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="screen-game" class="screen">
+
+  <!-- 相手エリア（位置は JS で配置） -->
+  <div id="zone-top"   class="opp-zone zone-top"></div>
+  <div id="zone-left"  class="opp-zone zone-left"></div>
+  <div id="zone-right" class="opp-zone zone-right"></div>
+
+  <!-- 中央テーブル -->
+  <div class="game-table">
+    <div class="deck-area">
+      <!-- 山札 -->
+      <div class="draw-pile-wrap">
+        <div class="card-back-face card-pile" id="draw-pile" onclick="handleDrawCard()" title="ドロー">
+          <div class="card-back-inner"></div>
+        </div>
+        <div class="pile-label" id="draw-count">52枚</div>
+      </div>
+      <!-- 捨て札 -->
+      <div class="discard-wrap">
+        <div id="discard-pile" class="discard-area">
+          <div class="empty-pile-hint">捨て札</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ゲーム情報 -->
+    <div class="game-info-row">
+      <div class="turn-badge" id="turn-indicator">準備中...</div>
+      <div class="dir-ring" id="direction-ring">
+        <!-- 矢印SVGはJSで描画 -->
+        <svg id="dir-svg" viewBox="0 0 60 60" width="60" height="60"></svg>
+      </div>
+      <div class="draw-stack-badge" id="draw-stack-display" style="display:none">
+        +<span id="draw-stack-count">0</span>
       </div>
     </div>
   </div>
 
-  <!-- ===== MODE SELECT ===== -->
-  <div id="screen-mode-select" class="screen">
-    <div class="screen-header">
-      <button class="btn-back" onclick="showScreen('title')">← 戻る</button>
-      <h2>モード選択</h2>
-    </div>
-    <div class="mode-cards">
-      <div class="mode-card" onclick="showScreen('ai-setup')">
-        <div class="mode-icon">🤖</div>
-        <h3>AI対戦</h3>
-        <p>コンピューターと対戦</p>
-        <div class="mode-badge">1人プレイ</div>
-      </div>
-      <div class="mode-card" onclick="showScreen('online-select')">
-        <div class="mode-icon">🌐</div>
-        <h3>オンライン対戦</h3>
-        <p>フレンドと対戦</p>
-        <div class="mode-badge">2〜4人</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== AI SETUP ===== -->
-  <div id="screen-ai-setup" class="screen">
-    <div class="screen-header">
-      <button class="btn-back" onclick="showScreen('mode-select')">← 戻る</button>
-      <h2>AI対戦設定</h2>
-    </div>
-    <div class="setup-form">
-      <div class="form-group">
-        <label>プレイヤー名</label>
-        <input type="text" id="ai-player-name" placeholder="あなたの名前" maxlength="12" value="プレイヤー">
-      </div>
-      <div class="form-group">
-        <label>AI人数</label>
-        <div class="number-picker">
-          <button onclick="adjustAICount(-1)">−</button>
-          <span id="ai-count">3</span>
-          <button onclick="adjustAICount(1)">＋</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>難易度</label>
-        <div class="difficulty-select">
-          <button class="diff-btn active" data-diff="easy" onclick="selectDifficulty(this)">Easy</button>
-          <button class="diff-btn" data-diff="normal" onclick="selectDifficulty(this)">Normal</button>
-          <button class="diff-btn" data-diff="hard" onclick="selectDifficulty(this)">Hard</button>
-        </div>
-      </div>
-      <button class="btn btn-primary btn-lg" onclick="startAIGame()">
-        ゲーム開始
-      </button>
-    </div>
-  </div>
-
-  <!-- ===== ONLINE SELECT ===== -->
-  <div id="screen-online-select" class="screen">
-    <div class="screen-header">
-      <button class="btn-back" onclick="showScreen('mode-select')">← 戻る</button>
-      <h2>オンライン対戦</h2>
-    </div>
-    <div class="mode-cards">
-      <div class="mode-card" onclick="showScreen('create-room')">
-        <div class="mode-icon">🏠</div>
-        <h3>ルーム作成</h3>
-        <p>新しいルームを作ってフレンドを招待</p>
-      </div>
-      <div class="mode-card" onclick="showScreen('join-room')">
-        <div class="mode-icon">🚪</div>
-        <h3>ルーム参加</h3>
-        <p>ルームIDで参加する</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== CREATE ROOM ===== -->
-  <div id="screen-create-room" class="screen">
-    <div class="screen-header">
-      <button class="btn-back" onclick="showScreen('online-select')">← 戻る</button>
-      <h2>ルーム作成</h2>
-    </div>
-    <div class="setup-form">
-      <div class="form-group">
-        <label>プレイヤー名</label>
-        <input type="text" id="host-player-name" placeholder="あなたの名前" maxlength="12" value="ホスト">
-      </div>
-      <div class="form-group">
-        <label>ルーム名</label>
-        <input type="text" id="room-name-input" placeholder="ルーム名" maxlength="20" value="UNO Room">
-      </div>
-      <div class="form-group">
-        <label>最大人数</label>
-        <div class="number-picker">
-          <button onclick="adjustMaxPlayers(-1)">−</button>
-          <span id="max-players-display">4</span>
-          <button onclick="adjustMaxPlayers(1)">＋</button>
-        </div>
-      </div>
-      <button class="btn btn-primary btn-lg" onclick="createRoom()">
-        ルームを作成
-      </button>
-      <div id="create-room-status" class="status-message"></div>
-    </div>
-  </div>
-
-  <!-- ===== JOIN ROOM ===== -->
-  <div id="screen-join-room" class="screen">
-    <div class="screen-header">
-      <button class="btn-back" onclick="showScreen('online-select')">← 戻る</button>
-      <h2>ルーム参加</h2>
-    </div>
-    <div class="setup-form">
-      <div class="form-group">
-        <label>プレイヤー名</label>
-        <input type="text" id="join-player-name" placeholder="あなたの名前" maxlength="12" value="プレイヤー">
-      </div>
-      <div class="form-group">
-        <label>ルームID</label>
-        <input type="text" id="room-id-input" placeholder="6桁のルームID" maxlength="6" style="text-transform:uppercase">
-      </div>
-      <button class="btn btn-primary btn-lg" onclick="joinRoom()">
-        参加する
-      </button>
-      <div id="join-room-status" class="status-message"></div>
-    </div>
-  </div>
-
-  <!-- ===== LOBBY ===== -->
-  <div id="screen-lobby" class="screen">
-    <div class="screen-header">
-      <button class="btn-back" id="lobby-back-btn" onclick="leaveLobby()">← 退出</button>
-      <h2>ロビー</h2>
-    </div>
-    <div class="lobby-container">
-      <div class="lobby-info">
-        <div class="room-id-display">
-          <span class="label">ルームID</span>
-          <span id="display-room-id" class="room-id-big">------</span>
-          <button class="btn-copy" onclick="copyRoomId()">コピー</button>
-        </div>
-        <div class="invite-url-display">
-          <span class="label">招待URL</span>
-          <input type="text" id="invite-url" readonly>
-          <button class="btn-copy" onclick="copyInviteUrl()">コピー</button>
-        </div>
-      </div>
-      <div class="player-list">
-        <h3>参加者 <span id="player-count">0</span>/<span id="max-player-count">4</span></h3>
-        <div id="players-grid"></div>
-      </div>
-      <div id="lobby-actions">
-        <button class="btn btn-primary btn-lg" id="start-game-btn" onclick="startOnlineGame()" style="display:none">
-          ゲーム開始
-        </button>
-        <p id="waiting-message" class="waiting-text">ホストがゲームを開始するまで待ちます...</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== GAME SCREEN ===== -->
-  <div id="screen-game" class="screen">
-    <!-- Top: Other players -->
-    <div id="opponents-area"></div>
-
-    <!-- Center: Game table -->
-    <div class="game-table">
-      <div class="deck-area">
-        <div class="card-back card-pile" id="draw-pile" onclick="handleDrawCard()" title="山札からドロー">
-          <div class="card-back-design"></div>
-          <div class="pile-count" id="draw-count">52</div>
-        </div>
-        <div class="discard-pile-wrapper">
-          <div id="discard-pile" class="discard-display">
-            <div class="empty-pile">捨て札</div>
-          </div>
-        </div>
-      </div>
-      <div class="game-info-bar">
-        <div class="turn-indicator" id="turn-indicator">準備中...</div>
-        <div class="direction-indicator" id="direction-indicator">→</div>
-        <div class="draw-stack-indicator" id="draw-stack-display" style="display:none">
-          +<span id="draw-stack-count">0</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bottom: My hand -->
-    <div class="my-area">
-      <div class="my-info">
-        <span id="my-name-display">プレイヤー</span>
+  <!-- 自分エリア（下） -->
+  <div class="my-area">
+    <div class="my-info-bar">
+      <div class="my-name-wrap">
+        <span class="my-name" id="my-name-display">プレイヤー</span>
         <span class="card-count-badge" id="my-card-count">0</span>
-        <button class="uno-btn" id="uno-btn" onclick="declareUno()" style="display:none">UNO!</button>
       </div>
-      <div class="hand-container" id="my-hand"></div>
+      <button class="uno-btn" id="uno-btn" onclick="declareUno()" style="display:none">UNO!</button>
     </div>
-
-    <!-- Color picker modal -->
-    <div id="color-picker" class="modal" style="display:none">
-      <div class="modal-content">
-        <h3>色を選んでください</h3>
-        <div class="color-options">
-          <button class="color-btn red" onclick="selectColor('red')">赤</button>
-          <button class="color-btn blue" onclick="selectColor('blue')">青</button>
-          <button class="color-btn green" onclick="selectColor('green')">緑</button>
-          <button class="color-btn yellow" onclick="selectColor('yellow')">黄</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Toast notifications -->
-    <div id="toast-container"></div>
-
-    <!-- Action overlay -->
-    <div id="action-overlay" class="action-overlay" style="display:none">
-      <div class="action-text" id="action-text"></div>
-    </div>
+    <div class="hand-scroll" id="my-hand"></div>
   </div>
 
-  <!-- ===== RESULT SCREEN ===== -->
-  <div id="screen-result" class="screen">
-    <div class="result-container">
-      <div class="result-fireworks">
-        <div class="fw fw1"></div>
-        <div class="fw fw2"></div>
-        <div class="fw fw3"></div>
-      </div>
-      <h2 class="result-title" id="result-title">ゲーム終了!</h2>
-      <div class="ranking-list" id="ranking-list"></div>
-      <div class="result-buttons">
-        <button class="btn btn-primary btn-lg" onclick="returnToTitle()">タイトルへ</button>
-        <button class="btn btn-secondary btn-lg" id="play-again-btn" onclick="playAgain()" style="display:none">もう一度</button>
+  <!-- カード飛ぶアニメレイヤー -->
+  <div id="anim-layer"></div>
+
+  <!-- 色選択 -->
+  <div id="color-picker" class="modal-overlay" style="display:none">
+    <div class="color-modal">
+      <div class="color-modal-title">色を選択</div>
+      <div class="color-grid">
+        <button class="color-btn cb-red"    onclick="selectColor('red')">赤</button>
+        <button class="color-btn cb-blue"   onclick="selectColor('blue')">青</button>
+        <button class="color-btn cb-green"  onclick="selectColor('green')">緑</button>
+        <button class="color-btn cb-yellow" onclick="selectColor('yellow')">黄</button>
       </div>
     </div>
   </div>
 
-  <script type="module" src="js/main.js"></script>
+  <!-- トースト -->
+  <div id="toast-container"></div>
+
+  <!-- アクションオーバーレイ -->
+  <div id="action-overlay" style="display:none">
+    <div id="action-text" class="action-text"></div>
+  </div>
+</div>
+
+<!-- ===== RESULT ===== -->
+<div id="screen-result" class="screen">
+  <div class="result-bg">
+    <div class="confetti" id="confetti-container"></div>
+  </div>
+  <div class="result-card">
+    <div class="result-title" id="result-title">ゲーム終了!</div>
+    <div class="ranking-list" id="ranking-list"></div>
+    <div class="result-btns">
+      <button class="btn btn-primary btn-lg" onclick="returnToTitle()">タイトルへ</button>
+      <button class="btn btn-secondary btn-lg" id="play-again-btn" onclick="playAgain()" style="display:none">もう一度</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -1,426 +1,347 @@
 /**
- * main.js - Application entry point
- * Screen management, AI game mode, global event handlers
+ * main.js — エントリーポイント + AI ゲームモード
  */
 
-import {
-  createGameState, initGame, playCard, playerDraw,
-  getTopCard
-} from './game.js';
+import { createGameState, initGame, playCard, playerDraw, getTopCard, drawFromDeck } from './game.js';
 import { aiChooseCard } from './ai.js';
 import {
-  showToast, renderHand, updateDiscardDisplay, updateTurnIndicator,
-  updateDirectionIndicator, updateDeckCount, updateDrawStack,
-  renderOpponentPanel, renderResults, showActionOverlay,
-  showUnoButton, renderLobbyPlayers
+  makeCard, makeDiscardCard, renderHand, updateDiscard, updateTurn,
+  updateDeckCount, updateDrawStack, updateDirectionArrow, layoutOpponents,
+  renderResults, showAction, showUnoBtn, toast,
+  animatePlayCard, animateDrawCard, renderLobbyPlayers, launchConfetti
 } from './ui.js';
 
 // ================================================================
-// SCREEN MANAGEMENT
+// 名前の永続化 (localStorage)
 // ================================================================
+function loadName(key, fallback) {
+  try { return localStorage.getItem(key) || fallback; } catch { return fallback; }
+}
+function saveName(key, val) {
+  try { localStorage.setItem(key, val); } catch {}
+}
 
-export function showScreen(screenName) {
+// ================================================================
+// 画面切替
+// ================================================================
+export function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById(`screen-${screenName}`);
+  const el = document.getElementById(`screen-${name}`);
   if (el) el.classList.add('active');
 }
 window.showScreen = showScreen;
 
 // ================================================================
-// AI GAME STATE
+// AI ゲーム状態
 // ================================================================
+let G        = null;   // GameState
+const MY_ID  = 'local-player';
+let pendWild = null;
+let aiTimer  = null;
+let unoTimer = null;
+let aiDiff   = 'normal';
 
-let aiGameState = null;
-const AI_MY_ID = 'local-player';
-let aiPendingWild = null;
-let aiTurnTimer = null;
-let unoUnclaimedTimer = null;
-let aiDifficulty = 'normal';
+const THINK = { easy:{min:1000,max:2200}, normal:{min:1600,max:3000}, hard:{min:2200,max:4200} };
 
-// Controls
-let _aiCount = 3;
-let _maxPlayers = 4;
-let _difficulty = 'normal';
-
-window.adjustAICount = (delta) => {
-  _aiCount = Math.max(1, Math.min(3, _aiCount + delta));
-  const el = document.getElementById('ai-count');
-  if (el) el.textContent = _aiCount;
-};
-
-window.adjustMaxPlayers = (delta) => {
-  _maxPlayers = Math.max(2, Math.min(4, _maxPlayers + delta));
-  const el = document.getElementById('max-players-display');
-  if (el) el.textContent = _maxPlayers;
-};
-
-window.selectDifficulty = (btn) => {
+// ================================================================
+// 設定コントロール
+// ================================================================
+let _aiN  = 3, _maxP = 4, _diff = 'normal';
+window.adjustAICount    = d => { _aiN  = Math.max(1,Math.min(3,_aiN+d));  document.getElementById('ai-count').textContent = _aiN; };
+window.adjustMaxPlayers = d => { _maxP = Math.max(2,Math.min(4,_maxP+d)); document.getElementById('max-players-display').textContent = _maxP; };
+window.selectDifficulty = btn => {
   document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  _difficulty = btn.dataset.diff;
+  btn.classList.add('active'); _diff = btn.dataset.diff;
 };
 
 // ================================================================
-// AI GAME START
+// AI ゲーム開始
 // ================================================================
-
 window.startAIGame = () => {
-  const nameEl = document.getElementById('ai-player-name');
-  const playerName = nameEl?.value?.trim() || 'プレイヤー';
-  aiDifficulty = _difficulty;
-  aiPendingWild = null;
-  clearTimeout(aiTurnTimer);
-  clearTimeout(unoUnclaimedTimer);
+  const inp  = document.getElementById('ai-player-name');
+  const name = inp?.value?.trim() || 'プレイヤー';
+  saveName('uno_player_name', name);
+  aiDiff = _diff; pendWild = null;
+  clearTimeout(aiTimer); clearTimeout(unoTimer);
 
-  aiGameState = createGameState('LOCAL', 'AI Game', AI_MY_ID, _aiCount + 1);
-  aiGameState.players.push({ id: AI_MY_ID, name: playerName, hand: [], isAI: false, saidUno: false });
+  G = createGameState('LOCAL','AI Game',MY_ID,_aiN+1);
+  G.players.push({ id:MY_ID, name, hand:[], isAI:false, saidUno:false });
 
-  const aiNames = ['ゆいな', 'たかし', 'はるか', 'けんじ'];
-  for (let i = 0; i < _aiCount; i++) {
-    aiGameState.players.push({
-      id: `ai-${i}`, name: aiNames[i] || `AI ${i+1}`,
-      hand: [], isAI: true, difficulty: aiDifficulty, saidUno: false
-    });
+  const aiNames = ['ゆいな','たかし','はるか','けんじ'];
+  for (let i = 0; i < _aiN; i++) {
+    G.players.push({ id:`ai-${i}`, name:aiNames[i]||`AI${i+1}`, hand:[], isAI:true, difficulty:_diff, saidUno:false });
   }
-
-  initGame(aiGameState);
+  initGame(G);
   showScreen('game');
-  renderAIGameUI();
-  scheduleAIIfNeeded();
+  renderGame();
+  scheduleAI();
 };
 
-function renderAIGameUI() {
-  if (!aiGameState) return;
-  const state = aiGameState;
-  const me = state.players.find(p => p.id === AI_MY_ID);
+// ================================================================
+// ゲーム UI 全更新
+// ================================================================
+function renderGame() {
+  if (!G) return;
+  const me      = G.players.find(p => p.id === MY_ID);
   if (!me) return;
+  const top     = getTopCard(G);
+  const isMine  = G.players[G.currentTurn]?.id === MY_ID;
 
-  const top = getTopCard(state);
-  const isMyTurn = state.players[state.currentTurn]?.id === AI_MY_ID;
+  // 相手 — 時計回り順で取得
+  const myIdx = G.players.findIndex(p => p.id === MY_ID);
+  const opps  = [];
+  for (let i = 1; i < G.players.length; i++) opps.push(G.players[(myIdx+i)%G.players.length]);
+  layoutOpponents(opps, G.currentTurn, G.players);
 
-  // Opponents
-  const opArea = document.getElementById('opponents-area');
-  if (opArea) {
-    opArea.innerHTML = '';
-    state.players.forEach((p, i) => {
-      if (p.id === AI_MY_ID) return;
-      opArea.appendChild(renderOpponentPanel(p, i === state.currentTurn));
-    });
-  }
+  // 中央
+  updateDiscard(top);
+  updateDeckCount(G.deck.length);
+  updateDrawStack(G.drawStack);
+  updateDirectionArrow(G.direction, G.players, MY_ID, G.currentTurn);
+  updateTurn(G.players[G.currentTurn]?.name||'?', isMine);
 
-  updateDiscardDisplay(top);
-  updateDeckCount(state.deck.length);
-  updateDrawStack(state.drawStack);
-  updateDirectionIndicator(state.direction);
+  // 自分手札
+  renderHand(me.hand, top, G.drawStack, isMine, onCardClick);
 
-  const cur = state.players[state.currentTurn];
-  updateTurnIndicator(cur?.name || '?', isMyTurn);
+  const nn = document.getElementById('my-name-display');
+  if (nn) nn.textContent = me.name;
+  showUnoBtn(isMine && me.hand.length===1 && !me.saidUno);
 
-  renderHand(me.hand, top, state.drawStack, isMyTurn, handleAICardClick);
-
-  const myNameEl = document.getElementById('my-name-display');
-  if (myNameEl) myNameEl.textContent = me.name;
-
-  showUnoButton(isMyTurn && me.hand.length === 1 && !me.saidUno);
-
-  const drawPile = document.getElementById('draw-pile');
-  if (drawPile) {
-    drawPile.style.opacity = isMyTurn ? '1' : '0.6';
-    drawPile.style.cursor = isMyTurn ? 'pointer' : 'not-allowed';
-  }
+  const dp = document.getElementById('draw-pile');
+  if (dp) { dp.style.opacity = isMine?'1':'.65'; dp.style.cursor = isMine?'pointer':'not-allowed'; }
 }
 
-function handleAICardClick(card) {
-  if (!aiGameState) return;
-  if (aiGameState.players[aiGameState.currentTurn]?.id !== AI_MY_ID) {
-    showToast('あなたのターンではありません', 'warn'); return;
+// ================================================================
+// カードクリック
+// ================================================================
+function onCardClick(card) {
+  if (!G || G.players[G.currentTurn]?.id !== MY_ID) {
+    toast('あなたのターンではありません','warn'); return;
   }
-  if (card.type === 'wild' || card.type === 'wild4') {
-    aiPendingWild = card;
+  if (card.type==='wild'||card.type==='wild4') {
+    pendWild = card;
     document.getElementById('color-picker').style.display = 'flex';
   } else {
-    doAIPlay(card, null);
+    const el = document.querySelector(`[data-card-id="${card.id}"]`);
+    animatePlayCard(el, card, () => doPlay(card, null));
   }
 }
 
-function doAIPlay(card, color) {
-  if (!aiGameState) return;
-  const result = playCard(aiGameState, AI_MY_ID, card.id, color);
+function doPlay(card, color) {
+  if (!G) return;
+  const result = playCard(G, MY_ID, card.id, color);
   if (!result.success) {
-    if (result.needsColor) {
-      aiPendingWild = card;
-      document.getElementById('color-picker').style.display = 'flex';
-      return;
-    }
-    showToast('そのカードは出せません', 'error');
-    return;
+    if (result.needsColor) { pendWild=card; document.getElementById('color-picker').style.display='flex'; return; }
+    toast('そのカードは出せません','error');
+    renderGame(); return;
   }
-
-  showSpecialEffect(getTopCard(aiGameState));
-  clearTimeout(unoUnclaimedTimer);
-
-  const me = aiGameState.players.find(p => p.id === AI_MY_ID);
-  if (me && me.hand.length === 1 && !me.saidUno) {
-    unoUnclaimedTimer = setTimeout(() => {
-      if (!aiGameState) return;
-      const mp = aiGameState.players.find(p => p.id === AI_MY_ID);
-      if (mp && mp.hand.length === 1 && !mp.saidUno) {
-        for (let i = 0; i < 2; i++) { const c = deckDraw(aiGameState); if (c) mp.hand.push(c); }
-        showToast('UNO宣言を忘れて2枚ドロー!', 'error');
-        renderAIGameUI();
+  doSpecialEffect(getTopCard(G));
+  clearTimeout(unoTimer);
+  const me = G.players.find(p=>p.id===MY_ID);
+  if (me?.hand.length===1 && !me.saidUno) {
+    unoTimer = setTimeout(()=>{
+      if (!G) return;
+      const mp=G.players.find(p=>p.id===MY_ID);
+      if(mp?.hand.length===1&&!mp.saidUno){
+        for(let i=0;i<2;i++){const c=drawFromDeck(G);if(c)mp.hand.push(c);}
+        toast('UNO宣言を忘れて2枚ドロー!','error');
+        renderGame();
       }
     }, 5000);
   }
-
-  if (aiGameState.gameOver) { renderAIGameUI(); setTimeout(showAIResults, 800); return; }
-  renderAIGameUI();
-  scheduleAIIfNeeded();
+  if (G.gameOver){ renderGame(); setTimeout(showAIResult, 800); return; }
+  renderGame();
+  scheduleAI();
 }
 
-function scheduleAIIfNeeded() {
-  if (!aiGameState || aiGameState.gameOver) return;
-  const cur = aiGameState.players[aiGameState.currentTurn];
-  if (!cur?.isAI) return;
-  clearTimeout(aiTurnTimer);
-  aiTurnTimer = setTimeout(() => runAITurn(cur), 900 + Math.random() * 700);
-}
-
-function runAITurn(aiPlayer) {
-  if (!aiGameState || aiGameState.gameOver) return;
-  if (aiGameState.players[aiGameState.currentTurn].id !== aiPlayer.id) return;
-
-  const { card, chosenColor } = aiChooseCard(aiPlayer, aiGameState, aiPlayer.difficulty || aiDifficulty);
-  if (card) {
-    if (aiPlayer.hand.length === 2 && !aiPlayer.saidUno) {
-      aiPlayer.saidUno = true;
-      showToast(`${aiPlayer.name} が UNO!`, 'warn');
+// ================================================================
+// 山札を引く (+2/+4 自動ドロー対応)
+// ================================================================
+window.handleDrawCard = async () => {
+  if (G) {
+    if (G.players[G.currentTurn]?.id !== MY_ID){ toast('あなたのターンではありません','warn'); return; }
+    // drawStack があるとき対応カードを持っているか確認
+    if (G.drawStack > 0) {
+      const top = getTopCard(G);
+      const me  = G.players.find(p=>p.id===MY_ID);
+      const canCounter = me.hand.some(c=>{
+        if(top?.type==='draw2')  return c.type==='draw2';
+        if(top?.type==='wild4')  return c.type==='wild4';
+        return false;
+      });
+      if (canCounter) { toast('+2/+4カードで対応できます','info'); return; }
     }
-    const result = playCard(aiGameState, aiPlayer.id, card.id, chosenColor || null);
-    if (result.success) showSpecialEffect(getTopCard(aiGameState));
-    else playerDraw(aiGameState, aiPlayer.id);
-  } else {
-    playerDraw(aiGameState, aiPlayer.id);
+    // 山札から引くアニメ → 実際にドロー
+    animateDrawCard(()=>{
+      playerDraw(G, MY_ID);
+      renderGame();
+      scheduleAI();
+    });
+  } else if (onlineMode) {
+    const r = await getRm(); r.onDrawCard();
   }
+};
 
-  if (aiGameState.gameOver) {
-    renderAIGameUI();
-    setTimeout(showAIResults, 800);
-    return;
+// ================================================================
+// UNO宣言
+// ================================================================
+window.declareUno = async () => {
+  if (G) {
+    const me=G.players.find(p=>p.id===MY_ID);
+    if(me?.hand.length===1){ me.saidUno=true; clearTimeout(unoTimer); toast('UNO! 🎉','success'); renderGame(); }
+  } else if (onlineMode) {
+    const r = await getRm(); r.onDeclareUno();
   }
-  renderAIGameUI();
-  setTimeout(scheduleAIIfNeeded, 200);
+};
+
+// ================================================================
+// 色選択
+// ================================================================
+window.selectColor = async color => {
+  document.getElementById('color-picker').style.display='none';
+  if (G) {
+    if (!pendWild) return;
+    const card=pendWild; pendWild=null;
+    const el=document.querySelector(`[data-card-id="${card.id}"]`);
+    animatePlayCard(el,{...card,chosenColor:color},()=>doPlay(card,color));
+  } else if (onlineMode) {
+    const r=await getRm(); r.onColorSelected(color);
+  }
+};
+
+// ================================================================
+// AI スケジュール & 実行
+// ================================================================
+function scheduleAI() {
+  if (!G||G.gameOver) return;
+  const cur=G.players[G.currentTurn];
+  if (!cur?.isAI) return;
+  clearTimeout(aiTimer);
+  const t=THINK[cur.difficulty||aiDiff]||THINK.normal;
+  aiTimer=setTimeout(()=>runAI(cur), t.min+Math.random()*(t.max-t.min));
 }
 
-function showAIResults() {
-  if (!aiGameState) return;
-  renderResults(aiGameState.rankings, aiGameState.players, AI_MY_ID);
-  const titleEl = document.getElementById('result-title');
-  const winner = aiGameState.players.find(p => p.id === aiGameState.rankings[0]);
-  if (titleEl && winner) {
-    titleEl.textContent = winner.id === AI_MY_ID ? '🎉 あなたの勝利!' : `${winner.name} の勝利!`;
+function runAI(aiPlayer) {
+  if (!G||G.gameOver) return;
+  if (G.players[G.currentTurn].id!==aiPlayer.id) return;
+
+  const {card,chosenColor}=aiChooseCard(aiPlayer,G,aiPlayer.difficulty||aiDiff);
+
+  if (card) {
+    if (aiPlayer.hand.length===2&&!aiPlayer.saidUno){ aiPlayer.saidUno=true; toast(`${aiPlayer.name} が UNO!`,'warn'); }
+    const res=playCard(G,aiPlayer.id,card.id,chosenColor||null);
+    if (res.success) doSpecialEffect(getTopCard(G));
+    else playerDraw(G,aiPlayer.id);
+  } else {
+    playerDraw(G,aiPlayer.id);
   }
-  const btn = document.getElementById('play-again-btn');
-  if (btn) btn.style.display = 'block';
+
+  if (G.gameOver){ renderGame(); setTimeout(showAIResult,800); return; }
+  renderGame();
+  setTimeout(scheduleAI,250);
+}
+
+function doSpecialEffect(card) {
+  if (!card||card.type==='number') return;
+  const m={skip:'SKIP!',reverse:'REVERSE!',draw2:'+2!',wild4:'+4!'};
+  const t=m[card.type]; if(t) showAction(t);
+}
+
+// ================================================================
+// AI 結果
+// ================================================================
+function showAIResult() {
+  if (!G) return;
+  const w=G.players.find(p=>p.id===G.rankings[0]);
+  document.getElementById('result-title').textContent = w?.id===MY_ID?'🎉 あなたの勝利!':`${w?.name} の勝利!`;
+  renderResults(G.rankings,G.players,MY_ID);
+  document.getElementById('play-again-btn').style.display='block';
+  if (w?.id===MY_ID) launchConfetti();
   showScreen('result');
 }
 
-function showSpecialEffect(card) {
-  if (!card || card.type === 'number') return;
-  const labels = { skip: 'SKIP!', reverse: 'REVERSE!', draw2: '+2!', wild4: '+4!' };
-  const text = labels[card.type];
-  if (text) showActionOverlay(text);
-}
-
-// Deck draw helper (avoids import cycle)
-function deckDraw(state) {
-  if (state.deck.length === 0) {
-    if (state.discardPile.length <= 1) return null;
-    const top = state.discardPile.pop();
-    const r = state.discardPile.map(c => ({ ...c, chosenColor: null }));
-    for (let i = r.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]]; }
-    state.deck = r;
-    state.discardPile = [top];
-  }
-  return state.deck.pop() || null;
-}
-
 // ================================================================
-// ONLINE MODE - lazy load room.js
+// オンラインモード (lazy)
 // ================================================================
-
-let roomModule = null;
-async function getRoomModule() {
-  if (!roomModule) roomModule = await import('./room.js');
-  return roomModule;
-}
-
-// Track if we're in online mode
-let onlineMode = false;
+let rmMod=null, onlineMode=false;
+async function getRm() { if(!rmMod) rmMod=await import('./room.js'); return rmMod; }
 
 window.createRoom = async () => {
-  const name = document.getElementById('host-player-name')?.value?.trim() || 'ホスト';
-  const roomName = document.getElementById('room-name-input')?.value?.trim() || 'UNO Room';
-  const statusEl = document.getElementById('create-room-status');
-  if (statusEl) { statusEl.textContent = '接続中...'; statusEl.className = 'status-message'; }
-
+  const name    =document.getElementById('host-player-name')?.value?.trim()||'ホスト';
+  const roomName=document.getElementById('room-name-input')?.value?.trim()||'UNO Room';
+  saveName('uno_player_name',name);
+  const se=document.getElementById('create-room-status');
+  if(se){se.textContent='接続中...';se.className='status-message';}
   try {
-    const room = await getRoomModule();
-    const { peerManager } = await import('./peer.js');
-    const roomId = await room.hostCreateRoom(name, roomName, _maxPlayers);
-    onlineMode = true;
-    showScreen('lobby');
-
-    // Update lobby UI
-    document.getElementById('display-room-id').textContent = roomId;
-    const hostId = peerManager.myPeerId;
-    document.getElementById('invite-url').value = `${location.origin}${location.pathname}?room=${hostId}`;
-    document.getElementById('max-player-count').textContent = _maxPlayers;
-
-    // Initial player display
-    renderLobbyPlayers([{ id: hostId, name }], _maxPlayers, hostId);
-
-    const startBtn = document.getElementById('start-game-btn');
-    if (startBtn) startBtn.style.display = 'none';
-    const waitMsg = document.getElementById('waiting-message');
-    if (waitMsg) waitMsg.style.display = 'none';
-
-    // Host sees their own lobby controls
-    const actions = document.getElementById('lobby-actions');
-    if (actions) {
-      const hostNote = document.createElement('p');
-      hostNote.style.cssText = 'text-align:center;color:var(--text-dim);font-size:14px;margin-top:8px;';
-      hostNote.textContent = '2人以上集まったらゲームを開始できます';
-      actions.appendChild(hostNote);
-    }
-  } catch(e) {
-    if (statusEl) { statusEl.textContent = `エラー: ${e.message}`; statusEl.className = 'status-message error'; }
-  }
+    const r=await getRm();
+    const {peerManager}=await import('./peer.js');
+    const rid=await r.hostCreateRoom(name,roomName,_maxP);
+    onlineMode=true; showScreen('lobby');
+    document.getElementById('display-room-id').textContent=rid;
+    document.getElementById('invite-url').value=`${location.origin}${location.pathname}?room=${peerManager.myPeerId}`;
+    document.getElementById('max-player-count').textContent=_maxP;
+    renderLobbyPlayers([{id:peerManager.myPeerId,name}],_maxP,peerManager.myPeerId);
+    document.getElementById('start-game-btn').style.display='none';
+    document.getElementById('waiting-message').style.display='none';
+  } catch(e){ if(se){se.textContent=`エラー: ${e.message}`;se.className='status-message error';} }
 };
 
 window.joinRoom = async () => {
-  const name = document.getElementById('join-player-name')?.value?.trim() || 'プレイヤー';
-  const roomInput = document.getElementById('room-id-input')?.value?.trim();
-  const statusEl = document.getElementById('join-room-status');
-
-  if (!roomInput) {
-    if (statusEl) { statusEl.textContent = 'ルームIDを入力してください'; statusEl.className = 'status-message error'; }
-    return;
-  }
-  if (statusEl) { statusEl.textContent = '接続中...'; statusEl.className = 'status-message'; }
-
-  try {
-    const room = await getRoomModule();
-    await room.clientJoinRoom(name, roomInput);
-    onlineMode = true;
-    showScreen('lobby');
-  } catch(e) {
-    if (statusEl) { statusEl.textContent = `接続失敗: ${e.message}`; statusEl.className = 'status-message error'; }
-  }
+  const name=document.getElementById('join-player-name')?.value?.trim()||'プレイヤー';
+  const rid =document.getElementById('room-id-input')?.value?.trim();
+  saveName('uno_player_name',name);
+  const se=document.getElementById('join-room-status');
+  if(!rid){if(se){se.textContent='ルームIDを入力してください';se.className='status-message error';} return;}
+  if(se){se.textContent='接続中...';se.className='status-message';}
+  try { const r=await getRm(); await r.clientJoinRoom(name,rid); onlineMode=true; showScreen('lobby'); }
+  catch(e){ if(se){se.textContent=`接続失敗: ${e.message}`;se.className='status-message error';} }
 };
 
-window.startOnlineGame = async () => {
-  const room = await getRoomModule();
-  room.startOnlineGame();
-};
-
-window.leaveLobby = async () => {
-  if (roomModule) roomModule.resetRoomState();
-  onlineMode = false;
-  showScreen('online-select');
-};
-
-window.copyRoomId = () => {
-  const el = document.getElementById('display-room-id');
-  if (el) navigator.clipboard.writeText(el.textContent).then(() => showToast('コピーしました', 'success'));
-};
-
-window.copyInviteUrl = () => {
-  const el = document.getElementById('invite-url');
-  if (el) navigator.clipboard.writeText(el.value).then(() => showToast('URLをコピーしました', 'success'));
-};
+window.startOnlineGame = async () => { const r=await getRm(); r.startOnlineGame(); };
+window.leaveLobby      = async () => { if(rmMod)rmMod.resetRoomState(); onlineMode=false; showScreen('online-select'); };
+window.copyRoomId      = () => { const e=document.getElementById('display-room-id'); if(e) navigator.clipboard.writeText(e.textContent).then(()=>toast('コピーしました','success')); };
+window.copyInviteUrl   = () => { const e=document.getElementById('invite-url'); if(e) navigator.clipboard.writeText(e.value).then(()=>toast('URLをコピーしました','success')); };
 
 // ================================================================
-// SHARED GAME ACTIONS (AI & Online)
+// リザルト
 // ================================================================
-
-window.handleDrawCard = async () => {
-  if (aiGameState) {
-    if (aiGameState.players[aiGameState.currentTurn]?.id !== AI_MY_ID) {
-      showToast('あなたのターンではありません', 'warn'); return;
-    }
-    playerDraw(aiGameState, AI_MY_ID);
-    renderAIGameUI();
-    scheduleAIIfNeeded();
-  } else if (onlineMode) {
-    const room = await getRoomModule();
-    room.onDrawCard();
-  }
-};
-
-window.declareUno = async () => {
-  if (aiGameState) {
-    const me = aiGameState.players.find(p => p.id === AI_MY_ID);
-    if (me && me.hand.length === 1) {
-      me.saidUno = true;
-      clearTimeout(unoUnclaimedTimer);
-      showToast('UNO! 🎉', 'success');
-      renderAIGameUI();
-    }
-  } else if (onlineMode) {
-    const room = await getRoomModule();
-    room.onDeclareUno();
-  }
-};
-
-window.selectColor = async (color) => {
-  document.getElementById('color-picker').style.display = 'none';
-  if (aiGameState) {
-    if (aiPendingWild) { doAIPlay(aiPendingWild, color); aiPendingWild = null; }
-  } else if (onlineMode) {
-    const room = await getRoomModule();
-    room.onColorSelected(color);
-  }
-};
-
-// ================================================================
-// RESULT ACTIONS
-// ================================================================
-
 window.returnToTitle = async () => {
-  aiGameState = null;
-  onlineMode = false;
-  clearTimeout(aiTurnTimer);
-  clearTimeout(unoUnclaimedTimer);
-  if (roomModule) { roomModule.resetRoomState(); roomModule = null; }
+  G=null; onlineMode=false; clearTimeout(aiTimer); clearTimeout(unoTimer);
+  if(rmMod){rmMod.resetRoomState();rmMod=null;}
   showScreen('title');
 };
-
 window.playAgain = () => {
-  if (aiGameState || !onlineMode) {
-    const me = aiGameState?.players?.find(p => p.id === AI_MY_ID);
-    const name = me?.name || 'プレイヤー';
-    aiGameState = null;
-    clearTimeout(aiTurnTimer);
-    const nameEl = document.getElementById('ai-player-name');
-    if (nameEl) nameEl.value = name;
-    window.startAIGame();
-  }
+  const me=G?.players?.find(p=>p.id===MY_ID);
+  const nm=me?.name||'プレイヤー';
+  G=null; clearTimeout(aiTimer);
+  const ni=document.getElementById('ai-player-name'); if(ni)ni.value=nm;
+  window.startAIGame();
 };
 
 // ================================================================
-// URL PARAMS - Auto join from invite link
+// 名前をフォームに復元
 // ================================================================
-
-function checkUrlParams() {
-  const params = new URLSearchParams(location.search);
-  const roomPeerId = params.get('room');
-  if (roomPeerId) {
-    const input = document.getElementById('room-id-input');
-    if (input) input.value = roomPeerId;
-    showScreen('join-room');
-  } else {
-    showScreen('title');
-  }
+function restoreNames() {
+  const saved = loadName('uno_player_name', '');
+  if (!saved) return;
+  ['ai-player-name','host-player-name','join-player-name'].forEach(id=>{
+    const el=document.getElementById(id); if(el&&!el.value) el.value=saved;
+  });
+  // 入力時に随時保存
+  ['ai-player-name','host-player-name','join-player-name'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('input',()=>saveName('uno_player_name',el.value.trim()));
+  });
 }
 
-checkUrlParams();
+// ================================================================
+// URL パラメータ & 初期化
+// ================================================================
+function init() {
+  restoreNames();
+  const p=new URLSearchParams(location.search);
+  const rid=p.get('room');
+  if(rid){ const i=document.getElementById('room-id-input'); if(i) i.value=rid; showScreen('join-room'); }
+  else showScreen('title');
+}
+init();
