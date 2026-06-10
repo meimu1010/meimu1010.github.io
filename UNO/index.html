@@ -239,6 +239,23 @@
   <!-- カード飛ぶアニメレイヤー -->
   <div id="anim-layer"></div>
 
+  <!-- UNO 宣言プロンプト -->
+  <div id="uno-prompt" class="modal-overlay" style="display:none">
+    <div class="color-modal">
+      <div class="color-modal-title">最後の1枚！</div>
+      <div style="display:flex;flex-direction:column;gap:14px;align-items:center;margin-top:10px">
+        <p style="color:var(--text-dim);font-size:13px;max-width:240px;text-align:center;line-height:1.5">
+          UNOを宣言してからカードを出してください。<br>
+          宣言しないと他のプレイヤーから指摘されて<br>+2枚のペナルティを受ける可能性があります。
+        </p>
+        <button class="btn btn-primary" style="padding:14px 38px;font-size:20px;font-family:'Bebas Neue',sans-serif;letter-spacing:3px"
+                onclick="confirmUnoAndPlay()">UNO! と宣言して出す</button>
+        <button class="btn btn-secondary" style="padding:8px 18px;font-size:12px"
+                onclick="skipUnoAndPlay()">宣言せず出す（リスクあり）</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 色選択 -->
   <div id="color-picker" class="modal-overlay" style="display:none">
     <div class="color-modal">

@@ -29,7 +29,6 @@ let pendingWild = null;
 let viewState   = null;
 let cachedPlayers = [];
 let aiTimer     = null;
-const unoTimers = new Map();
 
 const THINK = { easy:{min:1000,max:2200}, normal:{min:1600,max:3000}, hard:{min:2200,max:4200} };
 
@@ -44,7 +43,8 @@ export async function hostCreateRoom(playerName, roomName, maxP) {
   const peerId = peerManager.myPeerId;
   myPlayer = { id:peerId, name:playerName, peerId };
 
-  const roomId = peerId.slice(0,6).toUpperCase();
+  // ルームIDは Peer ID そのもの (招待URLと一致させる)
+  const roomId = peerId;
   gameState = createGameState(roomId, roomName, peerId, max);
   gameState.players.push({ id:peerId, name:playerName, hand:[], isAI:false, saidUno:false });
 
@@ -64,7 +64,11 @@ function handleHostMsg(fromPeer, msg) {
     case 'join': {
       if (gameState.gameStarted) { peerManager.sendTo(fromPeer,{type:'error',message:'ゲームは開始済みです'}); return; }
       if (gameState.players.length >= gameState.maxPlayers) { peerManager.sendTo(fromPeer,{type:'error',message:'満員です'}); return; }
-      gameState.players.push({ id:fromPeer, name:msg.playerName||'Player', hand:[], isAI:false, saidUno:false });
+      // 重複参加防止
+      if (gameState.players.some(p => p.id === fromPeer)) { broadcastLobby(); return; }
+      // 名前 sanitize
+      const safeName = sanitizeName(msg.playerName);
+      gameState.players.push({ id:fromPeer, name:safeName, hand:[], isAI:false, saidUno:false, unoMissed:false });
       broadcastLobby();
       break;
     }
@@ -84,6 +88,10 @@ function handleHostMsg(fromPeer, msg) {
       hostUno(fromPeer);
       break;
     }
+    case 'callUnoOut': {
+      hostCallUnoOut(fromPeer, msg.targetId);
+      break;
+    }
   }
 }
 
@@ -100,9 +108,6 @@ function hostPlay(pid, cardId, color) {
     const m={skip:'SKIP!',reverse:'REVERSE!',draw2:'+2!',wild4:'+4!'};
     const t=m[top.type]; if(t){ peerManager.broadcast({type:'action',text:t}); showAction(t); }
   }
-  clearUnoTimer(pid);
-  const p = gameState.players.find(pl=>pl.id===pid);
-  if (p?.hand.length===1&&!p.saidUno) startUnoTimer(pid);
 
   if (gameState.gameOver) { endGame(); return; }
   broadcastState();
@@ -126,23 +131,33 @@ function hostUno(pid) {
   broadcastState();
 }
 
-// ================================================================
-// HOST — UNO タイマー
-// ================================================================
-function startUnoTimer(pid) {
-  clearUnoTimer(pid);
-  const t=setTimeout(()=>{
-    if(!gameState) return;
-    const p=gameState.players.find(pl=>pl.id===pid);
-    if(p&&p.hand.length===1&&!p.saidUno){
-      for(let i=0;i<2;i++){const c=drawFromDeck(gameState);if(c)p.hand.push(c);}
-      toast(`${p.name} UNO宣言忘れ —ペナルティ2枚`,'warn');
-      broadcastState();
-    }
-  }, 5000);
-  unoTimers.set(pid,t);
+function sanitizeName(n) {
+  if (typeof n !== 'string') return 'Player';
+  const cleaned = n.replace(/[\x00-\x1F\x7F<>"'`]/g, '').trim().slice(0, 12);
+  return cleaned || 'Player';
 }
-function clearUnoTimer(pid) { const t=unoTimers.get(pid); if(t!==undefined){clearTimeout(t);unoTimers.delete(pid);} }
+
+// ================================================================
+// HOST — UNO忘れ指摘
+// ================================================================
+function hostCallUnoOut(callerPid, targetPid) {
+  if (!gameState) return;
+  const target = gameState.players.find(p => p.id === targetPid);
+  if (!target) return;
+  if (target.hand.length === 1 && !target.saidUno && target.unoMissed) {
+    for (let i = 0; i < 2; i++) {
+      const c = drawFromDeck(gameState);
+      if (c) target.hand.push(c);
+    }
+    target.unoMissed = false;
+    const caller = gameState.players.find(p => p.id === callerPid);
+    toast(`${caller?.name || '誰か'}が ${target.name} のUNO忘れを指摘! +2枚`, 'warn');
+    peerManager.broadcast({ type:'unoMissedCalled', targetName: target.name, callerName: caller?.name });
+    broadcastState();
+  } else {
+    peerManager.sendTo(callerPid, { type:'error', message:'指摘できません' });
+  }
+}
 
 // ================================================================
 // HOST — 切断対応
@@ -226,6 +241,8 @@ function handleClientMsg(fromPeer, msg) {
       showAction(msg.text); break;
     case 'unoAnnounce':
       toast(`${msg.playerName} が UNO!`,'warn'); break;
+    case 'unoMissedCalled':
+      toast(`${msg.callerName} が ${msg.targetName} のUNO忘れを指摘! +2枚`,'warn'); break;
     case 'gameOver':
       cachedPlayers=msg.players||cachedPlayers;
       showResult(msg.rankings,cachedPlayers,myPlayer.id); break;
@@ -242,8 +259,10 @@ export function startOnlineGame() {
   initGame(gameState);
   peerManager.broadcast({type:'gameStarting'});
   showScreen('game');
-  broadcastState();
-  setTimeout(checkAI,600);
+  setTimeout(() => {
+    if (gameState) broadcastState();
+    setTimeout(checkAI, 600);
+  }, 120);
 }
 
 // ================================================================
@@ -344,12 +363,15 @@ function onlineCardClick(card) {
 // HOST — AI ターン
 // ================================================================
 function checkAI() {
-  if(!peerManager.isHost||!gameState||gameState.gameOver) return;
-  const cur=gameState.players[gameState.currentTurn];
-  if(!cur?.isAI) return;
   clearTimeout(aiTimer);
-  const t=THINK[cur.difficulty||'normal'];
-  aiTimer=setTimeout(()=>runAI(cur), t.min+Math.random()*(t.max-t.min));
+  aiTimer = null;
+  if (!peerManager.isHost || !gameState || gameState.gameOver) return;
+  if (!gameState.gameStarted) return;
+  const cur = gameState.players[gameState.currentTurn];
+  if (!cur || !cur.isAI) return;
+  const t = THINK[cur.difficulty || 'normal'] || THINK.normal;
+  const delay = t.min + Math.random() * (t.max - t.min);
+  aiTimer = setTimeout(() => runAI(cur), delay);
 }
 
 function runAI(aiPlayer) {
@@ -378,16 +400,15 @@ function runAI(aiPlayer) {
 // 結果
 // ================================================================
 function showResult(rankings, players, myId) {
-  renderResults(rankings,players,myId);
-  const w=players.find(p=>p.id===rankings[0]);
-  const t=document.getElementById('result-title');
-  if(t&&w) t.textContent=w.id===myId?'🎉 あなたの勝利!':`${w.name} の勝利!`;
-  if(w?.id===myId){ const {launchConfetti}=require_ui(); launchConfetti(); }
-  const btn=document.getElementById('play-again-btn');
-  if(btn) btn.style.display=peerManager.isHost?'block':'none';
+  renderResults(rankings, players, myId);
+  const w = players.find(p => p.id === rankings[0]);
+  const t = document.getElementById('result-title');
+  if (t && w) t.textContent = w.id === myId ? '🎉 あなたの勝利!' : `${w.name} の勝利!`;
+  if (w?.id === myId) launchConfetti();
+  const btn = document.getElementById('play-again-btn');
+  if (btn) btn.style.display = peerManager.isHost ? 'block' : 'none';
   showScreen('result');
 }
-function require_ui(){ return {launchConfetti}; }
 
 // ================================================================
 // リセット
@@ -395,7 +416,6 @@ function require_ui(){ return {launchConfetti}; }
 export function resetRoomState() {
   gameState=null; myPlayer={id:'',name:'',peerId:''};
   pendingWild=null; viewState=null; cachedPlayers=[];
-  unoTimers.forEach(t=>clearTimeout(t)); unoTimers.clear();
   clearTimeout(aiTimer);
   peerManager.destroy();
 }

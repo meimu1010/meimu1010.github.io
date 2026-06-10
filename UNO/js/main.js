@@ -2,7 +2,7 @@
  * main.js — エントリーポイント + AI ゲームモード
  */
 
-import { createGameState, initGame, playCard, playerDraw, getTopCard, drawFromDeck } from './game.js';
+import { createGameState, initGame, playCard, playerDraw, getTopCard, advanceTurn } from './game.js';
 import { aiChooseCard } from './ai.js';
 import {
   makeCard, makeDiscardCard, renderHand, updateDiscard, updateTurn,
@@ -38,7 +38,6 @@ let G        = null;   // GameState
 const MY_ID  = 'local-player';
 let pendWild = null;
 let aiTimer  = null;
-let unoTimer = null;
 let aiDiff   = 'normal';
 
 const THINK = { easy:{min:1000,max:2200}, normal:{min:1600,max:3000}, hard:{min:2200,max:4200} };
@@ -62,7 +61,7 @@ window.startAIGame = () => {
   const name = inp?.value?.trim() || 'プレイヤー';
   saveName('uno_player_name', name);
   aiDiff = _diff; pendWild = null;
-  clearTimeout(aiTimer); clearTimeout(unoTimer);
+  clearTimeout(aiTimer);
 
   G = createGameState('LOCAL','AI Game',MY_ID,_aiN+1);
   G.players.push({ id:MY_ID, name, hand:[], isAI:false, saidUno:false });
@@ -114,18 +113,60 @@ function renderGame() {
 // ================================================================
 // カードクリック
 // ================================================================
+let pendingPlayCard = null;
+let pendingPlayColor = null;
+
 function onCardClick(card) {
   if (!G || G.players[G.currentTurn]?.id !== MY_ID) {
     toast('あなたのターンではありません','warn'); return;
   }
+  const me = G.players.find(p => p.id === MY_ID);
+  // 手札2枚 → 1枚になる場合はUNO宣言ダイアログを先に出す
+  const willBeOne = me && me.hand.length === 2;
+
   if (card.type==='wild'||card.type==='wild4') {
     pendWild = card;
     document.getElementById('color-picker').style.display = 'flex';
-  } else {
-    const el = document.querySelector(`[data-card-id="${card.id}"]`);
-    animatePlayCard(el, card, () => doPlay(card, null));
+    return;
   }
+
+  if (willBeOne) {
+    pendingPlayCard = card;
+    pendingPlayColor = null;
+    document.getElementById('uno-prompt').style.display = 'flex';
+    return;
+  }
+
+  const el = document.querySelector(`[data-card-id="${card.id}"]`);
+  animatePlayCard(el, card, () => doPlay(card, null));
 }
+
+// UNO宣言してから出す
+window.confirmUnoAndPlay = () => {
+  document.getElementById('uno-prompt').style.display = 'none';
+  const me = G?.players.find(p => p.id === MY_ID);
+  if (me) { me.saidUno = true; me.unoMissed = false; }
+  const card = pendingPlayCard;
+  const color = pendingPlayColor;
+  pendingPlayCard = null; pendingPlayColor = null;
+  if (!card) return;
+  toast('UNO! 🎉','success');
+  const el = document.querySelector(`[data-card-id="${card.id}"]`);
+  animatePlayCard(el, color ? {...card, chosenColor:color} : card, () => doPlay(card, color));
+};
+
+// UNO宣言せずに出す（指摘対象になる）
+window.skipUnoAndPlay = () => {
+  document.getElementById('uno-prompt').style.display = 'none';
+  const me = G?.players.find(p => p.id === MY_ID);
+  if (me) { me.saidUno = false; me.unoMissed = true; }
+  const card = pendingPlayCard;
+  const color = pendingPlayColor;
+  pendingPlayCard = null; pendingPlayColor = null;
+  if (!card) return;
+  const el = document.querySelector(`[data-card-id="${card.id}"]`);
+  animatePlayCard(el, color ? {...card, chosenColor:color} : card, () => doPlay(card, color));
+};
 
 function doPlay(card, color) {
   if (!G) return;
@@ -136,19 +177,6 @@ function doPlay(card, color) {
     renderGame(); return;
   }
   doSpecialEffect(getTopCard(G));
-  clearTimeout(unoTimer);
-  const me = G.players.find(p=>p.id===MY_ID);
-  if (me?.hand.length===1 && !me.saidUno) {
-    unoTimer = setTimeout(()=>{
-      if (!G) return;
-      const mp=G.players.find(p=>p.id===MY_ID);
-      if(mp?.hand.length===1&&!mp.saidUno){
-        for(let i=0;i<2;i++){const c=drawFromDeck(G);if(c)mp.hand.push(c);}
-        toast('UNO宣言を忘れて2枚ドロー!','error');
-        renderGame();
-      }
-    }, 5000);
-  }
   if (G.gameOver){ renderGame(); setTimeout(showAIResult, 800); return; }
   renderGame();
   scheduleAI();
@@ -160,6 +188,17 @@ function doPlay(card, color) {
 window.handleDrawCard = async () => {
   if (G) {
     if (G.players[G.currentTurn]?.id !== MY_ID){ toast('あなたのターンではありません','warn'); return; }
+    // pendingDrawCardId がある場合はパス（ターン終了）
+    if (G.pendingDrawCardId) {
+      G.pendingDrawCardId = null;
+      const me = G.players.find(p=>p.id===MY_ID);
+      if (me) me.saidUno = false;
+      const { advanceTurn } = await import('./game.js');
+      advanceTurn(G);
+      renderGame();
+      scheduleAI();
+      return;
+    }
     // drawStack があるとき対応カードを持っているか確認
     if (G.drawStack > 0) {
       const top = getTopCard(G);
@@ -173,9 +212,12 @@ window.handleDrawCard = async () => {
     }
     // 山札から引くアニメ → 実際にドロー
     animateDrawCard(()=>{
-      playerDraw(G, MY_ID);
+      const result = playerDraw(G, MY_ID);
+      if (result.canPlayDrawn && result.drawnCard) {
+        toast('引いたカードを出せます！出すか山札をクリックでパス','info');
+      }
       renderGame();
-      scheduleAI();
+      if (!result.canPlayDrawn) scheduleAI();
     });
   } else if (onlineMode) {
     const r = await getRm(); r.onDrawCard();
@@ -277,7 +319,8 @@ window.createRoom = async () => {
     const {peerManager}=await import('./peer.js');
     const rid=await r.hostCreateRoom(name,roomName,_maxP);
     onlineMode=true; showScreen('lobby');
-    document.getElementById('display-room-id').textContent=rid;
+    const ridEl=document.getElementById('display-room-id');
+    if(ridEl){ridEl.textContent=rid;ridEl.dataset.fullId=rid;ridEl.title=rid;}
     document.getElementById('invite-url').value=`${location.origin}${location.pathname}?room=${peerManager.myPeerId}`;
     document.getElementById('max-player-count').textContent=_maxP;
     renderLobbyPlayers([{id:peerManager.myPeerId,name}],_maxP,peerManager.myPeerId);
@@ -299,14 +342,14 @@ window.joinRoom = async () => {
 
 window.startOnlineGame = async () => { const r=await getRm(); r.startOnlineGame(); };
 window.leaveLobby      = async () => { if(rmMod)rmMod.resetRoomState(); onlineMode=false; showScreen('online-select'); };
-window.copyRoomId      = () => { const e=document.getElementById('display-room-id'); if(e) navigator.clipboard.writeText(e.textContent).then(()=>toast('コピーしました','success')); };
+window.copyRoomId      = () => { const e=document.getElementById('display-room-id'); const full=e?.dataset?.fullId||e?.textContent||''; if(full) navigator.clipboard.writeText(full).then(()=>toast('コピーしました','success')); };
 window.copyInviteUrl   = () => { const e=document.getElementById('invite-url'); if(e) navigator.clipboard.writeText(e.value).then(()=>toast('URLをコピーしました','success')); };
 
 // ================================================================
 // リザルト
 // ================================================================
 window.returnToTitle = async () => {
-  G=null; onlineMode=false; clearTimeout(aiTimer); clearTimeout(unoTimer);
+  G=null; onlineMode=false; clearTimeout(aiTimer);
   if(rmMod){rmMod.resetRoomState();rmMod=null;}
   showScreen('title');
 };

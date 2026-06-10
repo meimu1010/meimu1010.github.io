@@ -193,16 +193,18 @@ export function applyCardEffect(state, card) {
       break;
 
     case 'draw2':
-      state.drawStack += 2;
+      state.drawStack = (state.drawStack || 0) + 2;
       break;
 
     case 'wild4':
-      state.drawStack += 4;
+      state.drawStack = (state.drawStack || 0) + 4;
       break;
 
     case 'wild':
     case 'number':
     default:
+      // 通常カードを出した時点で drawStack はクリア
+      state.drawStack = 0;
       break;
   }
 }
@@ -315,6 +317,12 @@ export function playCard(state, playerId, cardId, chosenColor = null) {
 
   // Reset UNO flag
   player.saidUno = false;
+  // 出した結果1枚残ったか判定してunoMissedフラグを立てる
+  if (player.hand.length === 1) {
+    player.unoMissed = !player.saidUno;
+  } else {
+    player.unoMissed = false;
+  }
 
   // Check win
   if (player.hand.length === 0) {
@@ -329,10 +337,8 @@ export function playCard(state, playerId, cardId, chosenColor = null) {
     return { success: true };
   }
 
-  // Advance turn (only after skip/reverse handled in applyCardEffect)
+  // Advance turn (skip/reverse already handled inside applyCardEffect)
   if (card.type !== 'skip' && card.type !== 'reverse') {
-    advanceTurn(state);
-  } else {
     advanceTurn(state);
   }
 
@@ -354,19 +360,36 @@ export function playerDraw(state, playerId) {
   const drawn = [];
 
   if (state.drawStack > 0) {
+    // +2/+4 のペナルティ消化: 引いてターン終了
     for (let i = 0; i < state.drawStack; i++) {
       const c = drawFromDeck(state);
       if (c) { player.hand.push(c); drawn.push(c); }
     }
     state.drawStack = 0;
-  } else {
-    const c = drawFromDeck(state);
-    if (c) { player.hand.push(c); drawn.push(c); }
+    player.saidUno = false;
+    advanceTurn(state);
+    return { success: true, drawn, penalty: true };
   }
 
+  // 通常ドロー: 1枚引いて、出せるならプレイ可能
+  const c = drawFromDeck(state);
+  if (c) { player.hand.push(c); drawn.push(c); }
+
+  // 引いたカードが出せるか判定
+  const top = getTopCard(state);
+  const playable = c && top && canPlayCard(c, top, 0);
+
+  if (playable) {
+    // ターン進めず、引いたカードのIDをペンディングに記録
+    state.pendingDrawCardId = c.id;
+    return { success: true, drawn, canPlayDrawn: true, drawnCard: c };
+  }
+
+  // 出せないので自動でターン進行
   player.saidUno = false;
+  state.pendingDrawCardId = null;
   advanceTurn(state);
-  return { success: true, drawn };
+  return { success: true, drawn, canPlayDrawn: false };
 }
 
 /**
@@ -392,7 +415,8 @@ export function createGameState(roomId, roomName, hostId, maxPlayers) {
     discardPile: [],
     rankings: [],
     gameOver: false,
-    pendingWildCard: null
+    pendingWildCard: null,
+    pendingDrawCardId: null
   };
 }
 
@@ -405,11 +429,30 @@ export function initGame(state) {
   state.discardPile = [];
   state.rankings = [];
   state.gameOver = false;
-  state.currentTurn = 0;
+  state.currentTurn = Math.floor(Math.random() * state.players.length);
   state.direction = 1;
   state.drawStack = 0;
+  state.pendingDrawCardId = null;
   state.gameStarted = true;
+  // 全プレイヤーフラグ初期化
+  for (const p of state.players) {
+    p.saidUno = false;
+    p.unoMissed = false;
+  }
   dealCards(state);
+
+  // 最初の捨て札が特殊カードなら効果適用
+  const top = getTopCard(state);
+  if (top) {
+    if (top.type === 'skip') advanceTurn(state);
+    else if (top.type === 'reverse') {
+      state.direction = -1;
+      if (state.players.length === 2) advanceTurn(state);
+    } else if (top.type === 'draw2') {
+      state.drawStack = 2;
+    }
+    // wild系は dealCards 内で除外済み
+  }
 }
 
 /**
