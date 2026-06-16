@@ -14,16 +14,20 @@
     <h1>地震速報モニター</h1>
   </div>
   <div class="controls">
+    <label class="sel">
+      最小震度
+      <select id="minScale">
+        <option value="0">すべて</option>
+        <option value="30" selected>震度3以上</option>
+        <option value="40">震度4以上</option>
+        <option value="45">震度5弱以上</option>
+      </select>
+    </label>
     <label class="toggle">
       <input type="checkbox" id="autoUpdate" checked>
       <span>自動更新</span>
     </label>
-    <select id="filterSelect">
-      <option value="all">すべて</option>
-      <option value="info">地震情報</option>
-      <option value="eew">緊急地震速報</option>
-    </select>
-    <button id="refreshBtn" title="今すぐ更新">⟳</button>
+    <button id="refreshBtn" title="今すぐ更新">⟳ 更新</button>
     <span id="status" class="status">接続中…</span>
   </div>
 </header>
@@ -36,9 +40,9 @@
 
   <aside class="side-pane">
     <div class="detail-card" id="detailCard">
-      <p class="placeholder">地震を選択すると詳細が表示されます</p>
+      <p class="placeholder">一覧から地震を選ぶと詳細が表示されます</p>
     </div>
-    <h2 class="list-title">履歴 <span id="count"></span></h2>
+    <h2 class="list-title">最近の地震 <span id="count"></span></h2>
     <ul class="quake-list" id="quakeList"></ul>
   </aside>
 </main>
