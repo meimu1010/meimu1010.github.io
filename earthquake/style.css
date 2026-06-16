@@ -9,11 +9,10 @@ body{
   background:var(--bg); color:var(--text); overflow:hidden;
 }
 
-/* top bar */
 .topbar{
-  display:flex; align-items:center; justify-content:space-between;
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
   padding:10px 18px; background:linear-gradient(90deg,#0e1422,#16203a);
-  border-bottom:1px solid var(--line); height:58px;
+  border-bottom:1px solid var(--line); min-height:58px; gap:10px;
 }
 .brand{display:flex; align-items:center; gap:10px}
 .brand h1{font-size:18px; letter-spacing:1px; font-weight:700}
@@ -26,50 +25,43 @@ body{
   70%{box-shadow:0 0 0 12px rgba(255,77,77,0)}
   100%{box-shadow:0 0 0 0 rgba(255,77,77,0)}
 }
-.controls{display:flex; align-items:center; gap:12px; font-size:13px}
-.toggle{display:flex; align-items:center; gap:5px; cursor:pointer; color:var(--muted)}
+.controls{display:flex; align-items:center; gap:14px; font-size:13px; flex-wrap:wrap}
+.sel,.toggle{display:flex; align-items:center; gap:6px; color:var(--muted); cursor:pointer}
 select,button{
   background:var(--panel2); color:var(--text); border:1px solid var(--line);
   border-radius:6px; padding:6px 10px; font-size:13px; cursor:pointer;
 }
-#refreshBtn{font-size:16px; line-height:1}
 #refreshBtn:hover,select:hover{border-color:var(--accent)}
-.status{color:var(--muted); min-width:120px; text-align:right}
+.status{color:var(--muted); min-width:150px; text-align:right}
 
-/* layout */
 .layout{display:flex; height:calc(100vh - 58px)}
 .map-pane{position:relative; flex:1 1 auto}
-#map{width:100%; height:100%; background:#0a0e16}
+#map{width:100%; height:100%; background:#aadaff}
 .side-pane{
   width:380px; flex:0 0 380px; background:var(--panel);
-  border-left:1px solid var(--line); display:flex; flex-direction:column;
-  overflow:hidden;
+  border-left:1px solid var(--line); display:flex; flex-direction:column; overflow:hidden;
 }
 
-/* legend */
 .legend{
   position:absolute; bottom:16px; left:16px; z-index:500;
-  background:rgba(16,22,34,.9); border:1px solid var(--line);
-  border-radius:8px; padding:8px 10px; font-size:11px; line-height:1.7;
+  background:rgba(16,22,34,.92); border:1px solid var(--line);
+  border-radius:8px; padding:8px 11px; font-size:11px; line-height:1.7; color:var(--text);
 }
 .legend .row{display:flex; align-items:center; gap:6px}
 .legend .sw{width:14px; height:14px; border-radius:3px; display:inline-block}
 
-/* detail card */
 .detail-card{
   padding:16px 18px; border-bottom:1px solid var(--line);
-  background:linear-gradient(180deg,var(--panel2),var(--panel));
-  min-height:150px;
+  background:linear-gradient(180deg,var(--panel2),var(--panel)); min-height:150px;
 }
 .placeholder{color:var(--muted); font-size:13px; text-align:center; padding-top:40px}
 .detail-head{display:flex; align-items:center; gap:14px; margin-bottom:12px}
 .shindo-badge{
-  width:60px; height:60px; border-radius:10px; display:flex;
-  flex-direction:column; align-items:center; justify-content:center;
-  font-weight:800; color:#111; flex:0 0 auto;
+  width:60px; height:60px; border-radius:10px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; font-weight:800; color:#111; flex:0 0 auto;
 }
 .shindo-badge small{font-size:10px; font-weight:600}
-.shindo-badge b{font-size:26px; line-height:1}
+.shindo-badge b{font-size:24px; line-height:1.1}
 .detail-head .h-name{font-size:17px; font-weight:700}
 .detail-head .h-time{font-size:12px; color:var(--muted); margin-top:3px}
 .detail-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
@@ -78,7 +70,6 @@ select,button{
 .detail-grid .cell strong{font-size:16px}
 .tsunami{margin-top:10px; font-size:12px; padding:6px 10px; border-radius:6px; text-align:center}
 
-/* list */
 .list-title{font-size:13px; color:var(--muted); padding:12px 18px 8px; font-weight:600}
 .list-title span{color:var(--accent)}
 .quake-list{list-style:none; overflow-y:auto; flex:1}
@@ -89,24 +80,20 @@ select,button{
 .quake-list li:hover{background:var(--panel2)}
 .quake-list li.active{background:#23304a; border-left:3px solid var(--accent); padding-left:15px}
 .mini-badge{
-  width:38px; height:38px; border-radius:8px; flex:0 0 auto;
-  display:flex; align-items:center; justify-content:center;
-  font-weight:800; font-size:16px; color:#111;
+  width:38px; height:38px; border-radius:8px; flex:0 0 auto; display:flex;
+  align-items:center; justify-content:center; font-weight:800; font-size:15px; color:#111;
 }
 .li-body{flex:1; min-width:0}
 .li-name{font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .li-meta{font-size:11px; color:var(--muted); margin-top:2px}
-.eew-tag{
-  font-size:10px; background:#ff4d4d; color:#fff; padding:1px 6px;
-  border-radius:4px; margin-left:6px; vertical-align:middle;
-}
+.eew-tag{font-size:10px; background:#ff4d4d; color:#fff; padding:1px 6px; border-radius:4px; margin-left:6px; vertical-align:middle}
+.empty{color:var(--muted); font-size:13px; text-align:center; padding:30px 18px}
 
-/* leaflet marker label */
 .epi-icon{
-  display:flex; align-items:center; justify-content:center;
-  font-weight:800; color:#111; border-radius:50%;
-  border:2px solid rgba(255,255,255,.85); box-shadow:0 0 10px rgba(0,0,0,.5);
+  display:flex; align-items:center; justify-content:center; font-weight:800; color:#111;
+  border-radius:50%; border:2px solid #fff; box-shadow:0 0 6px rgba(0,0,0,.5);
 }
+.epi-icon.sel{border:3px solid #fff; box-shadow:0 0 0 4px rgba(61,169,252,.7),0 0 10px rgba(0,0,0,.6)}
 .leaflet-popup-content-wrapper{background:var(--panel2); color:var(--text)}
 .leaflet-popup-tip{background:var(--panel2)}
 
