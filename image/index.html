@@ -342,6 +342,12 @@ viewer.addEventListener(
 
         e.preventDefault();
 
+        const rect = viewer.getBoundingClientRect();
+        const mouseX = e.clientX - (rect.left + rect.width / 2);
+        const mouseY = e.clientY - (rect.top + rect.height / 2);
+
+        const oldScale = scale;
+
         if(e.deltaY < 0){
             scale *= 1.1;
         }
@@ -353,6 +359,9 @@ viewer.addEventListener(
             0.05,
             Math.min(scale,50)
         );
+
+        posX = mouseX - (mouseX - posX) * (scale / oldScale);
+        posY = mouseY - (mouseY - posY) * (scale / oldScale);
 
         updateTransform();
     },
