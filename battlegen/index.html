@@ -2057,7 +2057,7 @@ function V4_catCaption(cat, t){
   ctx.translate(CW*.5,CH*.64);
   ctx.scale(1,scY);
   ctx.rotate(-3*Math.PI/180);
-  const w=CW*.86,h=CH*.105;
+  const w=CW*.86,h=CH*.125;
   ctx.fillStyle='#fff';
   V4_inkShadowOn(CW*.012,CW*.012);
   ctx.beginPath();
@@ -2066,12 +2066,15 @@ function V4_catCaption(cat, t){
   V4_inkShadowOff();
   ctx.lineWidth=Math.max(3,CW*.01); ctx.strokeStyle=V4_INK;
   ctx.stroke();
-  ctx.font=`600 ${CW*.026}px "Noto Sans JP",sans-serif`;
-  ctx.textAlign='center'; ctx.fillStyle='#666';
-  ctx.fillText(ja, 0, -h*.2);
-  ctx.font=`900 ${Math.min(CW*.1,w*.6/Math.max(4,en.length)*1.7)}px "Bebas Neue",Impact,sans-serif`;
+  // 日本語サブタイトルと英語タイトルの間隔を十分に確保し、被りを防ぐ
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.font=`600 ${CW*.023}px "Noto Sans JP",sans-serif`;
+  ctx.fillStyle='#666';
+  ctx.fillText(ja, 0, -h*.28);
+  const enPx=Math.min(CW*.082, w*.6/Math.max(4,en.length)*1.5);
+  ctx.font=`900 ${enPx}px "Bebas Neue",Impact,sans-serif`;
   ctx.fillStyle=V4_INK;
-  ctx.fillText(en, 0, h*.16);
+  ctx.fillText(en, 0, h*.26);
   ctx.restore();
 }
 // hR=縦の収まり枠(CH比) / wR=横の収まり枠(CW比)。両方に収まるようフィットさせるため、
