@@ -2054,7 +2054,7 @@ function V4_catCaption(cat, t){
   const en=cat.toUpperCase();
   const scY=V3_easeOut(t);
   ctx.save();
-  ctx.translate(CW*.5,CH*.5);
+  ctx.translate(CW*.5,CH*.64);
   ctx.scale(1,scY);
   ctx.rotate(-3*Math.PI/180);
   const w=CW*.86,h=CH*.105;
