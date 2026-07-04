@@ -2074,15 +2074,19 @@ function V4_catCaption(cat, t){
   ctx.fillText(en, 0, h*.16);
   ctx.restore();
 }
-function V4_charBody(img, cx, cy, sc, hR, alpha, tiltDeg, shadowOx, shadowOy){
+// hR=縦の収まり枠(CH比) / wR=横の収まり枠(CW比)。両方に収まるようフィットさせるため、
+// 顔だけをトリミングした正方形/横長素材でも画面全体を覆う極端なクローズアップにならない。
+function V4_charBody(img, cx, cy, sc, hR, wR, alpha, tiltDeg, shadowOx, shadowOy){
   if(!img||alpha<=0) return;
-  const th=CH*hR, tw=img.width*(th/img.height);
+  const boxH=CH*hR, boxW=CW*(wR??0.82);
+  const fit=Math.min(boxW/img.width, boxH/img.height);
+  const dw=img.width*fit*sc, dh=img.height*fit*sc;
   ctx.save();
   ctx.globalAlpha=alpha;
   ctx.translate(cx,cy);
   ctx.rotate((tiltDeg||0)*Math.PI/180);
   V4_inkShadowOn(shadowOx??CW*.014, shadowOy??CW*.014);
-  ctx.drawImage(img,-tw*sc/2,-th*sc/2,tw*sc,th*sc);
+  ctx.drawImage(img,-dw/2,-dh/2,dw,dh);
   V4_inkShadowOff();
   ctx.restore();
 }
@@ -2109,8 +2113,8 @@ function V4_renderIntro(i, cat, ci){
     V4_speedLines(aX, CH*.42, V4_CA, 10, i*3+11, Math.min(1,enterT*2)*.6, CW*.3);
     V4_speedLines(bX, CH*.42, V4_CB, 10, i*3+41, Math.min(1,enterT*2)*.6, CW*.3);
   }
-  V4_charBody(S.imgA, aX+shX, CH*.44+shY, .92, .62, Math.min(1,enterT*2.2), tiltA);
-  V4_charBody(S.imgB, bX+shX, CH*.44+shY, .92, .62, Math.min(1,enterT*2.2), tiltB);
+  V4_charBody(S.imgA, aX+shX, CH*.44+shY, .92, .62, .5, Math.min(1,enterT*2.2), tiltA);
+  V4_charBody(S.imgB, bX+shX, CH*.44+shY, .92, .62, .5, Math.min(1,enterT*2.2), tiltB);
 
   if(t>=impT-.02){
     const et=Math.min(1,(t-impT+.02)/.3);
@@ -2146,8 +2150,8 @@ function V4_renderCut(i, winner, pA, pB){
 
   if(winner==='Draw'){
     const pulse=.5+.5*Math.sin(t*Math.PI*5);
-    V4_charBody(S.imgA, CW*.28, CH*.44, .9+pulse*.03, .58, 1, -4);
-    V4_charBody(S.imgB, CW*.72, CH*.44, .9+pulse*.03, .58, 1, 4);
+    V4_charBody(S.imgA, CW*.28, CH*.44, .9+pulse*.03, .58, .5, 1, -4);
+    V4_charBody(S.imgB, CW*.72, CH*.44, .9+pulse*.03, .58, .5, 1, 4);
     V4_comicText('DRAW', CW*.5, CH*.44, CW*.15, '#999', 0);
     V4_scoreTicket(pA,pB,1);
     drawFlash(i,5);
@@ -2166,14 +2170,14 @@ function V4_renderCut(i, winner, pA, pB){
     const chT=t/hitT, chE=V3_easeInExpo(chT);
     const wStartX=winner==='A'?CW*.22:CW*.78;
     const wCurX=wStartX+(CW*.5-wStartX)*chE;
-    V4_charBody(lImg, winner==='A'?CW*.8:CW*.2, CH*.46, .82, .54, .95, winner==='A'?5:-5);
+    V4_charBody(lImg, winner==='A'?CW*.8:CW*.2, CH*.46, .82, .54, .42, .95, winner==='A'?5:-5);
     V4_speedLines(wCurX, CH*.44, wc, 12, i+21, .5+chE*.4, CW*.28);
-    V4_charBody(wImg, wCurX, CH*.44, .92+chE*.15, .6, 1, winner==='A'?-8:8);
+    V4_charBody(wImg, wCurX, CH*.44, .92+chE*.15, .6, .55, 1, winner==='A'?-8:8);
   } else if(t<=hitT+.14){
     const hp=(t-hitT)/.14, he=V3_easeOut(hp);
     if(hp<.4){ ctx.fillStyle=`rgba(255,255,255,${(1-hp/.4)*.9})`; ctx.fillRect(0,0,CW,CH); }
-    V4_charBody(lImg, winner==='A'?CW*.78:CW*.22, CH*.46+shY, .8-he*.1, .5, Math.max(0,1-he*.3), winner==='A'?10+he*20:-10-he*20);
-    V4_charBody(wImg, CW*.5+shX, CH*.44+shY, .95+he*.2, .62, 1, winner==='A'?-10:10);
+    V4_charBody(lImg, winner==='A'?CW*.78:CW*.22, CH*.46+shY, .8-he*.1, .5, .42, Math.max(0,1-he*.3), winner==='A'?10+he*20:-10-he*20);
+    V4_charBody(wImg, CW*.5+shX, CH*.44+shY, .95+he*.2, .62, .62, 1, winner==='A'?-10:10);
     V4_starBurst(CW*.5+shX, CH*.4+shY, he*CW*.5, (1-he)*.95, V4_YEL, 18);
     V4_speedLines(CW*.5+shX, CH*.4+shY, V4_INK, 20, i+555, 1-he, CW*.6);
     V4_comicText(V4_hitWord(V4_ciSeed(winner,pA,pB)), CW*.5+shX, CH*.28+shY, CW*.19*(1+he*.25), V4_YEL, (V3_hash(i+7)-.5)*16);
@@ -2181,8 +2185,8 @@ function V4_renderCut(i, winner, pA, pB){
     const bt=Math.min(1,(t-hitT-.14)/.7), be=V3_easeOut(bt);
     const loLX=winner==='A'? CW*.78+be*CW*.55 : CW*.22-be*CW*.55;
     const loRot=(winner==='A'?1:-1)*(20+be*70);
-    V4_charBody(lImg, loLX, CH*.46-be*CH*.12, Math.max(.1,.78-be*.6), .5, Math.max(0,1-be*1.3), loRot);
-    V4_charBody(wImg, CW*.5, CH*.46, .98+Math.sin(bt*Math.PI*6)*.02, .66, 1, winner==='A'?-6:6);
+    V4_charBody(lImg, loLX, CH*.46-be*CH*.12, Math.max(.1,.78-be*.6), .5, .42, Math.max(0,1-be*1.3), loRot);
+    V4_charBody(wImg, CW*.5, CH*.46, .98+Math.sin(bt*Math.PI*6)*.02, .66, .8, 1, winner==='A'?-6:6);
     if(bt>.22){
       const nt=Math.min(1,(bt-.22)/.3), ne=V3_easeBack(nt);
       ctx.save(); ctx.globalAlpha=Math.min(1,nt*1.6);
@@ -2206,8 +2210,8 @@ function V4_renderFinal(i, winner, pA, pB){
   V4_drawComicBg(t, wc!=='#999'?wc:null);
 
   if(!fi){
-    V4_charBody(S.imgA, CW*.28, CH*.46, .95, .6, 1, -4);
-    V4_charBody(S.imgB, CW*.72, CH*.46, .95, .6, 1, 4);
+    V4_charBody(S.imgA, CW*.28, CH*.46, .95, .6, .5, 1, -4);
+    V4_charBody(S.imgB, CW*.72, CH*.46, .95, .6, .5, 1, 4);
     V4_comicText('DRAW', CW*.5, CH*.46, CW*.22, '#999', 0);
     V4_scoreTicket(pA,pB,1);
     drawFlash(i,20);
@@ -2226,7 +2230,7 @@ function V4_renderFinal(i, winner, pA, pB){
     V4_starBurst(CW*.5, CH*.42, Math.sin(bT*Math.PI)*CW*.55, Math.sin(bT*Math.PI)*.85, V4_YEL, 20);
     V4_speedLines(CW*.5,CH*.42,V4_INK,22,i+3001,Math.sin(bT*Math.PI),CW*.62);
   }
-  V4_charBody(fi, CW*.5, CH*.44, (.98+breathe)*enterE, .78, enterE, tilt);
+  V4_charBody(fi, CW*.5, CH*.44, (.98+breathe)*enterE, .78, .82, enterE, tilt);
 
   const eI=Math.min(1,t*4);
   ctx.save(); ctx.globalAlpha=eI;
