@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全ウマ娘 名前当てクイズ</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --border: #e1e6ec;
+    --text: #1f2733;
+    --muted: #7c8797;
+    --accent: #3b6fe0;
+    --accent-dark: #2c56c0;
+    --correct: #2fae60;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  h1 {
+    margin: 0 0 12px;
+    font-size: 20px;
+    text-align: center;
+    color: var(--text);
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .score {
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    white-space: nowrap;
+  }
+  .score b {
+    color: var(--accent-dark);
+    font-size: 16px;
+  }
+  form#answerForm {
+    display: flex;
+    gap: 8px;
+  }
+  input[type="text"] {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 15px;
+    width: 220px;
+    outline: none;
+    background: #fff;
+    color: var(--text);
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+  button {
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 9px 16px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--accent-dark); }
+  #toast {
+    text-align: center;
+    font-size: 13px;
+    height: 18px;
+    margin-top: 8px;
+    color: var(--correct);
+  }
+  main {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .cell {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    transition: box-shadow 0.15s ease;
+  }
+  .cell.solved {
+    border-color: #bfe6cc;
+    box-shadow: 0 0 0 2px rgba(47,174,96,0.15);
+  }
+  .cell .thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    background: #f0f2f5;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cell .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .cell .num {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .cell .name {
+    font-size: 12px;
+    color: var(--text);
+    margin-top: 2px;
+    min-height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 24px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>全ウマ娘 名前当てクイズ</h1>
+  <div class="controls">
+    <div class="score">正解 <b id="correctCount">0</b> / <span id="totalCount">0</span></div>
+    <form id="answerForm">
+      <input type="text" id="answerInput" placeholder="キャラ名を入力してEnter" autocomplete="off">
+      <button type="submit">回答</button>
+    </form>
+  </div>
+  <div id="toast"></div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>uma フォルダ内の画像を読み込んでシルエット表示しています</footer>
+
+<script>
+  // ファイル名は "番号_キャラ名.png" 形式。uma フォルダの中身と一致させてください。
+  const RAW_NAMES = [
+"1_スペシャルウィーク","2_サイレンススズカ","3_トウカイテイオー","4_マルゼンスキー","5_フジキセキ",
+"6_オグリキャップ","7_ゴールドシップ","8_ウオッカ","9_ダイワスカーレット","10_タイキシャトル",
+"11_グラスワンダー","12_ヒシアマゾン","13_メジロマックイーン","14_エルコンドルパサー","15_テイエムオペラオー",
+"16_ナリタブライアン","17_シンボリルドルフ","18_エアグルーヴ","19_アグネスデジタル","20_セイウンスカイ",
+"21_タマモクロス","22_ファインモーション","23_ビワハヤヒデ","24_マヤノトップガン","25_マンハッタンカフェ",
+"26_ミホノブルボン","27_メジロライアン","28_ヒシアケボノ","29_ユキノビジン","30_ライスシャワー",
+"31_アイネスフウジン","32_アグネスタキオン","33_アドマイヤベガ","34_イナリワン","35_ウイニングチケット",
+"36_エアシャカール","37_エイシンフラッシュ","38_カレンチャン","39_カワカミプリンセス","40_ゴールドシチー",
+"41_サクラバクシンオー","42_シーキングザパール","43_シンコウウインディ","44_スイープトウショウ","45_スーパークリーク",
+"46_スマートファルコン","47_ゼンノロブロイ","48_トーセンジョーダン","49_ナカヤマフェスタ","50_ナリタタイシン",
+"51_ニシノフラワー","52_ハルウララ","53_バンブーメモリー","54_ビコーペガサス","55_マーベラスサンデー",
+"56_マチカネフクキタル","57_ミスターシービー","58_メイショウドトウ","59_メジロドーベル","60_ナイスネイチャ",
+"61_キングヘイロー","62_マチカネタンホイザ","63_イクノディクタス","64_メジロパーマー","65_ダイタクヘリオス",
+"66_ツインターボ","67_サトノダイヤモンド","68_キタサンブラック","69_サクラチヨノオー","70_シリウスシンボリ",
+"71_メジロアルダン","72_ヤエノムテキ","73_ツルマルツヨシ","74_メジロブライト","75_デアリングタクト",
+"76_サクラローレル","77_ナリタトップロード","78_ヤマニンゼファー","79_フリオーソ","80_トランセンド",
+"81_エスポワールシチー","82_ノースフライト","83_シンボリクリスエス","84_タニノギムレット","85_ダイイチルビー",
+"86_メジロラモーヌ","87_アストンマーチャン","88_サトノクラウン","89_シュヴァルグラン","90_ヴィルシーナ",
+"91_ヴィブロス","92_ダンツフレーム","93_ケイエスミラクル","94_ジャングルポケット","95_ビリーヴ",
+"96_ノーリーズン","97_スティルインラブ","98_コパノリッキー","99_ホッコータルマエ","100_ワンダーアキュート",
+"101_サムソンビッグ","102_サウンズオブアース","103_ロイスアンドロイス","104_カツラギエース","105_ネオユニヴァース",
+"106_ヒシミラクル","107_タップダンスシチー","108_ドゥラメンテ","109_ラインクラフト","110_シーザリオ",
+"111_エアメサイア","112_デアリングハート","113_フサイチパンドラ","114_ブエナビスタ","115_オルフェーヴル",
+"116_ジェンティルドンナ","117_ウインバリアシオン","118_アドマイヤグルーヴ","119_ドリームジャーニー","120_カルストンライトオ",
+"121_デュランダル","122_バブルガムフェロー","123_サクラチトセオー","124_フェノーメノ","125_ブラストワンピース",
+"126_アーモンドアイ","127_ラッキーライラック","128_グランアレグリア","129_ラヴズオンリーユー","130_クロノジェネシス",
+"131_カレンブーケドール","132_ステイゴールド","133_レッドディザイア","134_キセキ","135_フォーエバーヤング",
+"136_マルシュロレーヌ","137_エピファネイア","138_ロゴタイプ","139_ヴィクトワールピサ","140_ローズキングダム",
+"141_ルーラーシップ","142_タイトルホルダー"
+  ];
+
+  const CHARACTERS = RAW_NAMES.map(raw => {
+    const idx = raw.indexOf('_');
+    return {
+      num: raw.slice(0, idx),
+      name: raw.slice(idx + 1),
+      file: `uma/${raw}.png`,
+      solved: false
+    };
+  });
+
+  function normalize(str) {
+    return str
+      .trim()
+      .toLowerCase()
+      .replace(/[\u30a1-\u30f6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60))
+      .replace(/[\uff01-\uff5e]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+      .replace(/\s|・|ー|-/g, '');
+  }
+
+  const els = {
+    grid: document.getElementById('grid'),
+    form: document.getElementById('answerForm'),
+    input: document.getElementById('answerInput'),
+    correctCount: document.getElementById('correctCount'),
+    totalCount: document.getElementById('totalCount'),
+    toast: document.getElementById('toast'),
+  };
+
+  els.totalCount.textContent = CHARACTERS.length;
+
+  // 外周の白背景から塗りつぶし判定(flood fill)し、背景だけ白、
+  // それ以外(キャラの内部の白い部分も含めて)は完全に黒にする
+  function makeSilhouette(imgEl, targetImgEl) {
+    const canvas = document.createElement('canvas');
+    const w = imgEl.naturalWidth, h = imgEl.naturalHeight;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgEl, 0, 0);
+    let data;
+    try {
+      data = ctx.getImageData(0, 0, w, h);
+    } catch (e) {
+      // file:// でCORS制約に当たった場合は元画像をそのまま使う
+      return;
+    }
+    const px = data.data;
+    const THRESHOLD = 235;
+    const isBg = (idx) => {
+      const r = px[idx], g = px[idx + 1], b = px[idx + 2];
+      return r >= THRESHOLD && g >= THRESHOLD && b >= THRESHOLD;
+    };
+
+    const visited = new Uint8Array(w * h);
+    // 画像の四辺のピクセルを開始点として、白でつながっている範囲を背景とみなす
+    const seeds = [];
+    for (let x = 0; x < w; x++) { seeds.push([x, 0]); seeds.push([x, h - 1]); }
+    for (let y = 0; y < h; y++) { seeds.push([0, y]); seeds.push([w - 1, y]); }
+
+    const queue = [];
+    for (const [sx, sy] of seeds) {
+      const pi = sy * w + sx;
+      if (!visited[pi] && isBg(pi * 4)) {
+        visited[pi] = 1;
+        queue.push(pi);
+      }
+    }
+
+    let qi = 0;
+    while (qi < queue.length) {
+      const pi = queue[qi++];
+      const x = pi % w, y = (pi - x) / w;
+      const neighbors = [];
+      if (x > 0) neighbors.push(pi - 1);
+      if (x < w - 1) neighbors.push(pi + 1);
+      if (y > 0) neighbors.push(pi - w);
+      if (y < h - 1) neighbors.push(pi + w);
+      for (const npi of neighbors) {
+        if (!visited[npi] && isBg(npi * 4)) {
+          visited[npi] = 1;
+          queue.push(npi);
+        }
+      }
+    }
+
+    for (let pi = 0; pi < w * h; pi++) {
+      const idx = pi * 4;
+      if (visited[pi]) {
+        px[idx] = 255; px[idx + 1] = 255; px[idx + 2] = 255;
+      } else {
+        px[idx] = 0; px[idx + 1] = 0; px[idx + 2] = 0;
+      }
+    }
+
+    ctx.putImageData(data, 0, 0);
+    targetImgEl.src = canvas.toDataURL('image/png');
+  }
+
+  function buildGrid() {
+    CHARACTERS.forEach(ch => {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.id = `cell-${ch.num}`;
+
+      const thumb = document.createElement('div');
+      thumb.className = 'thumb';
+
+      const img = document.createElement('img');
+      img.alt = '';
+      thumb.appendChild(img);
+
+      const num = document.createElement('div');
+      num.className = 'num';
+      num.textContent = ch.num;
+
+      const name = document.createElement('div');
+      name.className = 'name';
+
+      cell.appendChild(thumb);
+      cell.appendChild(num);
+      cell.appendChild(name);
+      els.grid.appendChild(cell);
+
+      // 元画像を読み込み、シルエット版を作って表示
+      const loader = new Image();
+      loader.crossOrigin = 'anonymous';
+      loader.onload = () => {
+        makeSilhouette(loader, img);
+        if (!img.src) img.src = ch.file; // シルエット生成に失敗した場合のフォールバック
+      };
+      loader.onerror = () => {
+        thumb.style.background = '#eee';
+      };
+      loader.src = ch.file;
+    });
+  }
+
+  // 正解時に鳴らす「ピンポーン」チャイム(外部音源不要でWeb Audio APIから合成)
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+  }
+
+  function playChime() {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    const now = ctx.currentTime;
+
+    // 「ピン」(高い音) → 「ポーン」(低い音) の2音
+    const notes = [
+      { freq: 880.0, start: 0.0,  dur: 0.35 }, // ピン (A5)
+      { freq: 659.3, start: 0.28, dur: 0.55 }, // ポーン (E5)
+    ];
+
+    notes.forEach(({ freq, start, dur }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+
+      const t0 = now + start;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.35, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.05);
+    });
+  }
+
+  function showToast(msg, ok) {
+    els.toast.textContent = msg;
+    els.toast.style.color = ok ? 'var(--correct)' : '#c0392b';
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => { els.toast.textContent = ''; }, 1200);
+  }
+
+  els.form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const guess = normalize(els.input.value);
+    if (!guess) return;
+
+    const target = CHARACTERS.find(ch => !ch.solved && normalize(ch.name) === guess);
+    if (target) {
+      target.solved = true;
+      const cell = document.getElementById(`cell-${target.num}`);
+      cell.classList.add('solved');
+      cell.querySelector('img').src = target.file;
+      cell.querySelector('.name').textContent = target.name;
+      els.correctCount.textContent = CHARACTERS.filter(c => c.solved).length;
+      showToast(`正解! ${target.name}`, true);
+      playChime();
+    } else {
+      const already = CHARACTERS.find(ch => ch.solved && normalize(ch.name) === guess);
+      showToast(already ? 'すでに正解済みです' : '不正解…', false);
+    }
+    els.input.value = '';
+    els.input.focus();
+  });
+
+  buildGrid();
+  els.input.focus();
+</script>
+</body>
+</html>
