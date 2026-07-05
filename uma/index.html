@@ -128,6 +128,11 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    filter: brightness(1);
+    transition: filter 0.2s ease;
+  }
+  .cell .thumb img.dimmed {
+    filter: brightness(0.28) contrast(1.05);
   }
   .cell .num {
     font-size: 12px;
@@ -142,6 +147,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: 1px;
+  }
+  .cell .name.masked {
+    color: var(--muted);
   }
   footer {
     text-align: center;
@@ -169,7 +178,7 @@
   <div class="grid" id="grid"></div>
 </main>
 
-<footer>uma フォルダ内の画像を読み込んでシルエット表示しています</footer>
+<footer>uma フォルダ内の画像を少し暗くして表示しています(正解すると通常表示に)</footer>
 
 <script>
   // ファイル名は "番号_キャラ名.png" 形式。uma フォルダの中身と一致させてください。
@@ -235,74 +244,6 @@
 
   els.totalCount.textContent = CHARACTERS.length;
 
-  // 外周の白背景から塗りつぶし判定(flood fill)し、背景だけ白、
-  // それ以外(キャラの内部の白い部分も含めて)は完全に黒にする
-  function makeSilhouette(imgEl, targetImgEl) {
-    const canvas = document.createElement('canvas');
-    const w = imgEl.naturalWidth, h = imgEl.naturalHeight;
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(imgEl, 0, 0);
-    let data;
-    try {
-      data = ctx.getImageData(0, 0, w, h);
-    } catch (e) {
-      // file:// でCORS制約に当たった場合は元画像をそのまま使う
-      return;
-    }
-    const px = data.data;
-    const THRESHOLD = 235;
-    const isBg = (idx) => {
-      const r = px[idx], g = px[idx + 1], b = px[idx + 2];
-      return r >= THRESHOLD && g >= THRESHOLD && b >= THRESHOLD;
-    };
-
-    const visited = new Uint8Array(w * h);
-    // 画像の四辺のピクセルを開始点として、白でつながっている範囲を背景とみなす
-    const seeds = [];
-    for (let x = 0; x < w; x++) { seeds.push([x, 0]); seeds.push([x, h - 1]); }
-    for (let y = 0; y < h; y++) { seeds.push([0, y]); seeds.push([w - 1, y]); }
-
-    const queue = [];
-    for (const [sx, sy] of seeds) {
-      const pi = sy * w + sx;
-      if (!visited[pi] && isBg(pi * 4)) {
-        visited[pi] = 1;
-        queue.push(pi);
-      }
-    }
-
-    let qi = 0;
-    while (qi < queue.length) {
-      const pi = queue[qi++];
-      const x = pi % w, y = (pi - x) / w;
-      const neighbors = [];
-      if (x > 0) neighbors.push(pi - 1);
-      if (x < w - 1) neighbors.push(pi + 1);
-      if (y > 0) neighbors.push(pi - w);
-      if (y < h - 1) neighbors.push(pi + w);
-      for (const npi of neighbors) {
-        if (!visited[npi] && isBg(npi * 4)) {
-          visited[npi] = 1;
-          queue.push(npi);
-        }
-      }
-    }
-
-    for (let pi = 0; pi < w * h; pi++) {
-      const idx = pi * 4;
-      if (visited[pi]) {
-        px[idx] = 255; px[idx + 1] = 255; px[idx + 2] = 255;
-      } else {
-        px[idx] = 0; px[idx + 1] = 0; px[idx + 2] = 0;
-      }
-    }
-
-    ctx.putImageData(data, 0, 0);
-    targetImgEl.src = canvas.toDataURL('image/png');
-  }
-
   function buildGrid() {
     CHARACTERS.forEach(ch => {
       const cell = document.createElement('div');
@@ -314,6 +255,7 @@
 
       const img = document.createElement('img');
       img.alt = '';
+      img.className = 'dimmed';
       thumb.appendChild(img);
 
       const num = document.createElement('div');
@@ -321,24 +263,19 @@
       num.textContent = ch.num;
 
       const name = document.createElement('div');
-      name.className = 'name';
+      name.className = 'name masked';
+      // 正解前は文字数分の○で名前を伏せる(絵文字等を考慮しコードポイント単位で数える)
+      name.textContent = '○'.repeat(Array.from(ch.name).length);
 
       cell.appendChild(thumb);
       cell.appendChild(num);
       cell.appendChild(name);
       els.grid.appendChild(cell);
 
-      // 元画像を読み込み、シルエット版を作って表示
-      const loader = new Image();
-      loader.crossOrigin = 'anonymous';
-      loader.onload = () => {
-        makeSilhouette(loader, img);
-        if (!img.src) img.src = ch.file; // シルエット生成に失敗した場合のフォールバック
-      };
-      loader.onerror = () => {
+      img.onerror = () => {
         thumb.style.background = '#eee';
       };
-      loader.src = ch.file;
+      img.src = ch.file;
     });
   }
 
@@ -397,8 +334,10 @@
       target.solved = true;
       const cell = document.getElementById(`cell-${target.num}`);
       cell.classList.add('solved');
-      cell.querySelector('img').src = target.file;
-      cell.querySelector('.name').textContent = target.name;
+      cell.querySelector('img').classList.remove('dimmed');
+      const nameEl = cell.querySelector('.name');
+      nameEl.textContent = target.name;
+      nameEl.classList.remove('masked');
       els.correctCount.textContent = CHARACTERS.filter(c => c.solved).length;
       showToast(`正解! ${target.name}`, true);
       playChime();
