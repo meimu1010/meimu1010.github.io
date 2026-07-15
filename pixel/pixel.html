@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ドット絵グリッドオーバーレイ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DotGothic16&family=Share+Tech+Mono&display=swap');
+  :root {
+    --bg: #0a0a0f; --surface: #12121a; --border: #1e1e30;
+    --accent: #00ff88; --accent2: #ff2d6b; --accent3: #4daaff; --accent4: #ffcc00;
+    --text: #c8d0e8; --dim: #4a5070;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    padding: 20px 16px 48px;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% 0%, rgba(0,255,136,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 50% at 80% 100%, rgba(77,170,255,0.04) 0%, transparent 70%);
+  }
+  h1 {
+    font-family: 'DotGothic16', monospace; font-size: clamp(1.1rem,3vw,1.5rem);
+    letter-spacing: 0.1em; color: var(--accent); text-shadow: 0 0 20px rgba(0,255,136,0.4);
+    margin-bottom: 3px;
+  }
+  .subtitle { color: var(--dim); font-size: 0.68rem; letter-spacing: 0.2em; margin-bottom: 16px; }
+
+  .main-layout { display: flex; gap: 14px; width: 100%; max-width: 1200px; align-items: flex-start; }
+  .sidebar { flex: 0 0 210px; display: flex; flex-direction: column; gap: 10px; }
+  .preview-area { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 12px; width: 100%; }
+  .panel-title { font-size: 0.58rem; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+
+  .cg { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .cg:last-child { margin-bottom: 0; }
+  label { font-size: 0.6rem; letter-spacing: 0.1em; color: var(--dim); }
+
+  input[type="number"], input[type="color"], select {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    font-family: 'Share Tech Mono', monospace; font-size: 0.8rem;
+    padding: 5px 7px; border-radius: 3px; outline: none; transition: border-color 0.15s; width: 100%;
+  }
+  input[type="number"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,255,136,0.08); }
+  input[type="color"] { height: 30px; padding: 2px 4px; cursor: pointer; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+  /* Arrow pad */
+  .arrow-pad { display: grid; grid-template-columns: repeat(3,34px); grid-template-rows: repeat(3,30px); gap: 3px; margin: 8px auto 0; width: fit-content; }
+  .arrow-pad button {
+    width: 34px; height: 30px; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-size: 0.82rem; border-radius: 3px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.1s; padding: 0; font-family: inherit;
+  }
+  .arrow-pad button:hover { border-color: var(--accent4); color: var(--accent4); }
+  .arrow-pad button:active { transform: scale(0.88); }
+  .arrow-pad .hid { visibility: hidden; }
+  .offset-disp { text-align: center; font-size: 0.62rem; color: var(--accent4); margin-top: 5px; }
+  .key-hint { font-size: 0.56rem; color: var(--dim); text-align: center; margin-top: 5px; }
+  .key-hint kbd { background: var(--bg); border: 1px solid var(--border); border-radius: 2px; padding: 1px 3px; font-family: inherit; font-size: 0.56rem; color: var(--accent4); }
+
+  /* nudge step */
+  .step-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 0.6rem; color: var(--dim); }
+  .step-row input { width: 64px; flex: none; }
+
+  /* Buttons */
+  button.btn {
+    font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em;
+    padding: 7px 10px; border-radius: 3px; cursor: pointer; border: none; transition: all 0.15s; width: 100%; margin-bottom: 5px;
+  }
+  button.btn:last-child { margin-bottom: 0; }
+  .btn-primary { background: var(--accent); color: #000; font-weight: 700; }
+  .btn-primary:hover { background: #00ffaa; box-shadow: 0 0 14px rgba(0,255,136,0.3); }
+  .btn-auto { background: var(--accent4); color: #000; font-weight: 700; }
+  .btn-auto:hover { background: #ffe033; box-shadow: 0 0 14px rgba(255,204,0,0.3); }
+  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-secondary:hover { border-color: var(--accent3); color: var(--accent3); }
+  .btn-danger { background: transparent; border: 1px solid var(--border); color: var(--dim); }
+  .btn-danger:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* Drop zone */
+  .drop-zone {
+    width: 100%; min-height: 140px; border: 2px dashed var(--border); border-radius: 4px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; cursor: pointer; transition: all 0.2s; background: var(--surface); padding: 20px;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: rgba(0,255,136,0.03); }
+  .drop-icon { font-size: 1.8rem; opacity: 0.22; }
+  .drop-text { font-size: 0.7rem; color: var(--dim); text-align: center; line-height: 1.6; }
+  .drop-text span { color: var(--accent); }
+  #fileInput { display: none; }
+
+  /* Canvas area — NO scrollbar, image scales to fit */
+  .canvas-wrap {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;           /* ← no scrollbar */
+    background:
+      linear-gradient(45deg,#1a1a2a 25%,transparent 25%),
+      linear-gradient(-45deg,#1a1a2a 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#1a1a2a 75%),
+      linear-gradient(-45deg,transparent 75%,#1a1a2a 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    position: relative;
+  }
+  /* Canvas fits the container width */
+  .canvas-wrap canvas { display: block; }
+  #baseCanvas {
+    width: 100%;    /* CSS scale to fit — actual pixels unchanged */
+    height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  #gridCanvas {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  .info-bar { font-size: 0.6rem; color: var(--dim); line-height: 1.8; }
+  .info-bar span { color: var(--accent3); }
+
+  .auto-result {
+    display: none; font-size: 0.63rem; padding: 7px 9px;
+    background: rgba(255,204,0,0.07); border: 1px solid rgba(255,204,0,0.2);
+    border-radius: 3px; color: var(--accent4); line-height: 1.7; margin-top: 7px;
+  }
+</style>
+</head>
+<body>
+
+<h1>// PIXEL GRID OVERLAY</h1>
+<p class="subtitle">ドット絵グリッドジェネレーター</p>
+
+<div class="main-layout">
+  <div class="sidebar">
+
+    <!-- Block size -->
+    <div class="panel">
+      <div class="panel-title">ブロックサイズ</div>
+      <div class="row2">
+        <div class="cg"><label>幅 W (px)</label><input type="number" id="blockW" value="16" min="0.01" step="0.01"></div>
+        <div class="cg"><label>高 H (px)</label><input type="number" id="blockH" value="16" min="0.01" step="0.01"></div>
+      </div>
+      <button class="btn btn-auto" onclick="autoDetect()">⚡ 自動検出</button>
+      <div class="auto-result" id="autoResult"></div>
+    </div>
+
+    <!-- Offset + arrow pad -->
+    <div class="panel">
+      <div class="panel-title">グリッドオフセット</div>
+      <div class="row2">
+        <div class="cg"><label>X offset</label><input type="number" id="offsetX" value="0" step="0.01"></div>
+        <div class="cg"><label>Y offset</label><input type="number" id="offsetY" value="0" step="0.01"></div>
+      </div>
+      <div class="step-row">
+        <label style="white-space:nowrap">移動量</label>
+        <input type="number" id="nudgeStep" value="1" min="0.01" step="0.01">
+        <label>px</label>
+      </div>
+      <div class="arrow-pad">
+        <button class="hid"></button>
+        <button onclick="nudge(0,-1)">↑</button>
+        <button class="hid"></button>
+        <button onclick="nudge(-1,0)">←</button>
+        <button onclick="resetOffset()" style="font-size:0.55rem;color:var(--dim)">RST</button>
+        <button onclick="nudge(1,0)">→</button>
+        <button class="hid"></button>
+        <button onclick="nudge(0,1)">↓</button>
+        <button class="hid"></button>
+      </div>
+      <div class="offset-disp" id="offsetDisp">X: 0 / Y: 0</div>
+      <div class="key-hint"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> キーでも移動</div>
+    </div>
+
+    <!-- Display -->
+    <div class="panel">
+      <div class="panel-title">表示設定</div>
+      <div class="cg"><label>表示倍率</label><input type="number" id="scale" value="3" min="0.1" step="0.1"></div>
+      <div class="cg"><label>グリッド色</label><input type="color" id="gridColor" value="#ff2d6b"></div>
+      <div class="row2">
+        <div class="cg"><label>透明度 %</label><input type="number" id="gridOpacity" value="60" min="5" max="100"></div>
+        <div class="cg"><label>線幅 px</label><input type="number" id="lineWidth" value="1" min="1" max="4"></div>
+      </div>
+      <div class="cg"><label>線スタイル</label>
+        <select id="lineStyle">
+          <option value="solid">Solid</option>
+          <option value="dashed">Dashed</option>
+          <option value="dotted">Dotted</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="panel">
+      <div class="panel-title">保存 / 操作</div>
+      <button class="btn btn-primary" onclick="downloadImage('png')">▼ PNG 保存</button>
+      <button class="btn btn-secondary" onclick="downloadImage('jpeg')">▼ JPEG 保存</button>
+      <button class="btn btn-secondary" onclick="toggleGrid()">グリッド ON/OFF</button>
+      <button class="btn btn-danger" onclick="resetAll()">✕ リセット</button>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <div class="preview-area">
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">◻</div>
+      <div class="drop-text">クリックまたはドラッグ&ドロップ<br><span>[ 画像ファイルを選択 ]</span></div>
+      <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap" style="display:none">
+      <canvas id="baseCanvas"></canvas>
+      <canvas id="gridCanvas"></canvas>
+    </div>
+
+    <div class="info-bar" id="infoBar" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+let img = null;
+let gridVisible = true;
+
+const dropZone   = document.getElementById('dropZone');
+const fileInput  = document.getElementById('fileInput');
+const baseCanvas = document.getElementById('baseCanvas');
+const gridCanvas = document.getElementById('gridCanvas');
+const baseCtx    = baseCanvas.getContext('2d');
+const gridCtx    = gridCanvas.getContext('2d');
+const canvasWrap = document.getElementById('canvasWrap');
+const infoBar    = document.getElementById('infoBar');
+const autoResult = document.getElementById('autoResult');
+const offsetDisp = document.getElementById('offsetDisp');
+
+const v = id => document.getElementById(id);
+const fv = id => parseFloat(v(id).value) || 0;
+const getBlockW  = () => Math.max(0.01, fv('blockW'));
+const getBlockH  = () => Math.max(0.01, fv('blockH'));
+const getScale   = () => Math.max(0.1,  fv('scale'));
+const getOffsetX = () => fv('offsetX');
+const getOffsetY = () => fv('offsetY');
+const getNudge   = () => Math.max(0.01, fv('nudgeStep'));
+
+['blockW','blockH','scale','gridColor','gridOpacity','lineWidth','lineStyle','offsetX','offsetY']
+  .forEach(id => v(id).addEventListener('input', () => { if (img) render(); updateOffsetDisp(); }));
+
+// Drop zone
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => loadImage(e.target.files[0]));
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); loadImage(e.dataTransfer.files[0]); });
+
+// Arrow keys
+document.addEventListener('keydown', e => {
+  if (!img) return;
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT') return;
+  const map = { ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,-1], ArrowDown:[0,1] };
+  if (!map[e.key]) return;
+  e.preventDefault();
+  nudge(...map[e.key]);
+});
+
+function nudge(dx, dy) {
+  const s = getNudge();
+  v('offsetX').value = round4(getOffsetX() + dx * s);
+  v('offsetY').value = round4(getOffsetY() + dy * s);
+  updateOffsetDisp();
+  if (img) render();
+}
+function resetOffset() {
+  v('offsetX').value = 0; v('offsetY').value = 0;
+  updateOffsetDisp(); if (img) render();
+}
+function updateOffsetDisp() {
+  offsetDisp.textContent = `X: ${getOffsetX()} / Y: ${getOffsetY()}`;
+}
+function round4(n) { return Math.round(n * 10000) / 10000; }
+
+// Load image
+function loadImage(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const image = new Image();
+    image.onload = () => {
+      img = image;
+      // Set scale so image fits the preview area (roughly 70% of viewport height)
+      const previewW = canvasWrap.parentElement.clientWidth || (window.innerWidth - 260);
+      const maxH     = Math.floor(window.innerHeight * 0.70);
+      const sw = previewW / img.naturalWidth;
+      const sh = maxH    / img.naturalHeight;
+      const autoScale = Math.max(0.1, Math.min(sw, sh, 10));
+      v('scale').value = round4(autoScale);
+      v('offsetX').value = 0; v('offsetY').value = 0;
+      updateOffsetDisp();
+      render();
+      canvasWrap.style.display = 'block';
+      infoBar.style.display    = 'block';
+      dropZone.style.display   = 'none';
+      autoResult.style.display = 'none';
+    };
+    image.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Render
+function render() {
+  const scale = getScale();
+  const dw = Math.round(img.naturalWidth  * scale);
+  const dh = Math.round(img.naturalHeight * scale);
+
+  baseCanvas.width  = dw;
+  baseCanvas.height = dh;
+  gridCanvas.width  = dw;
+  gridCanvas.height = dh;
+
+  baseCtx.imageSmoothingEnabled = false;
+  baseCtx.drawImage(img, 0, 0, dw, dh);
+
+  drawGrid(dw, dh);
+  updateInfo(dw, dh);
+}
+
+function hexToRgba(hex, pct) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${pct/100})`;
+}
+
+function drawGrid(dw, dh) {
+  gridCtx.clearRect(0, 0, dw, dh);
+  if (!gridVisible) return;
+
+  const scale = getScale();
+  const bw = getBlockW() * scale;   // block width in display px
+  const bh = getBlockH() * scale;
+  const ox = ((getOffsetX() * scale) % bw + bw) % bw;
+  const oy = ((getOffsetY() * scale) % bh + bh) % bh;
+
+  const color = hexToRgba(v('gridColor').value, parseInt(v('gridOpacity').value));
+  const lw    = Math.max(1, parseInt(v('lineWidth').value));
+  const style = v('lineStyle').value;
+
+  gridCtx.strokeStyle = color;
+  gridCtx.lineWidth   = lw;
+  gridCtx.setLineDash(style === 'dashed' ? [4,3] : style === 'dotted' ? [1,3] : []);
+
+  gridCtx.beginPath();
+  for (let x = ox; x <= dw + 0.5; x += bw) {
+    const px = Math.round(x) + 0.5;
+    gridCtx.moveTo(px, 0); gridCtx.lineTo(px, dh);
+  }
+  for (let y = oy; y <= dh + 0.5; y += bh) {
+    const py = Math.round(y) + 0.5;
+    gridCtx.moveTo(0, py); gridCtx.lineTo(dw, py);
+  }
+  gridCtx.stroke();
+}
+
+function updateInfo(dw, dh) {
+  const bw = getBlockW(), bh = getBlockH();
+  infoBar.innerHTML =
+    `画像: <span>${img.naturalWidth}×${img.naturalHeight}px</span> ／ ` +
+    `ブロック: <span>${bw}×${bh}px</span> ／ ` +
+    `表示: <span>${dw}×${dh}px</span>`;
+}
+
+// ── AUTO DETECT ──
+// Strategy: block size may be fractional (e.g. 18.75 = 1200/64).
+// We try candidate block counts n = 2..maxN, compute period = total/n,
+// then score how well that period explains the diff profile.
+// Score = mean diff at grid line positions / mean diff at non-grid positions.
+// Grid line positions are sampled at off, off+T, off+2T, ... (rounded to nearest pixel).
+// We also try integer periods directly for robustness.
+
+function autoDetect() {
+  if (!img) { alert('先に画像を読み込んでください'); return; }
+  autoResult.style.display = 'block';
+  autoResult.innerHTML = '⏳ 解析中...';
+
+  setTimeout(() => {
+    const oc = document.createElement('canvas');
+    oc.width = img.naturalWidth; oc.height = img.naturalHeight;
+    const octx = oc.getContext('2d');
+    octx.imageSmoothingEnabled = false;
+    octx.drawImage(img, 0, 0);
+    const px = octx.getImageData(0, 0, oc.width, oc.height).data;
+    const W = oc.width, H = oc.height;
+
+    // Per-column and per-row edge strength
+    const colDiff = new Float64Array(W);
+    const rowDiff = new Float64Array(H);
+    for (let y = 0; y < H; y++) {
+      for (let x = 1; x < W; x++) {
+        const i0=(y*W+x-1)*4, i1=(y*W+x)*4;
+        colDiff[x] += Math.abs(px[i0]-px[i1])+Math.abs(px[i0+1]-px[i1+1])+Math.abs(px[i0+2]-px[i1+2]);
+      }
+    }
+    for (let x = 0; x < W; x++) {
+      for (let y = 1; y < H; y++) {
+        const i0=((y-1)*W+x)*4, i1=(y*W+x)*4;
+        rowDiff[y] += Math.abs(px[i0]-px[i1])+Math.abs(px[i0+1]-px[i1+1])+Math.abs(px[i0+2]-px[i1+2]);
+      }
+    }
+
+    // Score a fractional period T with offset off (both in pixels, possibly float).
+    // Returns boundary_mean / interior_mean ratio.
+    function scorePeriod(diffArr, total, T, off) {
+      // Mark boundary positions (round to nearest int)
+      const isBound = new Uint8Array(total);
+      for (let k = 0; k * T + off < total + T; k++) {
+        const pos = Math.round(k * T + off);
+        if (pos >= 0 && pos < total) isBound[pos] = 1;
+      }
+      let bSum = 0, bCount = 0, iSum = 0, iCount = 0;
+      for (let p = 1; p < total; p++) {
+        if (isBound[p]) { bSum += diffArr[p]; bCount++; }
+        else            { iSum += diffArr[p]; iCount++; }
+      }
+      if (bCount === 0 || iCount === 0) return 0;
+      return (bSum / bCount) / (iSum / iCount + 1e-9);
+    }
+
+    // For a given period T, find the best offset by grid search
+    function bestOffsetForT(diffArr, total, T) {
+      // Search offset in [0, T) with fine step
+      const steps = Math.min(200, Math.ceil(T * 4)); // up to 0.25px resolution
+      const step = T / steps;
+      let bestOff = 0, bestScore = -1;
+      for (let i = 0; i < steps; i++) {
+        const off = i * step;
+        const s = scorePeriod(diffArr, total, T, off);
+        if (s > bestScore) { bestScore = s; bestOff = off; }
+      }
+      return { off: bestOff, score: bestScore };
+    }
+
+    function findBestPeriod(diffArr, total) {
+      // Candidate periods: total/n for integer n → naturally generates 18.75=1200/64 etc.
+      const minT = 3, maxT = Math.floor(total / 3);
+      const nMin = Math.ceil(total / maxT), nMax = Math.floor(total / minT);
+      const candidates = [], seen = new Set();
+      for (let n = nMin; n <= nMax; n++) {
+        const T = total / n;
+        const key = Math.round(T * 100);
+        if (!seen.has(key)) { seen.add(key); candidates.push(T); }
+      }
+
+      let globalBestT = 8, globalBestOff = 0, globalBestScore = -1;
+      for (const T of candidates) {
+        const { off, score } = bestOffsetForT(diffArr, total, T);
+        // Mild gaussian penalty to avoid extreme sizes; centered at total/32 (typical dot count)
+        const ideal = total / 32;
+        const penalty = Math.exp(-0.5 * Math.pow(Math.log(T / ideal) / 1.5, 2));
+        const weighted = score * penalty;
+        if (weighted > globalBestScore) {
+          globalBestScore = weighted; globalBestT = T; globalBestOff = off;
+        }
+      }
+      return {
+        T:   Math.round(globalBestT   * 100) / 100,
+        off: Math.round(globalBestOff * 100) / 100
+      };
+    }
+
+    const rx = findBestPeriod(colDiff, W);
+
+    // For Y: also test X's period on the Y axis (pixel art often has square blocks).
+    // Pick whichever period scores better on Y.
+    const ryIndep = findBestPeriod(rowDiff, H);
+    const rySharedRes = bestOffsetForT(rowDiff, H, rx.T);
+    const rySharedScore = rySharedRes.score;
+    const ryIndepScore  = scorePeriod(rowDiff, H, ryIndep.T, ryIndep.off);
+    // Use shared period if it scores within 85% of the independent best
+    const ry = (rySharedScore >= ryIndepScore * 0.85)
+      ? { T: rx.T, off: Math.round(rySharedRes.off * 100) / 100 }
+      : ryIndep;
+
+    v('blockW').value  = rx.T;
+    v('blockH').value  = ry.T;
+    v('offsetX').value = rx.off;
+    v('offsetY').value = ry.off;
+    updateOffsetDisp();
+    render();
+
+    autoResult.style.display = 'block';
+    autoResult.innerHTML =
+      `⚡ 検出結果<br>` +
+      `W: <strong>${rx.T}px</strong>　H: <strong>${ry.T}px</strong><br>` +
+      `Offset X: ${rx.off} / Y: ${ry.off}<br>` +
+      `<span style="font-size:0.57rem;color:var(--dim)">合わない場合は矢印キーで微調整</span>`;
+  }, 30);
+}
+
+function toggleGrid() {
+  gridVisible = !gridVisible;
+  if (img) drawGrid(baseCanvas.width, baseCanvas.height);
+}
+
+function downloadImage(fmt) {
+  const mc = document.createElement('canvas');
+  mc.width = baseCanvas.width; mc.height = baseCanvas.height;
+  const mctx = mc.getContext('2d');
+  mctx.drawImage(baseCanvas, 0, 0);
+  if (gridVisible) mctx.drawImage(gridCanvas, 0, 0);
+  const link = document.createElement('a');
+  link.download = `pixel-grid.${fmt}`;
+  link.href = mc.toDataURL(fmt === 'jpeg' ? 'image/jpeg' : 'image/png', 0.95);
+  link.click();
+}
+
+function resetAll() {
+  img = null; gridVisible = true;
+  canvasWrap.style.display = 'none';
+  infoBar.style.display = 'none';
+  dropZone.style.display = 'flex';
+  fileInput.value = '';
+  autoResult.style.display = 'none';
+  v('offsetX').value = 0; v('offsetY').value = 0;
+  updateOffsetDisp();
+}
+</script>
+</body>
+</html>
