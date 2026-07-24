@@ -6,7 +6,6 @@
 <title>AniList アニメ履歴ビューワー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/wanakana@5.3.1/umd/wanakana.min.js"></script>
 <style>
   :root {
     --bg: #faf8f3;
@@ -1134,17 +1133,97 @@ function setAnimeSearchLoading(on) {
   btn.textContent = on ? '検索中...' : '検索';
 }
 
-// Convert a romaji string to hiragana using wanakana.
-// Names that are not standard Japanese romaji (e.g. Western-style names) will
-// not convert meaningfully — this is a mechanical conversion, not a dictionary lookup.
+// ---- Romaji -> Hiragana conversion (self-contained, no external dependency) ----
+// Mechanical Hepburn-romaji-to-kana conversion. Names that aren't standard
+// Japanese romaji (Western-style spellings) won't convert meaningfully.
+const ROMAJI_YOUON = {
+  kya:'きゃ',kyu:'きゅ',kyo:'きょ', gya:'ぎゃ',gyu:'ぎゅ',gyo:'ぎょ',
+  sha:'しゃ',shu:'しゅ',sho:'しょ', sya:'しゃ',syu:'しゅ',syo:'しょ',
+  ja:'じゃ',ju:'じゅ',jo:'じょ',   zya:'じゃ',zyu:'じゅ',zyo:'じょ',
+  cha:'ちゃ',chu:'ちゅ',cho:'ちょ', tya:'ちゃ',tyu:'ちゅ',tyo:'ちょ',
+  nya:'にゃ',nyu:'にゅ',nyo:'にょ',
+  hya:'ひゃ',hyu:'ひゅ',hyo:'ひょ',
+  bya:'びゃ',byu:'びゅ',byo:'びょ',
+  pya:'ぴゃ',pyu:'ぴゅ',pyo:'ぴょ',
+  mya:'みゃ',myu:'みゅ',myo:'みょ',
+  rya:'りゃ',ryu:'りゅ',ryo:'りょ'
+};
+const ROMAJI_SINGLE = {
+  a:'あ',i:'い',u:'う',e:'え',o:'お',
+  ka:'か',ki:'き',ku:'く',ke:'け',ko:'こ',
+  ga:'が',gi:'ぎ',gu:'ぐ',ge:'げ',go:'ご',
+  sa:'さ',shi:'し',si:'し',su:'す',se:'せ',so:'そ',
+  za:'ざ',ji:'じ',zi:'じ',zu:'ず',ze:'ぜ',zo:'ぞ',
+  ta:'た',chi:'ち',ti:'ち',tsu:'つ',tu:'つ',te:'て',to:'と',
+  da:'だ',di:'ぢ',du:'づ',de:'で',do:'ど',
+  na:'な',ni:'に',nu:'ぬ',ne:'ね',no:'の',
+  ha:'は',hi:'ひ',fu:'ふ',hu:'ふ',he:'へ',ho:'ほ',
+  ba:'ば',bi:'び',bu:'ぶ',be:'べ',bo:'ぼ',
+  pa:'ぱ',pi:'ぴ',pu:'ぷ',pe:'ぺ',po:'ぽ',
+  ma:'ま',mi:'み',mu:'む',me:'め',mo:'も',
+  ya:'や',yu:'ゆ',yo:'よ',
+  ra:'ら',ri:'り',ru:'る',re:'れ',ro:'ろ',
+  wa:'わ',wo:'を',wi:'ゐ',we:'ゑ',
+  n:'ん'
+};
+const SOKUON_CONSONANTS = new Set(['k','s','t','p','g','z','d','b','c']);
+
+function convertWordToHiragana(word) {
+  const w = word.toLowerCase();
+  let out = '', i = 0;
+  while (i < w.length) {
+    // double consonant -> small tsu (sokuon), e.g. "kk", "ssh", "tch", "pp"
+    if (
+      i + 1 < w.length &&
+      w[i] === w[i + 1] &&
+      SOKUON_CONSONANTS.has(w[i]) &&
+      !'aeiou'.includes(w[i])
+    ) {
+      out += 'っ';
+      i += 1;
+      continue;
+    }
+    if (w.slice(i, i + 3) === 'tch') { // e.g. "ecchi" style already handled above; "tch" alone
+      out += 'っ';
+      i += 1;
+      continue;
+    }
+    const three = w.slice(i, i + 3);
+    if (ROMAJI_YOUON[three]) { out += ROMAJI_YOUON[three]; i += 3; continue; }
+    const two = w.slice(i, i + 2);
+    if (ROMAJI_YOUON[two]) { out += ROMAJI_YOUON[two]; i += 2; continue; }
+    if (ROMAJI_SINGLE[three]) { out += ROMAJI_SINGLE[three]; i += 3; continue; }
+    if (ROMAJI_SINGLE[two]) { out += ROMAJI_SINGLE[two]; i += 2; continue; }
+    const one = w[i];
+    if (one === 'n') {
+      // moraic n: not followed by a vowel or y -> ん
+      const next = w[i + 1];
+      if (!next || !'aeiouy'.includes(next)) { out += 'ん'; i += 1; continue; }
+    }
+    if (ROMAJI_SINGLE[one]) { out += ROMAJI_SINGLE[one]; i += 1; continue; }
+    if (one === "'" || one === '-') { i += 1; continue; } // skip separators
+    out += one; // fallback: keep unknown character as-is (e.g. non-romaji input)
+    i += 1;
+  }
+  return out;
+}
+
 function toHiraganaSafe(str) {
   if (!str) return '';
   try {
-    if (typeof wanakana === 'undefined') return '';
-    return wanakana.toHiragana(str.toLowerCase());
+    return str.split(' ').map(convertWordToHiragana).join(' ');
   } catch (e) {
     return '';
   }
+}
+
+// AniList's Character.name.full is typically "First Last" (Western order).
+// Reorder to Japanese convention "Last First" for exactly two-token names.
+function toSurnameFirst(fullName) {
+  if (!fullName) return fullName;
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 2) return `${parts[1]} ${parts[0]}`;
+  return fullName;
 }
 
 async function searchAnime() {
@@ -1271,7 +1350,8 @@ async function loadAnimeCharacters(mediaId) {
       const ch = edge.node;
       const img = ch.image?.large;
       const native = ch.name?.native || '';
-      const romaji = ch.name?.full || '不明';
+      const romajiRaw = ch.name?.full || '不明';
+      const romaji = toSurnameFirst(romajiRaw);
       const hiragana = toHiraganaSafe(romaji);
       const roleLabel = ROLE_LABELS[edge.role] || edge.role;
       const imgHtml = img
@@ -1283,8 +1363,8 @@ async function loadAnimeCharacters(mediaId) {
         <div class="char-body">
           <div class="char-name">${esc(native || romaji)}</div>
           <div class="char-role">${roleLabel}</div>
-          <div class="char-native"><span class="char-field-label">ローマ字</span>${esc(romaji)}</div>
-          ${hiragana ? `<div class="char-hiragana"><span class="char-field-label">ひらがな</span>${esc(hiragana)}</div>` : ''}
+          <div class="char-native">${esc(romaji)}</div>
+          ${hiragana ? `<div class="char-hiragana">${esc(hiragana)}</div>` : ''}
         </div>
       </div>`;
     }
