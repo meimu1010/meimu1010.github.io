@@ -6,6 +6,7 @@
 <title>AniList アニメ履歴ビューワー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/wanakana@5.3.1/umd/wanakana.min.js"></script>
 <style>
   :root {
     --bg: #faf8f3;
@@ -68,6 +69,7 @@
     gap: 0;
     border-bottom: 2px solid var(--border);
     margin-bottom: 24px;
+    flex-wrap: wrap;
   }
 
   .tab-btn {
@@ -267,6 +269,7 @@
     color: inherit;
   }
   .anime-card:hover { border-color: var(--accent); }
+  .anime-result-card { cursor: pointer; }
 
   .anime-cover {
     width: 100%; aspect-ratio: 3/4;
@@ -320,7 +323,7 @@
 
   .va-hint { margin-top: 8px; font-size: 12px; color: var(--muted); }
 
-  /* VA result header */
+  /* VA / Anime result header */
   .va-result-header {
     display: flex;
     align-items: center;
@@ -347,6 +350,15 @@
     background: var(--surface2);
     display: flex; align-items: center; justify-content: center;
     font-size: 24px; flex-shrink: 0;
+  }
+
+  .anime-select-cover {
+    width: 60px; height: 84px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: var(--surface2);
+    flex-shrink: 0;
+    border: 1px solid var(--border);
   }
 
   .va-info { flex: 1; min-width: 0; }
@@ -420,6 +432,22 @@
     margin-top: 1px;
   }
 
+  /* new: native / hiragana name rows for anime-search character cards */
+  .char-native {
+    font-size: 12px; color: var(--text);
+    margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .char-hiragana {
+    font-size: 11px; color: var(--accent-dark);
+    margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .char-field-label {
+    font-size: 9px; color: var(--muted); font-weight: 500;
+    margin-right: 4px;
+  }
+
   /* Candidate list */
   .va-candidates {
     background: var(--surface);
@@ -457,6 +485,15 @@
     margin-bottom: 8px;
   }
 
+  .back-link {
+    display: inline-block;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .back-link:hover { text-decoration: underline; }
+
   /* Messages */
   .msg-loading { text-align: center; padding: 50px; }
   .spinner {
@@ -489,6 +526,7 @@
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('list')">📋 アニメリスト</button>
     <button class="tab-btn" onclick="switchTab('va')" id="vaTabBtn">🎙️ 声優検索</button>
+    <button class="tab-btn" onclick="switchTab('search')" id="animeSearchTabBtn">🔍 アニメ検索</button>
   </div>
 
   <!-- ===== TAB: ANIME LIST ===== -->
@@ -556,6 +594,20 @@
 
     <div id="vaErrorBox" style="display:none" class="msg-error"></div>
     <div id="vaContent"></div>
+  </div>
+
+  <!-- ===== TAB: ANIME SEARCH ===== -->
+  <div class="tab-panel" id="tab-search">
+    <div class="search-section">
+      <div class="search-row">
+        <input type="text" id="animeSearchInput" placeholder="アニメタイトルを入力..."/>
+        <button class="btn-search" id="animeSearchBtn" onclick="searchAnime()">検索</button>
+      </div>
+      <p class="hint">※ タイトルの一部でも検索できます。アニメを選択すると、そのキャラクター一覧を「名前（日本語表記）／ローマ字／ひらがな」で表示します。</p>
+    </div>
+
+    <div id="animeSearchErrorBox" style="display:none" class="msg-error"></div>
+    <div id="animeSearchContent"></div>
   </div>
 
 </div>
@@ -924,8 +976,6 @@ function showVACandidates(candidates) {
   `;
 }
 
-// store candidates globally for click handler
-let _pendingCandidates = [];
 async function selectCandidate(id) {
   setVALoading(true);
   hideVAError();
@@ -1069,6 +1119,181 @@ async function loadVAResult(staff) {
   document.getElementById('vaContent').innerHTML = html;
 }
 
+// ========== ANIME SEARCH (new) ==========
+let _lastAnimeSearchResults = [];
+
+function showAnimeSearchError(msg) {
+  const box = document.getElementById('animeSearchErrorBox');
+  box.textContent = '⚠ ' + msg;
+  box.style.display = 'block';
+}
+function hideAnimeSearchError() { document.getElementById('animeSearchErrorBox').style.display = 'none'; }
+function setAnimeSearchLoading(on) {
+  const btn = document.getElementById('animeSearchBtn');
+  btn.disabled = on;
+  btn.textContent = on ? '検索中...' : '検索';
+}
+
+// Convert a romaji string to hiragana using wanakana.
+// Names that are not standard Japanese romaji (e.g. Western-style names) will
+// not convert meaningfully — this is a mechanical conversion, not a dictionary lookup.
+function toHiraganaSafe(str) {
+  if (!str) return '';
+  try {
+    if (typeof wanakana === 'undefined') return '';
+    return wanakana.toHiragana(str.toLowerCase());
+  } catch (e) {
+    return '';
+  }
+}
+
+async function searchAnime() {
+  const q = document.getElementById('animeSearchInput').value.trim();
+  if (!q) return;
+  hideAnimeSearchError();
+  setAnimeSearchLoading(true);
+  document.getElementById('animeSearchContent').innerHTML =
+    `<div class="msg-loading"><div class="spinner"></div><p>アニメを検索中...</p></div>`;
+
+  try {
+    const data = await gqlRequest(`
+      query($search: String) {
+        Page(perPage: 12) {
+          media(search: $search, type: ANIME, sort: SEARCH_MATCH) {
+            id
+            title { romaji native }
+            coverImage { large }
+            seasonYear
+            format
+          }
+        }
+      }
+    `, { search: q });
+    _lastAnimeSearchResults = data.Page.media;
+    renderAnimeSearchResults();
+  } catch(e) {
+    document.getElementById('animeSearchContent').innerHTML = '';
+    showAnimeSearchError(e.message || '検索に失敗しました。');
+  }
+  setAnimeSearchLoading(false);
+}
+
+function renderAnimeSearchResults() {
+  hideAnimeSearchError();
+  const list = _lastAnimeSearchResults;
+  if (list.length === 0) {
+    document.getElementById('animeSearchContent').innerHTML =
+      '<div class="msg-empty">該当するアニメが見つかりませんでした。</div>';
+    return;
+  }
+  let html = '<div class="anime-grid">';
+  for (const m of list) {
+    const title = m.title.native || m.title.romaji || '不明';
+    const cover = m.coverImage?.large;
+    const coverHtml = cover
+      ? `<img class="anime-cover" src="${cover}" alt="" loading="lazy">`
+      : `<div class="anime-cover-placeholder">🎬</div>`;
+    html += `<div class="anime-card anime-result-card" onclick="loadAnimeCharacters(${m.id})">
+      ${coverHtml}
+      <div class="anime-body">
+        <div class="anime-title">${esc(title)}</div>
+        <div class="anime-meta">
+          ${m.seasonYear ? `<span class="anime-year">${m.seasonYear}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+  document.getElementById('animeSearchContent').innerHTML = html;
+}
+
+async function loadAnimeCharacters(mediaId) {
+  hideAnimeSearchError();
+  document.getElementById('animeSearchContent').innerHTML =
+    `<div class="msg-loading"><div class="spinner"></div><p>キャラクター情報を取得中...</p></div>`;
+
+  const query = `
+    query($id: Int, $page: Int) {
+      Media(id: $id) {
+        id
+        title { romaji native }
+        coverImage { large }
+        characters(page: $page, perPage: 25, sort: [ROLE, RELEVANCE]) {
+          pageInfo { hasNextPage }
+          edges {
+            role
+            node { id name { full native } image { large } }
+          }
+        }
+      }
+    }
+  `;
+
+  let edges = [], page = 1, mediaInfo = null;
+  try {
+    while (true) {
+      const loadEl = document.querySelector('#animeSearchContent .msg-loading p');
+      if (loadEl) loadEl.textContent = `キャラクター情報を取得中... (${edges.length} 件取得済み)`;
+      const data = await gqlRequest(query, { id: mediaId, page });
+      const m = data.Media;
+      if (!mediaInfo) mediaInfo = m;
+      edges.push(...m.characters.edges);
+      if (!m.characters.pageInfo.hasNextPage) break;
+      page++;
+      await sleep(600);
+    }
+  } catch(e) {
+    document.getElementById('animeSearchContent').innerHTML = '';
+    showAnimeSearchError(e.message || 'キャラクター取得に失敗しました。');
+    return;
+  }
+
+  const cover = mediaInfo.coverImage?.large;
+  const coverHtml = cover
+    ? `<img class="anime-select-cover" src="${cover}" alt="">`
+    : `<div class="anime-select-cover"></div>`;
+
+  let html = `<div class="back-link" onclick="renderAnimeSearchResults()">← 検索結果に戻る</div>`;
+  html += `<div class="va-result-header">
+    ${coverHtml}
+    <div class="va-info">
+      <div class="va-name">${esc(mediaInfo.title.romaji || '')}</div>
+      ${mediaInfo.title.native ? `<div class="va-name-native">${esc(mediaInfo.title.native)}</div>` : ''}
+      <div class="va-stats-row"><div class="va-stat">キャラクター数: <strong>${edges.length}</strong></div></div>
+    </div>
+  </div>`;
+
+  if (edges.length === 0) {
+    html += '<div class="msg-empty">キャラクター情報が見つかりませんでした。</div>';
+  } else {
+    html += '<div class="char-grid">';
+    for (const edge of edges) {
+      const ch = edge.node;
+      const img = ch.image?.large;
+      const native = ch.name?.native || '';
+      const romaji = ch.name?.full || '不明';
+      const hiragana = toHiraganaSafe(romaji);
+      const roleLabel = ROLE_LABELS[edge.role] || edge.role;
+      const imgHtml = img
+        ? `<img class="char-cover" src="${img}" alt="">`
+        : `<div class="char-cover-placeholder">👤</div>`;
+
+      html += `<div class="char-card">
+        ${imgHtml}
+        <div class="char-body">
+          <div class="char-name">${esc(native || romaji)}</div>
+          <div class="char-role">${roleLabel}</div>
+          <div class="char-native"><span class="char-field-label">ローマ字</span>${esc(romaji)}</div>
+          ${hiragana ? `<div class="char-hiragana"><span class="char-field-label">ひらがな</span>${esc(hiragana)}</div>` : ''}
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  document.getElementById('animeSearchContent').innerHTML = html;
+}
+
 // ========== UTILITIES ==========
 function esc(str) {
   if (!str) return '';
@@ -1081,6 +1306,9 @@ document.getElementById('userInput').addEventListener('keydown', e => {
 });
 document.getElementById('vaInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') searchVA();
+});
+document.getElementById('animeSearchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') searchAnime();
 });
 </script>
 </body>
