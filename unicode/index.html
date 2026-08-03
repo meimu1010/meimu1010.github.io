@@ -438,6 +438,22 @@
 
   #copy-all-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
+  #copy-highlighted-btn {
+    padding: 6px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text2);
+    font-family: inherit;
+    font-size: .68rem;
+    letter-spacing: .06em;
+    cursor: pointer;
+    transition: all .12s;
+  }
+
+  #copy-highlighted-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #copy-highlighted-btn:disabled { opacity: .4; cursor: not-allowed; }
+
   /* scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -487,6 +503,7 @@
 
 <footer>
   <span class="footer-info">Unicode Character Inspector</span>
+  <button id="copy-highlighted-btn" disabled>ハイライトのみコピー</button>
   <button id="copy-all-btn">全てコピー</button>
 </footer>
 
@@ -787,6 +804,7 @@ btnHl.addEventListener('click', () => {
   btnHl.classList.toggle('on', hlOn);
   document.body.classList.toggle('hl-on', hlOn);
   refreshHighlight();
+  document.getElementById('copy-highlighted-btn').disabled = !hlOn;
 });
 
 // ── INPUT ──
@@ -811,6 +829,29 @@ document.getElementById('copy-all-btn').addEventListener('click', () => {
     const btn = document.getElementById('copy-all-btn');
     btn.textContent = '✓ コピー済';
     setTimeout(() => { btn.textContent = '全てコピー'; }, 1800);
+  });
+});
+
+document.getElementById('copy-highlighted-btn').addEventListener('click', () => {
+  if (!hlOn) return;
+  const str = txt.value;
+  if (!str) return;
+  const segs = getSegments(str);
+  const seen = new Set();
+  const chars = [];
+  segs.forEach(ch => {
+    const cat = getCategory(ch.codePointAt(0));
+    if ((cat === 'warn' || cat === 'rare') && !seen.has(ch)) {
+      seen.add(ch);
+      chars.push(ch);
+    }
+  });
+  if (chars.length === 0) return;
+  navigator.clipboard.writeText(chars.join('')).then(() => {
+    const btn = document.getElementById('copy-highlighted-btn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ コピー済';
+    setTimeout(() => { btn.textContent = orig; }, 1800);
   });
 });
 
