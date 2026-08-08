@@ -475,7 +475,7 @@ function createWin(o){
   el.querySelector('.tbtn.min').onclick=e=>{e.stopPropagation();minimizeWin(w)};
   el.querySelector('.tbtn.max').onclick=e=>{e.stopPropagation();toggleMax(w)};
   el.querySelector('.tbtn.close').onclick=e=>{e.stopPropagation();closeWin(w)};
-  el.querySelector('.tbar').addEventListener('dblclick',e=>{if(!e.target.closest('.tbtns'))toggleMax(w)};
+  el.querySelector('.tbar').addEventListener('dblclick',e=>{if(!e.target.closest('.tbtns'))toggleMax(w);});
   el.querySelector('.tbar').addEventListener('contextmenu',e=>{
     e.preventDefault();e.stopPropagation();
     showCtx(e.clientX,e.clientY,[
@@ -578,7 +578,7 @@ function initResize(w){
     });
   });
 }
-/* スナップレイアウトフライアウト (Win11) */
+/* スナップレイアウトフライアウト */
 const SF_LAYOUTS=[[[0,0,1,1]],[[0,0,.5,1],[.5,0,.5,1]],[[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]]];
 let sfTarget=null,sfShowT=null,sfHideT=null;
 function buildSnapFly(){
@@ -919,7 +919,7 @@ defApp('explorer','エクスプローラー','explorer',760,500,(w,o)=>{
   render();
 });
 
-/* ブラウザ: 内部ページ + 実サイトiframe (google は ?igu=1 で埋め込み可能 [4]) */
+/* ブラウザ: 内部ページ + 実サイトiframe (google は ?igu=1 で埋め込み可能) */
 defApp('browser','Qwen ブラウザー','browser',880,580,w=>{
   let hist=[{t:'int',url:'qwen://start'}],hi=0;
   w.body.innerHTML=`<div class="br-bar"><button data-n="back">←</button><button data-n="fwd">→</button><button data-n="re">⟳</button><input class="br-addr" value="qwen://start"></div><div class="br-load"></div><div class="br-body"></div>`;
@@ -963,10 +963,10 @@ defApp('browser','Qwen ブラウザー','browser',880,580,w=>{
     if(v.startsWith('qwen://'))return{t:'int',url:v};
     if(/^https?:\/\//i.test(v))return{t:'ext',url:v};
     if(/^[^\s]+\.[^\s]{2,}$/.test(v)){
-      if(/google\./.test(v))return{t:'ext',url:'https://www.google.com/webhp?igu=1'}; /* igu=1 [4] */
+      if(/google\./.test(v))return{t:'ext',url:'https://www.google.com/webhp?igu=1'};
       return{t:'ext',url:'https://'+v};
     }
-    return{t:'ext',url:'https://www.google.com/search?igu=1&q='+encodeURIComponent(v)}; /* igu=1 [4] */
+    return{t:'ext',url:'https://www.google.com/search?igu=1&q='+encodeURIComponent(v)};
   }
   addr.addEventListener('keydown',e=>{if(e.key==='Enter'){const en=parse(addr.value);if(en)nav(en);}});
   body.addEventListener('keydown',e=>{if(e.target.dataset?.q!==undefined&&e.key==='Enter'){const en=parse(e.target.value);if(en)nav(en);}});
@@ -1111,7 +1111,7 @@ document.querySelectorAll('.qs-t').forEach(t=>{
 $('#sunIco').innerHTML=icon('sun',17);
 $('#volIco').innerHTML=icon('vol',17);
 
-/* ========== 初期化: 自動起動(電源ボタン・パスワードなし) ========== */
+/* ========== 初期化: 自動起動 ========== */
 applyTheme();
 applyWall();
 PINNED.forEach(ensureTbBtn);
