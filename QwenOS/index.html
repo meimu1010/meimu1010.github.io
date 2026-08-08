@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Windows 11</title>
+<title>QwenOS</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5/japanese-400.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5/japanese-500.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5/japanese-700.css">
@@ -11,10 +11,10 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden}
 body{font-family:'Segoe UI Variable','Segoe UI','Noto Sans JP',sans-serif;font-size:14px;--accent:#0067c0;--taskbar-h:48px;
-  --text:#1a1a1a;--win-bg:rgba(246,246,246,.92);--sys-bg:rgba(243,243,243,.86);--hover:rgba(0,0,0,.06);
-  --border:rgba(0,0,0,.12);--sub:#5a5a5a;--input:rgba(255,255,255,.8);--shadow:0 12px 40px rgba(0,0,0,.28)}
-body[data-theme="dark"]{--text:#f2f2f2;--win-bg:rgba(32,32,32,.9);--sys-bg:rgba(28,28,28,.86);--hover:rgba(255,255,255,.08);
-  --border:rgba(255,255,255,.14);--sub:#a5a5a5;--input:rgba(255,255,255,.08);--shadow:0 12px 40px rgba(0,0,0,.55)}
+  --text:#1a1a1a;--win-bg:rgba(243,243,243,.88);--sys-bg:rgba(243,243,243,.85);--hover:rgba(0,0,0,.05);
+  --border:rgba(0,0,0,.1);--sub:#616161;--input:rgba(255,255,255,.75);--shadow:0 16px 46px rgba(0,0,0,.3)}
+body[data-theme="dark"]{--text:#f5f5f5;--win-bg:rgba(32,32,32,.88);--sys-bg:rgba(32,32,32,.82);--hover:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.1);--sub:#a6a6a6;--input:rgba(255,255,255,.07);--shadow:0 16px 46px rgba(0,0,0,.6)}
 button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
 input,textarea{font-family:inherit;color:inherit}
 svg{display:block}
@@ -26,34 +26,34 @@ svg{display:block}
 #wallpaper{position:fixed;inset:0;z-index:0;background:#0a1a33 center/cover no-repeat}
 
 /* デスクトップアイコン */
-#deskIcons{position:fixed;top:8px;left:8px;z-index:2;display:flex;flex-direction:column;flex-wrap:wrap;gap:4px;height:calc(100% - 70px);align-content:flex-start}
-.dicon{width:84px;padding:8px 4px;border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;border:1px solid transparent;user-select:none}
-.dicon:hover{background:rgba(255,255,255,.14)}
-.dicon.sel{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)}
+#deskIcons{position:fixed;top:8px;left:8px;z-index:2;display:flex;flex-direction:column;flex-wrap:wrap;gap:2px;height:calc(100% - 70px);align-content:flex-start}
+.dicon{width:82px;padding:8px 4px;border-radius:4px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;border:1px solid transparent;user-select:none}
+.dicon:hover{background:rgba(255,255,255,.12)}
+.dicon.sel{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3)}
 .dicon .di{width:40px;height:40px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
 .dicon .di svg{width:100%;height:100%}
 .dicon span.lb{color:#fff;font-size:12px;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.8);line-height:1.3;word-break:break-all}
 
 /* ウィンドウ */
 #winLayer{position:fixed;inset:0 0 var(--taskbar-h) 0;z-index:10;pointer-events:none}
-.win{position:absolute;min-width:320px;min-height:200px;background:var(--win-bg);-webkit-backdrop-filter:blur(30px) saturate(1.4);backdrop-filter:blur(30px) saturate(1.4);
+.win{position:absolute;min-width:320px;min-height:200px;background:var(--win-bg);-webkit-backdrop-filter:blur(28px) saturate(1.5);backdrop-filter:blur(28px) saturate(1.5);
   border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);display:flex;flex-direction:column;color:var(--text);pointer-events:auto;overflow:hidden}
-.win.openAnim{animation:winIn .2s cubic-bezier(.2,.9,.3,1)}
-@keyframes winIn{from{opacity:0;transform:scale(.94) translateY(12px)}to{opacity:1;transform:none}}
-.win.closing{animation:winOut .14s forwards}
-@keyframes winOut{to{opacity:0;transform:scale(.95)}}
+.win.openAnim{animation:winIn .22s cubic-bezier(.1,.9,.2,1)}
+@keyframes winIn{from{opacity:0;transform:scale(.95) translateY(14px)}to{opacity:1;transform:none}}
+.win.closing{animation:winOut .13s forwards}
+@keyframes winOut{to{opacity:0;transform:scale(.96)}}
 .win.anim{transition:left .18s ease,top .18s ease,width .18s ease,height .18s ease}
 .win.min{opacity:0;transform:scale(.6) translateY(120px);transition:all .18s ease;pointer-events:none}
-.win.focused{box-shadow:0 18px 60px rgba(0,0,0,.45);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
-.tbar{height:38px;flex:0 0 38px;display:flex;align-items:center;gap:8px;padding-left:12px;user-select:none;cursor:default}
+.win.focused{border-color:rgba(128,128,128,.35)}
+.tbar{height:36px;flex:0 0 36px;display:flex;align-items:center;gap:8px;padding-left:12px;user-select:none;cursor:default}
 .tbar .ti{width:16px;height:16px}
 .tbar .ti svg{width:100%;height:100%}
-.tbar .tt{flex:1;font-size:12.5px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbar .tt{flex:1;font-size:12px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tbtns{display:flex;height:100%}
-.tbtn{width:46px;height:100%;display:grid;place-items:center;color:var(--text)}
+.tbtn{width:44px;height:100%;display:grid;place-items:center;color:var(--text)}
 .tbtn:hover{background:var(--hover)}
-.tbtn.close:hover{background:#e81123;color:#fff}
-.win:not(.focused) .tbar{opacity:.75}
+.tbtn.close:hover{background:#c42b1c;color:#fff}
+.win:not(.focused) .tbar{opacity:.7}
 .wbody{flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column}
 .rz{position:absolute;z-index:9}
 .rz[data-d="n"]{top:-3px;left:8px;right:8px;height:7px;cursor:ns-resize}
@@ -65,11 +65,18 @@ svg{display:block}
 .rz[data-d="se"]{bottom:-4px;right:-4px;width:12px;height:12px;cursor:nwse-resize}
 .rz[data-d="sw"]{bottom:-4px;left:-4px;width:12px;height:12px;cursor:nesw-resize}
 body.dragging{user-select:none;cursor:default}
-#snapPrev{position:fixed;z-index:9;display:none;background:color-mix(in srgb,var(--accent) 22%,transparent);border:2px solid var(--accent);border-radius:10px;transition:all .12s ease;pointer-events:none}
+#snapPrev{position:fixed;z-index:9;display:none;background:color-mix(in srgb,var(--accent) 20%,transparent);border:2px solid var(--accent);border-radius:10px;transition:all .12s ease;pointer-events:none}
+
+/* スナップレイアウトフライアウト */
+#snapFly{position:fixed;z-index:9400;background:var(--sys-bg);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:8px;display:none;flex-direction:column;gap:6px}
+#snapFly.show{display:flex}
+.sf-row{display:flex;gap:4px}
+.sf-z{width:40px;height:28px;border-radius:4px;background:var(--hover);border:1px solid var(--border);transition:all .1s}
+.sf-z:hover{background:var(--accent);border-color:var(--accent)}
 
 /* タスクバー */
 #taskbar{position:fixed;left:0;right:0;bottom:0;height:var(--taskbar-h);z-index:9000;background:var(--sys-bg);
-  -webkit-backdrop-filter:blur(30px) saturate(1.5);backdrop-filter:blur(30px) saturate(1.5);border-top:1px solid var(--border);
+  -webkit-backdrop-filter:blur(30px) saturate(1.6);backdrop-filter:blur(30px) saturate(1.6);border-top:1px solid var(--border);
   display:flex;align-items:center;padding:0 8px;color:var(--text)}
 #tbCenter{display:flex;align-items:center;gap:4px;position:absolute;left:50%;transform:translateX(-50%);height:100%}
 #startBtn{width:42px;height:40px;display:grid;place-items:center;border-radius:6px}
@@ -89,49 +96,49 @@ body.dragging{user-select:none;cursor:default}
 #showDesk:hover{background:var(--hover)}
 
 /* スタートメニュー */
-#startMenu{position:fixed;bottom:calc(var(--taskbar-h) + 10px);left:50%;transform:translateX(-50%) translateY(24px);width:600px;max-height:calc(100vh - 70px);
-  z-index:9100;background:var(--sys-bg);-webkit-backdrop-filter:blur(40px) saturate(1.5);backdrop-filter:blur(40px) saturate(1.5);
-  border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:24px 28px 0;display:none;flex-direction:column;color:var(--text);overflow:hidden}
-#startMenu.show{display:flex;animation:smIn .2s cubic-bezier(.2,.9,.3,1)}
-@keyframes smIn{from{opacity:0;transform:translateX(-50%) translateY(36px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-#smSearch{height:36px;border-radius:18px;border:1px solid var(--border);background:var(--input);padding:0 16px;width:100%;outline:none;font-size:13px;color:var(--text)}
-#smSearch:focus{border-color:var(--accent)}
-.sm-h{font-size:13px;font-weight:700;margin:20px 4px 10px}
-#smGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
-.sm-tile{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 4px;border-radius:6px;font-size:11.5px}
+#startMenu{position:fixed;bottom:calc(var(--taskbar-h) + 12px);left:50%;transform:translateX(-50%) translateY(24px);width:640px;max-height:calc(100vh - 76px);
+  z-index:9100;background:var(--sys-bg);-webkit-backdrop-filter:blur(40px) saturate(1.6);backdrop-filter:blur(40px) saturate(1.6);
+  border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:28px 32px 0;display:none;flex-direction:column;color:var(--text);overflow:hidden}
+#startMenu.show{display:flex;animation:smIn .22s cubic-bezier(.1,.9,.2,1)}
+@keyframes smIn{from{opacity:0;transform:translateX(-50%) translateY(40px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+#smSearch{height:38px;border-radius:19px;border:1px solid var(--border);background:var(--input);padding:0 18px;width:100%;outline:none;font-size:13px;color:var(--text)}
+#smSearch:focus{border-color:var(--accent);border-bottom-width:2px}
+.sm-h{font-size:13px;font-weight:700;margin:22px 4px 10px}
+#smGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:2px}
+.sm-tile{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 2px;border-radius:4px;font-size:11.5px}
 .sm-tile:hover{background:var(--hover)}
 .sm-tile .aic{width:32px;height:32px}
 .sm-tile .aic svg{width:100%;height:100%}
-#smRec{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding-bottom:18px}
-.sm-rec{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;font-size:12px;text-align:left}
+#smRec{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding-bottom:20px}
+.sm-rec{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:4px;font-size:12px;text-align:left}
 .sm-rec:hover{background:var(--hover)}
 .sm-rec .aic{width:26px;height:26px;flex:0 0 26px}
 .sm-rec .aic svg{width:100%;height:100%}
 .sm-rec small{display:block;color:var(--sub);font-size:11px}
-#smFoot{margin:0 -28px;padding:12px 28px;background:rgba(0,0,0,.14);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)}
-body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.3)}
+#smFoot{margin:0 -32px;padding:12px 32px;background:rgba(0,0,0,.12);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);position:relative}
+body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.28)}
 #smUser{display:flex;align-items:center;gap:10px;font-size:13px}
 #smUser .av{width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700}
-#smPower{width:38px;height:38px;border-radius:6px;display:grid;place-items:center;position:relative}
+#smPower{width:38px;height:38px;border-radius:6px;display:grid;place-items:center}
 #smPower:hover{background:var(--hover)}
-#powerPop{position:absolute;bottom:44px;right:0;width:170px;background:var(--sys-bg);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:4px;display:none}
-#powerPop.show{display:block}
+#powerPop{position:absolute;right:24px;bottom:58px;width:180px;background:var(--sys-bg);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:4px;display:none;z-index:5}
+#powerPop.show{display:block;animation:qpIn .14s ease}
 #powerPop button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:5px;font-size:12.5px;text-align:left}
 #powerPop button:hover{background:var(--hover)}
 
 /* クイック設定 */
-#quickPanel{position:fixed;bottom:calc(var(--taskbar-h) + 10px);right:10px;width:340px;z-index:9100;background:var(--sys-bg);
-  -webkit-backdrop-filter:blur(40px);backdrop-filter:blur(40px);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:18px;display:none;color:var(--text)}
+#quickPanel{position:fixed;bottom:calc(var(--taskbar-h) + 12px);right:10px;width:360px;z-index:9100;background:var(--sys-bg);
+  -webkit-backdrop-filter:blur(40px);backdrop-filter:blur(40px);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:20px;display:none;color:var(--text)}
 #quickPanel.show{display:block;animation:qpIn .18s ease}
 @keyframes qpIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .qs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
-.qs-t{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:6px;background:var(--input);border:1px solid var(--border);font-size:11px;color:var(--text)}
+.qs-t{display:flex;flex-direction:column;align-items:center;gap:6px;padding:11px 4px;border-radius:5px;background:var(--input);border:1px solid var(--border);font-size:11px;color:var(--text)}
 .qs-t.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .qs-row{display:flex;align-items:center;gap:12px;margin:10px 0}
 .qs-row input[type=range]{flex:1;accent-color:var(--accent)}
 
 /* コンテキストメニュー */
-#ctxMenu{position:fixed;z-index:9500;min-width:220px;background:var(--sys-bg);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);
+#ctxMenu{position:fixed;z-index:9500;min-width:230px;background:var(--sys-bg);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);
   border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:4px;display:none;color:var(--text)}
 #ctxMenu.show{display:block;animation:qpIn .12s ease}
 #ctxMenu button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 12px;border-radius:5px;font-size:12.5px;text-align:left}
@@ -140,18 +147,18 @@ body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.3)}
 
 /* 通知 */
 #toasts{position:fixed;right:14px;bottom:calc(var(--taskbar-h) + 14px);z-index:9600;display:flex;flex-direction:column;gap:10px}
-.toast{width:340px;background:var(--sys-bg);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:8px;
-  box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;color:var(--text);animation:tIn .25s cubic-bezier(.2,.9,.3,1)}
-@keyframes tIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}
+.toast{width:350px;background:var(--sys-bg);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:8px;
+  box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;color:var(--text);animation:tIn .25s cubic-bezier(.1,.9,.2,1)}
+@keyframes tIn{from{opacity:0;transform:translateX(70px)}to{opacity:1;transform:none}}
 .toast.out{animation:tOut .2s forwards}
-@keyframes tOut{to{opacity:0;transform:translateX(60px)}}
+@keyframes tOut{to{opacity:0;transform:translateX(70px)}}
 .toast b{font-size:13px;display:block;margin-bottom:2px}
 .toast p{font-size:12px;color:var(--sub);line-height:1.5}
 
 #brightOv{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:9990;transition:opacity .2s}
 #nightOv{position:fixed;inset:0;background:rgba(255,147,41,.14);pointer-events:none;z-index:9989;display:none}
 
-/* 電源 / 起動 / ロック */
+/* 起動 / ロック / 電源 */
 #boot{position:fixed;inset:0;background:#000;z-index:9995;display:none;flex-direction:column;align-items:center;justify-content:center;gap:70px;transition:opacity .5s}
 #boot.show{display:flex}
 #boot.hide{opacity:0;pointer-events:none}
@@ -165,21 +172,11 @@ body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.3)}
 @keyframes spin{to{transform:rotate(360deg)}}
 #lock{position:fixed;inset:0;z-index:9980;background:#0a1a33 center/cover no-repeat;display:none;align-items:center;justify-content:center;flex-direction:column;transition:transform .5s cubic-bezier(.6,0,.3,1),opacity .5s;cursor:pointer}
 #lock.show{display:flex}
-#lock::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.25)}
+#lock::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.22)}
 #lock.hide{transform:translateY(-100%);opacity:.4}
-#lockTop{display:flex;flex-direction:column;align-items:center;transition:transform .4s ease,opacity .4s}
-#lock.stage2 #lockTop{transform:translateY(-46vh);opacity:0}
 #lockClock{font-size:96px;font-weight:700;color:#fff;text-shadow:0 4px 20px rgba(0,0,0,.5)}
 #lockDate{font-size:20px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5);margin-top:-6px}
-#login{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
-#lock.stage2 #login{display:flex}
-#login .av{width:96px;height:96px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:40px;font-weight:700}
-#login .un{color:#fff;font-size:17px}
-#login .pwrow{display:flex;gap:6px}
-#login input{width:220px;height:36px;border-radius:4px;border:2px solid rgba(255,255,255,.6);background:rgba(0,0,0,.35);color:#fff;padding:0 12px;outline:none;font-size:13px}
-#login input:focus{border-color:#fff}
-#login .go{width:36px;height:36px;border-radius:4px;background:rgba(255,255,255,.85);color:#111;display:grid;place-items:center}
-#login .hint{color:rgba(255,255,255,.65);font-size:11.5px}
+#lockHint{position:absolute;bottom:56px;color:rgba(255,255,255,.8);font-size:12.5px}
 #poweroff{position:fixed;inset:0;background:#000;z-index:9996;display:none;align-items:center;justify-content:center;cursor:pointer}
 #poweroff.show{display:flex}
 #poweroff .pwr{width:64px;height:64px;color:#3a3a3a;transition:color .2s,transform .2s}
@@ -210,7 +207,7 @@ body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.3)}
 .t-prompt{color:#61d4ff;white-space:pre}
 
 .ex{flex:1;display:flex;overflow:hidden}
-.ex-side{width:170px;border-right:1px solid var(--border);padding:8px 4px;overflow-y:auto;flex:0 0 auto}
+.ex-side{width:172px;border-right:1px solid var(--border);padding:8px 4px;overflow-y:auto;flex:0 0 auto}
 .ex-side button{display:flex;align-items:center;gap:9px;width:100%;padding:7px 12px;border-radius:5px;font-size:12.5px;text-align:left}
 .ex-side button:hover{background:var(--hover)}
 .ex-side button.on{background:var(--hover)}
@@ -226,41 +223,46 @@ body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.3)}
 .ex-crumb button{padding:4px 7px;border-radius:4px;display:flex;align-items:center;gap:5px}
 .ex-crumb button:hover{background:var(--hover)}
 
+/* ブラウザ */
 .br-bar{display:flex;align-items:center;gap:6px;padding:8px;border-bottom:1px solid var(--border)}
 .br-bar button{width:32px;height:32px;border-radius:6px;display:grid;place-items:center;color:var(--text)}
 .br-bar button:hover{background:var(--hover)}
 .br-addr{flex:1;height:32px;border-radius:16px;border:1px solid var(--border);background:var(--input);padding:0 16px;font-size:12.5px;outline:none;color:var(--text)}
 .br-addr:focus{border-color:var(--accent)}
 .br-load{height:3px;background:transparent;position:relative;overflow:hidden;flex:0 0 3px}
-.br-load.on::before{content:'';position:absolute;inset:0;background:var(--accent);animation:load .5s ease}
+.br-load.on::before{content:'';position:absolute;inset:0;background:var(--accent);animation:load .6s ease}
 @keyframes load{from{transform:translateX(-100%)}to{transform:none}}
+.br-body{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .br-page{flex:1;overflow-y:auto;padding:28px 36px}
 .br-page h1{font-size:26px;margin-bottom:16px}
 .br-page h2{font-size:17px;margin:18px 0 8px}
 .br-page p{line-height:1.9;margin:8px 0;color:var(--sub)}
 .br-page a{color:var(--accent);cursor:pointer;text-decoration:none}
 .br-page a:hover{text-decoration:underline}
-.br-res{margin:14px 0}
-.br-res .u{font-size:12px;color:#4a9e5c}
 .br-quick{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px}
-.br-qt{width:96px;padding:16px 8px;border-radius:10px;background:var(--input);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:9px;font-size:12px;color:var(--text)}
+.br-qt{width:100px;padding:16px 8px;border-radius:10px;background:var(--input);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:9px;font-size:12px;color:var(--text)}
 .br-qt:hover{border-color:var(--accent)}
+.br-ext{display:flex;align-items:center;gap:10px;padding:6px 12px;font-size:11.5px;color:var(--sub);background:var(--input);border-bottom:1px solid var(--border)}
+.br-ext a{color:var(--accent);text-decoration:none;white-space:nowrap}
+.br-ext a:hover{text-decoration:underline}
+.br-frame{flex:1;border:0;background:#fff;width:100%}
 
+/* 設定 */
 .set{flex:1;display:flex;overflow:hidden}
-.set-side{width:190px;padding:10px 6px;border-right:1px solid var(--border);flex:0 0 auto}
+.set-side{width:192px;padding:10px 6px;border-right:1px solid var(--border);flex:0 0 auto}
 .set-side button{display:flex;gap:10px;align-items:center;width:100%;padding:9px 12px;border-radius:5px;font-size:12.5px;text-align:left}
 .set-side button:hover{background:var(--hover)}
 .set-side button.on{background:var(--hover);box-shadow:inset 3px 0 0 var(--accent)}
 .set-main{flex:1;overflow-y:auto;padding:22px 26px}
 .set-main h1{font-size:22px;margin-bottom:18px}
-.set-card{background:var(--input);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;justify-content:space-between}
+.set-card{background:var(--input);border:1px solid var(--border);border-radius:6px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;justify-content:space-between}
 .set-card .lab b{font-size:13px;display:block}
 .set-card .lab small{color:var(--sub);font-size:11.5px}
 .wp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.wp-th{height:90px;border-radius:8px;background-size:cover;background-position:center;border:2px solid transparent;cursor:pointer}
+.wp-th{height:90px;border-radius:6px;background-size:cover;background-position:center;border:2px solid transparent;cursor:pointer}
 .wp-th.on{border-color:var(--accent)}
 .acc-row{display:flex;gap:10px;flex-wrap:wrap}
-.acc{width:36px;height:36px;border-radius:8px;cursor:pointer;border:2px solid transparent}
+.acc{width:36px;height:36px;border-radius:6px;cursor:pointer;border:2px solid transparent}
 .acc.on{border-color:var(--text)}
 
 .pt-tools{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border);flex-wrap:wrap}
@@ -278,10 +280,10 @@ body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.3)}
 .tm td{padding:6px 10px;border-bottom:1px solid var(--border)}
 .tm tr.row:hover td{background:var(--hover)}
 .tm .kill{padding:3px 10px;border-radius:4px;background:var(--input);border:1px solid var(--border);font-size:11px}
-.tm .kill:hover{background:#e81123;color:#fff;border-color:#e81123}
+.tm .kill:hover{background:#c42b1c;color:#fff;border-color:#c42b1c}
 
 .ph-grid{flex:1;overflow-y:auto;padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start}
-.ph-th{height:100px;border-radius:8px;background-size:cover;background-position:center;cursor:pointer;border:2px solid transparent}
+.ph-th{height:100px;border-radius:6px;background-size:cover;background-position:center;cursor:pointer;border:2px solid transparent}
 .ph-th:hover{border-color:var(--accent)}
 .ph-view{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:14px}
 .ph-view img{max-width:100%;max-height:calc(100% - 60px);border-radius:8px;object-fit:contain}
@@ -297,6 +299,7 @@ body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.3)}
 <div id="deskIcons"></div>
 <div id="winLayer"></div>
 <div id="snapPrev"></div>
+<div id="snapFly"></div>
 
 <div id="taskbar">
   <div id="tbCenter">
@@ -321,13 +324,12 @@ body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.3)}
   <div id="smRec"></div>
   <div id="smFoot">
     <div id="smUser"><div class="av">U</div>ユーザー</div>
-    <button id="smPower"><span id="pwrIco"></span>
-      <div id="powerPop">
-        <button data-p="sleep">スリープ</button>
-        <button data-p="restart">再起動</button>
-        <button data-p="shutdown">シャットダウン</button>
-      </div>
-    </button>
+    <button id="smPower" title="電源"><span id="pwrIco"></span></button>
+    <div id="powerPop">
+      <button data-p="sleep">スリープ</button>
+      <button data-p="restart">再起動</button>
+      <button data-p="shutdown">シャットダウン</button>
+    </div>
   </div>
 </div>
 
@@ -349,33 +351,26 @@ body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.3)}
 <div id="nightOv"></div>
 <div id="brightOv"></div>
 
-<div id="lock">
-  <div id="lockTop"><div id="lockClock">00:00</div><div id="lockDate"></div></div>
-  <div id="login">
-    <div class="av">U</div><div class="un">ユーザー</div>
-    <div class="pwrow"><input type="password" id="pwIn" placeholder="パスワード"><button class="go" id="goBtn">→</button></div>
-    <div class="hint">パスワードは空欄のままサインインできます</div>
-  </div>
-</div>
+<div id="lock"><div id="lockClock">00:00</div><div id="lockDate"></div><div id="lockHint">クリックしてサインイン</div></div>
 <div id="boot"><div id="bootLogo"><div></div><div></div><div></div><div></div></div><div class="spinRing"><i></i><i></i><i></i><i></i><i></i></div></div>
 <div id="poweroff"><svg class="pwr" viewBox="0 0 24 24"><path d="M12 3v9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M7.5 5.5a8 8 0 1 0 9 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
 <div id="shutOv"><div class="spinRing"><i></i><i></i><i></i><i></i><i></i></div><div id="shutMsg">シャットダウンしています...</div></div>
 
 <script>
-/* ============ ユーティリティ ============ */
+/* ========== ユーティリティ ========== */
 const $=s=>document.querySelector(s);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const WD=['日','月','火','水','木','金','土'];
-let store={};try{store=JSON.parse(localStorage.getItem('w11')||'{}')}catch(e){}
-function save(){try{localStorage.setItem('w11',JSON.stringify(store))}catch(e){}}
+let store={};try{store=JSON.parse(localStorage.getItem('qos2')||'{}')}catch(e){}
+function save(){try{localStorage.setItem('qos2',JSON.stringify(store))}catch(e){}}
 
-/* ============ アイコン (SVG) ============ */
+/* ========== アイコン ========== */
 const ICO={
 pc:'<svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="1.6" fill="#4a5a6a"/><rect x="4" y="5.5" width="16" height="9.5" fill="#79b8f3"/><path d="M4 5.5h16v4H4z" fill="#a8d4fa"/><path d="M10 16.5h4v2h-4z" fill="#4a5a6a"/><path d="M7.5 20.5h9" stroke="#4a5a6a" stroke-width="1.6" stroke-linecap="round"/></svg>',
 recycle:'<svg viewBox="0 0 24 24"><path d="M5.5 7.5h13l-1.1 12.6a1.8 1.8 0 0 1-1.8 1.6H8.4a1.8 1.8 0 0 1-1.8-1.6L5.5 7.5z" fill="#dfe9f3"/><path d="M5.5 7.5h13l-1.1 12.6a1.8 1.8 0 0 1-1.8 1.6H8.4a1.8 1.8 0 0 1-1.8-1.6L5.5 7.5z" fill="none" stroke="#8aa0b8" stroke-width="1.2"/><path d="M3.8 7.2h16.4M9.6 7V5a1.2 1.2 0 0 1 1.2-1.2h2.4A1.2 1.2 0 0 1 14.4 5v2" fill="none" stroke="#8aa0b8" stroke-width="1.4" stroke-linecap="round"/><path d="M9.8 10.5v7.4M14.2 10.5v7.4" stroke="#9db3c8" stroke-width="1.3" stroke-linecap="round"/></svg>',
 explorer:'<svg viewBox="0 0 24 24"><path d="M3 6.2a1.8 1.8 0 0 1 1.8-1.8h4.4l2 2.2h8a1.8 1.8 0 0 1 1.8 1.8v9.8a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.2V6.2z" fill="#e8a33d"/><path d="M3 9.5h18v8.7a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.2V9.5z" fill="#ffd77e"/><path d="M3 9.5h18v2H3z" fill="#f5c25c"/></svg>',
-edge:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#0b87c9"/><path d="M12 2.5a9.5 9.5 0 0 1 9.5 9.5c0 5.2-4.3 9.5-9.5 9.5 4-2 5.5-4.6 5.5-7.2 0-2.9-2.4-4.6-5.7-4.6H6a9.5 9.5 0 0 1 6-7.2z" fill="#38c1e8"/><path d="M4 9.5h8.2c3.4 0 6 1.8 6 4.8 0 2.4-1.3 4.6-3.6 6.2A9.5 9.5 0 0 1 4 9.5z" fill="#a5e6f7"/></svg>',
+browser:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#1fa7e0"/><path d="M2.5 12h19M12 2.5c2.8 2.6 4.2 6 4.2 9.5s-1.4 6.9-4.2 9.5c-2.8-2.6-4.2-6-4.2-9.5s1.4-6.9 4.2-9.5z" fill="none" stroke="#eaf7ff" stroke-width="1.3"/><path d="M3.2 8.5h17.6M3.2 15.5h17.6" stroke="#eaf7ff" stroke-width="1.1"/></svg>',
 notepad:'<svg viewBox="0 0 24 24"><rect x="4.5" y="2.8" width="15" height="18.4" rx="1.8" fill="#f4f7fb"/><rect x="4.5" y="2.8" width="15" height="18.4" rx="1.8" fill="none" stroke="#9db3c8" stroke-width="1.1"/><path d="M8 8h8M8 11.5h8M8 15h5.5" stroke="#2d7ff0" stroke-width="1.4" stroke-linecap="round"/></svg>',
 calc:'<svg viewBox="0 0 24 24"><rect x="4.5" y="2.8" width="15" height="18.4" rx="1.8" fill="#0f6cbd"/><rect x="7" y="5.3" width="10" height="4.2" rx=".8" fill="#d6ecff"/><g fill="#d6ecff"><circle cx="8.8" cy="12.6" r="1.15"/><circle cx="12" cy="12.6" r="1.15"/><circle cx="15.2" cy="12.6" r="1.15"/><circle cx="8.8" cy="16.6" r="1.15"/><circle cx="12" cy="16.6" r="1.15"/><circle cx="15.2" cy="16.6" r="1.15"/></g></svg>',
 terminal:'<svg viewBox="0 0 24 24"><rect x="2.8" y="3.8" width="18.4" height="16.4" rx="1.8" fill="#141414"/><rect x="2.8" y="3.8" width="18.4" height="3" fill="#2d2d2d"/><path d="M6.8 10l3.2 3-3.2 3" stroke="#e6e6e6" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.8 16.2h5.4" stroke="#e6e6e6" stroke-width="1.6" stroke-linecap="round"/></svg>',
@@ -404,10 +399,12 @@ search:'<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.8" fill="none"
 power:'<svg viewBox="0 0 24 24"><path d="M12 3.5v8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M7.8 5.8a7.2 7.2 0 1 0 8.4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
 info:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.5V17" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="7.4" r="1.2" fill="currentColor"/></svg>',
 update:'<svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 1-8 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3.5 4v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8v5l3.4 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+trash:'<svg viewBox="0 0 24 24"><path d="M5.5 7.5h13l-1.1 12.6a1.8 1.8 0 0 1-1.8 1.6H8.4a1.8 1.8 0 0 1-1.8-1.6L5.5 7.5z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.8 7.2h16.4M9.6 7V5a1.2 1.2 0 0 1 1.2-1.2h2.4A1.2 1.2 0 0 1 14.4 5v2M9.8 10.5v7.4M14.2 10.5v7.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+ext:'<svg viewBox="0 0 24 24"><path d="M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M14 3h7v7M21 3l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
-const icon=(n,s=20)=>{const v=ICO[n]||'';return v.replace('<svg ',`<svg width="${s}" height="${s}" `)};
+const icon=(n,s=20)=>(ICO[n]||'').replace('<svg ',`<svg width="${s}" height="${s}" `);
 
-/* ============ 壁紙・テーマ ============ */
+/* ========== 壁紙・テーマ ========== */
 const WALLS=[
  {name:'Bloom',url:'https://image.qwenlm.ai/public_source/6e6b4ef1-bc2d-4afe-bc62-88c1cdc27af7/11d5b317d-16f6-470f-8318-f7811fac613e.png'},
  {name:'夜明け',url:'https://image.qwenlm.ai/public_source/6e6b4ef1-bc2d-4afe-bc62-88c1cdc27af7/14bf3ed96-037c-4411-9386-f9c2dc4f98c9.png'},
@@ -416,14 +413,9 @@ const WALLS=[
 const ACCENTS=['#0067c0','#0099bc','#744da9','#c30052','#b7410e','#107c10','#e81123','#4f46e5'];
 let wallIdx=clamp(store.wall??0,0,WALLS.length-1), theme=store.theme??'dark', accent=store.accent??'#0067c0';
 function applyTheme(){document.body.dataset.theme=theme;document.body.style.setProperty('--accent',accent);save();}
-function applyWall(){
-  const u='url('+WALLS[wallIdx].url+')';
-  $('#wallpaper').style.backgroundImage=u;
-  $('#lock').style.backgroundImage=u;
-  save();
-}
+function applyWall(){const u='url('+WALLS[wallIdx].url+')';$('#wallpaper').style.backgroundImage=u;$('#lock').style.backgroundImage=u;save();}
 
-/* ============ 通知 ============ */
+/* ========== 通知 ========== */
 function toast(ic,title,msg){
   const t=document.createElement('div');t.className='toast';
   t.innerHTML=`<span style="flex:0 0 auto">${icon(ic,22)}</span><div><b>${esc(title)}</b><p>${esc(msg)}</p></div>`;
@@ -431,20 +423,20 @@ function toast(ic,title,msg){
   setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),220)},5000);
 }
 
-/* ============ 電源 ============ */
+/* ========== 電源 ========== */
 const bootTime=Date.now();
 function boot(){
   $('#poweroff').classList.remove('show');
   const b=$('#boot');b.classList.add('show');b.classList.remove('hide');
-  setTimeout(()=>{b.classList.add('hide');resetLock();$('#lock').classList.add('show');},2800);
+  setTimeout(()=>{b.classList.add('hide');$('#lock').classList.remove('hide');$('#lock').classList.add('show');},2800);
 }
 function shutdownFlow(msg,then){$('#shutMsg').textContent=msg;$('#shutOv').classList.add('show');setTimeout(()=>{$('#shutOv').classList.remove('show');then();},2000);}
-function doShutdown(){closeAll();shutdownFlow('シャットダウンしています...',()=>{$('#lock').classList.remove('show');$('#boot').classList.remove('show');$('#poweroff').classList.add('show');});}
-function doRestart(){closeAll();shutdownFlow('再起動しています...',boot);}
-function doSleep(){closeAllMenus();resetLock();$('#lock').classList.add('show');}
+function doShutdown(){closeAll();closeAllMenus();shutdownFlow('シャットダウンしています...',()=>{$('#lock').classList.remove('show');$('#boot').classList.remove('show');$('#poweroff').classList.add('show');});}
+function doRestart(){closeAll();closeAllMenus();shutdownFlow('再起動しています...',boot);}
+function doSleep(){closeAllMenus();$('#lock').classList.remove('hide');$('#lock').classList.add('show');}
 $('#poweroff').onclick=boot;
 
-/* ============ 時計 ============ */
+/* ========== 時計 ========== */
 function tick(){
   const n=new Date(),hh=String(n.getHours()).padStart(2,'0'),mm=String(n.getMinutes()).padStart(2,'0');
   $('#tbClock').innerHTML=`<div>${hh}:${mm}</div><div>${n.getFullYear()}/${n.getMonth()+1}/${n.getDate()}</div>`;
@@ -453,28 +445,22 @@ function tick(){
 }
 setInterval(tick,1000);tick();
 
-/* ============ ロック / サインイン ============ */
-function resetLock(){const l=$('#lock');l.classList.remove('stage2','hide');$('#pwIn').value='';}
+/* ========== ロック(クリックでサインイン) ========== */
 $('#lock').addEventListener('click',()=>{
-  const l=$('#lock');
-  if(!l.classList.contains('stage2')){l.classList.add('stage2');setTimeout(()=>$('#pwIn').focus(),250);}
+  $('#lock').classList.add('hide');
+  if(!signIn.done){signIn.done=true;setTimeout(()=>toast('update','QwenOS セキュリティ','デバイスは保護されています。最新の状態です。'),6000);}
 });
-function signIn(){$('#lock').classList.add('hide');
-  if(!signIn.done){signIn.done=true;setTimeout(()=>toast('update','Windows Update','更新プログラムが利用可能です。デバイスは保護されています。'),6000);}
-}
-$('#goBtn').onclick=e=>{e.stopPropagation();signIn();};
-$('#pwIn').addEventListener('keydown',e=>{if(e.key==='Enter')signIn();});
 
-/* ============ ウィンドウマネージャ ============ */
+/* ========== ウィンドウマネージャ ========== */
 let wid=0,Z=100;const wins=[];
-const W_MIN='<svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 6h10" stroke="currentColor" stroke-width="1.1"/></svg>';
-const W_MAX='<svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>';
-const W_RES='<svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="3.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M4 3.5V1.5h6.5V8H8.5" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>';
-const W_CLS='<svg width="12" height="12" viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.1"/></svg>';
+const W_MIN='<svg width="11" height="11" viewBox="0 0 12 12"><path d="M1 6h10" stroke="currentColor" stroke-width="1.1"/></svg>';
+const W_MAX='<svg width="11" height="11" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>';
+const W_RES='<svg width="11" height="11" viewBox="0 0 12 12"><rect x="1.5" y="3.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M4 3.5V1.5h6.5V8H8.5" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>';
+const W_CLS='<svg width="11" height="11" viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.1"/></svg>';
 function getFocused(){return wins.find(w=>w.el.classList.contains('focused'))}
 function setMaxIcon(w){w.el.querySelector('.tbtn.max').innerHTML=(w.max||w.snap)?W_RES:W_MAX;}
 function createWin(o){
-  const w={id:++wid,app:o.app,title:o.title,icon:o.icon,min:false,max:false,snap:null,prev:null,onClose:o.onClose};
+  const w={id:++wid,app:o.app,title:o.title,icon:o.icon,min:false,max:false,snap:null,prev:null,onClose:o.onClose,api:o.api};
   const el=document.createElement('div');el.className='win openAnim';w.el=el;
   const W=o.w||560,H=o.h||400,off=(wins.length%6)*28;
   el.style.width=W+'px';el.style.height=H+'px';
@@ -489,10 +475,19 @@ function createWin(o){
   el.querySelector('.tbtn.min').onclick=e=>{e.stopPropagation();minimizeWin(w)};
   el.querySelector('.tbtn.max').onclick=e=>{e.stopPropagation();toggleMax(w)};
   el.querySelector('.tbtn.close').onclick=e=>{e.stopPropagation();closeWin(w)};
-  el.querySelector('.tbar').addEventListener('dblclick',e=>{if(!e.target.closest('.tbtns'))toggleMax(w)});
-  initDrag(w);initResize(w);
+  el.querySelector('.tbar').addEventListener('dblclick',e=>{if(!e.target.closest('.tbtns'))toggleMax(w)};
+  el.querySelector('.tbar').addEventListener('contextmenu',e=>{
+    e.preventDefault();e.stopPropagation();
+    showCtx(e.clientX,e.clientY,[
+      {i:'refresh',l:'最小化',fn:()=>minimizeWin(w)},
+      {i:'monitor',l:(w.max||w.snap)?'元に戻す':'最大化',fn:()=>toggleMax(w)},
+      '-',
+      {i:'trash',l:'閉じる',fn:()=>closeWin(w)},
+    ]);
+  });
+  initDrag(w);initResize(w);initSnapFly(w);
   wins.push(w);ensureTbBtn(w.app);focusWin(w);
-  setTimeout(()=>el.classList.remove('openAnim'),240);
+  setTimeout(()=>el.classList.remove('openAnim'),260);
   return w;
 }
 function focusWin(w){wins.forEach(x=>x.el.classList.remove('focused'));w.el.classList.add('focused');w.el.style.zIndex=++Z;refreshTaskbar();}
@@ -506,19 +501,27 @@ function toggleMax(w){
   else{w.prev=currentRect(w);setRect(w,{x:0,y:0,w:innerWidth,h:innerHeight-48});w.max=true;w.snap=null;}
   setMaxIcon(w);focusWin(w);
 }
+function applySnapRect(w,z){
+  w.el.classList.add('anim');setTimeout(()=>w.el.classList.remove('anim'),220);
+  if(!w.prev)w.prev=currentRect(w);
+  w.max=false;w.snap='layout';
+  if(z[2]===1&&z[3]===1){setRect(w,{x:0,y:0,w:innerWidth,h:innerHeight-48});w.max=true;w.snap=null;}
+  else setRect(w,{x:z[0]*innerWidth+6,y:z[1]*(innerHeight-48)+6,w:z[2]*innerWidth-12,h:z[3]*(innerHeight-48)-12});
+  setMaxIcon(w);focusWin(w);
+}
 function snapWin(w,kind){
   w.el.classList.add('anim');setTimeout(()=>w.el.classList.remove('anim'),220);
   if(!w.prev)w.prev=currentRect(w);
   w.max=false;
   if(kind==='T'){setRect(w,{x:0,y:0,w:innerWidth,h:innerHeight-48});w.max=true;}
-  else if(kind==='L')setRect(w,{x:0,y:0,w:innerWidth/2,h:innerHeight-48});
-  else setRect(w,{x:innerWidth/2,y:0,w:innerWidth/2,h:innerHeight-48});
+  else if(kind==='L')setRect(w,{x:6,y:6,w:innerWidth/2-12,h:innerHeight-48-12});
+  else setRect(w,{x:innerWidth/2+6,y:6,w:innerWidth/2-12,h:innerHeight-48-12});
   w.snap=kind==='T'?null:kind;setMaxIcon(w);focusWin(w);
 }
 function closeWin(w){
   w.el.classList.add('closing');
   setTimeout(()=>{w.el.remove();const i=wins.indexOf(w);if(i>-1)wins.splice(i,1);
-    if(!wins.some(x=>x.app===w.app)){const b=$('#tbApps').querySelector(`[data-app="${w.app}"]`);if(b)b.remove();}
+    if(!wins.some(x=>x.app===w.app)&&!PINNED.includes(w.app)){const b=$('#tbApps').querySelector(`[data-app="${w.app}"]`);if(b)b.remove();}
     if(w.onClose)w.onClose();refreshTaskbar();},140);
 }
 function closeAll(){[...wins].forEach(closeWin);}
@@ -575,18 +578,58 @@ function initResize(w){
     });
   });
 }
+/* スナップレイアウトフライアウト (Win11) */
+const SF_LAYOUTS=[[[0,0,1,1]],[[0,0,.5,1],[.5,0,.5,1]],[[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]]];
+let sfTarget=null,sfShowT=null,sfHideT=null;
+function buildSnapFly(){
+  $('#snapFly').innerHTML=SF_LAYOUTS.map(row=>'<div class="sf-row">'+row.map(z=>`<button class="sf-z" data-z="${z.join(',')}"></button>`).join('')+'</div>').join('');
+  $('#snapFly').addEventListener('click',e=>{
+    const z=e.target.closest('.sf-z');if(!z||!sfTarget)return;
+    applySnapRect(sfTarget,z.dataset.z.split(',').map(Number));hideSnapFly();
+  });
+  $('#snapFly').addEventListener('mouseenter',()=>clearTimeout(sfHideT));
+  $('#snapFly').addEventListener('mouseleave',()=>hideSnapFly());
+}
+function showSnapFly(w,btn){
+  sfTarget=w;const r=btn.getBoundingClientRect();
+  const f=$('#snapFly');f.classList.add('show');
+  f.style.left=clamp(r.right-f.offsetWidth,8,innerWidth-f.offsetWidth-8)+'px';
+  f.style.top=(r.bottom+8)+'px';
+}
+function hideSnapFly(){sfHideT=setTimeout(()=>$('#snapFly').classList.remove('show'),200);}
+function initSnapFly(w){
+  const btn=w.el.querySelector('.tbtn.max');
+  btn.addEventListener('mouseenter',()=>{clearTimeout(sfHideT);sfShowT=setTimeout(()=>showSnapFly(w,btn),420);});
+  btn.addEventListener('mouseleave',()=>{clearTimeout(sfShowT);hideSnapFly();});
+}
+buildSnapFly();
 
-/* ============ タスクバー (起動中のアプリのみ表示) ============ */
+/* ========== マウスのサイドボタン(戻る/進む)をOS内で処理 ========== */
+function sideNav(dir){const f=getFocused();if(f&&f.api){dir<0?f.api.back():f.api.fwd();}}
+['mousedown','mouseup','auxclick','click'].forEach(t=>window.addEventListener(t,e=>{
+  if(e.button===3||e.button===4){e.preventDefault();e.stopPropagation();if(t==='mousedown')sideNav(e.button===3?-1:1);}
+},true));
+
+/* ========== タスクバー(ピン留め) ========== */
+const PINNED=['explorer','browser','notepad','terminal','settings'];
 function ensureTbBtn(app){
   if($('#tbApps').querySelector(`[data-app="${app}"]`))return;
   const b=document.createElement('button');b.className='tb-btn';b.dataset.app=app;
   b.innerHTML=icon(app,22)+'<span class="ind"></span>';b.title=APPS[app].title;
   b.onclick=()=>tbClick(app);
+  b.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();
+    showCtx(e.clientX,e.clientY,[
+      {i:app,l:APPS[app].title+' を開く',fn:()=>openApp(app)},
+      '-',
+      {i:'taskmgr',l:'タスクマネージャー',fn:()=>openApp('taskmgr')},
+      {i:'settings',l:'設定',fn:()=>openApp('settings')},
+    ]);
+  });
   $('#tbApps').appendChild(b);
 }
 function tbClick(app){
   const ws=wins.filter(x=>x.app===app);
-  if(!ws.length)return;
+  if(!ws.length){openApp(app);return;}
   const f=getFocused(),t=ws[ws.length-1];
   if(f&&f.app===app&&!f.min)minimizeWin(t);else{restoreWin(t);focusWin(t);}
   refreshTaskbar();
@@ -598,8 +641,18 @@ function refreshTaskbar(){
     b.classList.toggle('active',!!f&&f.app===b.dataset.app&&!f.min);
   });
 }
+$('#taskbar').addEventListener('contextmenu',e=>{
+  if(e.target.closest('.tb-btn'))return;
+  e.preventDefault();
+  showCtx(e.clientX,e.clientY,[
+    {i:'taskmgr',l:'タスクマネージャー',fn:()=>openApp('taskmgr')},
+    {i:'settings',l:'設定',fn:()=>openApp('settings')},
+    '-',
+    {i:'monitor',l:'デスクトップの表示',fn:()=>wins.forEach(w=>minimizeWin(w))},
+  ]);
+});
 
-/* ============ スタートメニュー ============ */
+/* ========== スタートメニュー ========== */
 const recents=[];
 function addRecent(id){const i=recents.findIndex(r=>r.app===id);if(i>-1)recents.splice(i,1);recents.unshift({app:id,t:'つい先ほど'});if(recents.length>6)recents.pop();}
 function renderStart(){
@@ -621,12 +674,17 @@ $('#startMenu').addEventListener('click',e=>{
   const t=e.target.closest('[data-app]');if(t){openApp(t.dataset.app);toggleStart(false);}
 });
 $('#smPower').onclick=e=>{e.stopPropagation();$('#powerPop').classList.toggle('show');};
-$('#powerPop').onclick=e=>{
+$('#powerPop').addEventListener('click',e=>{
   e.stopPropagation();const p=e.target.closest('[data-p]');if(!p)return;toggleStart(false);
   if(p.dataset.p==='shutdown')doShutdown();else if(p.dataset.p==='restart')doRestart();else doSleep();
-};
+});
+/* Winキーでスタートメニュー */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Meta'){e.preventDefault();toggleStart();}
+  if(e.key==='Escape')closeAllMenus();
+});
 
-/* ============ クイック設定 ============ */
+/* ========== クイック設定 ========== */
 function toggleQuick(show){const q=$('#quickPanel');const s=show??!q.classList.contains('show');closeAllMenus();if(s)q.classList.add('show');}
 $('#trayBtn').onclick=e=>{e.stopPropagation();toggleQuick();};
 $('#qsWifi').onclick=function(){this.classList.toggle('on');$('#icWifi').innerHTML=icon(this.classList.contains('on')?'wifi':'wifiOff',15);};
@@ -638,7 +696,7 @@ function setBright(v){$('#brightOv').style.opacity=((100-v)/100*.85).toFixed(2);
 $('#brSlider').oninput=e=>setBright(e.target.value);
 $('#volSlider').oninput=e=>{$('#icVol').innerHTML=icon(e.target.value==0?'volMute':'vol',15);};
 
-/* ============ コンテキストメニュー ============ */
+/* ========== コンテキストメニュー ========== */
 function showCtx(x,y,items){
   const c=$('#ctxMenu');c.innerHTML='';
   items.forEach(it=>{
@@ -651,14 +709,13 @@ function showCtx(x,y,items){
   c.style.top=clamp(y,0,innerHeight-c.offsetHeight-54)+'px';
 }
 function hideCtx(){$('#ctxMenu').classList.remove('show')}
-function closeAllMenus(){hideCtx();$('#startMenu').classList.remove('show');$('#quickPanel').classList.remove('show');$('#powerPop').classList.remove('show');}
+function closeAllMenus(){hideCtx();$('#startMenu').classList.remove('show');$('#quickPanel').classList.remove('show');$('#powerPop').classList.remove('show');$('#snapFly').classList.remove('show');}
 document.addEventListener('pointerdown',e=>{
   if(!e.target.closest('#ctxMenu'))hideCtx();
   if(!e.target.closest('#startMenu,#startBtn,#tbSearch'))$('#startMenu').classList.remove('show');
   if(!e.target.closest('#quickPanel,#trayBtn'))$('#quickPanel').classList.remove('show');
   if(!e.target.closest('#powerPop,#smPower'))$('#powerPop').classList.remove('show');
 },true);
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAllMenus();});
 document.addEventListener('contextmenu',e=>{
   if(e.target.closest('.win,#taskbar,#startMenu'))return;
   e.preventDefault();
@@ -666,7 +723,7 @@ document.addEventListener('contextmenu',e=>{
     {i:'refresh',l:'最新の情報に更新',fn:()=>{}},
     {i:'img',l:'壁紙を変更',fn:()=>{wallIdx=(wallIdx+1)%WALLS.length;applyWall();}},
     '-',
-    {i:'txt',l:'新規テキスト文書',fn:()=>{addDeskIcon('newtxt','新しいテキスト文書.txt','txt',()=>openApp('notepad'));}},
+    {i:'txt',l:'新規テキスト文書',fn:()=>{addDeskIcon('newtxt','新しいテキスト文書.txt','txt',()=>openApp('notepad'),true);}},
     {i:'folder',l:'新規フォルダー',fn:()=>{}},
     '-',
     {i:'monitor',l:'ディスプレイ設定',fn:()=>openApp('settings',{page:'system'})},
@@ -674,11 +731,21 @@ document.addEventListener('contextmenu',e=>{
   ]);
 });
 
-/* ============ デスクトップアイコン ============ */
-function addDeskIcon(id,label,ic,openFn){
-  const d=document.createElement('div');d.className='dicon';d.innerHTML=`<div class="di">${icon(ic,40)}</div><span class="lb">${esc(label)}</span>`;
+/* ========== デスクトップアイコン ========== */
+function addDeskIcon(id,label,ic,openFn,removable){
+  const d=document.createElement('div');d.className='dicon';d.dataset.rem=removable?'1':'';
+  d.innerHTML=`<div class="di">${icon(ic,40)}</div><span class="lb">${esc(label)}</span>`;
   d.onclick=e=>{e.stopPropagation();document.querySelectorAll('.dicon').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');};
   d.ondblclick=()=>openFn();
+  d.addEventListener('contextmenu',e=>{
+    e.preventDefault();e.stopPropagation();
+    showCtx(e.clientX,e.clientY,[
+      {i:'refresh',l:'開く',fn:openFn},
+      '-',
+      ...(removable?[{i:'trash',l:'削除',fn:()=>d.remove()}]:[]),
+      {i:'monitor',l:'最新の情報に更新',fn:()=>{}},
+    ]);
+  });
   $('#deskIcons').appendChild(d);
 }
 document.addEventListener('click',e=>{if(!e.target.closest('.dicon'))document.querySelectorAll('.dicon').forEach(x=>x.classList.remove('sel'));});
@@ -686,12 +753,12 @@ document.addEventListener('click',e=>{if(!e.target.closest('.dicon'))document.qu
  ['bin','ごみ箱','recycle',()=>openApp('recycle')],
  ['notepad','メモ帳','notepad',()=>openApp('notepad')],
  ['paint','ペイント','paint',()=>openApp('paint')],
- ['edge','Microsoft Edge','edge',()=>openApp('edge')],
+ ['browser','Qwen ブラウザー','browser',()=>openApp('browser')],
  ['terminal','ターミナル','terminal',()=>openApp('terminal')],
-].forEach(a=>addDeskIcon(a[0],a[1],a[2],a[3]));
+].forEach(a=>addDeskIcon(a[0],a[1],a[2],a[3],false));
 $('#showDesk').onclick=()=>{wins.forEach(w=>minimizeWin(w));};
 
-/* ============ ファイルシステム ============ */
+/* ========== ファイルシステム ========== */
 const FS={
  'デスクトップ':{d:[],f:[{n:'打合せメモ.txt',t:'txt',c:'8/7 定例打合せメモ\r\n\r\n・次回リリースの確認事項\r\n・備品購入の件（モニターアーム x2）\r\n・来週スケジュールはWikiに記入のこと'}]},
  'ドキュメント':{d:['プロジェクト','レポート'],f:[{n:'買い物リスト.txt',t:'txt',c:'・卵\r\n・牛乳\r\n・コーヒー豆\r\n・付箋（大）'}]},
@@ -705,7 +772,7 @@ const FS={
 };
 const FICO={txt:'txt',img:'img',exe:'exe',mus:'mus'};
 
-/* ============ アプリ ============ */
+/* ========== アプリ ========== */
 const APPS={};
 function defApp(id,title,ic,w,h,launch,extra={}){APPS[id]={title,icon:ic,w,h,launch,...extra};}
 
@@ -756,22 +823,21 @@ defApp('calc','電卓','calc',340,480,w=>{
 });
 
 defApp('terminal','ターミナル','terminal',640,420,w=>{
-  w.body.innerHTML=`<div class="term"><div class="t-out">Microsoft Windows [Version 10.0.22631.4317]\n(c) Microsoft Corporation。All rights reserved。\n\n</div><div class="t-line"><span class="t-prompt">C:\\Users\\User&gt;</span><input class="t-in" autocomplete="off"></div></div>`;
+  w.body.innerHTML=`<div class="term"><div class="t-out">QwenOS [Version 12.0.26100.1001]\n(c) Qwen Corporation。All rights reserved。\n\n</div><div class="t-line"><span class="t-prompt">C:\\Users\\User&gt;</span><input class="t-in" autocomplete="off"></div></div>`;
   const out=w.body.querySelector('.t-out'),inp=w.body.querySelector('.t-in'),term=w.body.querySelector('.term');
   term.onclick=()=>inp.focus();setTimeout(()=>inp.focus(),100);
-  const hist=[];let hi=-1;
+  const hist=[];let hi=-1;let rest=[];
   const print=s=>{out.textContent+=s+'\n';term.scrollTop=term.scrollHeight;};
   const CC={'0':'#0c0c0c','1':'#3b78c3','2':'#16a34a','3':'#3ec6c6','4':'#d13438','5':'#b45bc9','6':'#c8a11c','7':'#cccccc','8':'#8a8a8a','9':'#61b3ff',A:'#4ce07a',B:'#7ce6e6',C:'#ff5c5c',D:'#e08ae0',E:'#ffe95c',F:'#ffffff'};
-  let rest=[];
   const CMDS={
     help:()=>print('使用可能なコマンド:\n  help / cls / echo / date / time / whoami / ver / dir\n  systeminfo / color <0-9,A-F> / start <アプリ> / shutdown / exit'),
     cls:()=>{out.textContent='';},
     date:()=>print(new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'long'})),
     time:()=>print(new Date().toLocaleTimeString('ja-JP')),
-    whoami:()=>print('desktop-7k4m2\\user'),
-    ver:()=>print('Microsoft Windows [Version 10.0.22631.4317]'),
+    whoami:()=>print('desktop-qwen\\user'),
+    ver:()=>print('QwenOS [Version 12.0.26100.1001]'),
     dir:()=>{print(' C:\\Users\\User のディレクトリ\n\n2026/08/07  18:22    <DIR>          デスクトップ\n2026/08/05  09:14    <DIR>          ドキュメント\n2026/08/01  12:40    <DIR>          ダウンロード\n2026/07/28  20:03    <DIR>          ピクチャ\n2026/06/11  07:55    <DIR>          ミュージック\n2026/06/11  07:55    <DIR>          ビデオ\n               0 個のファイル');},
-    systeminfo:()=>print(`ホスト名:              DESKTOP-7K4M2\nOS 名:                Microsoft Windows 11 Pro\nOS バージョン:        10.0.22631 N/A ビルド 22631\nシステムの種類:       x64-based PC\nプロセッサ:           Intel64 Family 6 Model 186 (14コア)\n物理メモリ総量:       16,384 MB\n利用可能な物理メモリ: 7,412 MB\n起動時間:             ${Math.floor((Date.now()-bootTime)/1000)} 秒前`),
+    systeminfo:()=>print(`ホスト名:              DESKTOP-QWEN\nOS 名:                QwenOS Pro\nOS バージョン:        12.0.26100 N/A ビルド 26100\nシステムの種類:       x64-based PC\nプロセッサ:           Quantum Core (14コア) 2.40 GHz\n物理メモリ総量:       16,384 MB\n利用可能な物理メモリ: 7,412 MB\n起動時間:             ${Math.floor((Date.now()-bootTime)/1000)} 秒前`),
     color:()=>{const a=(rest[0]||'').toUpperCase();if(a.length===2&&CC[a[1]]){term.style.color=CC[a[1]];print('コンソールの色を変更しました。')}else print('使用法: color <背景1桁><文字1桁>  例: color 0A');},
     shutdown:()=>{setTimeout(doShutdown,300);print('シャットダウン中です...');},
     exit:()=>closeWin(w),
@@ -785,7 +851,7 @@ defApp('terminal','ターミナル','terminal',640,420,w=>{
     if(line.trim()){hist.push(line);
       const parts=line.trim().split(/\s+/);const cmd=parts[0].toLowerCase();rest=parts.slice(1);
       if(cmd==='echo')print(rest.join(' '));
-      else if(cmd==='start'){const m={notepad:'notepad',calc:'calc',explorer:'explorer',edge:'edge',terminal:'terminal',settings:'settings',paint:'paint',photos:'photos',taskmgr:'taskmgr'}[rest[0]];
+      else if(cmd==='start'){const m={notepad:'notepad',calc:'calc',explorer:'explorer',browser:'browser',terminal:'terminal',settings:'settings',paint:'paint',photos:'photos',taskmgr:'taskmgr'}[rest[0]];
         if(m){openApp(m);print('「'+APPS[m].title+'」を起動しました。')}else print('指定されたファイルまたはアプリケーションが見つかりません。');}
       else if(CMDS[cmd])CMDS[cmd]();
       else print(`'${cmd}' は、内部コマンドまたは外部コマンド、\n操作可能なプログラムまたはバッチ ファイルとして認識されていません。`);
@@ -813,34 +879,60 @@ defApp('explorer','エクスプローラー','explorer',760,500,(w,o)=>{
       ||'<div class="empty" style="width:100%"><div class="ei">'+icon('folder',56)+'</div>このフォルダーは空です</div>';
     w.body.querySelector('.ex-c').textContent=`${n.d.length+n.f.length} 項目`;
   }
+  function openIt(it){
+    if(it.dataset.t==='dir')go([...path,it.dataset.n]);
+    else{const f=node(path).f[+it.dataset.i];if(!f)return;
+      if(f.t==='txt')openApp('notepad',{content:f.c||''});
+      else if(f.t==='img')openApp('photos',{index:f.img});
+      else if(f.t==='exe')toast('exe','インストール','このパッケージは既に最新の状態です。');
+      else if(f.t==='mus')toast('mus','メディアプレーヤー','再生中: '+f.n);}
+  }
+  items.addEventListener('contextmenu',e=>{
+    e.preventDefault();e.stopPropagation();
+    const it=e.target.closest('.ex-it');
+    if(it){
+      showCtx(e.clientX,e.clientY,[
+        {i:'refresh',l:'開く',fn:()=>openIt(it)},
+        {i:'trash',l:'削除',fn:()=>{
+          const n=node(path);
+          if(it.dataset.t==='dir')n.d=n.d.filter(d=>d!==it.dataset.n);
+          else n.f.splice(+it.dataset.i,1);
+          render();}},
+        '-',
+        {i:'info',l:'プロパティ',fn:()=>toast('explorer','プロパティ',it.querySelector('.fn').textContent)},
+      ]);
+    }else{
+      showCtx(e.clientX,e.clientY,[
+        {i:'txt',l:'新規テキスト文書',fn:()=>{node(path).f.push({n:'新しいテキスト文書.txt',t:'txt',c:''});render();}},
+        {i:'refresh',l:'最新の情報に更新',fn:render},
+      ]);
+    }
+  });
   crumb.onclick=e=>{const b=e.target.closest('[data-i]');if(b)go(path.slice(0,+b.dataset.i+1));};
   w.body.querySelector('[data-n=back]').onclick=()=>{if(hi>0){hi--;path=hist[hi].slice();render();}};
   w.body.querySelector('[data-n=fwd]').onclick=()=>{if(hi<hist.length-1){hi++;path=hist[hi].slice();render();}};
   w.body.querySelector('[data-n=up]').onclick=()=>{if(path.length>1)go(path.slice(0,-1));};
   items.onclick=e=>{const it=e.target.closest('.ex-it');if(!it)return;
     items.querySelectorAll('.ex-it').forEach(x=>x.classList.remove('sel'));it.classList.add('sel');};
-  items.ondblclick=e=>{const it=e.target.closest('.ex-it');if(!it)return;
-    if(it.dataset.t==='dir')go([...path,it.dataset.n]);
-    else{const f=node(path).f[+it.dataset.i];
-      if(f.t==='txt')openApp('notepad',{content:f.c||''});
-      else if(f.t==='img')openApp('photos',{index:f.img});
-      else if(f.t==='exe')toast('exe','インストール','このパッケージは既に最新の状態です。');
-      else if(f.t==='mus')toast('mus','メディアプレーヤー','再生中: '+f.n);
-    }};
+  items.ondblclick=e=>{const it=e.target.closest('.ex-it');if(it)openIt(it);};
+  w.api={back:()=>{if(hi>0){hi--;path=hist[hi].slice();render();}},fwd:()=>{if(hi<hist.length-1){hi++;path=hist[hi].slice();render();}}};
   render();
 });
 
-defApp('edge','Microsoft Edge','edge',860,560,w=>{
-  let hist=['edge://start'],hi=0;
-  w.body.innerHTML=`<div class="br-bar"><button data-n="back">←</button><button data-n="fwd">→</button><button data-n="re">⟳</button><input class="br-addr" value="edge://start"></div><div class="br-load"></div><div class="br-page"></div>`;
-  const page=w.body.querySelector('.br-page'),addr=w.body.querySelector('.br-addr'),load=w.body.querySelector('.br-load');
+/* ブラウザ: 内部ページ + 実サイトiframe (google は ?igu=1 で埋め込み可能 [4]) */
+defApp('browser','Qwen ブラウザー','browser',880,580,w=>{
+  let hist=[{t:'int',url:'qwen://start'}],hi=0;
+  w.body.innerHTML=`<div class="br-bar"><button data-n="back">←</button><button data-n="fwd">→</button><button data-n="re">⟳</button><input class="br-addr" value="qwen://start"></div><div class="br-load"></div><div class="br-body"></div>`;
+  const body=w.body.querySelector('.br-body'),addr=w.body.querySelector('.br-addr'),load=w.body.querySelector('.br-load');
   const PAGES={
-    'edge://start':()=>`<div style="text-align:center;padding-top:56px"><h1 style="font-size:30px">新しいタブ</h1>
+    'qwen://start':()=>`<div style="text-align:center;padding-top:52px"><h1 style="font-size:30px">新しいタブ</h1>
       <input class="br-addr" data-q style="max-width:460px;margin:16px auto;height:40px" placeholder="Web を検索またはアドレスを入力">
       <div class="br-quick" style="justify-content:center">
+        <div class="br-qt" data-ext="https://www.google.com/webhp?igu=1">${icon('search',26)}<span>Google</span></div>
         <div class="br-qt" data-go="news">${icon('txt',26)}<span>デイリーニュース</span></div>
         <div class="br-qt" data-go="weather">${icon('sun',26)}<span>天気予報</span></div>
-        <div class="br-qt" data-go="wiki">${icon('search',26)}<span>百科事典</span></div>
+        <div class="br-qt" data-go="wiki">${icon('info',26)}<span>百科事典</span></div>
+        <div class="br-qt" data-ext="https://example.com">${icon('ext',26)}<span>example.com</span></div>
       </div></div>`,
     news:()=>`<h1>デイリーニュース</h1><p>${new Date().toLocaleDateString('ja-JP')} の主な見出し</p>
       <h2><a data-go="wiki">市中心部の新広場が一般公開、初日から大勢の来場者</a></h2><p>再開発が進められていたエリアの整備が完了。週末にはマルシェも開催される予定。</p>
@@ -849,29 +941,44 @@ defApp('edge','Microsoft Edge','edge',860,560,w=>{
     weather:()=>`<h1>天気予報 — 東京</h1><p>更新: ${new Date().toLocaleTimeString('ja-JP')}</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">${['☀ 28°','☀ 29°','☁ 27°','☂ 24°','☀ 30°','☁ 28°','☀ 31°'].map((x,i)=>`<div class="br-qt" style="width:100px"><span style="font-size:20px">${x.split(' ')[0]}</span><span>${['今日','日','月','火','水','木','金'][i]} ${x.split(' ')[1]}</span></div>`).join('')}</div>
       <p style="margin-top:18px">湿度 55% / 降水確率 10% / 紫外線 中程度</p>`,
-    wiki:()=>`<h1>百科事典 — Windows</h1><p><b>Windows</b>（ウィンドウズ）は、マイクロソフトが開発・販売するオペレーティングシステム（OS）のシリーズである。グラフィカルユーザインターフェイスを採用し、個人用コンピュータからサーバーまで幅広く利用されている。</p>
-      <h2>概要</h2><p>1985年に最初のバージョンが発売されて以来、世界で最も普及しているデスクトップOSの一つである。現在の主力バージョンは Windows 11 である。</p>
-      <h2>主な機能</h2><p>ウィンドウ管理、タスクバー、スタートメニュー、ファイル管理、マルチタスク、プラグアンドプレイなどを備える。</p>`,
+    wiki:()=>`<h1>百科事典 — QwenOS</h1><p><b>QwenOS</b> は、ブラウザ上で動作するデスクトップ環境である。ウィンドウ管理、タスクバー、スタートメニュー、ファイル管理、ターミナル、ペイントなどの機能を備える。</p>
+      <h2>概要</h2><p>単一のHTMLファイルとして実装されており、電源投入からサインイン、アプリの起動、スナップレイアウトまでを再現する。</p>
+      <h2>主な機能</h2><p>ウィンドウ管理、スナップレイアウト、ダークテーマ、アクセントカラー、仮想ファイルシステム、コマンドインタープリタ、実サイトへのナビゲーションなどを標準搭載する。</p>`,
   };
-  function render(url){
-    load.classList.add('on');setTimeout(()=>load.classList.remove('on'),500);
-    addr.value=url;let html;
-    if(PAGES[url])html=PAGES[url]();
-    else if(url.startsWith('search:')){const q=decodeURIComponent(url.slice(7));
-      html=`<h1>「${esc(q)}」の検索結果</h1><p>約 1,280,000 件 (0.${Math.floor(Math.random()*80+10)} 秒)</p>`+
-      [[`${q}とは - 百科事典`,`${q} の概要、歴史、特徴について解説。`],[`${q}の最新情報 - デイリーニュース`,`${q} に関する最新の話題をお届けします。`],[`${q}の使い方まとめ`,`${q} の基本的な使い方から応用まで。`],[`${q} 公式サイト`,`${q} の公式情報、ダウンロード、ドキュメント。`]].map(r=>`<div class="br-res"><a data-go="wiki">${r[0]}</a><div class="u">www.example.co.jp › ${esc(q)}</div><p>${r[1]}</p></div>`).join('');}
-    else html=`<div class="empty"><div class="ei">${icon('edge',56)}</div><b>ページにアクセスできません</b><p>${esc(url)} に到達できませんでした (ERR_NAME_NOT_RESOLVED)</p></div>`;
-    page.innerHTML=html;page.scrollTop=0;
+  function renderEntry(en){
+    load.classList.add('on');setTimeout(()=>load.classList.remove('on'),600);
+    addr.value=en.url;
+    if(en.t==='int'){
+      body.innerHTML='<div class="br-page">'+(PAGES[en.url]?PAGES[en.url]():'<div class="empty"><div class="ei">'+icon('browser',56)+'</div><b>ページを開けません</b></div>')+'</div>';
+    }else{
+      let host='';try{host=new URL(en.url).host}catch(e){host=en.url}
+      body.innerHTML=`<div class="br-ext"><span>${esc(host)} を表示中 — サイトによっては埋め込みを拒否する場合があります</span><span style="flex:1"></span><a href="${esc(en.url)}" target="_blank" rel="noopener">新しいタブで開く</a></div>
+      <iframe class="br-frame" src="${esc(en.url)}" referrerpolicy="no-referrer"></iframe>`;
+      const fr=body.querySelector('iframe');fr.addEventListener('load',()=>{load.classList.remove('on');});
+    }
   }
-  function nav(url){hist=hist.slice(0,hi+1);hist.push(url);hi++;render(url);}
-  w.body.querySelector('[data-n=back]').onclick=()=>{if(hi>0){hi--;render(hist[hi]);}};
-  w.body.querySelector('[data-n=fwd]').onclick=()=>{if(hi<hist.length-1){hi++;render(hist[hi]);}};
-  w.body.querySelector('[data-n=re]').onclick=()=>render(hist[hi]);
-  addr.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const v=addr.value.trim();
-    nav(v.includes(' ')||!v.includes('.')?`search:${encodeURIComponent(v)}`:v);});
-  page.addEventListener('keydown',e=>{if(e.target.dataset?.q!==undefined&&e.key==='Enter')nav(`search:${encodeURIComponent(e.target.value)}`);});
-  page.onclick=e=>{const g=e.target.closest('[data-go]');if(g)nav(g.dataset.go);};
-  render('edge://start');
+  function nav(en){hist=hist.slice(0,hi+1);hist.push(en);hi++;renderEntry(en);}
+  function parse(v){
+    v=v.trim();if(!v)return null;
+    if(v.startsWith('qwen://'))return{t:'int',url:v};
+    if(/^https?:\/\//i.test(v))return{t:'ext',url:v};
+    if(/^[^\s]+\.[^\s]{2,}$/.test(v)){
+      if(/google\./.test(v))return{t:'ext',url:'https://www.google.com/webhp?igu=1'}; /* igu=1 [4] */
+      return{t:'ext',url:'https://'+v};
+    }
+    return{t:'ext',url:'https://www.google.com/search?igu=1&q='+encodeURIComponent(v)}; /* igu=1 [4] */
+  }
+  addr.addEventListener('keydown',e=>{if(e.key==='Enter'){const en=parse(addr.value);if(en)nav(en);}});
+  body.addEventListener('keydown',e=>{if(e.target.dataset?.q!==undefined&&e.key==='Enter'){const en=parse(e.target.value);if(en)nav(en);}});
+  body.addEventListener('click',e=>{
+    const g=e.target.closest('[data-go]');if(g){nav({t:'int',url:g.dataset.go});return;}
+    const x=e.target.closest('[data-ext]');if(x)nav({t:'ext',url:x.dataset.ext});
+  });
+  w.body.querySelector('[data-n=back]').onclick=()=>{if(hi>0){hi--;renderEntry(hist[hi]);}};
+  w.body.querySelector('[data-n=fwd]').onclick=()=>{if(hi<hist.length-1){hi++;renderEntry(hist[hi]);}};
+  w.body.querySelector('[data-n=re]').onclick=()=>renderEntry(hist[hi]);
+  w.api={back:()=>{if(hi>0){hi--;renderEntry(hist[hi]);}},fwd:()=>{if(hi<hist.length-1){hi++;renderEntry(hist[hi]);}}};
+  renderEntry(hist[0]);
 });
 
 defApp('settings','設定','settings',820,560,(w,o)=>{
@@ -895,11 +1002,11 @@ defApp('settings','設定','settings',820,560,(w,o)=>{
       <div class="set-card"><div class="lab"><b>ストレージ</b><small>ローカルディスク (C:)</small></div><div style="width:220px"><div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden"><div style="width:42%;height:100%;background:var(--accent)"></div></div><small style="color:var(--sub)">108 GB 使用 / 256 GB</small></div></div>
       <div class="set-card"><div class="lab"><b>ディスプレイ</b></div><span style="color:var(--sub);font-size:12px">${innerWidth} × ${innerHeight} / 100%</span></div>`;
     else main.innerHTML=`<h1>バージョン情報</h1>
-      <div class="set-card"><div class="lab"><b>デバイス名</b></div><span>DESKTOP-7K4M2</span></div>
-      <div class="set-card"><div class="lab"><b>エディション</b></div><span>Windows 11 Pro</span></div>
-      <div class="set-card"><div class="lab"><b>バージョン</b></div><span>23H2</span></div>
-      <div class="set-card"><div class="lab"><b>OS ビルド</b></div><span>22631.4317</span></div>
-      <div class="set-card"><div class="lab"><b>プロセッサ</b></div><span>Intel Core i7-13700H 2.40 GHz</span></div>
+      <div class="set-card"><div class="lab"><b>デバイス名</b></div><span>DESKTOP-QWEN</span></div>
+      <div class="set-card"><div class="lab"><b>エディション</b></div><span>QwenOS Pro</span></div>
+      <div class="set-card"><div class="lab"><b>バージョン</b></div><span>26H2</span></div>
+      <div class="set-card"><div class="lab"><b>OS ビルド</b></div><span>26100.1001</span></div>
+      <div class="set-card"><div class="lab"><b>プロセッサ</b></div><span>Quantum Core 2.40 GHz (14コア)</span></div>
       <div class="set-card"><div class="lab"><b>実装 RAM</b></div><span>16.0 GB</span></div>`;
     main.querySelectorAll('.wp-th').forEach(t=>t.onclick=()=>{wallIdx=+t.dataset.w;applyWall();render();});
     main.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{theme=b.dataset.th;applyTheme();});
@@ -948,7 +1055,7 @@ defApp('taskmgr','タスクマネージャー','taskmgr',640,480,w=>{
   <div style="flex:1;overflow-y:auto"><table><thead><tr><th>名前</th><th>CPU</th><th>メモリ</th><th></th></tr></thead><tbody></tbody></table></div></div>`;
   const tb=w.body.querySelector('tbody'),spark=w.body.querySelector('.spark'),sctx=spark.getContext('2d');
   const cpuHist=new Array(55).fill(3);
-  const base=[['System',.1,12],['Registry',0,8],['explorer.exe',.6,92],['dwm.exe',1.1,64],['SearchApp.exe',.3,41],['サービス ホスト: Windows Update',.2,28]];
+  const base=[['System',.1,12],['QwenShell.exe',.6,92],['ウィンドウ マネージャー',1.1,64],['検索インデックス',.3,41],['セキュリティ サービス',.2,28]];
   function renderRows(){
     const appRows=wins.map(x=>({label:APPS[x.app].title,cpu:Math.random()*3+.5,mem:Math.random()*180+60,win:x}));
     const all=[...base.map(b=>({label:b[0],cpu:b[1]+Math.random()*.4,mem:b[2],win:null})),...appRows];
@@ -961,7 +1068,7 @@ defApp('taskmgr','タスクマネージャー','taskmgr',640,480,w=>{
   }
   renderRows();
   const iv=setInterval(renderRows,1000);
-  tb.onclick=e=>{const k=e.target.closest('.kill');if(k){const x=wins.find(v=>v.id==k.dataset.w);if(x){closeWin(x);}}}
+  tb.onclick=e=>{const k=e.target.closest('.kill');if(k){const x=wins.find(v=>v.id==k.dataset.w);if(x)closeWin(x);}};
   w.onClose=()=>clearInterval(iv);
 },{single:true});
 
@@ -991,7 +1098,7 @@ function openApp(id,opts={}){
   return w;
 }
 
-/* ============ 静的アイコンの配置 ============ */
+/* ========== 静的アイコン ========== */
 $('#searchIco').innerHTML=icon('search',14);
 $('#icWifi').innerHTML=icon('wifi',15);
 $('#icVol').innerHTML=icon('vol',15);
@@ -1004,10 +1111,12 @@ document.querySelectorAll('.qs-t').forEach(t=>{
 $('#sunIco').innerHTML=icon('sun',17);
 $('#volIco').innerHTML=icon('vol',17);
 
-/* ============ 初期化(電源オフ状態から開始) ============ */
+/* ========== 初期化: 自動起動(電源ボタン・パスワードなし) ========== */
 applyTheme();
 applyWall();
-$('#poweroff').classList.add('show');
+PINNED.forEach(ensureTbBtn);
+if(store.bright){$('#brSlider').value=store.bright;$('#brightOv').style.opacity=((100-store.bright)/100*.85).toFixed(2);}
+boot();
 </script>
 </body>
 </html>
