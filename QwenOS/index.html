@@ -70,7 +70,7 @@ body.dragging{user-select:none;cursor:default}
 /* タスクバー */
 #taskbar{position:fixed;left:0;right:0;bottom:0;height:var(--taskbar-h);z-index:9000;background:var(--sys-bg);
   -webkit-backdrop-filter:blur(30px) saturate(1.5);backdrop-filter:blur(30px) saturate(1.5);border-top:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;padding:0 8px;color:var(--text)}
+  display:flex;align-items:center;padding:0 8px;color:var(--text)}
 #tbCenter{display:flex;align-items:center;gap:4px;position:absolute;left:50%;transform:translateX(-50%);height:100%}
 #startBtn{width:42px;height:40px;display:grid;place-items:center;border-radius:6px}
 #startBtn:hover,#tbSearch:hover,.tb-btn:hover{background:var(--hover)}
@@ -81,7 +81,7 @@ body.dragging{user-select:none;cursor:default}
 .tb-btn.open .ind{background:var(--sub)}
 .tb-btn.active .ind{width:16px;background:var(--accent)}
 .tb-btn.active{background:var(--hover)}
-#tbRight{display:flex;align-items:center;height:100%;gap:2px}
+#tbRight{display:flex;align-items:center;height:100%;gap:2px;margin-left:auto}
 #trayBtn{display:flex;align-items:center;gap:8px;height:38px;padding:0 10px;border-radius:6px}
 #trayBtn:hover,#tbClock:hover{background:var(--hover)}
 #tbClock{height:38px;padding:0 10px;border-radius:6px;font-size:12px;line-height:1.5;text-align:right}
@@ -403,7 +403,6 @@ monitor:'<svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" r
 search:'<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15 15l5.2 5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
 power:'<svg viewBox="0 0 24 24"><path d="M12 3.5v8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M7.8 5.8a7.2 7.2 0 1 0 8.4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
 info:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.5V17" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="7.4" r="1.2" fill="currentColor"/></svg>',
-shield:'<svg viewBox="0 0 24 24"><path d="M12 2.8l7.5 2.8v6c0 5-3.2 8.4-7.5 9.6C7.7 20 4.5 16.6 4.5 11.6v-6L12 2.8z" fill="#0f6cbd"/><path d="M8.6 11.8l2.4 2.5 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 update:'<svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 1-8 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3.5 4v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8v5l3.4 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
 };
 const icon=(n,s=20)=>{const v=ICO[n]||'';return v.replace('<svg ',`<svg width="${s}" height="${s}" `)};
@@ -456,9 +455,9 @@ setInterval(tick,1000);tick();
 
 /* ============ ロック / サインイン ============ */
 function resetLock(){const l=$('#lock');l.classList.remove('stage2','hide');$('#pwIn').value='';}
-$('#lock').addEventListener('click',e=>{
+$('#lock').addEventListener('click',()=>{
   const l=$('#lock');
-  if(!l.classList.contains('stage2')){l.classList.add('stage2');setTimeout(()=>$('#pwIn').focus(),250);return;}
+  if(!l.classList.contains('stage2')){l.classList.add('stage2');setTimeout(()=>$('#pwIn').focus(),250);}
 });
 function signIn(){$('#lock').classList.add('hide');
   if(!signIn.done){signIn.done=true;setTimeout(()=>toast('update','Windows Update','更新プログラムが利用可能です。デバイスは保護されています。'),6000);}
@@ -519,7 +518,7 @@ function snapWin(w,kind){
 function closeWin(w){
   w.el.classList.add('closing');
   setTimeout(()=>{w.el.remove();const i=wins.indexOf(w);if(i>-1)wins.splice(i,1);
-    if(!wins.some(x=>x.app===w.app)&&!PINNED.includes(w.app)){const b=$('#tbApps').querySelector(`[data-app="${w.app}"]`);if(b)b.remove();}
+    if(!wins.some(x=>x.app===w.app)){const b=$('#tbApps').querySelector(`[data-app="${w.app}"]`);if(b)b.remove();}
     if(w.onClose)w.onClose();refreshTaskbar();},140);
 }
 function closeAll(){[...wins].forEach(closeWin);}
@@ -577,8 +576,7 @@ function initResize(w){
   });
 }
 
-/* ============ タスクバー ============ */
-const PINNED=['explorer','edge','notepad','terminal','settings'];
+/* ============ タスクバー (起動中のアプリのみ表示) ============ */
 function ensureTbBtn(app){
   if($('#tbApps').querySelector(`[data-app="${app}"]`))return;
   const b=document.createElement('button');b.className='tb-btn';b.dataset.app=app;
@@ -588,7 +586,7 @@ function ensureTbBtn(app){
 }
 function tbClick(app){
   const ws=wins.filter(x=>x.app===app);
-  if(!ws.length){openApp(app);return;}
+  if(!ws.length)return;
   const f=getFocused(),t=ws[ws.length-1];
   if(f&&f.app===app&&!f.min)minimizeWin(t);else{restoreWin(t);focusWin(t);}
   refreshTaskbar();
@@ -764,6 +762,7 @@ defApp('terminal','ターミナル','terminal',640,420,w=>{
   const hist=[];let hi=-1;
   const print=s=>{out.textContent+=s+'\n';term.scrollTop=term.scrollHeight;};
   const CC={'0':'#0c0c0c','1':'#3b78c3','2':'#16a34a','3':'#3ec6c6','4':'#d13438','5':'#b45bc9','6':'#c8a11c','7':'#cccccc','8':'#8a8a8a','9':'#61b3ff',A:'#4ce07a',B:'#7ce6e6',C:'#ff5c5c',D:'#e08ae0',E:'#ffe95c',F:'#ffffff'};
+  let rest=[];
   const CMDS={
     help:()=>print('使用可能なコマンド:\n  help / cls / echo / date / time / whoami / ver / dir\n  systeminfo / color <0-9,A-F> / start <アプリ> / shutdown / exit'),
     cls:()=>{out.textContent='';},
@@ -777,7 +776,6 @@ defApp('terminal','ターミナル','terminal',640,420,w=>{
     shutdown:()=>{setTimeout(doShutdown,300);print('シャットダウン中です...');},
     exit:()=>closeWin(w),
   };
-  let rest=[];
   inp.addEventListener('keydown',e=>{
     if(e.key==='ArrowUp'){if(hi<hist.length-1){hi++;inp.value=hist[hist.length-1-hi]||'';}e.preventDefault();return;}
     if(e.key==='ArrowDown'){if(hi>0){hi--;inp.value=hist[hist.length-1-hi]||'';}else{hi=-1;inp.value='';}e.preventDefault();return;}
@@ -1009,7 +1007,6 @@ $('#volIco').innerHTML=icon('vol',17);
 /* ============ 初期化(電源オフ状態から開始) ============ */
 applyTheme();
 applyWall();
-PINNED.forEach(ensureTbBtn);
 $('#poweroff').classList.add('show');
 </script>
 </body>
