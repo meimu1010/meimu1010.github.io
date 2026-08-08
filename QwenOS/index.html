@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 11</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5/japanese-400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5/japanese-500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-jp@5/japanese-700.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:'Segoe UI Variable','Segoe UI','Noto Sans JP',sans-serif;font-size:14px;--accent:#0067c0;--taskbar-h:48px;
+  --text:#1a1a1a;--win-bg:rgba(246,246,246,.92);--sys-bg:rgba(243,243,243,.86);--hover:rgba(0,0,0,.06);
+  --border:rgba(0,0,0,.12);--sub:#5a5a5a;--input:rgba(255,255,255,.8);--shadow:0 12px 40px rgba(0,0,0,.28)}
+body[data-theme="dark"]{--text:#f2f2f2;--win-bg:rgba(32,32,32,.9);--sys-bg:rgba(28,28,28,.86);--hover:rgba(255,255,255,.08);
+  --border:rgba(255,255,255,.14);--sub:#a5a5a5;--input:rgba(255,255,255,.08);--shadow:0 12px 40px rgba(0,0,0,.55)}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,textarea{font-family:inherit;color:inherit}
+svg{display:block}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(128,128,128,.45);border-radius:6px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+::selection{background:var(--accent);color:#fff}
+
+#wallpaper{position:fixed;inset:0;z-index:0;background:#0a1a33 center/cover no-repeat}
+
+/* デスクトップアイコン */
+#deskIcons{position:fixed;top:8px;left:8px;z-index:2;display:flex;flex-direction:column;flex-wrap:wrap;gap:4px;height:calc(100% - 70px);align-content:flex-start}
+.dicon{width:84px;padding:8px 4px;border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;border:1px solid transparent;user-select:none}
+.dicon:hover{background:rgba(255,255,255,.14)}
+.dicon.sel{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.35)}
+.dicon .di{width:40px;height:40px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+.dicon .di svg{width:100%;height:100%}
+.dicon span.lb{color:#fff;font-size:12px;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.8);line-height:1.3;word-break:break-all}
+
+/* ウィンドウ */
+#winLayer{position:fixed;inset:0 0 var(--taskbar-h) 0;z-index:10;pointer-events:none}
+.win{position:absolute;min-width:320px;min-height:200px;background:var(--win-bg);-webkit-backdrop-filter:blur(30px) saturate(1.4);backdrop-filter:blur(30px) saturate(1.4);
+  border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);display:flex;flex-direction:column;color:var(--text);pointer-events:auto;overflow:hidden}
+.win.openAnim{animation:winIn .2s cubic-bezier(.2,.9,.3,1)}
+@keyframes winIn{from{opacity:0;transform:scale(.94) translateY(12px)}to{opacity:1;transform:none}}
+.win.closing{animation:winOut .14s forwards}
+@keyframes winOut{to{opacity:0;transform:scale(.95)}}
+.win.anim{transition:left .18s ease,top .18s ease,width .18s ease,height .18s ease}
+.win.min{opacity:0;transform:scale(.6) translateY(120px);transition:all .18s ease;pointer-events:none}
+.win.focused{box-shadow:0 18px 60px rgba(0,0,0,.45);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.tbar{height:38px;flex:0 0 38px;display:flex;align-items:center;gap:8px;padding-left:12px;user-select:none;cursor:default}
+.tbar .ti{width:16px;height:16px}
+.tbar .ti svg{width:100%;height:100%}
+.tbar .tt{flex:1;font-size:12.5px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbtns{display:flex;height:100%}
+.tbtn{width:46px;height:100%;display:grid;place-items:center;color:var(--text)}
+.tbtn:hover{background:var(--hover)}
+.tbtn.close:hover{background:#e81123;color:#fff}
+.win:not(.focused) .tbar{opacity:.75}
+.wbody{flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.rz{position:absolute;z-index:9}
+.rz[data-d="n"]{top:-3px;left:8px;right:8px;height:7px;cursor:ns-resize}
+.rz[data-d="s"]{bottom:-3px;left:8px;right:8px;height:7px;cursor:ns-resize}
+.rz[data-d="e"]{right:-3px;top:8px;bottom:8px;width:7px;cursor:ew-resize}
+.rz[data-d="w"]{left:-3px;top:8px;bottom:8px;width:7px;cursor:ew-resize}
+.rz[data-d="ne"]{top:-4px;right:-4px;width:12px;height:12px;cursor:nesw-resize}
+.rz[data-d="nw"]{top:-4px;left:-4px;width:12px;height:12px;cursor:nwse-resize}
+.rz[data-d="se"]{bottom:-4px;right:-4px;width:12px;height:12px;cursor:nwse-resize}
+.rz[data-d="sw"]{bottom:-4px;left:-4px;width:12px;height:12px;cursor:nesw-resize}
+body.dragging{user-select:none;cursor:default}
+#snapPrev{position:fixed;z-index:9;display:none;background:color-mix(in srgb,var(--accent) 22%,transparent);border:2px solid var(--accent);border-radius:10px;transition:all .12s ease;pointer-events:none}
+
+/* タスクバー */
+#taskbar{position:fixed;left:0;right:0;bottom:0;height:var(--taskbar-h);z-index:9000;background:var(--sys-bg);
+  -webkit-backdrop-filter:blur(30px) saturate(1.5);backdrop-filter:blur(30px) saturate(1.5);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 8px;color:var(--text)}
+#tbCenter{display:flex;align-items:center;gap:4px;position:absolute;left:50%;transform:translateX(-50%);height:100%}
+#startBtn{width:42px;height:40px;display:grid;place-items:center;border-radius:6px}
+#startBtn:hover,#tbSearch:hover,.tb-btn:hover{background:var(--hover)}
+#startBtn svg{width:22px;height:22px}
+#tbSearch{height:36px;display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:18px;background:var(--input);border:1px solid var(--border);font-size:12.5px;color:var(--sub);margin:0 6px}
+.tb-btn{width:44px;height:40px;border-radius:6px;display:grid;place-items:center;position:relative}
+.tb-btn .ind{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:6px;height:3px;border-radius:2px;background:var(--sub);transition:all .15s}
+.tb-btn.open .ind{background:var(--sub)}
+.tb-btn.active .ind{width:16px;background:var(--accent)}
+.tb-btn.active{background:var(--hover)}
+#tbRight{display:flex;align-items:center;height:100%;gap:2px}
+#trayBtn{display:flex;align-items:center;gap:8px;height:38px;padding:0 10px;border-radius:6px}
+#trayBtn:hover,#tbClock:hover{background:var(--hover)}
+#tbClock{height:38px;padding:0 10px;border-radius:6px;font-size:12px;line-height:1.5;text-align:right}
+#showDesk{width:8px;height:100%;border-left:1px solid var(--border);margin-left:4px}
+#showDesk:hover{background:var(--hover)}
+
+/* スタートメニュー */
+#startMenu{position:fixed;bottom:calc(var(--taskbar-h) + 10px);left:50%;transform:translateX(-50%) translateY(24px);width:600px;max-height:calc(100vh - 70px);
+  z-index:9100;background:var(--sys-bg);-webkit-backdrop-filter:blur(40px) saturate(1.5);backdrop-filter:blur(40px) saturate(1.5);
+  border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:24px 28px 0;display:none;flex-direction:column;color:var(--text);overflow:hidden}
+#startMenu.show{display:flex;animation:smIn .2s cubic-bezier(.2,.9,.3,1)}
+@keyframes smIn{from{opacity:0;transform:translateX(-50%) translateY(36px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+#smSearch{height:36px;border-radius:18px;border:1px solid var(--border);background:var(--input);padding:0 16px;width:100%;outline:none;font-size:13px;color:var(--text)}
+#smSearch:focus{border-color:var(--accent)}
+.sm-h{font-size:13px;font-weight:700;margin:20px 4px 10px}
+#smGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.sm-tile{display:flex;flex-direction:column;align-items:center;gap:7px;padding:10px 4px;border-radius:6px;font-size:11.5px}
+.sm-tile:hover{background:var(--hover)}
+.sm-tile .aic{width:32px;height:32px}
+.sm-tile .aic svg{width:100%;height:100%}
+#smRec{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding-bottom:18px}
+.sm-rec{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;font-size:12px;text-align:left}
+.sm-rec:hover{background:var(--hover)}
+.sm-rec .aic{width:26px;height:26px;flex:0 0 26px}
+.sm-rec .aic svg{width:100%;height:100%}
+.sm-rec small{display:block;color:var(--sub);font-size:11px}
+#smFoot{margin:0 -28px;padding:12px 28px;background:rgba(0,0,0,.14);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border)}
+body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.3)}
+#smUser{display:flex;align-items:center;gap:10px;font-size:13px}
+#smUser .av{width:32px;height:32px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700}
+#smPower{width:38px;height:38px;border-radius:6px;display:grid;place-items:center;position:relative}
+#smPower:hover{background:var(--hover)}
+#powerPop{position:absolute;bottom:44px;right:0;width:170px;background:var(--sys-bg);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:4px;display:none}
+#powerPop.show{display:block}
+#powerPop button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:5px;font-size:12.5px;text-align:left}
+#powerPop button:hover{background:var(--hover)}
+
+/* クイック設定 */
+#quickPanel{position:fixed;bottom:calc(var(--taskbar-h) + 10px);right:10px;width:340px;z-index:9100;background:var(--sys-bg);
+  -webkit-backdrop-filter:blur(40px);backdrop-filter:blur(40px);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:18px;display:none;color:var(--text)}
+#quickPanel.show{display:block;animation:qpIn .18s ease}
+@keyframes qpIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.qs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.qs-t{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:6px;background:var(--input);border:1px solid var(--border);font-size:11px;color:var(--text)}
+.qs-t.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.qs-row{display:flex;align-items:center;gap:12px;margin:10px 0}
+.qs-row input[type=range]{flex:1;accent-color:var(--accent)}
+
+/* コンテキストメニュー */
+#ctxMenu{position:fixed;z-index:9500;min-width:220px;background:var(--sys-bg);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);
+  border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:4px;display:none;color:var(--text)}
+#ctxMenu.show{display:block;animation:qpIn .12s ease}
+#ctxMenu button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 12px;border-radius:5px;font-size:12.5px;text-align:left}
+#ctxMenu button:hover{background:var(--hover)}
+#ctxMenu .sep{height:1px;background:var(--border);margin:4px 8px}
+
+/* 通知 */
+#toasts{position:fixed;right:14px;bottom:calc(var(--taskbar-h) + 14px);z-index:9600;display:flex;flex-direction:column;gap:10px}
+.toast{width:340px;background:var(--sys-bg);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:8px;
+  box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;color:var(--text);animation:tIn .25s cubic-bezier(.2,.9,.3,1)}
+@keyframes tIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}
+.toast.out{animation:tOut .2s forwards}
+@keyframes tOut{to{opacity:0;transform:translateX(60px)}}
+.toast b{font-size:13px;display:block;margin-bottom:2px}
+.toast p{font-size:12px;color:var(--sub);line-height:1.5}
+
+#brightOv{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:9990;transition:opacity .2s}
+#nightOv{position:fixed;inset:0;background:rgba(255,147,41,.14);pointer-events:none;z-index:9989;display:none}
+
+/* 電源 / 起動 / ロック */
+#boot{position:fixed;inset:0;background:#000;z-index:9995;display:none;flex-direction:column;align-items:center;justify-content:center;gap:70px;transition:opacity .5s}
+#boot.show{display:flex}
+#boot.hide{opacity:0;pointer-events:none}
+#bootLogo{display:grid;grid-template-columns:34px 34px;grid-template-rows:34px 34px;gap:5px}
+#bootLogo div{background:#0078d4;border-radius:2px}
+.spinRing{width:44px;height:44px;position:relative}
+.spinRing i{position:absolute;inset:0;animation:spin 2.2s linear infinite}
+.spinRing i::before{content:'';position:absolute;top:0;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#fff}
+.spinRing i:nth-child(2){animation-delay:.18s}.spinRing i:nth-child(3){animation-delay:.36s}
+.spinRing i:nth-child(4){animation-delay:.54s}.spinRing i:nth-child(5){animation-delay:.72s}
+@keyframes spin{to{transform:rotate(360deg)}}
+#lock{position:fixed;inset:0;z-index:9980;background:#0a1a33 center/cover no-repeat;display:none;align-items:center;justify-content:center;flex-direction:column;transition:transform .5s cubic-bezier(.6,0,.3,1),opacity .5s;cursor:pointer}
+#lock.show{display:flex}
+#lock::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.25)}
+#lock.hide{transform:translateY(-100%);opacity:.4}
+#lockTop{display:flex;flex-direction:column;align-items:center;transition:transform .4s ease,opacity .4s}
+#lock.stage2 #lockTop{transform:translateY(-46vh);opacity:0}
+#lockClock{font-size:96px;font-weight:700;color:#fff;text-shadow:0 4px 20px rgba(0,0,0,.5)}
+#lockDate{font-size:20px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5);margin-top:-6px}
+#login{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+#lock.stage2 #login{display:flex}
+#login .av{width:96px;height:96px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:40px;font-weight:700}
+#login .un{color:#fff;font-size:17px}
+#login .pwrow{display:flex;gap:6px}
+#login input{width:220px;height:36px;border-radius:4px;border:2px solid rgba(255,255,255,.6);background:rgba(0,0,0,.35);color:#fff;padding:0 12px;outline:none;font-size:13px}
+#login input:focus{border-color:#fff}
+#login .go{width:36px;height:36px;border-radius:4px;background:rgba(255,255,255,.85);color:#111;display:grid;place-items:center}
+#login .hint{color:rgba(255,255,255,.65);font-size:11.5px}
+#poweroff{position:fixed;inset:0;background:#000;z-index:9996;display:none;align-items:center;justify-content:center;cursor:pointer}
+#poweroff.show{display:flex}
+#poweroff .pwr{width:64px;height:64px;color:#3a3a3a;transition:color .2s,transform .2s}
+#poweroff:hover .pwr{color:#0078d4;transform:scale(1.06)}
+#shutOv{position:fixed;inset:0;background:#000;z-index:9997;display:none;align-items:center;justify-content:center;flex-direction:column;gap:40px;color:#fff;font-size:15px}
+#shutOv.show{display:flex}
+
+/* アプリ共通 */
+.abar{display:flex;align-items:center;gap:4px;padding:6px 8px;border-bottom:1px solid var(--border);flex:0 0 auto}
+.abar button{padding:6px 10px;border-radius:5px;font-size:12px}
+.abar button:hover{background:var(--hover)}
+.astatus{padding:4px 12px;border-top:1px solid var(--border);font-size:11.5px;color:var(--sub);display:flex;justify-content:space-between;flex:0 0 auto}
+
+.np-area{flex:1;resize:none;border:none;outline:none;background:transparent;color:var(--text);padding:12px 14px;font-size:14px;line-height:1.8;font-family:Consolas,'Noto Sans JP',monospace}
+
+.calc{flex:1;display:flex;flex-direction:column;padding:10px;gap:6px;outline:none}
+.c-expr{height:22px;text-align:right;font-size:13px;color:var(--sub);padding:0 6px;overflow:hidden}
+.c-disp{height:56px;display:flex;align-items:center;justify-content:flex-end;font-size:36px;font-weight:500;padding:0 6px;overflow:hidden}
+.c-grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:4px}
+.c-grid button{border-radius:5px;background:var(--input);font-size:15px;border:1px solid var(--border)}
+.c-grid button:hover{background:var(--hover)}
+.c-grid button.op{background:transparent}
+.c-grid button.eq{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.term{flex:1;background:#0c0c0c;color:#cccccc;font-family:Consolas,'Courier New',monospace;font-size:13px;padding:10px;overflow-y:auto;cursor:text}
+.term .t-line{display:flex;gap:6px;align-items:center}
+.term input{flex:1;background:transparent;border:none;outline:none;color:inherit;font:inherit}
+.t-prompt{color:#61d4ff;white-space:pre}
+
+.ex{flex:1;display:flex;overflow:hidden}
+.ex-side{width:170px;border-right:1px solid var(--border);padding:8px 4px;overflow-y:auto;flex:0 0 auto}
+.ex-side button{display:flex;align-items:center;gap:9px;width:100%;padding:7px 12px;border-radius:5px;font-size:12.5px;text-align:left}
+.ex-side button:hover{background:var(--hover)}
+.ex-side button.on{background:var(--hover)}
+.ex-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.ex-items{flex:1;overflow-y:auto;padding:10px;display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start}
+.ex-it{width:92px;padding:10px 4px;border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;text-align:center;cursor:default}
+.ex-it:hover{background:var(--hover)}
+.ex-it.sel{background:color-mix(in srgb,var(--accent) 20%,transparent)}
+.ex-it .fi{width:36px;height:36px}
+.ex-it .fi svg{width:100%;height:100%}
+.ex-it .fn{word-break:break-all;line-height:1.35}
+.ex-crumb{display:flex;align-items:center;gap:2px;flex:1;padding:0 8px;font-size:12.5px;overflow:hidden}
+.ex-crumb button{padding:4px 7px;border-radius:4px;display:flex;align-items:center;gap:5px}
+.ex-crumb button:hover{background:var(--hover)}
+
+.br-bar{display:flex;align-items:center;gap:6px;padding:8px;border-bottom:1px solid var(--border)}
+.br-bar button{width:32px;height:32px;border-radius:6px;display:grid;place-items:center;color:var(--text)}
+.br-bar button:hover{background:var(--hover)}
+.br-addr{flex:1;height:32px;border-radius:16px;border:1px solid var(--border);background:var(--input);padding:0 16px;font-size:12.5px;outline:none;color:var(--text)}
+.br-addr:focus{border-color:var(--accent)}
+.br-load{height:3px;background:transparent;position:relative;overflow:hidden;flex:0 0 3px}
+.br-load.on::before{content:'';position:absolute;inset:0;background:var(--accent);animation:load .5s ease}
+@keyframes load{from{transform:translateX(-100%)}to{transform:none}}
+.br-page{flex:1;overflow-y:auto;padding:28px 36px}
+.br-page h1{font-size:26px;margin-bottom:16px}
+.br-page h2{font-size:17px;margin:18px 0 8px}
+.br-page p{line-height:1.9;margin:8px 0;color:var(--sub)}
+.br-page a{color:var(--accent);cursor:pointer;text-decoration:none}
+.br-page a:hover{text-decoration:underline}
+.br-res{margin:14px 0}
+.br-res .u{font-size:12px;color:#4a9e5c}
+.br-quick{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px}
+.br-qt{width:96px;padding:16px 8px;border-radius:10px;background:var(--input);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:9px;font-size:12px;color:var(--text)}
+.br-qt:hover{border-color:var(--accent)}
+
+.set{flex:1;display:flex;overflow:hidden}
+.set-side{width:190px;padding:10px 6px;border-right:1px solid var(--border);flex:0 0 auto}
+.set-side button{display:flex;gap:10px;align-items:center;width:100%;padding:9px 12px;border-radius:5px;font-size:12.5px;text-align:left}
+.set-side button:hover{background:var(--hover)}
+.set-side button.on{background:var(--hover);box-shadow:inset 3px 0 0 var(--accent)}
+.set-main{flex:1;overflow-y:auto;padding:22px 26px}
+.set-main h1{font-size:22px;margin-bottom:18px}
+.set-card{background:var(--input);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;justify-content:space-between}
+.set-card .lab b{font-size:13px;display:block}
+.set-card .lab small{color:var(--sub);font-size:11.5px}
+.wp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.wp-th{height:90px;border-radius:8px;background-size:cover;background-position:center;border:2px solid transparent;cursor:pointer}
+.wp-th.on{border-color:var(--accent)}
+.acc-row{display:flex;gap:10px;flex-wrap:wrap}
+.acc{width:36px;height:36px;border-radius:8px;cursor:pointer;border:2px solid transparent}
+.acc.on{border-color:var(--text)}
+
+.pt-tools{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.pt-tools .sw{width:24px;height:24px;border-radius:6px;border:2px solid transparent;cursor:pointer}
+.pt-tools .sw.on{border-color:var(--text)}
+.pt-tools input[type=range]{width:90px;accent-color:var(--accent)}
+.pt-tools button{padding:6px 10px;border-radius:5px;font-size:12px}
+.pt-tools button:hover{background:var(--hover)}
+.pt-tools button.on{background:var(--accent);color:#fff}
+#ptCanvas{flex:1;cursor:crosshair;background:#fff;touch-action:none}
+
+.tm{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:10px}
+.tm table{width:100%;border-collapse:collapse;font-size:12px}
+.tm th{text-align:left;padding:7px 10px;color:var(--sub);font-weight:500;border-bottom:1px solid var(--border)}
+.tm td{padding:6px 10px;border-bottom:1px solid var(--border)}
+.tm tr.row:hover td{background:var(--hover)}
+.tm .kill{padding:3px 10px;border-radius:4px;background:var(--input);border:1px solid var(--border);font-size:11px}
+.tm .kill:hover{background:#e81123;color:#fff;border-color:#e81123}
+
+.ph-grid{flex:1;overflow-y:auto;padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start}
+.ph-th{height:100px;border-radius:8px;background-size:cover;background-position:center;cursor:pointer;border:2px solid transparent}
+.ph-th:hover{border-color:var(--accent)}
+.ph-view{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:14px}
+.ph-view img{max-width:100%;max-height:calc(100% - 60px);border-radius:8px;object-fit:contain}
+
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--sub)}
+.empty .ei{width:56px;height:56px;opacity:.6}
+.empty .ei svg{width:100%;height:100%}
+</style>
+</head>
+<body data-theme="dark">
+
+<div id="wallpaper"></div>
+<div id="deskIcons"></div>
+<div id="winLayer"></div>
+<div id="snapPrev"></div>
+
+<div id="taskbar">
+  <div id="tbCenter">
+    <button id="startBtn" title="スタート">
+      <svg viewBox="0 0 24 24"><rect x="1" y="1" width="10.5" height="10.5" rx="1" fill="#0078d4"/><rect x="12.5" y="1" width="10.5" height="10.5" rx="1" fill="#0078d4"/><rect x="1" y="12.5" width="10.5" height="10.5" rx="1" fill="#0078d4"/><rect x="12.5" y="12.5" width="10.5" height="10.5" rx="1" fill="#0078d4"/></svg>
+    </button>
+    <button id="tbSearch"><span id="searchIco"></span>検索</button>
+    <div id="tbApps" style="display:flex;gap:2px"></div>
+  </div>
+  <div id="tbRight">
+    <button id="trayBtn" title="クイック設定"><span id="icWifi"></span><span id="icVol"></span><span id="icBat"></span></button>
+    <button id="tbClock"></button>
+    <div id="showDesk" title="デスクトップの表示"></div>
+  </div>
+</div>
+
+<div id="startMenu">
+  <input id="smSearch" placeholder="アプリを検索するにはここに入力します">
+  <div class="sm-h">ピン留め済み</div>
+  <div id="smGrid"></div>
+  <div class="sm-h">おすすめ</div>
+  <div id="smRec"></div>
+  <div id="smFoot">
+    <div id="smUser"><div class="av">U</div>ユーザー</div>
+    <button id="smPower"><span id="pwrIco"></span>
+      <div id="powerPop">
+        <button data-p="sleep">スリープ</button>
+        <button data-p="restart">再起動</button>
+        <button data-p="shutdown">シャットダウン</button>
+      </div>
+    </button>
+  </div>
+</div>
+
+<div id="quickPanel">
+  <div class="qs-grid">
+    <button class="qs-t on" id="qsWifi"><span class="qi"></span>Wi-Fi</button>
+    <button class="qs-t on" id="qsBt"><span class="qi"></span>Bluetooth</button>
+    <button class="qs-t" id="qsAir"><span class="qi"></span>機内モード</button>
+    <button class="qs-t" id="qsNight"><span class="qi"></span>夜間モード</button>
+    <button class="qs-t on" id="qsSave"><span class="qi"></span>省電力</button>
+    <button class="qs-t" id="qsTheme"><span class="qi"></span>テーマ</button>
+  </div>
+  <div class="qs-row"><span id="sunIco"></span><input type="range" id="brSlider" min="30" max="100" value="100"></div>
+  <div class="qs-row"><span id="volIco"></span><input type="range" id="volSlider" min="0" max="100" value="65"></div>
+</div>
+
+<div id="ctxMenu"></div>
+<div id="toasts"></div>
+<div id="nightOv"></div>
+<div id="brightOv"></div>
+
+<div id="lock">
+  <div id="lockTop"><div id="lockClock">00:00</div><div id="lockDate"></div></div>
+  <div id="login">
+    <div class="av">U</div><div class="un">ユーザー</div>
+    <div class="pwrow"><input type="password" id="pwIn" placeholder="パスワード"><button class="go" id="goBtn">→</button></div>
+    <div class="hint">パスワードは空欄のままサインインできます</div>
+  </div>
+</div>
+<div id="boot"><div id="bootLogo"><div></div><div></div><div></div><div></div></div><div class="spinRing"><i></i><i></i><i></i><i></i><i></i></div></div>
+<div id="poweroff"><svg class="pwr" viewBox="0 0 24 24"><path d="M12 3v9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M7.5 5.5a8 8 0 1 0 9 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+<div id="shutOv"><div class="spinRing"><i></i><i></i><i></i><i></i><i></i></div><div id="shutMsg">シャットダウンしています...</div></div>
+
+<script>
+/* ============ ユーティリティ ============ */
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const WD=['日','月','火','水','木','金','土'];
+let store={};try{store=JSON.parse(localStorage.getItem('w11')||'{}')}catch(e){}
+function save(){try{localStorage.setItem('w11',JSON.stringify(store))}catch(e){}}
+
+/* ============ アイコン (SVG) ============ */
+const ICO={
+pc:'<svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="1.6" fill="#4a5a6a"/><rect x="4" y="5.5" width="16" height="9.5" fill="#79b8f3"/><path d="M4 5.5h16v4H4z" fill="#a8d4fa"/><path d="M10 16.5h4v2h-4z" fill="#4a5a6a"/><path d="M7.5 20.5h9" stroke="#4a5a6a" stroke-width="1.6" stroke-linecap="round"/></svg>',
+recycle:'<svg viewBox="0 0 24 24"><path d="M5.5 7.5h13l-1.1 12.6a1.8 1.8 0 0 1-1.8 1.6H8.4a1.8 1.8 0 0 1-1.8-1.6L5.5 7.5z" fill="#dfe9f3"/><path d="M5.5 7.5h13l-1.1 12.6a1.8 1.8 0 0 1-1.8 1.6H8.4a1.8 1.8 0 0 1-1.8-1.6L5.5 7.5z" fill="none" stroke="#8aa0b8" stroke-width="1.2"/><path d="M3.8 7.2h16.4M9.6 7V5a1.2 1.2 0 0 1 1.2-1.2h2.4A1.2 1.2 0 0 1 14.4 5v2" fill="none" stroke="#8aa0b8" stroke-width="1.4" stroke-linecap="round"/><path d="M9.8 10.5v7.4M14.2 10.5v7.4" stroke="#9db3c8" stroke-width="1.3" stroke-linecap="round"/></svg>',
+explorer:'<svg viewBox="0 0 24 24"><path d="M3 6.2a1.8 1.8 0 0 1 1.8-1.8h4.4l2 2.2h8a1.8 1.8 0 0 1 1.8 1.8v9.8a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.2V6.2z" fill="#e8a33d"/><path d="M3 9.5h18v8.7a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.2V9.5z" fill="#ffd77e"/><path d="M3 9.5h18v2H3z" fill="#f5c25c"/></svg>',
+edge:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#0b87c9"/><path d="M12 2.5a9.5 9.5 0 0 1 9.5 9.5c0 5.2-4.3 9.5-9.5 9.5 4-2 5.5-4.6 5.5-7.2 0-2.9-2.4-4.6-5.7-4.6H6a9.5 9.5 0 0 1 6-7.2z" fill="#38c1e8"/><path d="M4 9.5h8.2c3.4 0 6 1.8 6 4.8 0 2.4-1.3 4.6-3.6 6.2A9.5 9.5 0 0 1 4 9.5z" fill="#a5e6f7"/></svg>',
+notepad:'<svg viewBox="0 0 24 24"><rect x="4.5" y="2.8" width="15" height="18.4" rx="1.8" fill="#f4f7fb"/><rect x="4.5" y="2.8" width="15" height="18.4" rx="1.8" fill="none" stroke="#9db3c8" stroke-width="1.1"/><path d="M8 8h8M8 11.5h8M8 15h5.5" stroke="#2d7ff0" stroke-width="1.4" stroke-linecap="round"/></svg>',
+calc:'<svg viewBox="0 0 24 24"><rect x="4.5" y="2.8" width="15" height="18.4" rx="1.8" fill="#0f6cbd"/><rect x="7" y="5.3" width="10" height="4.2" rx=".8" fill="#d6ecff"/><g fill="#d6ecff"><circle cx="8.8" cy="12.6" r="1.15"/><circle cx="12" cy="12.6" r="1.15"/><circle cx="15.2" cy="12.6" r="1.15"/><circle cx="8.8" cy="16.6" r="1.15"/><circle cx="12" cy="16.6" r="1.15"/><circle cx="15.2" cy="16.6" r="1.15"/></g></svg>',
+terminal:'<svg viewBox="0 0 24 24"><rect x="2.8" y="3.8" width="18.4" height="16.4" rx="1.8" fill="#141414"/><rect x="2.8" y="3.8" width="18.4" height="3" fill="#2d2d2d"/><path d="M6.8 10l3.2 3-3.2 3" stroke="#e6e6e6" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.8 16.2h5.4" stroke="#e6e6e6" stroke-width="1.6" stroke-linecap="round"/></svg>',
+settings:'<svg viewBox="0 0 24 24"><path fill="#7d8b99" d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94 7.07 7.07 0 0 0-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.3 7.3 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.49-.42h-3.8a.5.5 0 0 0-.49.42l-.36 2.54a7.3 7.3 0 0 0-1.62.94l-2.39-.96a.5.5 0 0 0-.61.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0-.06.94 7.07 7.07 0 0 0 .06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .61.22l2.39-.96a7.3 7.3 0 0 0 1.62.94l.36 2.54a.5.5 0 0 0 .49.42h3.8a.5.5 0 0 0 .49-.42l.36-2.54a7.3 7.3 0 0 0 1.62-.94l2.39.96a.5.5 0 0 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64zM12 15.5A3.5 3.5 0 1 1 15.5 12 3.5 3.5 0 0 1 12 15.5z"/></svg>',
+paint:'<svg viewBox="0 0 24 24"><path d="M12 2.8a9.2 9.2 0 1 0 0 18.4c1.5 0 2.5-1 2.5-2.1 0-.6-.3-1.1-.6-1.5-.3-.4-.6-.8-.6-1.3 0-1.1 1-2.1 2.1-2.1h2.2a5.6 5.6 0 0 0 5.6-5.6A9.2 9.2 0 0 0 12 2.8z" fill="#eef2f7" stroke="#9db3c8" stroke-width="1"/><circle cx="7.6" cy="9.2" r="1.4" fill="#e81123"/><circle cx="12" cy="6.9" r="1.4" fill="#0f6cbd"/><circle cx="16.4" cy="9.2" r="1.4" fill="#107c10"/><circle cx="7.3" cy="13.6" r="1.4" fill="#ffb900"/></svg>',
+photos:'<svg viewBox="0 0 24 24"><rect x="2.8" y="4.8" width="18.4" height="14.4" rx="1.8" fill="#eef2f7" stroke="#9db3c8"/><circle cx="9" cy="10" r="1.9" fill="#ffca3d"/><path d="M4.5 17.5l4.8-5 3.1 3.2 3.4-3.9 3.7 5.7z" fill="#107c10"/></svg>',
+taskmgr:'<svg viewBox="0 0 24 24"><rect x="2.8" y="3.8" width="18.4" height="16.4" rx="1.8" fill="#eef2f7" stroke="#9db3c8"/><path d="M5.5 15.5l3.4-4.6 3 3.2 4.6-6.6" stroke="#107c10" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+txt:'<svg viewBox="0 0 24 24"><path d="M6 2.8h8l4.5 4.7V21a1.6 1.6 0 0 1-1.6 1.6H6A1.6 1.6 0 0 1 4.4 21V4.4A1.6 1.6 0 0 1 6 2.8z" fill="#f4f7fb" stroke="#9db3c8"/><path d="M14 2.8v4.8h4.5" fill="none" stroke="#9db3c8"/><path d="M8 12h8M8 15h8M8 18h5" stroke="#7d8b99" stroke-width="1.2" stroke-linecap="round"/></svg>',
+img:'<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="1.6" fill="#f4f7fb" stroke="#9db3c8"/><circle cx="9" cy="9.8" r="1.6" fill="#ffca3d"/><path d="M5 18l4.4-4.6 2.9 3 3.1-3.6 3.6 5.2z" fill="#107c10"/></svg>',
+mus:'<svg viewBox="0 0 24 24"><path d="M9.5 17.5V6.8l9-2.3v10.7" fill="none" stroke="#5a6b7c" stroke-width="1.6"/><circle cx="7.3" cy="17.6" r="2.4" fill="#5a6b7c"/><circle cx="16.3" cy="15.3" r="2.4" fill="#5a6b7c"/></svg>',
+exe:'<svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="1.6" fill="#eef2f7" stroke="#9db3c8"/><path d="M3 7.5h18" stroke="#9db3c8"/><circle cx="5.3" cy="6" r=".8" fill="#e81123"/><circle cx="7.6" cy="6" r=".8" fill="#ffb900"/><path d="M7 11h10M7 14h10M7 17h6" stroke="#7d8b99" stroke-width="1.2" stroke-linecap="round"/></svg>',
+folder:'<svg viewBox="0 0 24 24"><path d="M3 6.2a1.8 1.8 0 0 1 1.8-1.8h4.4l2 2.2h8a1.8 1.8 0 0 1 1.8 1.8v9.8a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.2V6.2z" fill="#e8a33d"/><path d="M3 9.5h18v8.7a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.2V9.5z" fill="#ffd77e"/></svg>',
+wifi:'<svg viewBox="0 0 24 24"><path d="M3.5 9.5a13 13 0 0 1 17 0M6.5 12.6a8.6 8.6 0 0 1 11 0M9.5 15.7a4.4 4.4 0 0 1 5 0" stroke="currentColor" fill="none" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="18.4" r="1.5" fill="currentColor"/></svg>',
+wifiOff:'<svg viewBox="0 0 24 24"><path d="M3.5 9.5a13 13 0 0 1 17 0M6.5 12.6a8.6 8.6 0 0 1 11 0M9.5 15.7a4.4 4.4 0 0 1 5 0" stroke="currentColor" fill="none" stroke-width="1.7" stroke-linecap="round" opacity=".4"/><circle cx="12" cy="18.4" r="1.5" fill="currentColor"/><path d="M4 4l16 16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+vol:'<svg viewBox="0 0 24 24"><path d="M4 9.8v4.4h3.2L11.5 18V6L7.2 9.8H4z" fill="currentColor"/><path d="M14.8 9.2a4.4 4.4 0 0 1 0 5.6M17.3 7a8 8 0 0 1 0 10" stroke="currentColor" fill="none" stroke-width="1.6" stroke-linecap="round"/></svg>',
+volMute:'<svg viewBox="0 0 24 24"><path d="M4 9.8v4.4h3.2L11.5 18V6L7.2 9.8H4z" fill="currentColor"/><path d="M15 9.5l5 5M20 9.5l-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+bat:'<svg viewBox="0 0 24 24"><rect x="2.5" y="8" width="17" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4.2" y="9.7" width="11" height="4.6" rx="1" fill="currentColor"/><path d="M21.7 10.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+bt:'<svg viewBox="0 0 24 24"><path d="M7 7.5l10 9-5 4.5V3l5 4.5-10 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+plane:'<svg viewBox="0 0 24 24"><path d="M10.2 13.2 3.5 10.5l1.7-1.7 5.6.9 4.6-4.9c.5-.5 1.4-.5 1.9 0 .5.5.5 1.4 0 1.9l-4.9 4.6.9 5.6-1.7 1.7-2.7-6.7z" fill="currentColor"/><path d="M4 20h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+moon:'<svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg>',
+sun:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="currentColor"/><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.4 5.4l1.4 1.4M17.2 17.2l1.4 1.4M18.6 5.4l-1.4 1.4M6.8 17.2l-1.4 1.4"/></g></svg>',
+brush:'<svg viewBox="0 0 24 24"><path d="M4 20c3.2 0 4.4-1.2 4.4-3.1 0-1.6-1.1-2.7-2.7-2.7S3 15.4 3 17c0 1 .4 2 1 3z" fill="#c58f4a"/><path d="M9.2 13.8 19.8 3.2l1.4 1.4L10.6 15.2z" fill="#7d8b99"/></svg>',
+refresh:'<svg viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M19.8 3.8v4h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+monitor:'<svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M10 16.5h4v2.5h-4zM7.5 21h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+search:'<svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15 15l5.2 5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+power:'<svg viewBox="0 0 24 24"><path d="M12 3.5v8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M7.8 5.8a7.2 7.2 0 1 0 8.4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+info:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.5V17" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="7.4" r="1.2" fill="currentColor"/></svg>',
+shield:'<svg viewBox="0 0 24 24"><path d="M12 2.8l7.5 2.8v6c0 5-3.2 8.4-7.5 9.6C7.7 20 4.5 16.6 4.5 11.6v-6L12 2.8z" fill="#0f6cbd"/><path d="M8.6 11.8l2.4 2.5 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+update:'<svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 1-8 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3.5 4v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8v5l3.4 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+};
+const icon=(n,s=20)=>{const v=ICO[n]||'';return v.replace('<svg ',`<svg width="${s}" height="${s}" `)};
+
+/* ============ 壁紙・テーマ ============ */
+const WALLS=[
+ {name:'Bloom',url:'https://image.qwenlm.ai/public_source/6e6b4ef1-bc2d-4afe-bc62-88c1cdc27af7/11d5b317d-16f6-470f-8318-f7811fac613e.png'},
+ {name:'夜明け',url:'https://image.qwenlm.ai/public_source/6e6b4ef1-bc2d-4afe-bc62-88c1cdc27af7/14bf3ed96-037c-4411-9386-f9c2dc4f98c9.png'},
+ {name:'深宇宙',url:'https://image.qwenlm.ai/public_source/6e6b4ef1-bc2d-4afe-bc62-88c1cdc27af7/147390e20-ca8c-4133-94e3-598b8ef52feb.png'},
+];
+const ACCENTS=['#0067c0','#0099bc','#744da9','#c30052','#b7410e','#107c10','#e81123','#4f46e5'];
+let wallIdx=clamp(store.wall??0,0,WALLS.length-1), theme=store.theme??'dark', accent=store.accent??'#0067c0';
+function applyTheme(){document.body.dataset.theme=theme;document.body.style.setProperty('--accent',accent);save();}
+function applyWall(){
+  const u='url('+WALLS[wallIdx].url+')';
+  $('#wallpaper').style.backgroundImage=u;
+  $('#lock').style.backgroundImage=u;
+  save();
+}
+
+/* ============ 通知 ============ */
+function toast(ic,title,msg){
+  const t=document.createElement('div');t.className='toast';
+  t.innerHTML=`<span style="flex:0 0 auto">${icon(ic,22)}</span><div><b>${esc(title)}</b><p>${esc(msg)}</p></div>`;
+  $('#toasts').appendChild(t);
+  setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),220)},5000);
+}
+
+/* ============ 電源 ============ */
+const bootTime=Date.now();
+function boot(){
+  $('#poweroff').classList.remove('show');
+  const b=$('#boot');b.classList.add('show');b.classList.remove('hide');
+  setTimeout(()=>{b.classList.add('hide');resetLock();$('#lock').classList.add('show');},2800);
+}
+function shutdownFlow(msg,then){$('#shutMsg').textContent=msg;$('#shutOv').classList.add('show');setTimeout(()=>{$('#shutOv').classList.remove('show');then();},2000);}
+function doShutdown(){closeAll();shutdownFlow('シャットダウンしています...',()=>{$('#lock').classList.remove('show');$('#boot').classList.remove('show');$('#poweroff').classList.add('show');});}
+function doRestart(){closeAll();shutdownFlow('再起動しています...',boot);}
+function doSleep(){closeAllMenus();resetLock();$('#lock').classList.add('show');}
+$('#poweroff').onclick=boot;
+
+/* ============ 時計 ============ */
+function tick(){
+  const n=new Date(),hh=String(n.getHours()).padStart(2,'0'),mm=String(n.getMinutes()).padStart(2,'0');
+  $('#tbClock').innerHTML=`<div>${hh}:${mm}</div><div>${n.getFullYear()}/${n.getMonth()+1}/${n.getDate()}</div>`;
+  $('#lockClock').textContent=`${hh}:${mm}`;
+  $('#lockDate').textContent=`${n.getMonth()+1}月${n.getDate()}日（${WD[n.getDay()]}）`;
+}
+setInterval(tick,1000);tick();
+
+/* ============ ロック / サインイン ============ */
+function resetLock(){const l=$('#lock');l.classList.remove('stage2','hide');$('#pwIn').value='';}
+$('#lock').addEventListener('click',e=>{
+  const l=$('#lock');
+  if(!l.classList.contains('stage2')){l.classList.add('stage2');setTimeout(()=>$('#pwIn').focus(),250);return;}
+});
+function signIn(){$('#lock').classList.add('hide');
+  if(!signIn.done){signIn.done=true;setTimeout(()=>toast('update','Windows Update','更新プログラムが利用可能です。デバイスは保護されています。'),6000);}
+}
+$('#goBtn').onclick=e=>{e.stopPropagation();signIn();};
+$('#pwIn').addEventListener('keydown',e=>{if(e.key==='Enter')signIn();});
+
+/* ============ ウィンドウマネージャ ============ */
+let wid=0,Z=100;const wins=[];
+const W_MIN='<svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 6h10" stroke="currentColor" stroke-width="1.1"/></svg>';
+const W_MAX='<svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>';
+const W_RES='<svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="3.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M4 3.5V1.5h6.5V8H8.5" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>';
+const W_CLS='<svg width="12" height="12" viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.1"/></svg>';
+function getFocused(){return wins.find(w=>w.el.classList.contains('focused'))}
+function setMaxIcon(w){w.el.querySelector('.tbtn.max').innerHTML=(w.max||w.snap)?W_RES:W_MAX;}
+function createWin(o){
+  const w={id:++wid,app:o.app,title:o.title,icon:o.icon,min:false,max:false,snap:null,prev:null,onClose:o.onClose};
+  const el=document.createElement('div');el.className='win openAnim';w.el=el;
+  const W=o.w||560,H=o.h||400,off=(wins.length%6)*28;
+  el.style.width=W+'px';el.style.height=H+'px';
+  el.style.left=clamp((innerWidth-W)/2-80+off,8,Math.max(8,innerWidth-W-8))+'px';
+  el.style.top=clamp((innerHeight-48-H)/2-50+off*.7,8,Math.max(8,innerHeight-48-H-8))+'px';
+  el.innerHTML=`<div class="tbar"><span class="ti">${icon(w.icon,16)}</span><span class="tt">${esc(w.title)}</span>
+    <div class="tbtns"><button class="tbtn min" title="最小化">${W_MIN}</button><button class="tbtn max" title="最大化">${W_MAX}</button><button class="tbtn close" title="閉じる">${W_CLS}</button></div></div>
+    <div class="wbody"></div>`+['n','s','e','w','ne','nw','se','sw'].map(d=>`<div class="rz" data-d="${d}"></div>`).join('');
+  w.body=el.querySelector('.wbody');
+  $('#winLayer').appendChild(el);
+  el.addEventListener('pointerdown',()=>focusWin(w));
+  el.querySelector('.tbtn.min').onclick=e=>{e.stopPropagation();minimizeWin(w)};
+  el.querySelector('.tbtn.max').onclick=e=>{e.stopPropagation();toggleMax(w)};
+  el.querySelector('.tbtn.close').onclick=e=>{e.stopPropagation();closeWin(w)};
+  el.querySelector('.tbar').addEventListener('dblclick',e=>{if(!e.target.closest('.tbtns'))toggleMax(w)});
+  initDrag(w);initResize(w);
+  wins.push(w);ensureTbBtn(w.app);focusWin(w);
+  setTimeout(()=>el.classList.remove('openAnim'),240);
+  return w;
+}
+function focusWin(w){wins.forEach(x=>x.el.classList.remove('focused'));w.el.classList.add('focused');w.el.style.zIndex=++Z;refreshTaskbar();}
+function minimizeWin(w){w.min=true;clearTimeout(w.minT);w.el.classList.add('min');w.minT=setTimeout(()=>{w.el.style.display='none'},190);refreshTaskbar();}
+function restoreWin(w){if(!w.min)return;w.min=false;clearTimeout(w.minT);w.el.style.display='';void w.el.offsetWidth;w.el.classList.remove('min');}
+function currentRect(w){return{x:w.el.offsetLeft,y:w.el.offsetTop,w:w.el.offsetWidth,h:w.el.offsetHeight}}
+function setRect(w,r){w.el.style.left=r.x+'px';w.el.style.top=r.y+'px';w.el.style.width=r.w+'px';w.el.style.height=r.h+'px';}
+function toggleMax(w){
+  w.el.classList.add('anim');setTimeout(()=>w.el.classList.remove('anim'),220);
+  if(w.max||w.snap){setRect(w,w.prev||{x:80,y:60,w:560,h:400});w.max=false;w.snap=null;w.prev=null;}
+  else{w.prev=currentRect(w);setRect(w,{x:0,y:0,w:innerWidth,h:innerHeight-48});w.max=true;w.snap=null;}
+  setMaxIcon(w);focusWin(w);
+}
+function snapWin(w,kind){
+  w.el.classList.add('anim');setTimeout(()=>w.el.classList.remove('anim'),220);
+  if(!w.prev)w.prev=currentRect(w);
+  w.max=false;
+  if(kind==='T'){setRect(w,{x:0,y:0,w:innerWidth,h:innerHeight-48});w.max=true;}
+  else if(kind==='L')setRect(w,{x:0,y:0,w:innerWidth/2,h:innerHeight-48});
+  else setRect(w,{x:innerWidth/2,y:0,w:innerWidth/2,h:innerHeight-48});
+  w.snap=kind==='T'?null:kind;setMaxIcon(w);focusWin(w);
+}
+function closeWin(w){
+  w.el.classList.add('closing');
+  setTimeout(()=>{w.el.remove();const i=wins.indexOf(w);if(i>-1)wins.splice(i,1);
+    if(!wins.some(x=>x.app===w.app)&&!PINNED.includes(w.app)){const b=$('#tbApps').querySelector(`[data-app="${w.app}"]`);if(b)b.remove();}
+    if(w.onClose)w.onClose();refreshTaskbar();},140);
+}
+function closeAll(){[...wins].forEach(closeWin);}
+function initDrag(w){
+  const tb=w.el.querySelector('.tbar');
+  tb.addEventListener('pointerdown',e=>{
+    if(e.target.closest('.tbtns')||e.button!==0)return;
+    focusWin(w);
+    if(w.max||w.snap){
+      const ratio=e.clientX/innerWidth;
+      const pw=w.max?560:(w.prev?w.prev.w:560),ph=w.max?400:(w.prev?w.prev.h:400);
+      setRect(w,{x:e.clientX-pw*ratio,y:Math.max(0,e.clientY-19),w:pw,h:ph});
+      w.max=false;w.snap=null;w.prev=null;setMaxIcon(w);
+    }
+    const r=currentRect(w),sx=e.clientX,sy=e.clientY;
+    document.body.classList.add('dragging');tb.setPointerCapture(e.pointerId);
+    const sp=$('#snapPrev');
+    const mv=ev=>{
+      let nx=r.x+ev.clientX-sx,ny=r.y+ev.clientY-sy;
+      ny=clamp(ny,0,innerHeight-48-34);
+      setRect(w,{x:nx,y:ny,w:r.w,h:r.h});
+      let kind=null;
+      if(ev.clientY<=4)kind='T';else if(ev.clientX<=4)kind='L';else if(ev.clientX>=innerWidth-4)kind='R';
+      if(kind){sp.style.display='block';
+        if(kind==='T')Object.assign(sp.style,{left:'8px',top:'8px',width:innerWidth-16+'px',height:innerHeight-48-16+'px'});
+        else if(kind==='L')Object.assign(sp.style,{left:'8px',top:'8px',width:innerWidth/2-12+'px',height:innerHeight-48-16+'px'});
+        else Object.assign(sp.style,{left:innerWidth/2+4+'px',top:'8px',width:innerWidth/2-12+'px',height:innerHeight-48-16+'px'});
+        sp.dataset.kind=kind;
+      }else sp.style.display='none';
+    };
+    const up=()=>{tb.releasePointerCapture(e.pointerId);document.body.classList.remove('dragging');
+      if(sp.style.display==='block'){snapWin(w,sp.dataset.kind);sp.style.display='none';}
+      document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);};
+    document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
+  });
+}
+function initResize(w){
+  w.el.querySelectorAll('.rz').forEach(h=>{
+    h.addEventListener('pointerdown',e=>{
+      e.stopPropagation();focusWin(w);if(w.max)return;
+      const d=h.dataset.d,r0=currentRect(w),sx=e.clientX,sy=e.clientY;
+      document.body.classList.add('dragging');h.setPointerCapture(e.pointerId);
+      const mv=ev=>{
+        const dx=ev.clientX-sx,dy=ev.clientY-sy;let{x,y,w:W,h:H}=r0;
+        if(d.includes('e'))W=r0.w+dx;
+        if(d.includes('s'))H=r0.h+dy;
+        if(d.includes('w')){W=r0.w-dx;x=r0.x+dx;if(W<320){x-=(320-W);W=320;}}
+        if(d.includes('n')){H=r0.h-dy;y=r0.y+dy;if(H<200){y-=(200-H);H=200;}}
+        setRect(w,{x,y,w:Math.max(320,W),h:Math.max(200,H)});
+      };
+      const up=()=>{document.body.classList.remove('dragging');h.releasePointerCapture(e.pointerId);
+        document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);};
+      document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);
+    });
+  });
+}
+
+/* ============ タスクバー ============ */
+const PINNED=['explorer','edge','notepad','terminal','settings'];
+function ensureTbBtn(app){
+  if($('#tbApps').querySelector(`[data-app="${app}"]`))return;
+  const b=document.createElement('button');b.className='tb-btn';b.dataset.app=app;
+  b.innerHTML=icon(app,22)+'<span class="ind"></span>';b.title=APPS[app].title;
+  b.onclick=()=>tbClick(app);
+  $('#tbApps').appendChild(b);
+}
+function tbClick(app){
+  const ws=wins.filter(x=>x.app===app);
+  if(!ws.length){openApp(app);return;}
+  const f=getFocused(),t=ws[ws.length-1];
+  if(f&&f.app===app&&!f.min)minimizeWin(t);else{restoreWin(t);focusWin(t);}
+  refreshTaskbar();
+}
+function refreshTaskbar(){
+  const f=getFocused();
+  $('#tbApps').querySelectorAll('.tb-btn').forEach(b=>{
+    b.classList.toggle('open',wins.some(x=>x.app===b.dataset.app));
+    b.classList.toggle('active',!!f&&f.app===b.dataset.app&&!f.min);
+  });
+}
+
+/* ============ スタートメニュー ============ */
+const recents=[];
+function addRecent(id){const i=recents.findIndex(r=>r.app===id);if(i>-1)recents.splice(i,1);recents.unshift({app:id,t:'つい先ほど'});if(recents.length>6)recents.pop();}
+function renderStart(){
+  $('#smGrid').innerHTML=Object.keys(APPS).map(id=>`<button class="sm-tile" data-app="${id}"><span class="aic">${icon(id,32)}</span>${APPS[id].title}</button>`).join('');
+  $('#smRec').innerHTML=recents.length?recents.slice(0,4).map(r=>`<button class="sm-rec" data-app="${r.app}"><span class="aic">${icon(r.app,26)}</span><span>${APPS[r.app].title}<small>${r.t}</small></span></button>`).join(''):'<div style="grid-column:1/3;color:var(--sub);font-size:12px;padding:6px">最近使ったアプリはありません</div>';
+}
+function toggleStart(show){
+  const sm=$('#startMenu');const willShow=show??!sm.classList.contains('show');
+  closeAllMenus();
+  if(willShow){renderStart();sm.classList.add('show');$('#smSearch').value='';filterStart('');}
+}
+function filterStart(q){
+  $('#smGrid').querySelectorAll('.sm-tile').forEach(t=>{t.style.display=(APPS[t.dataset.app].title.includes(q)||t.dataset.app.includes(q))?'':'none';});
+}
+$('#startBtn').onclick=e=>{e.stopPropagation();toggleStart();};
+$('#tbSearch').onclick=e=>{e.stopPropagation();toggleStart(true);setTimeout(()=>$('#smSearch').focus(),50);};
+$('#smSearch').oninput=e=>filterStart(e.target.value);
+$('#startMenu').addEventListener('click',e=>{
+  const t=e.target.closest('[data-app]');if(t){openApp(t.dataset.app);toggleStart(false);}
+});
+$('#smPower').onclick=e=>{e.stopPropagation();$('#powerPop').classList.toggle('show');};
+$('#powerPop').onclick=e=>{
+  e.stopPropagation();const p=e.target.closest('[data-p]');if(!p)return;toggleStart(false);
+  if(p.dataset.p==='shutdown')doShutdown();else if(p.dataset.p==='restart')doRestart();else doSleep();
+};
+
+/* ============ クイック設定 ============ */
+function toggleQuick(show){const q=$('#quickPanel');const s=show??!q.classList.contains('show');closeAllMenus();if(s)q.classList.add('show');}
+$('#trayBtn').onclick=e=>{e.stopPropagation();toggleQuick();};
+$('#qsWifi').onclick=function(){this.classList.toggle('on');$('#icWifi').innerHTML=icon(this.classList.contains('on')?'wifi':'wifiOff',15);};
+$('#qsBt').onclick=function(){this.classList.toggle('on')};
+$('#qsAir').onclick=function(){this.classList.toggle('on')};
+$('#qsNight').onclick=function(){this.classList.toggle('on');$('#nightOv').style.display=this.classList.contains('on')?'block':'none';};
+$('#qsTheme').onclick=()=>{theme=theme==='dark'?'light':'dark';applyTheme();};
+function setBright(v){$('#brightOv').style.opacity=((100-v)/100*.85).toFixed(2);store.bright=v;save();}
+$('#brSlider').oninput=e=>setBright(e.target.value);
+$('#volSlider').oninput=e=>{$('#icVol').innerHTML=icon(e.target.value==0?'volMute':'vol',15);};
+
+/* ============ コンテキストメニュー ============ */
+function showCtx(x,y,items){
+  const c=$('#ctxMenu');c.innerHTML='';
+  items.forEach(it=>{
+    if(it==='-'){c.insertAdjacentHTML('beforeend','<div class="sep"></div>');return;}
+    const b=document.createElement('button');b.innerHTML=`<span style="width:16px;height:16px">${icon(it.i,16)}</span>${it.l}`;
+    b.onclick=()=>{hideCtx();it.fn&&it.fn();};c.appendChild(b);
+  });
+  c.classList.add('show');
+  c.style.left=clamp(x,0,innerWidth-c.offsetWidth-6)+'px';
+  c.style.top=clamp(y,0,innerHeight-c.offsetHeight-54)+'px';
+}
+function hideCtx(){$('#ctxMenu').classList.remove('show')}
+function closeAllMenus(){hideCtx();$('#startMenu').classList.remove('show');$('#quickPanel').classList.remove('show');$('#powerPop').classList.remove('show');}
+document.addEventListener('pointerdown',e=>{
+  if(!e.target.closest('#ctxMenu'))hideCtx();
+  if(!e.target.closest('#startMenu,#startBtn,#tbSearch'))$('#startMenu').classList.remove('show');
+  if(!e.target.closest('#quickPanel,#trayBtn'))$('#quickPanel').classList.remove('show');
+  if(!e.target.closest('#powerPop,#smPower'))$('#powerPop').classList.remove('show');
+},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAllMenus();});
+document.addEventListener('contextmenu',e=>{
+  if(e.target.closest('.win,#taskbar,#startMenu'))return;
+  e.preventDefault();
+  showCtx(e.clientX,e.clientY,[
+    {i:'refresh',l:'最新の情報に更新',fn:()=>{}},
+    {i:'img',l:'壁紙を変更',fn:()=>{wallIdx=(wallIdx+1)%WALLS.length;applyWall();}},
+    '-',
+    {i:'txt',l:'新規テキスト文書',fn:()=>{addDeskIcon('newtxt','新しいテキスト文書.txt','txt',()=>openApp('notepad'));}},
+    {i:'folder',l:'新規フォルダー',fn:()=>{}},
+    '-',
+    {i:'monitor',l:'ディスプレイ設定',fn:()=>openApp('settings',{page:'system'})},
+    {i:'brush',l:'個人用設定',fn:()=>openApp('settings',{page:'personal'})},
+  ]);
+});
+
+/* ============ デスクトップアイコン ============ */
+function addDeskIcon(id,label,ic,openFn){
+  const d=document.createElement('div');d.className='dicon';d.innerHTML=`<div class="di">${icon(ic,40)}</div><span class="lb">${esc(label)}</span>`;
+  d.onclick=e=>{e.stopPropagation();document.querySelectorAll('.dicon').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');};
+  d.ondblclick=()=>openFn();
+  $('#deskIcons').appendChild(d);
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.dicon'))document.querySelectorAll('.dicon').forEach(x=>x.classList.remove('sel'));});
+[['pc','PC','pc',()=>openApp('explorer')],
+ ['bin','ごみ箱','recycle',()=>openApp('recycle')],
+ ['notepad','メモ帳','notepad',()=>openApp('notepad')],
+ ['paint','ペイント','paint',()=>openApp('paint')],
+ ['edge','Microsoft Edge','edge',()=>openApp('edge')],
+ ['terminal','ターミナル','terminal',()=>openApp('terminal')],
+].forEach(a=>addDeskIcon(a[0],a[1],a[2],a[3]));
+$('#showDesk').onclick=()=>{wins.forEach(w=>minimizeWin(w));};
+
+/* ============ ファイルシステム ============ */
+const FS={
+ 'デスクトップ':{d:[],f:[{n:'打合せメモ.txt',t:'txt',c:'8/7 定例打合せメモ\r\n\r\n・次回リリースの確認事項\r\n・備品購入の件（モニターアーム x2）\r\n・来週スケジュールはWikiに記入のこと'}]},
+ 'ドキュメント':{d:['プロジェクト','レポート'],f:[{n:'買い物リスト.txt',t:'txt',c:'・卵\r\n・牛乳\r\n・コーヒー豆\r\n・付箋（大）'}]},
+ 'ダウンロード':{d:[],f:[{n:'setup_printer.exe',t:'exe'},{n:'scan_0801.jpg',t:'img',img:1}]},
+ 'ピクチャ':{d:['壁紙'],f:[{n:'IMG_2041.jpg',t:'img',img:0}]},
+ 'ミュージック':{d:[],f:[{n:'ambient_01.mp3',t:'mus'}]},
+ 'ビデオ':{d:[],f:[]},
+ 'プロジェクト':{d:[],f:[{n:'段取り.txt',t:'txt',c:'今期の段取り\r\n\r\n1. 要件確認（済）\r\n2. 設計（済）\r\n3. 実装\r\n4. 検証\r\n5. 展開'}]},
+ 'レポート':{d:[],f:[{n:'月次報告_07.txt',t:'txt',c:'7月度 月次報告\r\n\r\n稼働率: 96.2%\r\n未解決案件: 2件\r\n特記事項: なし'}]},
+ '壁紙':{d:[],f:WALLS.map((x,i)=>({n:'wallpaper_0'+(i+1)+'.jpg',t:'img',img:i}))},
+};
+const FICO={txt:'txt',img:'img',exe:'exe',mus:'mus'};
+
+/* ============ アプリ ============ */
+const APPS={};
+function defApp(id,title,ic,w,h,launch,extra={}){APPS[id]={title,icon:ic,w,h,launch,...extra};}
+
+defApp('notepad','メモ帳','notepad',560,420,(w,o)=>{
+  w.body.innerHTML=`<div class="abar"><button data-a="new">新規</button><button data-a="save">保存</button><button data-a="wrap">折り返し ✔</button></div>
+  <textarea class="np-area" spellcheck="false"></textarea>
+  <div class="astatus"><span class="np-c">行 1、列 1 | 0 文字</span><span>UTF-8 (CRLF) | テキスト文書</span></div>`;
+  const ta=w.body.querySelector('.np-area');ta.value=o.content||'';
+  const upd=()=>{const p=ta.selectionStart,lines=ta.value.substr(0,p).split('\n');
+    w.body.querySelector('.np-c').textContent=`行 ${lines.length}、列 ${lines[lines.length-1].length+1} | ${ta.value.length} 文字`;};
+  ta.addEventListener('input',upd);ta.addEventListener('click',upd);upd();
+  w.body.querySelector('[data-a=new]').onclick=()=>{ta.value='';upd();};
+  w.body.querySelector('[data-a=wrap]').onclick=function(){ta.wrap=ta.wrap==='off'?'':'off';this.textContent=ta.wrap==='off'?'折り返し ✖':'折り返し ✔';};
+  w.body.querySelector('[data-a=save]').onclick=()=>{
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ta.value],{type:'text/plain'}));a.download='無題.txt';a.click();
+    toast('notepad','メモ帳','ファイルを保存しました。');};
+});
+
+defApp('calc','電卓','calc',340,480,w=>{
+  w.body.innerHTML=`<div class="calc" tabindex="0"><div class="c-expr">&nbsp;</div><div class="c-disp">0</div><div class="c-grid"></div></div>`;
+  const keys=['C','⌫','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','±','0','.','='];
+  const grid=w.body.querySelector('.c-grid');
+  grid.innerHTML=keys.map(k=>`<button data-k="${k}" class="${'÷×−+C⌫%±'.includes(k)?'op':''}${k==='='?'eq':''}">${k}</button>`).join('');
+  let expr='';
+  const disp=w.body.querySelector('.c-disp'),ex=w.body.querySelector('.c-expr');
+  const show=()=>{disp.textContent=expr?expr.replace(/\*/g,'×').replace(/\//g,'÷'):'0';disp.style.fontSize=expr.length>14?'22px':'36px';};
+  const calc=()=>{try{const s=expr.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');if(!/^[0-9+\-*/.() ]+$/.test(s))throw 0;
+    const r=Function('"use strict";return('+s+')')();if(!isFinite(r))throw 0;ex.textContent=expr+' =';expr=String(Math.round(r*1e10)/1e10);}catch(e){ex.textContent='エラー';expr='';}show();};
+  function press(k){
+    if(k==='C'){expr='';ex.innerHTML='&nbsp;';}
+    else if(k==='⌫')expr=expr.slice(0,-1);
+    else if(k==='=')calc();
+    else if(k==='±')expr=expr.startsWith('-')?expr.slice(1):'-'+expr;
+    else if(k==='%')expr+='*0.01';
+    else expr+=({'÷':'/','×':'*','−':'-'})[k]??k;
+    if(k!=='=')ex.innerHTML='&nbsp;';show();
+  }
+  grid.onclick=e=>{const k=e.target.closest('button')?.dataset?.k;if(k)press(k);};
+  const root=w.body.querySelector('.calc');
+  root.addEventListener('keydown',e=>{
+    const k=e.key;let m=null;
+    if(/^[0-9.]$/.test(k))m=k;
+    else if(k==='+')m='+';else if(k==='-')m='−';else if(k==='*')m='×';else if(k==='/')m='÷';
+    else if(k==='Enter'||k==='=')m='=';else if(k==='Backspace')m='⌫';else if(k==='Escape'||k==='Delete')m='C';
+    if(m){press(m);e.preventDefault();}
+  });
+  root.focus();
+});
+
+defApp('terminal','ターミナル','terminal',640,420,w=>{
+  w.body.innerHTML=`<div class="term"><div class="t-out">Microsoft Windows [Version 10.0.22631.4317]\n(c) Microsoft Corporation。All rights reserved。\n\n</div><div class="t-line"><span class="t-prompt">C:\\Users\\User&gt;</span><input class="t-in" autocomplete="off"></div></div>`;
+  const out=w.body.querySelector('.t-out'),inp=w.body.querySelector('.t-in'),term=w.body.querySelector('.term');
+  term.onclick=()=>inp.focus();setTimeout(()=>inp.focus(),100);
+  const hist=[];let hi=-1;
+  const print=s=>{out.textContent+=s+'\n';term.scrollTop=term.scrollHeight;};
+  const CC={'0':'#0c0c0c','1':'#3b78c3','2':'#16a34a','3':'#3ec6c6','4':'#d13438','5':'#b45bc9','6':'#c8a11c','7':'#cccccc','8':'#8a8a8a','9':'#61b3ff',A:'#4ce07a',B:'#7ce6e6',C:'#ff5c5c',D:'#e08ae0',E:'#ffe95c',F:'#ffffff'};
+  const CMDS={
+    help:()=>print('使用可能なコマンド:\n  help / cls / echo / date / time / whoami / ver / dir\n  systeminfo / color <0-9,A-F> / start <アプリ> / shutdown / exit'),
+    cls:()=>{out.textContent='';},
+    date:()=>print(new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'long'})),
+    time:()=>print(new Date().toLocaleTimeString('ja-JP')),
+    whoami:()=>print('desktop-7k4m2\\user'),
+    ver:()=>print('Microsoft Windows [Version 10.0.22631.4317]'),
+    dir:()=>{print(' C:\\Users\\User のディレクトリ\n\n2026/08/07  18:22    <DIR>          デスクトップ\n2026/08/05  09:14    <DIR>          ドキュメント\n2026/08/01  12:40    <DIR>          ダウンロード\n2026/07/28  20:03    <DIR>          ピクチャ\n2026/06/11  07:55    <DIR>          ミュージック\n2026/06/11  07:55    <DIR>          ビデオ\n               0 個のファイル');},
+    systeminfo:()=>print(`ホスト名:              DESKTOP-7K4M2\nOS 名:                Microsoft Windows 11 Pro\nOS バージョン:        10.0.22631 N/A ビルド 22631\nシステムの種類:       x64-based PC\nプロセッサ:           Intel64 Family 6 Model 186 (14コア)\n物理メモリ総量:       16,384 MB\n利用可能な物理メモリ: 7,412 MB\n起動時間:             ${Math.floor((Date.now()-bootTime)/1000)} 秒前`),
+    color:()=>{const a=(rest[0]||'').toUpperCase();if(a.length===2&&CC[a[1]]){term.style.color=CC[a[1]];print('コンソールの色を変更しました。')}else print('使用法: color <背景1桁><文字1桁>  例: color 0A');},
+    shutdown:()=>{setTimeout(doShutdown,300);print('シャットダウン中です...');},
+    exit:()=>closeWin(w),
+  };
+  let rest=[];
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='ArrowUp'){if(hi<hist.length-1){hi++;inp.value=hist[hist.length-1-hi]||'';}e.preventDefault();return;}
+    if(e.key==='ArrowDown'){if(hi>0){hi--;inp.value=hist[hist.length-1-hi]||'';}else{hi=-1;inp.value='';}e.preventDefault();return;}
+    if(e.key!=='Enter')return;
+    const line=inp.value;inp.value='';hi=-1;
+    print('C:\\Users\\User> '+line);
+    if(line.trim()){hist.push(line);
+      const parts=line.trim().split(/\s+/);const cmd=parts[0].toLowerCase();rest=parts.slice(1);
+      if(cmd==='echo')print(rest.join(' '));
+      else if(cmd==='start'){const m={notepad:'notepad',calc:'calc',explorer:'explorer',edge:'edge',terminal:'terminal',settings:'settings',paint:'paint',photos:'photos',taskmgr:'taskmgr'}[rest[0]];
+        if(m){openApp(m);print('「'+APPS[m].title+'」を起動しました。')}else print('指定されたファイルまたはアプリケーションが見つかりません。');}
+      else if(CMDS[cmd])CMDS[cmd]();
+      else print(`'${cmd}' は、内部コマンドまたは外部コマンド、\n操作可能なプログラムまたはバッチ ファイルとして認識されていません。`);
+    }
+    out.textContent+='\n';term.scrollTop=term.scrollHeight;
+  });
+});
+
+defApp('explorer','エクスプローラー','explorer',760,500,(w,o)=>{
+  let path=o.path||['PC'],hist=[path.slice()],hi=0;
+  w.body.innerHTML=`<div class="abar"><button data-n="back">←</button><button data-n="fwd">→</button><button data-n="up">↑</button>
+    <div class="ex-crumb"></div></div><div class="ex"><div class="ex-side"></div><div class="ex-main"><div class="ex-items"></div><div class="astatus"><span class="ex-c"></span><span></span></div></div></div>`;
+  const side=w.body.querySelector('.ex-side'),items=w.body.querySelector('.ex-items'),crumb=w.body.querySelector('.ex-crumb');
+  side.innerHTML=['デスクトップ','ドキュメント','ダウンロード','ピクチャ','ミュージック','ビデオ','-','PC'].map(s=>s==='-'?'<div style="height:1px;background:var(--border);margin:6px 10px"></div>':`<button data-p="${s}">${icon(s==='PC'?'pc':'folder',16)} ${s}</button>`).join('');
+  side.onclick=e=>{const b=e.target.closest('[data-p]');if(b){b.dataset.p==='PC'?go(['PC']):go(['PC',b.dataset.p]);}};
+  const TOP=['デスクトップ','ドキュメント','ダウンロード','ピクチャ','ミュージック','ビデオ'];
+  function node(p){if(p.length===1)return{d:TOP,f:[]};return FS[p[p.length-1]]||{d:[],f:[]};}
+  function go(p,push=true){path=p;if(push){hist=hist.slice(0,hi+1);hist.push(p.slice());hi++;}render();}
+  function render(){
+    crumb.innerHTML=path.map((s,i)=>`<button data-i="${i}">${icon(i===0?'pc':'folder',14)} ${s}</button>`).join('');
+    const n=node(path);
+    side.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p===path[path.length-1]));
+    items.innerHTML=(n.d.map(d=>`<div class="ex-it" data-t="dir" data-n="${d}"><div class="fi">${icon('folder',36)}</div><div class="fn">${d}</div></div>`).join('')
+      +n.f.map((f,i)=>`<div class="ex-it" data-t="file" data-i="${i}"><div class="fi">${icon(FICO[f.t]||'txt',36)}</div><div class="fn">${esc(f.n)}</div></div>`).join(''))
+      ||'<div class="empty" style="width:100%"><div class="ei">'+icon('folder',56)+'</div>このフォルダーは空です</div>';
+    w.body.querySelector('.ex-c').textContent=`${n.d.length+n.f.length} 項目`;
+  }
+  crumb.onclick=e=>{const b=e.target.closest('[data-i]');if(b)go(path.slice(0,+b.dataset.i+1));};
+  w.body.querySelector('[data-n=back]').onclick=()=>{if(hi>0){hi--;path=hist[hi].slice();render();}};
+  w.body.querySelector('[data-n=fwd]').onclick=()=>{if(hi<hist.length-1){hi++;path=hist[hi].slice();render();}};
+  w.body.querySelector('[data-n=up]').onclick=()=>{if(path.length>1)go(path.slice(0,-1));};
+  items.onclick=e=>{const it=e.target.closest('.ex-it');if(!it)return;
+    items.querySelectorAll('.ex-it').forEach(x=>x.classList.remove('sel'));it.classList.add('sel');};
+  items.ondblclick=e=>{const it=e.target.closest('.ex-it');if(!it)return;
+    if(it.dataset.t==='dir')go([...path,it.dataset.n]);
+    else{const f=node(path).f[+it.dataset.i];
+      if(f.t==='txt')openApp('notepad',{content:f.c||''});
+      else if(f.t==='img')openApp('photos',{index:f.img});
+      else if(f.t==='exe')toast('exe','インストール','このパッケージは既に最新の状態です。');
+      else if(f.t==='mus')toast('mus','メディアプレーヤー','再生中: '+f.n);
+    }};
+  render();
+});
+
+defApp('edge','Microsoft Edge','edge',860,560,w=>{
+  let hist=['edge://start'],hi=0;
+  w.body.innerHTML=`<div class="br-bar"><button data-n="back">←</button><button data-n="fwd">→</button><button data-n="re">⟳</button><input class="br-addr" value="edge://start"></div><div class="br-load"></div><div class="br-page"></div>`;
+  const page=w.body.querySelector('.br-page'),addr=w.body.querySelector('.br-addr'),load=w.body.querySelector('.br-load');
+  const PAGES={
+    'edge://start':()=>`<div style="text-align:center;padding-top:56px"><h1 style="font-size:30px">新しいタブ</h1>
+      <input class="br-addr" data-q style="max-width:460px;margin:16px auto;height:40px" placeholder="Web を検索またはアドレスを入力">
+      <div class="br-quick" style="justify-content:center">
+        <div class="br-qt" data-go="news">${icon('txt',26)}<span>デイリーニュース</span></div>
+        <div class="br-qt" data-go="weather">${icon('sun',26)}<span>天気予報</span></div>
+        <div class="br-qt" data-go="wiki">${icon('search',26)}<span>百科事典</span></div>
+      </div></div>`,
+    news:()=>`<h1>デイリーニュース</h1><p>${new Date().toLocaleDateString('ja-JP')} の主な見出し</p>
+      <h2><a data-go="wiki">市中心部の新広場が一般公開、初日から大勢の来場者</a></h2><p>再開発が進められていたエリアの整備が完了。週末にはマルシェも開催される予定。</p>
+      <h2>郊外線に新型車両、来月から順次投入</h2><p>通勤時間帯の混雑緩和が期待されている。</p>
+      <h2>市内の図書館、開館時間を30分延長へ</h2><p>利用者からの要望を受けた対応。試験運用は9月から。</p>`,
+    weather:()=>`<h1>天気予報 — 東京</h1><p>更新: ${new Date().toLocaleTimeString('ja-JP')}</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">${['☀ 28°','☀ 29°','☁ 27°','☂ 24°','☀ 30°','☁ 28°','☀ 31°'].map((x,i)=>`<div class="br-qt" style="width:100px"><span style="font-size:20px">${x.split(' ')[0]}</span><span>${['今日','日','月','火','水','木','金'][i]} ${x.split(' ')[1]}</span></div>`).join('')}</div>
+      <p style="margin-top:18px">湿度 55% / 降水確率 10% / 紫外線 中程度</p>`,
+    wiki:()=>`<h1>百科事典 — Windows</h1><p><b>Windows</b>（ウィンドウズ）は、マイクロソフトが開発・販売するオペレーティングシステム（OS）のシリーズである。グラフィカルユーザインターフェイスを採用し、個人用コンピュータからサーバーまで幅広く利用されている。</p>
+      <h2>概要</h2><p>1985年に最初のバージョンが発売されて以来、世界で最も普及しているデスクトップOSの一つである。現在の主力バージョンは Windows 11 である。</p>
+      <h2>主な機能</h2><p>ウィンドウ管理、タスクバー、スタートメニュー、ファイル管理、マルチタスク、プラグアンドプレイなどを備える。</p>`,
+  };
+  function render(url){
+    load.classList.add('on');setTimeout(()=>load.classList.remove('on'),500);
+    addr.value=url;let html;
+    if(PAGES[url])html=PAGES[url]();
+    else if(url.startsWith('search:')){const q=decodeURIComponent(url.slice(7));
+      html=`<h1>「${esc(q)}」の検索結果</h1><p>約 1,280,000 件 (0.${Math.floor(Math.random()*80+10)} 秒)</p>`+
+      [[`${q}とは - 百科事典`,`${q} の概要、歴史、特徴について解説。`],[`${q}の最新情報 - デイリーニュース`,`${q} に関する最新の話題をお届けします。`],[`${q}の使い方まとめ`,`${q} の基本的な使い方から応用まで。`],[`${q} 公式サイト`,`${q} の公式情報、ダウンロード、ドキュメント。`]].map(r=>`<div class="br-res"><a data-go="wiki">${r[0]}</a><div class="u">www.example.co.jp › ${esc(q)}</div><p>${r[1]}</p></div>`).join('');}
+    else html=`<div class="empty"><div class="ei">${icon('edge',56)}</div><b>ページにアクセスできません</b><p>${esc(url)} に到達できませんでした (ERR_NAME_NOT_RESOLVED)</p></div>`;
+    page.innerHTML=html;page.scrollTop=0;
+  }
+  function nav(url){hist=hist.slice(0,hi+1);hist.push(url);hi++;render(url);}
+  w.body.querySelector('[data-n=back]').onclick=()=>{if(hi>0){hi--;render(hist[hi]);}};
+  w.body.querySelector('[data-n=fwd]').onclick=()=>{if(hi<hist.length-1){hi++;render(hist[hi]);}};
+  w.body.querySelector('[data-n=re]').onclick=()=>render(hist[hi]);
+  addr.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const v=addr.value.trim();
+    nav(v.includes(' ')||!v.includes('.')?`search:${encodeURIComponent(v)}`:v);});
+  page.addEventListener('keydown',e=>{if(e.target.dataset?.q!==undefined&&e.key==='Enter')nav(`search:${encodeURIComponent(e.target.value)}`);});
+  page.onclick=e=>{const g=e.target.closest('[data-go]');if(g)nav(g.dataset.go);};
+  render('edge://start');
+});
+
+defApp('settings','設定','settings',820,560,(w,o)=>{
+  let page=o.page||'personal';
+  w.body.innerHTML=`<div class="set"><div class="set-side"></div><div class="set-main"></div></div>`;
+  const side=w.body.querySelector('.set-side'),main=w.body.querySelector('.set-main');
+  side.innerHTML=[['personal','brush','個人用設定'],['system','monitor','システム'],['about','info','バージョン情報']].map(p=>`<button data-p="${p[0]}" class="${p[0]===page?'on':''}">${icon(p[1],16)} ${p[2]}</button>`).join('');
+  side.onclick=e=>{const b=e.target.closest('[data-p]');if(b){page=b.dataset.p;side.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));render();}};
+  function render(){
+    if(page==='personal')main.innerHTML=`<h1>個人用設定</h1>
+      <div class="sm-h" style="margin:0 0 10px">背景</div><div class="wp-grid">${WALLS.map((x,i)=>`<div class="wp-th ${i===wallIdx?'on':''}" data-w="${i}" style="background-image:url(${x.url})" title="${x.name}"></div>`).join('')}</div>
+      <div class="sm-h" style="margin:0 0 10px">モード</div>
+      <div class="set-card"><div class="lab"><b>アプリとウィンドウの配色</b><small>ライト / ダーク</small></div>
+        <div style="display:flex;gap:8px"><button data-th="light" style="padding:8px 16px;border-radius:6px;background:var(--input);border:1px solid var(--border)">ライト</button>
+        <button data-th="dark" style="padding:8px 16px;border-radius:6px;background:var(--input);border:1px solid var(--border)">ダーク</button></div></div>
+      <div class="sm-h" style="margin:0 0 10px">アクセントカラー</div>
+      <div class="acc-row">${ACCENTS.map(c=>`<div class="acc ${c===accent?'on':''}" data-c="${c}" style="background:${c}"></div>`).join('')}</div>`;
+    else if(page==='system')main.innerHTML=`<h1>システム</h1>
+      <div class="set-card"><div class="lab"><b>画面の明るさ</b></div><input type="range" min="30" max="100" value="${$('#brSlider').value}" data-br style="width:200px;accent-color:var(--accent)"></div>
+      <div class="set-card"><div class="lab"><b>ナイトライト</b><small>ブルーライトを軽減します</small></div><input type="checkbox" data-nl ${$('#nightOv').style.display==='block'?'checked':''} style="width:20px;height:20px;accent-color:var(--accent)"></div>
+      <div class="set-card"><div class="lab"><b>ストレージ</b><small>ローカルディスク (C:)</small></div><div style="width:220px"><div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden"><div style="width:42%;height:100%;background:var(--accent)"></div></div><small style="color:var(--sub)">108 GB 使用 / 256 GB</small></div></div>
+      <div class="set-card"><div class="lab"><b>ディスプレイ</b></div><span style="color:var(--sub);font-size:12px">${innerWidth} × ${innerHeight} / 100%</span></div>`;
+    else main.innerHTML=`<h1>バージョン情報</h1>
+      <div class="set-card"><div class="lab"><b>デバイス名</b></div><span>DESKTOP-7K4M2</span></div>
+      <div class="set-card"><div class="lab"><b>エディション</b></div><span>Windows 11 Pro</span></div>
+      <div class="set-card"><div class="lab"><b>バージョン</b></div><span>23H2</span></div>
+      <div class="set-card"><div class="lab"><b>OS ビルド</b></div><span>22631.4317</span></div>
+      <div class="set-card"><div class="lab"><b>プロセッサ</b></div><span>Intel Core i7-13700H 2.40 GHz</span></div>
+      <div class="set-card"><div class="lab"><b>実装 RAM</b></div><span>16.0 GB</span></div>`;
+    main.querySelectorAll('.wp-th').forEach(t=>t.onclick=()=>{wallIdx=+t.dataset.w;applyWall();render();});
+    main.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{theme=b.dataset.th;applyTheme();});
+    main.querySelectorAll('.acc').forEach(a=>a.onclick=()=>{accent=a.dataset.c;applyTheme();render();});
+    const br=main.querySelector('[data-br]');if(br)br.oninput=e=>{$('#brSlider').value=e.target.value;setBright(e.target.value);};
+    const nl=main.querySelector('[data-nl]');if(nl)nl.onchange=e=>{$('#qsNight').classList.toggle('on',e.target.checked);$('#nightOv').style.display=e.target.checked?'block':'none';};
+  }
+  render();
+},{single:true});
+
+defApp('paint','ペイント','paint',760,540,w=>{
+  w.body.innerHTML=`<div class="pt-tools">
+    <button data-t="pen" class="on">ペン</button><button data-t="eraser">消しゴム</button>
+    <span style="width:1px;height:20px;background:var(--border)"></span>
+    ${['#000000','#ffffff','#e81123','#0067c0','#107c10','#ffb900','#744da9','#c30052'].map((c,i)=>`<div class="sw ${i===0?'on':''}" data-c="${c}" style="background:${c}"></div>`).join('')}
+    <input type="color" value="#000000" data-cc style="width:26px;height:26px;border:none;background:none;cursor:pointer">
+    <span style="width:1px;height:20px;background:var(--border)"></span>
+    <span style="font-size:12px">太さ</span><input type="range" min="1" max="40" value="4" data-size>
+    <span style="flex:1"></span>
+    <button data-a="clear">クリア</button><button data-a="save">保存</button></div>
+    <canvas id="ptCanvas"></canvas>`;
+  const cv=w.body.querySelector('canvas'),ctx=cv.getContext('2d');
+  let tool='pen',color='#000000',size=4,drawing=false,lx=0,ly=0;
+  function fit(){const snap=document.createElement('canvas');snap.width=cv.width;snap.height=cv.height;if(cv.width)snap.getContext('2d').drawImage(cv,0,0);
+    cv.width=Math.max(50,cv.clientWidth);cv.height=Math.max(50,cv.clientHeight);ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);if(snap.width)ctx.drawImage(snap,0,0);}
+  setTimeout(fit,30);new ResizeObserver(()=>fit()).observe(cv);
+  const pos=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  cv.addEventListener('pointerdown',e=>{drawing=true;[lx,ly]=pos(e);cv.setPointerCapture(e.pointerId);draw(e);});
+  cv.addEventListener('pointermove',e=>{if(drawing)draw(e);});
+  cv.addEventListener('pointerup',()=>drawing=false);
+  function draw(e){const[x,y]=pos(e);ctx.strokeStyle=tool==='eraser'?'#fff':color;ctx.lineWidth=tool==='eraser'?size*3:size;ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();lx=x;ly=y;}
+  w.body.querySelector('.pt-tools').onclick=e=>{
+    const t=e.target.closest('[data-t]');if(t){tool=t.dataset.t;w.body.querySelectorAll('[data-t]').forEach(x=>x.classList.toggle('on',x===t));}
+    const s=e.target.closest('.sw');if(s){color=s.dataset.c;w.body.querySelectorAll('.sw').forEach(x=>x.classList.toggle('on',x===s));}
+    const a=e.target.closest('[data-a]');if(a){
+      if(a.dataset.a==='clear'){ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);}
+      else{const l=document.createElement('a');l.download='無題.png';l.href=cv.toDataURL();l.click();toast('paint','ペイント','画像を保存しました。');}}
+  };
+  w.body.querySelector('[data-cc]').oninput=e=>color=e.target.value;
+  w.body.querySelector('[data-size]').oninput=e=>size=+e.target.value;
+});
+
+defApp('taskmgr','タスクマネージャー','taskmgr',640,480,w=>{
+  w.body.innerHTML=`<div class="tm"><div style="display:flex;align-items:center;gap:14px;margin-bottom:8px"><b style="font-size:14px">タスクマネージャー</b><canvas class="spark" width="220" height="40" style="border:1px solid var(--border);border-radius:6px;background:var(--input)"></canvas><span class="cpu-l" style="font-size:12px;color:var(--sub)">CPU 0%</span></div>
+  <div style="flex:1;overflow-y:auto"><table><thead><tr><th>名前</th><th>CPU</th><th>メモリ</th><th></th></tr></thead><tbody></tbody></table></div></div>`;
+  const tb=w.body.querySelector('tbody'),spark=w.body.querySelector('.spark'),sctx=spark.getContext('2d');
+  const cpuHist=new Array(55).fill(3);
+  const base=[['System',.1,12],['Registry',0,8],['explorer.exe',.6,92],['dwm.exe',1.1,64],['SearchApp.exe',.3,41],['サービス ホスト: Windows Update',.2,28]];
+  function renderRows(){
+    const appRows=wins.map(x=>({label:APPS[x.app].title,cpu:Math.random()*3+.5,mem:Math.random()*180+60,win:x}));
+    const all=[...base.map(b=>({label:b[0],cpu:b[1]+Math.random()*.4,mem:b[2],win:null})),...appRows];
+    let tot=2;all.forEach(p=>tot+=p.cpu);
+    tb.innerHTML=all.map(p=>`<tr class="row"><td>${p.label}</td><td>${p.cpu.toFixed(1)}%</td><td>${p.mem.toFixed(0)} MB</td><td>${p.win?`<button class="kill" data-w="${p.win.id}">タスクの終了</button>`:''}</td></tr>`).join('');
+    w.body.querySelector('.cpu-l').textContent=`CPU ${tot.toFixed(1)}%`;
+    cpuHist.push(clamp(tot,0,100));cpuHist.shift();
+    sctx.clearRect(0,0,220,40);sctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--accent')||'#0067c0';sctx.beginPath();
+    cpuHist.forEach((v,i)=>{const x=i*(220/54),y=38-v/100*36;i?sctx.lineTo(x,y):sctx.moveTo(x,y)});sctx.stroke();
+  }
+  renderRows();
+  const iv=setInterval(renderRows,1000);
+  tb.onclick=e=>{const k=e.target.closest('.kill');if(k){const x=wins.find(v=>v.id==k.dataset.w);if(x){closeWin(x);}}}
+  w.onClose=()=>clearInterval(iv);
+},{single:true});
+
+defApp('photos','フォト','photos',640,460,(w,o)=>{
+  let view=o.index??null;
+  function render(){
+    if(view===null)w.body.innerHTML=`<div class="abar"><b style="padding:0 8px;font-size:13px">コレクション</b></div><div class="ph-grid">${WALLS.map((x,i)=>`<div class="ph-th" data-i="${i}" style="background-image:url(${x.url})" title="${x.name}"></div>`).join('')}</div>`;
+    else w.body.innerHTML=`<div class="abar"><button data-b>← 戻る</button><b style="font-size:13px">wallpaper_0${view+1}.jpg</b><span style="flex:1"></span><button data-set>背景として設定</button></div>
+      <div class="ph-view"><img src="${WALLS[view].url}"></div>`;
+    w.body.querySelectorAll('.ph-th').forEach(t=>t.onclick=()=>{view=+t.dataset.i;render();});
+    const b=w.body.querySelector('[data-b]');if(b)b.onclick=()=>{view=null;render();};
+    const s=w.body.querySelector('[data-set]');if(s)s.onclick=()=>{wallIdx=view;applyWall();toast('photos','個人用設定','デスクトップの背景を設定しました。');};
+  }
+  render();
+});
+
+defApp('recycle','ごみ箱','recycle',560,380,w=>{
+  w.body.innerHTML=`<div class="abar"><button>ごみ箱を空にする</button><button>すべて元に戻す</button></div><div class="empty"><div class="ei">${icon('recycle',56)}</div><b>ごみ箱は空です</b></div>`;
+  w.body.querySelectorAll('.abar button').forEach(b=>b.onclick=()=>{});
+});
+
+function openApp(id,opts={}){
+  const A=APPS[id];if(!A)return;
+  if(A.single){const ex=wins.find(x=>x.app===id);if(ex){restoreWin(ex);focusWin(ex);return ex;}}
+  const w=createWin({app:id,title:A.title,icon:A.icon,w:A.w,h:A.h});
+  A.launch(w,opts);addRecent(id);refreshTaskbar();
+  return w;
+}
+
+/* ============ 静的アイコンの配置 ============ */
+$('#searchIco').innerHTML=icon('search',14);
+$('#icWifi').innerHTML=icon('wifi',15);
+$('#icVol').innerHTML=icon('vol',15);
+$('#icBat').innerHTML=icon('bat',16);
+$('#pwrIco').innerHTML=icon('power',17);
+document.querySelectorAll('.qs-t').forEach(t=>{
+  const m={qsWifi:'wifi',qsBt:'bt',qsAir:'plane',qsNight:'moon',qsSave:'bat',qsTheme:'sun'}[t.id];
+  t.querySelector('.qi').innerHTML=icon(m,16);
+});
+$('#sunIco').innerHTML=icon('sun',17);
+$('#volIco').innerHTML=icon('vol',17);
+
+/* ============ 初期化(電源オフ状態から開始) ============ */
+applyTheme();
+applyWall();
+PINNED.forEach(ensureTbBtn);
+$('#poweroff').classList.add('show');
+</script>
+</body>
+</html>
