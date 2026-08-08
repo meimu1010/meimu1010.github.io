@@ -84,7 +84,8 @@ body.dragging{user-select:none;cursor:default}
 #startBtn svg{width:22px;height:22px}
 #tbSearch{height:36px;display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:18px;background:var(--input);border:1px solid var(--border);font-size:12.5px;color:var(--sub);margin:0 6px}
 .tb-btn{width:44px;height:40px;border-radius:6px;display:grid;place-items:center;position:relative}
-.tb-btn .ind{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:6px;height:3px;border-radius:2px;background:var(--sub);transition:all .15s}
+/* インジケーターは「開いている時」のみ表示 */
+.tb-btn .ind{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:6px;height:3px;border-radius:2px;background:transparent;transition:all .15s}
 .tb-btn.open .ind{background:var(--sub)}
 .tb-btn.active .ind{width:16px;background:var(--accent)}
 .tb-btn.active{background:var(--hover)}
@@ -242,9 +243,6 @@ body[data-theme="dark"] #smFoot{background:rgba(0,0,0,.28)}
 .br-quick{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px}
 .br-qt{width:100px;padding:16px 8px;border-radius:10px;background:var(--input);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:9px;font-size:12px;color:var(--text)}
 .br-qt:hover{border-color:var(--accent)}
-.br-ext{display:flex;align-items:center;gap:10px;padding:6px 12px;font-size:11.5px;color:var(--sub);background:var(--input);border-bottom:1px solid var(--border)}
-.br-ext a{color:var(--accent);text-decoration:none;white-space:nowrap}
-.br-ext a:hover{text-decoration:underline}
 .br-frame{flex:1;border:0;background:#fff;width:100%}
 
 /* 設定 */
@@ -445,7 +443,7 @@ function tick(){
 }
 setInterval(tick,1000);tick();
 
-/* ========== ロック(クリックでサインイン) ========== */
+/* ========== ロック ========== */
 $('#lock').addEventListener('click',()=>{
   $('#lock').classList.add('hide');
   if(!signIn.done){signIn.done=true;setTimeout(()=>toast('update','QwenOS セキュリティ','デバイスは保護されています。最新の状態です。'),6000);}
@@ -604,13 +602,13 @@ function initSnapFly(w){
 }
 buildSnapFly();
 
-/* ========== マウスのサイドボタン(戻る/進む)をOS内で処理 ========== */
+/* ========== マウスのサイドボタン ========== */
 function sideNav(dir){const f=getFocused();if(f&&f.api){dir<0?f.api.back():f.api.fwd();}}
 ['mousedown','mouseup','auxclick','click'].forEach(t=>window.addEventListener(t,e=>{
   if(e.button===3||e.button===4){e.preventDefault();e.stopPropagation();if(t==='mousedown')sideNav(e.button===3?-1:1);}
 },true));
 
-/* ========== タスクバー(ピン留め) ========== */
+/* ========== タスクバー ========== */
 const PINNED=['explorer','browser','notepad','terminal','settings'];
 function ensureTbBtn(app){
   if($('#tbApps').querySelector(`[data-app="${app}"]`))return;
@@ -678,7 +676,6 @@ $('#powerPop').addEventListener('click',e=>{
   e.stopPropagation();const p=e.target.closest('[data-p]');if(!p)return;toggleStart(false);
   if(p.dataset.p==='shutdown')doShutdown();else if(p.dataset.p==='restart')doRestart();else doSleep();
 });
-/* Winキーでスタートメニュー */
 document.addEventListener('keydown',e=>{
   if(e.key==='Meta'){e.preventDefault();toggleStart();}
   if(e.key==='Escape')closeAllMenus();
@@ -919,20 +916,23 @@ defApp('explorer','エクスプローラー','explorer',760,500,(w,o)=>{
   render();
 });
 
-/* ブラウザ: 内部ページ + 実サイトiframe (google は ?igu=1 で埋め込み可能) */
+/* ブラウザ: 内部ページ + 実サイトiframe
+   - google は ?igu=1 で埋め込み可能
+   - youtube は X-Frame-Options で拒否されるため、信頼できる Invidious ミラー inv.nadeko.net へ変換 [[2]][[5]] */
+const YT_MIRROR='inv.nadeko.net';
 defApp('browser','Qwen ブラウザー','browser',880,580,w=>{
-  let hist=[{t:'int',url:'qwen://start'}],hi=0;
-  w.body.innerHTML=`<div class="br-bar"><button data-n="back">←</button><button data-n="fwd">→</button><button data-n="re">⟳</button><input class="br-addr" value="qwen://start"></div><div class="br-load"></div><div class="br-body"></div>`;
-  const body=w.body.querySelector('.br-body'),addr=w.body.querySelector('.br-addr'),load=w.body.querySelector('.br-load');
+  let hist=[{t:'int',url:'qwen://start'}],hi=0,cur=null;
+  w.body.innerHTML=`<div class="br-bar"><button data-n="back">←</button><button data-n="fwd">→</button><button data-n="re">⟳</button><input class="br-addr" value="qwen://start"><button data-n="ext" title="新しいタブで開く" style="visibility:hidden">${icon('ext',15)}</button></div><div class="br-load"></div><div class="br-body"></div>`;
+  const body=w.body.querySelector('.br-body'),addr=w.body.querySelector('.br-addr'),load=w.body.querySelector('.br-load'),extBtn=w.body.querySelector('[data-n=ext]');
   const PAGES={
     'qwen://start':()=>`<div style="text-align:center;padding-top:52px"><h1 style="font-size:30px">新しいタブ</h1>
       <input class="br-addr" data-q style="max-width:460px;margin:16px auto;height:40px" placeholder="Web を検索またはアドレスを入力">
       <div class="br-quick" style="justify-content:center">
         <div class="br-qt" data-ext="https://www.google.com/webhp?igu=1">${icon('search',26)}<span>Google</span></div>
+        <div class="br-qt" data-ext="https://${YT_MIRROR}">${icon('ext',26)}<span>YouTube</span></div>
         <div class="br-qt" data-go="news">${icon('txt',26)}<span>デイリーニュース</span></div>
         <div class="br-qt" data-go="weather">${icon('sun',26)}<span>天気予報</span></div>
         <div class="br-qt" data-go="wiki">${icon('info',26)}<span>百科事典</span></div>
-        <div class="br-qt" data-ext="https://example.com">${icon('ext',26)}<span>example.com</span></div>
       </div></div>`,
     news:()=>`<h1>デイリーニュース</h1><p>${new Date().toLocaleDateString('ja-JP')} の主な見出し</p>
       <h2><a data-go="wiki">市中心部の新広場が一般公開、初日から大勢の来場者</a></h2><p>再開発が進められていたエリアの整備が完了。週末にはマルシェも開催される予定。</p>
@@ -946,27 +946,32 @@ defApp('browser','Qwen ブラウザー','browser',880,580,w=>{
       <h2>主な機能</h2><p>ウィンドウ管理、スナップレイアウト、ダークテーマ、アクセントカラー、仮想ファイルシステム、コマンドインタープリタ、実サイトへのナビゲーションなどを標準搭載する。</p>`,
   };
   function renderEntry(en){
+    cur=en;
     load.classList.add('on');setTimeout(()=>load.classList.remove('on'),600);
     addr.value=en.url;
+    extBtn.style.visibility=en.t==='ext'?'visible':'hidden';
     if(en.t==='int'){
       body.innerHTML='<div class="br-page">'+(PAGES[en.url]?PAGES[en.url]():'<div class="empty"><div class="ei">'+icon('browser',56)+'</div><b>ページを開けません</b></div>')+'</div>';
     }else{
-      let host='';try{host=new URL(en.url).host}catch(e){host=en.url}
-      body.innerHTML=`<div class="br-ext"><span>${esc(host)} を表示中 — サイトによっては埋め込みを拒否する場合があります</span><span style="flex:1"></span><a href="${esc(en.url)}" target="_blank" rel="noopener">新しいタブで開く</a></div>
-      <iframe class="br-frame" src="${esc(en.url)}" referrerpolicy="no-referrer"></iframe>`;
-      const fr=body.querySelector('iframe');fr.addEventListener('load',()=>{load.classList.remove('on');});
+      body.innerHTML=`<iframe class="br-frame" src="${esc(en.url)}" referrerpolicy="no-referrer"></iframe>`;
+      body.querySelector('iframe').addEventListener('load',()=>{load.classList.remove('on');});
     }
   }
   function nav(en){hist=hist.slice(0,hi+1);hist.push(en);hi++;renderEntry(en);}
   function parse(v){
     v=v.trim();if(!v)return null;
     if(v.startsWith('qwen://'))return{t:'int',url:v};
-    if(/^https?:\/\//i.test(v))return{t:'ext',url:v};
-    if(/^[^\s]+\.[^\s]{2,}$/.test(v)){
-      if(/google\./.test(v))return{t:'ext',url:'https://www.google.com/webhp?igu=1'};
-      return{t:'ext',url:'https://'+v};
-    }
+    if(/^https?:\/\//i.test(v))return{t:'ext',url:rewrite(v)};
+    if(/^[^\s]+\.[^\s]{2,}$/.test(v))return{t:'ext',url:rewrite('https://'+v)};
     return{t:'ext',url:'https://www.google.com/search?igu=1&q='+encodeURIComponent(v)};
+  }
+  function rewrite(url){
+    try{
+      const u=new URL(url),h=u.hostname.replace(/^(www|m)\./,'');
+      if(h==='google.com'||h.endsWith('.google.com'))return 'https://www.google.com/webhp?igu=1'+u.search;
+      if(h==='youtube.com'||h.endsWith('.youtube.com')||h==='youtu.be')return 'https://'+YT_MIRROR+(u.pathname==='/'?'':u.pathname)+u.search; /* YouTubeミラー [[5]] */
+    }catch(e){}
+    return url;
   }
   addr.addEventListener('keydown',e=>{if(e.key==='Enter'){const en=parse(addr.value);if(en)nav(en);}});
   body.addEventListener('keydown',e=>{if(e.target.dataset?.q!==undefined&&e.key==='Enter'){const en=parse(e.target.value);if(en)nav(en);}});
@@ -974,6 +979,7 @@ defApp('browser','Qwen ブラウザー','browser',880,580,w=>{
     const g=e.target.closest('[data-go]');if(g){nav({t:'int',url:g.dataset.go});return;}
     const x=e.target.closest('[data-ext]');if(x)nav({t:'ext',url:x.dataset.ext});
   });
+  extBtn.onclick=()=>{if(cur&&cur.t==='ext')window.open(cur.url,'_blank');};
   w.body.querySelector('[data-n=back]').onclick=()=>{if(hi>0){hi--;renderEntry(hist[hi]);}};
   w.body.querySelector('[data-n=fwd]').onclick=()=>{if(hi<hist.length-1){hi++;renderEntry(hist[hi]);}};
   w.body.querySelector('[data-n=re]').onclick=()=>renderEntry(hist[hi]);
@@ -1111,7 +1117,7 @@ document.querySelectorAll('.qs-t').forEach(t=>{
 $('#sunIco').innerHTML=icon('sun',17);
 $('#volIco').innerHTML=icon('vol',17);
 
-/* ========== 初期化: 自動起動 ========== */
+/* ========== 初期化 ========== */
 applyTheme();
 applyWall();
 PINNED.forEach(ensureTbBtn);
