@@ -426,7 +426,6 @@
   <select id="modelSelect">
     <option value="gemma-4-31b-it">Gemma 4 31B</option>
     <option value="gemma-4-26b-a4b-it">Gemma 4 26B (MoE)</option>
-    <option value="gemma-4-27b-it">Gemma 4 27B</option>
     <option value="custom">カスタム</option>
   </select>
   <input
@@ -582,13 +581,37 @@
   }
 
   function extractFinalJapanese(text) {
-    const matches = [...text.matchAll(/(?:^|\n)[ \t]*【一言紹介】/g)];
-    let body = text;
+    const marker = "【一言紹介】";
+    const requiredHeadings = ["【あらすじ】", "【主な登場人物】", "【見どころ】", "【こんな人におすすめ】"];
+    let best = -1;
+    let searchFrom = 0;
+    let idx = text.indexOf(marker, searchFrom);
 
-    if (matches.length) {
-      const last = matches[matches.length - 1];
-      body = text.slice(last.index);
+    while (idx !== -1) {
+      const rest = text.slice(idx);
+      let prev = 0;
+      let ok = true;
+
+      for (const heading of requiredHeadings) {
+        const pos = rest.indexOf(heading, prev);
+
+        if (pos === -1) {
+          ok = false;
+          break;
+        }
+
+        prev = pos + heading.length;
+      }
+
+      if (ok) {
+        best = idx;
+      }
+
+      searchFrom = idx + marker.length;
+      idx = text.indexOf(marker, searchFrom);
     }
+
+    const body = best !== -1 ? text.slice(best) : text;
 
     return body
       .split("\n")
@@ -667,13 +690,12 @@
       "- 作品を知らない人が「見るかどうか判断できる」情報に絞ってください。",
       "- 事実関係が不確実な場合は断定せず「要確認」と書いてください。",
       "- 存在しない作品や判断できない場合は、その旨を正直に書いてください。",
-      "- 必ず日本語のみで回答してください。作品名や固有名詞の英字（Key、Na-Ga など）はそのまま使ってかまいません。",
+      "- 必ず日本語のみで回答してください。固有名詞の英字はそのまま使ってかまいません。",
       "- いきなり最終的な日本語出力だけを出力してください。",
       "- 【一言紹介】の行から直接始めてください。それより前に何も書かないでください。",
       "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
       "- 出力は指定された見出しのみを使用してください。",
-      "- 検索結果がある場合は、検索結果の表記と内容を優先してください。",
-      "- 検索結果にない固有名詞・人物名・設定を勝手に作らないでください。"
+      "- 検索結果がある場合は、検索結果の表記と内容を優先してください。"
     ];
 
     if (searchResultsText) {
@@ -683,7 +705,8 @@
         searchResultsText,
         "",
         "検索結果を参考にする場合、検索結果にない情報を断定せず、不明な点は要確認としてください。",
-        "検索結果にネタバレが含まれる可能性がある場合は、ネタバレ部分を無視してください。"
+        "検索結果にネタバレが含まれる可能性がある場合は、ネタバレ部分を無視してください。",
+        "登場人物などの情報が検索結果に不足している場合は、自分の知識で補ってかまいません。その場合、不確実な情報には（要確認）を付けてください。"
       );
     }
 
@@ -694,17 +717,17 @@
       "1〜2文で作品の魅力を端的に書いてください。",
       "",
       "【あらすじ】",
-      "冒頭〜序盤の設定を中心に、ネタバレなしで3〜5文で書いてください。",
+      "冒頭〜序盤の設定を中心に、ネタバレなしで4〜6文で書いてください。",
       "",
       "【主な登場人物】",
       "主要キャラクターを5人以内で、各キャラクターを1行で書いてください。",
       "形式: キャラクター名 / 立場や特徴（ネタバレ禁止）",
       "",
       "【見どころ】",
-      "作画、物語、キャラ、世界観など魅力を3〜5個の箇条書きで書いてください。",
+      "作画、物語、キャラ、世界観など魅力を4〜5個の箇条書きで書いてください。",
       "",
       "【こんな人におすすめ】",
-      "どんな気分や嗜好の人に向くか、2〜4個の箇条書きで書いてください。"
+      "どんな気分や嗜好の人に向くか、3〜4個の箇条書きで書いてください。"
     );
 
     return lines.join("\n");
