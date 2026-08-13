@@ -29,7 +29,7 @@
   body {
     margin: 0;
     min-height: 100vh;
-    padding: 48px 20px 72px;
+    padding: 64px 20px 72px;
     font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif;
     background:
       radial-gradient(900px 480px at 85% -10%, rgba(124, 58, 237, 0.10), transparent 60%),
@@ -46,9 +46,33 @@
     gap: 18px;
   }
 
+  .gear {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    background: var(--card);
+    color: var(--muted);
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(28, 35, 51, 0.08);
+    transition: color 0.2s, transform 0.2s;
+  }
+
+  .gear:hover {
+    color: var(--accent-1);
+    transform: rotate(30deg);
+  }
+
   .hero {
     text-align: center;
-    padding: 8px 0 10px;
+    padding: 8px 0 4px;
   }
 
   .hero-eyebrow {
@@ -76,29 +100,183 @@
     color: var(--muted);
   }
 
-  .card {
-    padding: 24px;
-    border: 1px solid var(--card-border);
-    border-radius: 20px;
-    background: var(--card);
-    box-shadow: 0 12px 32px rgba(28, 35, 51, 0.06);
+  .search-box {
+    display: flex;
+    gap: 10px;
+    max-width: 620px;
+    margin: 28px auto 0;
   }
 
-  h2 {
+  .search-box input {
+    flex: 1;
+    padding: 14px 20px;
+    border: 1px solid #d7dbe7;
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    box-shadow: 0 6px 18px rgba(28, 35, 51, 0.06);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .search-box input:focus {
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+  }
+
+  @media (max-width: 560px) {
+    .search-box {
+      flex-direction: column;
+    }
+
+    .search-box .btn {
+      width: 100%;
+    }
+  }
+
+  .btn {
+    padding: 14px 24px;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
+    transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px rgba(236, 72, 153, 0.3);
+  }
+
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: wait;
+    transform: none;
+  }
+
+  .meta-line {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin: 0 0 16px;
-    font-size: 15px;
-    letter-spacing: 0.08em;
+    justify-content: center;
+    gap: 12px;
+    min-height: 32px;
+  }
+
+  .status {
+    margin-top: 8px;
+    min-height: 20px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .error {
+    color: var(--danger);
+  }
+
+  .success {
+    color: var(--success);
+  }
+
+  .timer {
+    margin-top: 8px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .timer[hidden] {
+    display: none;
+  }
+
+  #result {
+    padding: 20px;
+    border: 1px solid #e9e4f6;
+    border-left: 3px solid var(--accent-2);
+    border-radius: 14px;
+    background: var(--card);
+    box-shadow: 0 12px 32px rgba(28, 35, 51, 0.06);
+    white-space: pre-wrap;
+    line-height: 1.9;
+    font-size: 14.5px;
+  }
+
+  #result:empty {
+    display: none;
+  }
+
+  #result.filled {
+    animation: fadeUp 0.35s ease;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  dialog.settings-dialog {
+    width: min(480px, calc(100vw - 32px));
+    padding: 24px;
+    border: none;
+    border-radius: 20px;
+    background: var(--card);
+    color: var(--text);
+    box-shadow: 0 24px 64px rgba(28, 35, 51, 0.25);
+  }
+
+  dialog.settings-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+  }
+
+  .dialog-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .dialog-head h2 {
+    margin: 0;
+    font-size: 16px;
     color: #334155;
   }
 
-  h2 .bar {
-    width: 4px;
-    height: 18px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, var(--accent-1), var(--accent-2));
+  .icon-btn {
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .icon-btn:hover {
+    color: var(--danger);
   }
 
   label {
@@ -136,114 +314,6 @@
     margin-top: 8px;
   }
 
-  .btn {
-    margin-top: 18px;
-    padding: 12px 24px;
-    border: 0;
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
-    color: #fff;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
-    transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
-  }
-
-  .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 28px rgba(236, 72, 153, 0.3);
-  }
-
-  .btn:disabled {
-    opacity: 0.55;
-    cursor: wait;
-    transform: none;
-  }
-
-  .row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-  }
-
-  @media (max-width: 700px) {
-    .row {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .meta-line {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .status {
-    margin-top: 12px;
-    min-height: 20px;
-    font-size: 13px;
-    color: var(--muted);
-  }
-
-  .error {
-    color: var(--danger);
-  }
-
-  .success {
-    color: var(--success);
-  }
-
-  .timer {
-    margin-top: 12px;
-    padding: 4px 12px;
-    border-radius: 999px;
-    background: #eef2ff;
-    color: #4338ca;
-    font-size: 12px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-
-  .timer[hidden] {
-    display: none;
-  }
-
-  #result {
-    margin-top: 16px;
-    padding: 20px;
-    border: 1px solid #e9e4f6;
-    border-left: 3px solid var(--accent-2);
-    border-radius: 14px;
-    background: #fbfaff;
-    white-space: pre-wrap;
-    line-height: 1.9;
-    font-size: 14.5px;
-  }
-
-  #result:empty {
-    display: none;
-  }
-
-  #result.filled {
-    animation: fadeUp 0.35s ease;
-  }
-
-  @keyframes fadeUp {
-    from {
-      opacity: 0;
-      transform: translateY(6px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
   .hint {
     margin: 6px 0 0;
     font-size: 11.5px;
@@ -254,7 +324,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 4px 0 0;
+    margin: 16px 0 0;
     cursor: pointer;
   }
 
@@ -298,103 +368,96 @@
     color: var(--text);
   }
 
-  footer {
-    margin-top: 4px;
-    text-align: center;
-    font-size: 11px;
-    color: var(--muted);
+  dialog .btn {
+    margin-top: 18px;
+    width: 100%;
   }
 </style>
 </head>
 <body>
+<button id="openSettings" class="gear" aria-label="設定を開く" title="設定">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"></circle>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+  </svg>
+</button>
+
 <main>
   <header class="hero">
     <p class="hero-eyebrow">SPOILER-FREE ANIME GUIDE</p>
     <h1>ネタバレなしアニメ紹介</h1>
     <p class="hero-lead">見たいアニメ名を入力すると、ネタバレなしのあらすじ・魅力・登場人物をAIがまとめます。</p>
-  </header>
 
-  <section class="card">
-    <h2><span class="bar"></span>API設定</h2>
-
-    <label for="apiKey">Google APIキー</label>
-    <input
-      id="apiKey"
-      type="password"
-      placeholder="Google APIキー"
-      autocomplete="off"
-    />
-
-    <div class="row">
-      <div>
-        <label for="modelSelect">モデル</label>
-        <select id="modelSelect">
-          <option value="gemma-4-31b-it">Gemma 4 31B</option>
-          <option value="gemma-4-26b-a4b-it">Gemma 4 26B (MoE)</option>
-          <option value="gemma-4-27b-it">Gemma 4 27B</option>
-          <option value="custom">カスタム</option>
-        </select>
-        <input
-          id="modelId"
-          type="text"
-          placeholder="カスタムモデルID"
-          hidden
-        />
-        <p class="hint">実際のモデルIDは環境により異なる可能性があります。エラーが出る場合はカスタムを選択してください。</p>
-      </div>
-
-      <div>
-        <label for="apiBase">APIベースURL</label>
-        <input
-          id="apiBase"
-          type="text"
-          placeholder="https://generativelanguage.googleapis.com/v1beta"
-        />
-        <p class="hint">通常はデフォルトのままで問題ありません。</p>
-      </div>
+    <div class="search-box">
+      <input
+        id="animeTitle"
+        type="text"
+        placeholder="例：葬送のフリーレン"
+      />
+      <button id="generate" class="btn">ネタバレなしで調べる</button>
     </div>
-
-    <button id="saveSettings" class="btn">設定を保存</button>
-    <div id="settingsStatus" class="status"></div>
-  </section>
-
-  <section class="card">
-    <h2><span class="bar"></span>検索設定</h2>
-
-    <label class="switch">
-      <input id="useSearch" type="checkbox" checked />
-      <span class="slider"></span>
-      <span class="switch-label">Wikipedia検索を使う（APIキー不要）</span>
-    </label>
-
-    <p class="hint">
-      日本語Wikipediaを検索して、その結果をAIに渡します。
-      検索結果自体にネタバレが混ざる可能性はあります。
-    </p>
-  </section>
-
-  <section class="card">
-    <h2><span class="bar"></span>検索</h2>
-
-    <label for="animeTitle">アニメ名</label>
-    <input
-      id="animeTitle"
-      type="text"
-      placeholder="例：葬送のフリーレン"
-    />
-
-    <button id="generate" class="btn">ネタバレなしで調べる</button>
 
     <div class="meta-line">
       <div id="generateStatus" class="status"></div>
       <div id="timer" class="timer" hidden></div>
     </div>
+  </header>
 
-    <div id="result"></div>
-  </section>
+  <div id="result"></div>
 
   <footer>生成結果は誤りを含む可能性があります。重要な情報は必ず自身でも確認してください。</footer>
 </main>
+
+<dialog id="settingsDialog" class="settings-dialog">
+  <div class="dialog-head">
+    <h2>設定</h2>
+    <button id="closeSettings" class="icon-btn" aria-label="閉じる">×</button>
+  </div>
+
+  <label for="apiKey">Google APIキー</label>
+  <input
+    id="apiKey"
+    type="password"
+    placeholder="Google APIキー"
+    autocomplete="off"
+  />
+
+  <label for="modelSelect">モデル</label>
+  <select id="modelSelect">
+    <option value="gemma-4-31b-it">Gemma 4 31B</option>
+    <option value="gemma-4-26b-a4b-it">Gemma 4 26B (MoE)</option>
+    <option value="gemma-4-27b-it">Gemma 4 27B</option>
+    <option value="custom">カスタム</option>
+  </select>
+  <input
+    id="modelId"
+    type="text"
+    placeholder="カスタムモデルID"
+    hidden
+  />
+  <p class="hint">実際のモデルIDは環境により異なる可能性があります。エラーが出る場合はカスタムを選択してください。</p>
+
+  <label for="apiBase">APIベースURL</label>
+  <input
+    id="apiBase"
+    type="text"
+    placeholder="https://generativelanguage.googleapis.com/v1beta"
+  />
+  <p class="hint">通常はデフォルトのままで問題ありません。</p>
+
+  <label class="switch">
+    <input id="useSearch" type="checkbox" checked />
+    <span class="slider"></span>
+    <span class="switch-label">Wikipedia検索を使う（APIキー不要）</span>
+  </label>
+  <p class="hint">
+    日本語Wikipediaを検索して、その結果をAIに渡します。
+    検索結果自体にネタバレが混ざる可能性はあります。
+  </p>
+
+  <button id="saveSettings" class="btn">設定を保存</button>
+  <div id="settingsStatus" class="status"></div>
+</dialog>
 
 <script>
   const STORAGE_KEYS = {
@@ -407,6 +470,9 @@
   const DEFAULT_MODEL_ID = "gemma-4-31b-it";
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 
+  const openSettingsButton = document.getElementById("openSettings");
+  const closeSettingsButton = document.getElementById("closeSettings");
+  const settingsDialog = document.getElementById("settingsDialog");
   const apiKeyInput = document.getElementById("apiKey");
   const modelSelect = document.getElementById("modelSelect");
   const modelIdInput = document.getElementById("modelId");
@@ -516,13 +582,19 @@
   }
 
   function extractFinalJapanese(text) {
-    const markerMatch = text.match(/(?:^|\n)【一言紹介】/);
+    const matches = [...text.matchAll(/(?:^|\n)[ \t]*【一言紹介】/g)];
+    let body = text;
 
-    if (markerMatch) {
-      return text.slice(markerMatch.index).replace(/^\n/, "").trim();
+    if (matches.length) {
+      const last = matches[matches.length - 1];
+      body = text.slice(last.index);
     }
 
-    return text.trim();
+    return body
+      .split("\n")
+      .map(line => line.trimStart())
+      .join("\n")
+      .trim();
   }
 
   async function searchWikipedia(query) {
@@ -595,7 +667,7 @@
       "- 作品を知らない人が「見るかどうか判断できる」情報に絞ってください。",
       "- 事実関係が不確実な場合は断定せず「要確認」と書いてください。",
       "- 存在しない作品や判断できない場合は、その旨を正直に書いてください。",
-      "- 必ず日本語のみで回答してください。英語を使わないでください。",
+      "- 必ず日本語のみで回答してください。作品名や固有名詞の英字（Key、Na-Ga など）はそのまま使ってかまいません。",
       "- いきなり最終的な日本語出力だけを出力してください。",
       "- 【一言紹介】の行から直接始めてください。それより前に何も書かないでください。",
       "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
@@ -671,7 +743,8 @@
     stopTimer();
 
     if (!apiKey) {
-      setGenerateStatus("APIキーがありません。API設定で入力して保存してください。", true);
+      setGenerateStatus("APIキーがありません。右上の歯車から設定してください。", true);
+      settingsDialog.showModal();
       return;
     }
 
@@ -728,7 +801,7 @@
           ],
           generationConfig: {
             temperature: 0.2,
-            maxOutputTokens: 2048
+            maxOutputTokens: 8192
           }
         })
       });
@@ -748,7 +821,12 @@
 
       const rawText = extractModelText(data);
       const text = extractFinalJapanese(rawText);
-      resultBox.textContent = text || "AIの応答が空でした。";
+      const finishReason = data?.candidates?.[0]?.finishReason || "";
+      const truncated = finishReason === "MAX_TOKENS";
+
+      resultBox.textContent = truncated
+        ? `${text}\n\n（注意: 出力が途中で切れた可能性があります）`
+        : text || "AIの応答が空でした。";
       resultBox.classList.add("filled");
 
       const aiMs = performance.now() - aiStart;
@@ -770,6 +848,8 @@
     }
   }
 
+  openSettingsButton.addEventListener("click", () => settingsDialog.showModal());
+  closeSettingsButton.addEventListener("click", () => settingsDialog.close());
   saveSettingsButton.addEventListener("click", saveSettings);
   generateButton.addEventListener("click", generateAnimeIntro);
   modelSelect.addEventListener("change", syncModelInput);
