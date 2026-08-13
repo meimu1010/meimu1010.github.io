@@ -470,7 +470,7 @@
   <div id="result"></div>
 
   <section id="charactersSection" hidden>
-    <h2><span class="bar"></span>登場キャラクター（AniDB）</h2>
+    <h2><span class="bar"></span>登場キャラクター（AniList）</h2>
     <div id="characterCards" class="cards-grid"></div>
   </section>
 
@@ -538,12 +538,7 @@
 
   const DEFAULT_MODEL_ID = "gemma-4-31b-it";
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
-
-  const CORS_PROXIES = [
-    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-    (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
-  ];
+  const ANILIST_ENDPOINT = "https://graphql.anilist.co";
 
   const openSettingsButton = document.getElementById("openSettings");
   const closeSettingsButton = document.getElementById("closeSettings");
@@ -658,152 +653,75 @@
     return doc.body.textContent || "";
   }
 
-  async function fetchViaProxy(url) {
-    let lastError = null;
-
-    for (const wrap of CORS_PROXIES) {
-      try {
-        const response = await fetch(wrap(url));
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const text = await response.text();
-
-        if (text) {
-          return text;
-        }
-      } catch (error) {
-        lastError = error;
-      }
-    }
-
-    throw lastError || new Error("どのプロキシでも取得できませんでした。");
-  }
-
-  async function findAniDBAnimeId(title) {
-    const urls = [
-      `https://anidb.net/search/?q=${encodeURIComponent(title)}&entity=anime`,
-      `https://anidb.net/search/?q=${encodeURIComponent(title)}&entity=anime&do.search=1`
-    ];
-
-    for (const url of urls) {
-      const html = await fetchViaProxy(url);
-      const doc = new DOMParser().parseFromString(html, "text/html");
-      const anchors = [...doc.querySelectorAll("a[href]")];
-
-      for (const a of anchors) {
-        const m = (a.getAttribute("href") || "").match(/\/anime\/(\d+)/);
-
-        if (m) {
-          return m[1];
+  async function fetchAniListCharacters(animeTitle) {
+    const query = `
+      query ($search: String) {
+        Media(search: $search, type: ANIME) {
+          characters(sort: ROLE, perPage: 25) {
+            edges {
+              role
+              node {
+                name { full }
+                image { large }
+              }
+            }
+          }
         }
       }
+    `;
+
+    const response = await fetch(ANILIST_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        query,
+        variables: { search: animeTitle }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`AniList HTTP ${response.status}`);
     }
 
-    return null;
-  }
-
-  function normalizeImgSrc(imgEl) {
-    const src = imgEl.getAttribute("src") || imgEl.getAttribute("data-src") || "";
-
-    if (!src) {
-      return null;
-    }
-
-    if (src.startsWith("//")) {
-      return `https:${src}`;
-    }
-
-    return src;
-  }
-
-  function findCharacterImg(anchor) {
-    let node = anchor;
-
-    for (let depth = 0; depth < 4 && node; depth++) {
-      if (node.querySelectorAll) {
-        const imgs = [...node.querySelectorAll("img")];
-
-        if (imgs.length === 1) {
-          return normalizeImgSrc(imgs[0]);
-        }
-
-        if (imgs.length > 1) {
-          return null;
-        }
-      }
-
-      node = node.parentElement;
-    }
-
-    return null;
-  }
-
-  function parseAniDBCharacters(doc) {
-    const headingEls = [...doc.querySelectorAll("h1,h2,h3,h4,h5,h6,div,span,p,td,th,b,strong,em")]
-      .filter(el => {
-        const t = (el.textContent || "").trim().toLowerCase();
-        return t === "main cast" || t === "secondary cast";
-      });
-
-    const anchors = [...doc.querySelectorAll('a[href*="/character/"]')];
+    const data = await response.json();
+    const edges = data?.data?.Media?.characters?.edges || [];
     const seen = new Set();
     const chars = [];
 
-    for (const a of anchors) {
-      const m = (a.getAttribute("href") || "").match(/\/character\/(\d+)/);
+    for (const edge of edges) {
+      const role = edge?.role;
 
-      if (!m) {
+      if (role !== "MAIN" && role !== "SUPPORTING") {
         continue;
       }
 
-      const id = m[1];
+      const name = edge?.node?.name?.full || "";
 
-      if (seen.has(id)) {
+      if (!name || seen.has(name)) {
         continue;
       }
 
-      const name = (a.textContent || "").replace(/\s+/g, " ").trim();
-
-      if (!name) {
-        continue;
-      }
-
-      let type = null;
-
-      for (const h of headingEls) {
-        const pos = h.compareDocumentPosition(a);
-
-        if (pos & Node.DOCUMENT_POSITION_FOLLOWING) {
-          type = (h.textContent || "").trim().toLowerCase();
-        }
-      }
-
-      if (type !== "main cast" && type !== "secondary cast") {
-        continue;
-      }
-
-      seen.add(id);
+      seen.add(name);
       chars.push({
-        id,
         name,
-        type,
-        img: findCharacterImg(a)
+        type: role === "MAIN" ? "main" : "supporting",
+        img: edge?.node?.image?.large || null
       });
     }
 
     return chars;
   }
 
-  function formatAniDBForPrompt(chars) {
+  function formatCharactersForPrompt(chars) {
     if (!chars.length) {
       return "";
     }
 
-    const main = chars.filter(c => c.type === "main cast").map(c => c.name);
-    const sub = chars.filter(c => c.type === "secondary cast").map(c => c.name);
+    const main = chars.filter(c => c.type === "main").map(c => c.name);
+    const sub = chars.filter(c => c.type === "supporting").map(c => c.name);
     const parts = [];
 
     if (main.length) {
@@ -811,7 +729,7 @@
     }
 
     if (sub.length) {
-      parts.push(`secondary cast: ${sub.join(", ")}`);
+      parts.push(`supporting cast: ${sub.join(", ")}`);
     }
 
     return parts.join("\n");
@@ -835,14 +753,9 @@
         img.src = c.img;
 
         img.onerror = () => {
-          if (img.dataset.fallback !== "1") {
-            img.dataset.fallback = "1";
-            img.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(c.img)}`;
-          } else {
-            img.remove();
-            imgWrap.classList.add("no-img");
-            imgWrap.textContent = c.name.charAt(0);
-          }
+          img.remove();
+          imgWrap.classList.add("no-img");
+          imgWrap.textContent = c.name.charAt(0);
         };
 
         imgWrap.appendChild(img);
@@ -852,8 +765,8 @@
       }
 
       const badge = document.createElement("span");
-      badge.className = `char-badge ${c.type === "main cast" ? "main" : "sub"}`;
-      badge.textContent = c.type === "main cast" ? "MAIN" : "SUB";
+      badge.className = `char-badge ${c.type === "main" ? "main" : "sub"}`;
+      badge.textContent = c.type === "main" ? "MAIN" : "SUPPORTING";
       imgWrap.appendChild(badge);
 
       const nameEl = document.createElement("p");
@@ -922,7 +835,7 @@
     }).join("\n\n");
   }
 
-  function buildPrompt(animeTitle, searchResultsText, aniDBText) {
+  function buildPrompt(animeTitle, searchResultsText, charactersText) {
     const lines = [
       "あなたはアニメ作品に詳しい紹介ライターです。",
       "以下のアニメについて、未視聴者向けに日本語でネタバレなしの紹介を作成してください。",
@@ -942,7 +855,7 @@
       "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
       "- 出力は指定された見出しのみを使用してください。",
       "- 検索結果がある場合は、検索結果の表記と内容を優先してください。",
-      "- AniDBのキャラクター一覧がある場合は、登場人物の名前としてその表記を最優先で使ってください。"
+      "- AniListのキャラクター一覧がある場合は、登場人物の名前としてその表記を最優先で使ってください。"
     ];
 
     if (searchResultsText) {
@@ -957,11 +870,11 @@
       );
     }
 
-    if (aniDBText) {
+    if (charactersText) {
       lines.push(
         "",
-        "AniDBのキャラクター一覧:",
-        aniDBText
+        "AniListのキャラクター一覧:",
+        charactersText
       );
     }
 
@@ -1009,159 +922,6 @@
     return parts.map(part => part?.text ?? "").join("").trim();
   }
 
-  async function fetchAniDBCharacters(animeTitle) {
-    const animeId = await findAniDBAnimeId(animeTitle);
-
-    if (!animeId) {
-      return [];
-    }
-
-    const html = await fetchViaProxy(`https://anidb.net/anime/${animeId}`);
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    return parseAniDBCharacters(doc);
-  }
-
-  async function generateAnimeIntro() {
-    const apiKey = apiKeyInput.value.trim();
-    const modelId = normalizeModelId(getEffectiveModelId());
-    const apiBase = normalizeApiBase(apiBaseInput.value);
-    const animeTitle = animeTitleInput.value.trim();
-
-    resultBox.textContent = "";
-    resultBox.classList.remove("filled");
-    renderCharacterCards([]);
-    setGenerateStatus("");
-    timerBox.hidden = true;
-    stopTimer();
-
-    if (!apiKey) {
-      setGenerateStatus("APIキーがありません。右上の歯車から設定してください。", true);
-      settingsDialog.showModal();
-      return;
-    }
-
-    if (!animeTitle) {
-      setGenerateStatus("アニメ名を入力してください。", true);
-      return;
-    }
-
-    generateButton.disabled = true;
-    startTimer();
-    const totalStart = performance.now();
-    let searchMs = null;
-    let aniDBMs = null;
-    let searchResultsText = "";
-    let aniDBText = "";
-
-    if (useSearchCheckbox.checked) {
-      setGenerateStatus("Wikipedia検索中...");
-      const searchStart = performance.now();
-
-      try {
-        const results = await getWikipediaSearchResults(animeTitle);
-        searchResultsText = formatSearchResults(results);
-
-        if (!searchResultsText) {
-          setGenerateStatus("検索結果がなかったので、AIのみで生成します。");
-        }
-      } catch (error) {
-        console.error(error);
-        setGenerateStatus(`Wikipedia検索に失敗したため、検索なしで続行します: ${error.message}`, true);
-      }
-
-      searchMs = performance.now() - searchStart;
-    }
-
-    setGenerateStatus("AniDB取得中...");
-    const aniDBStart = performance.now();
-
-    try {
-      const chars = await fetchAniDBCharacters(animeTitle);
-      aniDBText = formatAniDBForPrompt(chars);
-      renderCharacterCards(chars);
-
-      if (!chars.length) {
-        setGenerateStatus("AniDBからキャラクターを取得できませんでした。AIのみで続行します。");
-      }
-    } catch (error) {
-      console.error(error);
-      renderCharacterCards([]);
-      setGenerateStatus(`AniDBの取得に失敗したため、なしで続行します: ${error.message}`, true);
-    }
-
-    aniDBMs = performance.now() - aniDBStart;
-
-    setGenerateStatus("AIに送信中...");
-    const aiStart = performance.now();
-
-    try {
-      const url = `${apiBase}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: buildPrompt(animeTitle, searchResultsText, aniDBText)
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 8192
-          }
-        })
-      });
-
-      let data = null;
-
-      try {
-        data = await response.json();
-      } catch {
-        data = null;
-      }
-
-      if (!response.ok) {
-        const apiMessage = data?.error?.message || `HTTP ${response.status}`;
-        throw new Error(apiMessage);
-      }
-
-      const rawText = extractModelText(data);
-      const text = extractFinalJapanese(rawText);
-      const finishReason = data?.candidates?.[0]?.finishReason || "";
-      const truncated = finishReason === "MAX_TOKENS";
-
-      resultBox.textContent = truncated
-        ? `${text}\n\n（注意: 出力が途中で切れた可能性があります）`
-        : text || "AIの応答が空でした。";
-      resultBox.classList.add("filled");
-
-      const aiMs = performance.now() - aiStart;
-      const totalMs = performance.now() - totalStart;
-      const searchLabel = searchMs === null ? "検索 -" : `検索 ${formatDuration(searchMs)}`;
-      const aniDBLabel = `AniDB ${formatDuration(aniDBMs)}`;
-
-      stopTimer();
-      timerBox.textContent = `合計 ${formatDuration(totalMs)}`;
-      setGenerateStatus(`生成しました。（${searchLabel} / ${aniDBLabel} / AI ${formatDuration(aiMs)}）`, false, true);
-    } catch (error) {
-      const totalMs = performance.now() - totalStart;
-      console.error(error);
-      resultBox.textContent = "";
-      stopTimer();
-      timerBox.textContent = `${formatDuration(totalMs)} で停止`;
-      setGenerateStatus(`失敗: ${error.message}`, true);
-    } finally {
-      generateButton.disabled = false;
-    }
-  }
-
   function extractFinalJapanese(text) {
     const marker = "【一言紹介】";
     const requiredHeadings = ["【あらすじ】", "【主な登場人物】", "【見どころ】", "【こんな人におすすめ】"];
@@ -1200,6 +960,147 @@
       .map(line => line.trimStart())
       .join("\n")
       .trim();
+  }
+
+  async function generateAnimeIntro() {
+    const apiKey = apiKeyInput.value.trim();
+    const modelId = normalizeModelId(getEffectiveModelId());
+    const apiBase = normalizeApiBase(apiBaseInput.value);
+    const animeTitle = animeTitleInput.value.trim();
+
+    resultBox.textContent = "";
+    resultBox.classList.remove("filled");
+    renderCharacterCards([]);
+    setGenerateStatus("");
+    timerBox.hidden = true;
+    stopTimer();
+
+    if (!apiKey) {
+      setGenerateStatus("APIキーがありません。右上の歯車から設定してください。", true);
+      settingsDialog.showModal();
+      return;
+    }
+
+    if (!animeTitle) {
+      setGenerateStatus("アニメ名を入力してください。", true);
+      return;
+    }
+
+    generateButton.disabled = true;
+    startTimer();
+    const totalStart = performance.now();
+    let searchMs = null;
+    let charMs = null;
+    let searchResultsText = "";
+    let charactersText = "";
+
+    if (useSearchCheckbox.checked) {
+      setGenerateStatus("Wikipedia検索中...");
+      const searchStart = performance.now();
+
+      try {
+        const results = await getWikipediaSearchResults(animeTitle);
+        searchResultsText = formatSearchResults(results);
+
+        if (!searchResultsText) {
+          setGenerateStatus("検索結果がなかったので、AIのみで生成します。");
+        }
+      } catch (error) {
+        console.error(error);
+        setGenerateStatus(`Wikipedia検索に失敗したため、検索なしで続行します: ${error.message}`, true);
+      }
+
+      searchMs = performance.now() - searchStart;
+    }
+
+    setGenerateStatus("AniList取得中...");
+    const charStart = performance.now();
+
+    try {
+      const chars = await fetchAniListCharacters(animeTitle);
+      charactersText = formatCharactersForPrompt(chars);
+      renderCharacterCards(chars);
+
+      if (!chars.length) {
+        setGenerateStatus("AniListからキャラクターを取得できませんでした。AIのみで続行します。");
+      }
+    } catch (error) {
+      console.error(error);
+      renderCharacterCards([]);
+      setGenerateStatus(`AniListの取得に失敗したため、なしで続行します: ${error.message}`, true);
+    }
+
+    charMs = performance.now() - charStart;
+
+    setGenerateStatus("AIに送信中...");
+    const aiStart = performance.now();
+
+    try {
+      const url = `${apiBase}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: buildPrompt(animeTitle, searchResultsText, charactersText)
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 8192
+          }
+        })
+      });
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok) {
+        const apiMessage = data?.error?.message || `HTTP ${response.status}`;
+        throw new Error(apiMessage);
+      }
+
+      const rawText = extractModelText(data);
+      const text = extractFinalJapanese(rawText);
+      const finishReason = data?.candidates?.[0]?.finishReason || "";
+      const truncated = finishReason === "MAX_TOKENS";
+
+      resultBox.textContent = truncated
+        ? `${text}\n\n（注意: 出力が途中で切れた可能性があります）`
+        : text || "AIの応答が空でした。";
+      resultBox.classList.add("filled");
+
+      const aiMs = performance.now() - aiStart;
+      const totalMs = performance.now() - totalStart;
+      const searchLabel = searchMs === null ? "検索 -" : `検索 ${formatDuration(searchMs)}`;
+      const charLabel = `AniList ${formatDuration(charMs)}`;
+
+      stopTimer();
+      timerBox.textContent = `合計 ${formatDuration(totalMs)}`;
+      setGenerateStatus(`生成しました。（${searchLabel} / ${charLabel} / AI ${formatDuration(aiMs)}）`, false, true);
+    } catch (error) {
+      const totalMs = performance.now() - totalStart;
+      console.error(error);
+      resultBox.textContent = "";
+      stopTimer();
+      timerBox.textContent = `${formatDuration(totalMs)} で停止`;
+      setGenerateStatus(`失敗: ${error.message}`, true);
+    } finally {
+      generateButton.disabled = false;
+    }
   }
 
   openSettingsButton.addEventListener("click", () => settingsDialog.showModal());
