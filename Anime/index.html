@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ネタバレなしアニメ紹介</title>
+<style>
+  :root {
+    color-scheme: light dark;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #f6f7fb;
+    color: #1f2937;
+  }
+
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    display: grid;
+    gap: 16px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  h1 {
+    font-size: 28px;
+    margin: 0 0 8px;
+  }
+
+  h2 {
+    font-size: 18px;
+    margin: 0 0 12px;
+  }
+
+  p {
+    line-height: 1.6;
+  }
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin: 12px 0 6px;
+  }
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 15px;
+  }
+
+  button {
+    margin-top: 16px;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 10px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  @media (max-width: 700px) {
+    .row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .status {
+    margin-top: 12px;
+    font-size: 14px;
+    min-height: 20px;
+  }
+
+  .error {
+    color: #dc2626;
+  }
+
+  .success {
+    color: #16a34a;
+  }
+
+  #result {
+    margin-top: 16px;
+    white-space: pre-wrap;
+    line-height: 1.7;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    min-height: 40px;
+  }
+
+  .hint {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: #64748b;
+  }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>ネタバレなしアニメ紹介</h1>
+    <p>見たいアニメ名を入力すると、ネタバレなしのあらすじ・魅力・登場人物をAIがまとめます。</p>
+  </div>
+
+  <section class="card">
+    <h2>API設定</h2>
+
+    <label for="apiKey">Google APIキー</label>
+    <input
+      id="apiKey"
+      type="password"
+      placeholder="Google APIキー"
+      autocomplete="off"
+    />
+
+    <div class="row">
+      <div>
+        <label for="modelId">モデルID</label>
+        <input
+          id="modelId"
+          type="text"
+          placeholder="gemma-4-31b-it"
+        />
+        <p class="hint">Gemma 4 31Bの実際のモデルIDは環境により異なる可能性があります。</p>
+      </div>
+
+      <div>
+        <label for="apiBase">APIベースURL</label>
+        <input
+          id="apiBase"
+          type="text"
+          placeholder="https://generativelanguage.googleapis.com/v1beta"
+        />
+        <p class="hint">通常はデフォルトのままで問題ありません。</p>
+      </div>
+    </div>
+
+    <button id="saveSettings">API設定を保存</button>
+    <div id="settingsStatus" class="status"></div>
+  </section>
+
+  <section class="card">
+    <h2>アニメ名を入力</h2>
+
+    <label for="animeTitle">アニメ名</label>
+    <input
+      id="animeTitle"
+      type="text"
+      placeholder="例：葬送のフリーレン"
+    />
+
+    <button id="generate">ネタバレなしで調べる</button>
+    <div id="generateStatus" class="status"></div>
+
+    <div id="result"></div>
+  </section>
+</main>
+
+<script>
+  const STORAGE_KEYS = {
+    apiKey: "anime_intro_google_api_key",
+    modelId: "anime_intro_model_id",
+    apiBase: "anime_intro_api_base"
+  };
+
+  const DEFAULT_MODEL_ID = "gemma-4-31b-it";
+  const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
+
+  const apiKeyInput = document.getElementById("apiKey");
+  const modelIdInput = document.getElementById("modelId");
+  const apiBaseInput = document.getElementById("apiBase");
+  const saveSettingsButton = document.getElementById("saveSettings");
+  const settingsStatus = document.getElementById("settingsStatus");
+  const animeTitleInput = document.getElementById("animeTitle");
+  const generateButton = document.getElementById("generate");
+  const generateStatus = document.getElementById("generateStatus");
+  const resultBox = document.getElementById("result");
+
+  function loadSettings() {
+    apiKeyInput.value = localStorage.getItem(STORAGE_KEYS.apiKey) || "";
+    modelIdInput.value = localStorage.getItem(STORAGE_KEYS.modelId) || DEFAULT_MODEL_ID;
+    apiBaseInput.value = localStorage.getItem(STORAGE_KEYS.apiBase) || DEFAULT_API_BASE;
+  }
+
+  function setSettingsStatus(message, isError = false) {
+    settingsStatus.textContent = message;
+    settingsStatus.className = isError ? "status error" : "status success";
+  }
+
+  function setGenerateStatus(message, isError = false) {
+    generateStatus.textContent = message;
+    generateStatus.className = isError ? "status error" : "status";
+  }
+
+  function saveSettings() {
+    localStorage.setItem(STORAGE_KEYS.apiKey, apiKeyInput.value.trim());
+    localStorage.setItem(STORAGE_KEYS.modelId, modelIdInput.value.trim() || DEFAULT_MODEL_ID);
+    localStorage.setItem(STORAGE_KEYS.apiBase, apiBaseInput.value.trim() || DEFAULT_API_BASE);
+    setSettingsStatus("API設定をlocalStorageに保存しました。");
+  }
+
+  function normalizeApiBase(value) {
+    return (value || DEFAULT_API_BASE).trim().replace(/\/+$/, "");
+  }
+
+  function normalizeModelId(value) {
+    return (value || DEFAULT_MODEL_ID).trim().replace(/^models\//, "");
+  }
+
+  function buildPrompt(animeTitle) {
+    return [
+      "あなたはアニメ作品に詳しい紹介ライターです。",
+      "以下のアニメについて、未視聴者向けに日本語でネタバレなしの紹介を作成してください。",
+      "",
+      "アニメ名:",
+      animeTitle,
+      "",
+      "必須ルール:",
+      "- 重大な結末、死亡、裏切り、犯人、どんでん返し、後半の重要な展開は書かないでください。",
+      "- 登場人物の説明でもネタバレになる伏線や運命の確定は避けてください。",
+      "- 作品を知らない人が「見るかどうか判断できる」情報に絞ってください。",
+      "- 事実関係が不確実な場合は断定せず「要確認」と書いてください。",
+      "- 存在しない作品や判断できない場合は、その旨を正直に書いてください。",
+      "",
+      "出力形式:",
+      "【一言紹介】",
+      "1〜2文で作品の魅力を端的に書いてください。",
+      "",
+      "【あらすじ】",
+      "冒頭〜序盤の設定を中心に、ネタバレなしで3〜5文で書いてください。",
+      "",
+      "【主な登場人物】",
+      "主要キャラクターを5人以内で、各キャラクターを1行で書いてください。",
+      "形式: キャラクター名 / 立場や特徴（ネタバレ禁止）",
+      "",
+      "【見どころ】",
+      "作画、物語、キャラ、世界観など魅力を3〜5個の箇条書きで書いてください。",
+      "",
+      "【こんな人におすすめ】",
+      "どんな気分や嗜好の人に向くか、2〜4個の箇条書きで書いてください。"
+    ].join("\n");
+  }
+
+  function extractModelText(data) {
+    const candidate = data?.candidates?.[0];
+
+    if (!candidate) {
+      const blockReason = data?.promptFeedback?.blockReason;
+      if (blockReason) {
+        throw new Error(`安全性設定によりブロックされました: ${blockReason}`);
+      }
+      throw new Error("候補が返却されませんでした。");
+    }
+
+    const parts = candidate?.content?.parts;
+
+    if (!Array.isArray(parts) || parts.length === 0) {
+      throw new Error("本文が見つかりませんでした。");
+    }
+
+    return parts.map(part => part?.text ?? "").join("").trim();
+  }
+
+  async function generateAnimeIntro() {
+    const apiKey = apiKeyInput.value.trim();
+    const modelId = normalizeModelId(modelIdInput.value);
+    const apiBase = normalizeApiBase(apiBaseInput.value);
+    const animeTitle = animeTitleInput.value.trim();
+
+    resultBox.textContent = "";
+    setGenerateStatus("");
+
+    if (!apiKey) {
+      setGenerateStatus("APIキーがありません。API設定で入力して保存してください。", true);
+      return;
+    }
+
+    if (!animeTitle) {
+      setGenerateStatus("アニメ名を入力してください。", true);
+      return;
+    }
+
+    generateButton.disabled = true;
+    setGenerateStatus("送信中...");
+
+    try {
+      const url = `${apiBase}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: buildPrompt(animeTitle)
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 1024
+          }
+        })
+      });
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok) {
+        const apiMessage = data?.error?.message || `HTTP ${response.status}`;
+        throw new Error(apiMessage);
+      }
+
+      const text = extractModelText(data);
+      resultBox.textContent = text || "AIの応答が空でした。";
+      setGenerateStatus("生成しました。");
+    } catch (error) {
+      console.error(error);
+      resultBox.textContent = "";
+      setGenerateStatus(`失敗: ${error.message}`, true);
+    } finally {
+      generateButton.disabled = false;
+    }
+  }
+
+  saveSettingsButton.addEventListener("click", saveSettings);
+  generateButton.addEventListener("click", generateAnimeIntro);
+
+  animeTitleInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      generateAnimeIntro();
+    }
+  });
+
+  loadSettings();
+</script>
+</body>
+</html>
