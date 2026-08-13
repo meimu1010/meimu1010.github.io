@@ -4,83 +4,170 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ネタバレなしアニメ紹介</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Old+Mincho:wght@700;900&display=swap" rel="stylesheet" />
 <style>
   :root {
-    color-scheme: light dark;
+    color-scheme: dark;
+    --bg: #070b16;
+    --card: rgba(255, 255, 255, 0.045);
+    --card-border: rgba(255, 255, 255, 0.09);
+    --text: #e8ecf6;
+    --muted: #94a1b8;
+    --accent-1: #8b5cf6;
+    --accent-2: #f472b6;
+    --accent-3: #22d3ee;
+    --danger: #f87171;
+    --success: #4ade80;
+  }
+
+  * {
+    box-sizing: border-box;
   }
 
   body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     margin: 0;
-    padding: 24px;
-    background: #f6f7fb;
-    color: #1f2937;
+    min-height: 100vh;
+    padding: 48px 20px 72px;
+    font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(1000px 500px at 85% -10%, rgba(139, 92, 246, 0.16), transparent 60%),
+      radial-gradient(800px 460px at -10% 110%, rgba(244, 114, 182, 0.12), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
   }
 
   main {
-    max-width: 860px;
+    max-width: 880px;
     margin: 0 auto;
     display: grid;
-    gap: 16px;
+    gap: 18px;
   }
 
-  .card {
-    background: #fff;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  .hero {
+    text-align: center;
+    padding: 8px 0 10px;
+  }
+
+  .hero-eyebrow {
+    margin: 0 0 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.35em;
+    color: var(--accent-3);
   }
 
   h1 {
-    font-size: 28px;
-    margin: 0 0 8px;
+    margin: 0 0 12px;
+    font-family: "Zen Old Mincho", serif;
+    font-size: clamp(30px, 5vw, 44px);
+    font-weight: 900;
+    background: linear-gradient(92deg, #ffffff 10%, #c4b5fd 55%, #f9a8d4 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero-lead {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .card {
+    padding: 24px;
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    background: var(--card);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 
   h2 {
-    font-size: 18px;
-    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 16px;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: #dbe3f4;
   }
 
-  p {
-    line-height: 1.6;
+  h2 .bar {
+    width: 4px;
+    height: 18px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, var(--accent-1), var(--accent-2));
   }
 
   label {
     display: block;
-    font-weight: 600;
-    margin: 12px 0 6px;
+    margin: 14px 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--muted);
   }
 
   input[type="text"],
-  input[type="password"] {
+  input[type="password"],
+  select {
     width: 100%;
-    box-sizing: border-box;
-    padding: 10px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
+    padding: 11px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    background: rgba(3, 7, 18, 0.6);
+    color: var(--text);
     font-size: 15px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
 
-  button {
-    margin-top: 16px;
-    padding: 10px 16px;
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  select:focus {
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+  }
+
+  #modelId {
+    margin-top: 8px;
+  }
+
+  .btn {
+    margin-top: 18px;
+    padding: 12px 24px;
     border: 0;
-    border-radius: 10px;
-    background: #2563eb;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
     color: #fff;
-    font-size: 15px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     cursor: pointer;
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35);
+    transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
   }
 
-  button:disabled {
-    opacity: 0.6;
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px rgba(244, 114, 182, 0.4);
+  }
+
+  .btn:disabled {
+    opacity: 0.55;
     cursor: wait;
+    transform: none;
   }
 
   .row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 14px;
   }
 
   @media (max-width: 700px) {
@@ -91,57 +178,122 @@
 
   .status {
     margin-top: 12px;
-    font-size: 14px;
     min-height: 20px;
+    font-size: 13px;
+    color: var(--muted);
   }
 
   .error {
-    color: #dc2626;
+    color: var(--danger);
   }
 
   .success {
-    color: #16a34a;
+    color: var(--success);
   }
 
   #result {
     margin-top: 16px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid var(--accent-2);
+    border-radius: 14px;
+    background: rgba(3, 7, 18, 0.65);
     white-space: pre-wrap;
-    line-height: 1.7;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 16px;
-    min-height: 40px;
+    line-height: 1.9;
+    font-size: 14.5px;
+  }
+
+  #result:empty {
+    display: none;
+  }
+
+  #result.filled {
+    animation: fadeUp 0.35s ease;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 
   .hint {
     margin: 6px 0 0;
-    font-size: 12px;
-    color: #64748b;
+    font-size: 11.5px;
+    color: var(--muted);
   }
 
-  .checkbox {
+  .switch {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 12px;
-    font-weight: 600;
+    gap: 12px;
+    margin: 4px 0 0;
+    cursor: pointer;
   }
 
-  .checkbox input {
-    width: auto;
+  .switch input {
+    display: none;
+  }
+
+  .slider {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+    transition: background 0.2s;
+  }
+
+  .slider::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s;
+  }
+
+  .switch input:checked + .slider {
+    background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  }
+
+  .switch input:checked + .slider::after {
+    transform: translateX(20px);
+  }
+
+  .switch-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  footer {
+    margin-top: 4px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
   }
 </style>
 </head>
 <body>
 <main>
-  <div>
+  <header class="hero">
+    <p class="hero-eyebrow">SPOILER-FREE ANIME GUIDE</p>
     <h1>ネタバレなしアニメ紹介</h1>
-    <p>見たいアニメ名を入力すると、ネタバレなしのあらすじ・魅力・登場人物をAIがまとめます。</p>
-  </div>
+    <p class="hero-lead">見たいアニメ名を入力すると、ネタバレなしのあらすじ・魅力・登場人物をAIがまとめます。</p>
+  </header>
 
   <section class="card">
-    <h2>API設定</h2>
+    <h2><span class="bar"></span>API設定</h2>
 
     <label for="apiKey">Google APIキー</label>
     <input
@@ -153,13 +305,19 @@
 
     <div class="row">
       <div>
-        <label for="modelId">モデルID</label>
+        <label for="modelSelect">モデル</label>
+        <select id="modelSelect">
+          <option value="gemma-4-31b-it">Gemma 4 31B</option>
+          <option value="gemma-4-26b-it">Gemma 4 26B</option>
+          <option value="custom">カスタム</option>
+        </select>
         <input
           id="modelId"
           type="text"
-          placeholder="gemma-4-31b-it"
+          placeholder="カスタムモデルID"
+          hidden
         />
-        <p class="hint">Gemma 4 31Bの実際のモデルIDは環境により異なる可能性があります。</p>
+        <p class="hint">実際のモデルIDは環境により異なる可能性があります。エラーが出る場合はカスタムを選択してください。</p>
       </div>
 
       <div>
@@ -173,16 +331,17 @@
       </div>
     </div>
 
-    <button id="saveSettings">API設定を保存</button>
+    <button id="saveSettings" class="btn">設定を保存</button>
     <div id="settingsStatus" class="status"></div>
   </section>
 
   <section class="card">
-    <h2>検索設定</h2>
+    <h2><span class="bar"></span>検索設定</h2>
 
-    <label class="checkbox">
+    <label class="switch">
       <input id="useSearch" type="checkbox" checked />
-      Wikipedia検索を使う（APIキー不要）
+      <span class="slider"></span>
+      <span class="switch-label">Wikipedia検索を使う（APIキー不要）</span>
     </label>
 
     <p class="hint">
@@ -192,7 +351,7 @@
   </section>
 
   <section class="card">
-    <h2>アニメ名を入力</h2>
+    <h2><span class="bar"></span>検索</h2>
 
     <label for="animeTitle">アニメ名</label>
     <input
@@ -201,11 +360,13 @@
       placeholder="例：葬送のフリーレン"
     />
 
-    <button id="generate">ネタバレなしで調べる</button>
+    <button id="generate" class="btn">ネタバレなしで調べる</button>
     <div id="generateStatus" class="status"></div>
 
     <div id="result"></div>
   </section>
+
+  <footer>生成結果は誤りを含む可能性があります。重要な情報は必ず自身でも確認してください。</footer>
 </main>
 
 <script>
@@ -220,6 +381,7 @@
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 
   const apiKeyInput = document.getElementById("apiKey");
+  const modelSelect = document.getElementById("modelSelect");
   const modelIdInput = document.getElementById("modelId");
   const apiBaseInput = document.getElementById("apiBase");
   const useSearchCheckbox = document.getElementById("useSearch");
@@ -232,8 +394,22 @@
 
   function loadSettings() {
     apiKeyInput.value = localStorage.getItem(STORAGE_KEYS.apiKey) || "";
-    modelIdInput.value = localStorage.getItem(STORAGE_KEYS.modelId) || DEFAULT_MODEL_ID;
     apiBaseInput.value = localStorage.getItem(STORAGE_KEYS.apiBase) || DEFAULT_API_BASE;
+
+    const savedModel = localStorage.getItem(STORAGE_KEYS.modelId) || DEFAULT_MODEL_ID;
+    const presetValues = Array.from(modelSelect.options)
+      .map(option => option.value)
+      .filter(value => value !== "custom");
+
+    if (presetValues.includes(savedModel)) {
+      modelSelect.value = savedModel;
+      modelIdInput.hidden = true;
+      modelIdInput.value = savedModel;
+    } else {
+      modelSelect.value = "custom";
+      modelIdInput.hidden = false;
+      modelIdInput.value = savedModel;
+    }
 
     const savedUseSearch = localStorage.getItem(STORAGE_KEYS.useSearch);
     useSearchCheckbox.checked = savedUseSearch === null ? true : savedUseSearch === "true";
@@ -244,18 +420,34 @@
     settingsStatus.className = isError ? "status error" : "status success";
   }
 
-  function setGenerateStatus(message, isError = false) {
+  function setGenerateStatus(message, isError = false, isSuccess = false) {
     generateStatus.textContent = message;
-    generateStatus.className = isError ? "status error" : "status";
+    generateStatus.className = isError ? "status error" : isSuccess ? "status success" : "status";
+  }
+
+  function getEffectiveModelId() {
+    if (modelSelect.value === "custom") {
+      return modelIdInput.value.trim() || DEFAULT_MODEL_ID;
+    }
+    return modelSelect.value;
+  }
+
+  function syncModelInput() {
+    const isCustom = modelSelect.value === "custom";
+    modelIdInput.hidden = !isCustom;
+
+    if (!isCustom) {
+      modelIdInput.value = modelSelect.value;
+    }
   }
 
   function saveSettings() {
     localStorage.setItem(STORAGE_KEYS.apiKey, apiKeyInput.value.trim());
-    localStorage.setItem(STORAGE_KEYS.modelId, modelIdInput.value.trim() || DEFAULT_MODEL_ID);
+    localStorage.setItem(STORAGE_KEYS.modelId, getEffectiveModelId());
     localStorage.setItem(STORAGE_KEYS.apiBase, apiBaseInput.value.trim() || DEFAULT_API_BASE);
     localStorage.setItem(STORAGE_KEYS.useSearch, useSearchCheckbox.checked ? "true" : "false");
 
-    setSettingsStatus("API設定と検索設定をlocalStorageに保存しました。");
+    setSettingsStatus("設定をlocalStorageに保存しました。");
   }
 
   function normalizeApiBase(value) {
@@ -264,6 +456,10 @@
 
   function normalizeModelId(value) {
     return (value || DEFAULT_MODEL_ID).trim().replace(/^models\//, "");
+  }
+
+  function formatDuration(ms) {
+    return `${(ms / 1000).toFixed(1)}秒`;
   }
 
   function stripHtml(html) {
@@ -340,7 +536,12 @@
       "- 登場人物の説明でもネタバレになる伏線や運命の確定は避けてください。",
       "- 作品を知らない人が「見るかどうか判断できる」情報に絞ってください。",
       "- 事実関係が不確実な場合は断定せず「要確認」と書いてください。",
-      "- 存在しない作品や判断できない場合は、その旨を正直に書いてください。"
+      "- 存在しない作品や判断できない場合は、その旨を正直に書いてください。",
+      "- いきなり最終的な日本語出力だけを出力してください。",
+      "- 【一言紹介】より前に、計画・思考過程・下書き・英語・役割設定・確認事項を書かないでください。",
+      "- 出力は指定された見出しのみを使用してください。",
+      "- 検索結果がある場合は、検索結果の表記と内容を優先してください。",
+      "- 検索結果にない固有名詞・人物名・設定を勝手に作らないでください。"
     ];
 
     if (searchResultsText) {
@@ -365,139 +566,4 @@
       "",
       "【主な登場人物】",
       "主要キャラクターを5人以内で、各キャラクターを1行で書いてください。",
-      "形式: キャラクター名 / 立場や特徴（ネタバレ禁止）",
-      "",
-      "【見どころ】",
-      "作画、物語、キャラ、世界観など魅力を3〜5個の箇条書きで書いてください。",
-      "",
-      "【こんな人におすすめ】",
-      "どんな気分や嗜好の人に向くか、2〜4個の箇条書きで書いてください。"
-    );
-
-    return lines.join("\n");
-  }
-
-  function extractModelText(data) {
-    const candidate = data?.candidates?.[0];
-
-    if (!candidate) {
-      const blockReason = data?.promptFeedback?.blockReason;
-      if (blockReason) {
-        throw new Error(`安全性設定によりブロックされました: ${blockReason}`);
-      }
-      throw new Error("候補が返却されませんでした。");
-    }
-
-    const parts = candidate?.content?.parts;
-
-    if (!Array.isArray(parts) || parts.length === 0) {
-      throw new Error("本文が見つかりませんでした。");
-    }
-
-    return parts.map(part => part?.text ?? "").join("").trim();
-  }
-
-  async function generateAnimeIntro() {
-    const apiKey = apiKeyInput.value.trim();
-    const modelId = normalizeModelId(modelIdInput.value);
-    const apiBase = normalizeApiBase(apiBaseInput.value);
-    const animeTitle = animeTitleInput.value.trim();
-
-    resultBox.textContent = "";
-    setGenerateStatus("");
-
-    if (!apiKey) {
-      setGenerateStatus("APIキーがありません。API設定で入力して保存してください。", true);
-      return;
-    }
-
-    if (!animeTitle) {
-      setGenerateStatus("アニメ名を入力してください。", true);
-      return;
-    }
-
-    generateButton.disabled = true;
-
-    let searchResultsText = "";
-
-    if (useSearchCheckbox.checked) {
-      setGenerateStatus("Wikipedia検索中...");
-
-      try {
-        const results = await getWikipediaSearchResults(animeTitle);
-        searchResultsText = formatSearchResults(results);
-
-        if (!searchResultsText) {
-          setGenerateStatus("検索結果がなかったので、AIのみで生成します。");
-        }
-      } catch (error) {
-        console.error(error);
-        setGenerateStatus(`Wikipedia検索に失敗したため、検索なしで続行します: ${error.message}`, true);
-      }
-    }
-
-    setGenerateStatus("AIに送信中...");
-
-    try {
-      const url = `${apiBase}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: buildPrompt(animeTitle, searchResultsText)
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 1024
-          }
-        })
-      });
-
-      let data = null;
-
-      try {
-        data = await response.json();
-      } catch {
-        data = null;
-      }
-
-      if (!response.ok) {
-        const apiMessage = data?.error?.message || `HTTP ${response.status}`;
-        throw new Error(apiMessage);
-      }
-
-      const text = extractModelText(data);
-      resultBox.textContent = text || "AIの応答が空でした。";
-      setGenerateStatus("生成しました。");
-    } catch (error) {
-      console.error(error);
-      resultBox.textContent = "";
-      setGenerateStatus(`失敗: ${error.message}`, true);
-    } finally {
-      generateButton.disabled = false;
-    }
-  }
-
-  saveSettingsButton.addEventListener("click", saveSettings);
-  generateButton.addEventListener("click", generateAnimeIntro);
-
-  animeTitleInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      generateAnimeIntro();
-    }
-  });
-
-  loadSettings();
-</script>
-</body>
-</html>
+      "形式: キャラ
