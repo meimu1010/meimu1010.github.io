@@ -9,17 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Old+Mincho:wght@700;900&display=swap" rel="stylesheet" />
 <style>
   :root {
-    color-scheme: dark;
-    --bg: #070b16;
-    --card: rgba(255, 255, 255, 0.045);
-    --card-border: rgba(255, 255, 255, 0.09);
-    --text: #e8ecf6;
-    --muted: #94a1b8;
-    --accent-1: #8b5cf6;
-    --accent-2: #f472b6;
-    --accent-3: #22d3ee;
-    --danger: #f87171;
-    --success: #4ade80;
+    color-scheme: light;
+    --bg: #f6f7fc;
+    --card: #ffffff;
+    --card-border: #e7e9f2;
+    --text: #1c2333;
+    --muted: #667085;
+    --accent-1: #7c3aed;
+    --accent-2: #ec4899;
+    --accent-3: #0e7490;
+    --danger: #dc2626;
+    --success: #16a34a;
   }
 
   * {
@@ -32,8 +32,8 @@
     padding: 48px 20px 72px;
     font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif;
     background:
-      radial-gradient(1000px 500px at 85% -10%, rgba(139, 92, 246, 0.16), transparent 60%),
-      radial-gradient(800px 460px at -10% 110%, rgba(244, 114, 182, 0.12), transparent 60%),
+      radial-gradient(900px 480px at 85% -10%, rgba(124, 58, 237, 0.10), transparent 60%),
+      radial-gradient(800px 460px at -10% 110%, rgba(236, 72, 153, 0.08), transparent 60%),
       var(--bg);
     color: var(--text);
     overflow-x: hidden;
@@ -64,7 +64,7 @@
     font-family: "Zen Old Mincho", serif;
     font-size: clamp(30px, 5vw, 44px);
     font-weight: 900;
-    background: linear-gradient(92deg, #ffffff 10%, #c4b5fd 55%, #f9a8d4 90%);
+    background: linear-gradient(92deg, #312e81 10%, #7c3aed 55%, #db2777 90%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -81,8 +81,7 @@
     border: 1px solid var(--card-border);
     border-radius: 20px;
     background: var(--card);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 12px 32px rgba(28, 35, 51, 0.06);
   }
 
   h2 {
@@ -92,7 +91,7 @@
     margin: 0 0 16px;
     font-size: 15px;
     letter-spacing: 0.08em;
-    color: #dbe3f4;
+    color: #334155;
   }
 
   h2 .bar {
@@ -116,9 +115,9 @@
   select {
     width: 100%;
     padding: 11px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid #d7dbe7;
     border-radius: 12px;
-    background: rgba(3, 7, 18, 0.6);
+    background: #ffffff;
     color: var(--text);
     font-size: 15px;
     font-family: inherit;
@@ -130,7 +129,7 @@
   input[type="password"]:focus,
   select:focus {
     border-color: var(--accent-1);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
   }
 
   #modelId {
@@ -149,13 +148,13 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35);
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
     transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
   }
 
   .btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 28px rgba(244, 114, 182, 0.4);
+    box-shadow: 0 10px 28px rgba(236, 72, 153, 0.3);
   }
 
   .btn:disabled {
@@ -176,6 +175,13 @@
     }
   }
 
+  .meta-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
   .status {
     margin-top: 12px;
     min-height: 20px;
@@ -191,13 +197,29 @@
     color: var(--success);
   }
 
+  .timer {
+    margin-top: 12px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .timer[hidden] {
+    display: none;
+  }
+
   #result {
     margin-top: 16px;
     padding: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid #e9e4f6;
     border-left: 3px solid var(--accent-2);
     border-radius: 14px;
-    background: rgba(3, 7, 18, 0.65);
+    background: #fbfaff;
     white-space: pre-wrap;
     line-height: 1.9;
     font-size: 14.5px;
@@ -246,7 +268,7 @@
     height: 26px;
     flex-shrink: 0;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.15);
+    background: #d8dce8;
     transition: background 0.2s;
   }
 
@@ -308,7 +330,8 @@
         <label for="modelSelect">モデル</label>
         <select id="modelSelect">
           <option value="gemma-4-31b-it">Gemma 4 31B</option>
-          <option value="gemma-4-26b-it">Gemma 4 26B</option>
+          <option value="gemma-4-26b-a4b-it">Gemma 4 26B (MoE)</option>
+          <option value="gemma-4-27b-it">Gemma 4 27B</option>
           <option value="custom">カスタム</option>
         </select>
         <input
@@ -361,7 +384,11 @@
     />
 
     <button id="generate" class="btn">ネタバレなしで調べる</button>
-    <div id="generateStatus" class="status"></div>
+
+    <div class="meta-line">
+      <div id="generateStatus" class="status"></div>
+      <div id="timer" class="timer" hidden></div>
+    </div>
 
     <div id="result"></div>
   </section>
@@ -390,7 +417,28 @@
   const animeTitleInput = document.getElementById("animeTitle");
   const generateButton = document.getElementById("generate");
   const generateStatus = document.getElementById("generateStatus");
+  const timerBox = document.getElementById("timer");
   const resultBox = document.getElementById("result");
+
+  let timerInterval = null;
+  let timerStart = 0;
+
+  function startTimer() {
+    stopTimer();
+    timerStart = performance.now();
+    timerBox.hidden = false;
+    timerBox.textContent = "経過 0.0秒";
+    timerInterval = setInterval(() => {
+      timerBox.textContent = `経過 ${((performance.now() - timerStart) / 1000).toFixed(1)}秒`;
+    }, 100);
+  }
+
+  function stopTimer() {
+    if (timerInterval !== null) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
 
   function loadSettings() {
     apiKeyInput.value = localStorage.getItem(STORAGE_KEYS.apiKey) || "";
@@ -467,6 +515,16 @@
     return doc.body.textContent || "";
   }
 
+  function extractFinalJapanese(text) {
+    const markerMatch = text.match(/(?:^|\n)【一言紹介】/);
+
+    if (markerMatch) {
+      return text.slice(markerMatch.index).replace(/^\n/, "").trim();
+    }
+
+    return text.trim();
+  }
+
   async function searchWikipedia(query) {
     const url = `https://ja.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=5&format=json&origin=*&srprop=snippet`;
 
@@ -537,8 +595,10 @@
       "- 作品を知らない人が「見るかどうか判断できる」情報に絞ってください。",
       "- 事実関係が不確実な場合は断定せず「要確認」と書いてください。",
       "- 存在しない作品や判断できない場合は、その旨を正直に書いてください。",
+      "- 必ず日本語のみで回答してください。英語を使わないでください。",
       "- いきなり最終的な日本語出力だけを出力してください。",
-      "- 【一言紹介】より前に、計画・思考過程・下書き・英語・役割設定・確認事項を書かないでください。",
+      "- 【一言紹介】の行から直接始めてください。それより前に何も書かないでください。",
+      "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
       "- 出力は指定された見出しのみを使用してください。",
       "- 検索結果がある場合は、検索結果の表記と内容を優先してください。",
       "- 検索結果にない固有名詞・人物名・設定を勝手に作らないでください。"
@@ -607,8 +667,9 @@
     resultBox.textContent = "";
     resultBox.classList.remove("filled");
     setGenerateStatus("");
+    timerBox.hidden = true;
+    stopTimer();
 
-    // 【修正】バリデーションを disabled=true より先に実行
     if (!apiKey) {
       setGenerateStatus("APIキーがありません。API設定で入力して保存してください。", true);
       return;
@@ -619,8 +680,8 @@
       return;
     }
 
-    // 入力が正しい場合のみボタンをロック
     generateButton.disabled = true;
+    startTimer();
     const totalStart = performance.now();
     let searchMs = null;
     let searchResultsText = "";
@@ -685,7 +746,8 @@
         throw new Error(apiMessage);
       }
 
-      const text = extractModelText(data);
+      const rawText = extractModelText(data);
+      const text = extractFinalJapanese(rawText);
       resultBox.textContent = text || "AIの応答が空でした。";
       resultBox.classList.add("filled");
 
@@ -693,12 +755,16 @@
       const totalMs = performance.now() - totalStart;
       const searchLabel = searchMs === null ? "検索 -" : `検索 ${formatDuration(searchMs)}`;
 
-      setGenerateStatus(`生成しました。合計 ${formatDuration(totalMs)}（${searchLabel} / AI ${formatDuration(aiMs)}）`, false, true);
+      stopTimer();
+      timerBox.textContent = `合計 ${formatDuration(totalMs)}`;
+      setGenerateStatus(`生成しました。（${searchLabel} / AI ${formatDuration(aiMs)}）`, false, true);
     } catch (error) {
       const totalMs = performance.now() - totalStart;
       console.error(error);
       resultBox.textContent = "";
-      setGenerateStatus(`失敗（${formatDuration(totalMs)}）: ${error.message}`, true);
+      stopTimer();
+      timerBox.textContent = `${formatDuration(totalMs)} で停止`;
+      setGenerateStatus(`失敗: ${error.message}`, true);
     } finally {
       generateButton.disabled = false;
     }
