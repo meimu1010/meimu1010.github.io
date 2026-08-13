@@ -232,6 +232,70 @@
     }
   }
 
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 14px;
+  }
+
+  .char-card {
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    background: var(--card);
+    box-shadow: 0 8px 24px rgba(28, 35, 51, 0.06);
+    overflow: hidden;
+    animation: fadeUp 0.35s ease;
+  }
+
+  .char-img {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    background: #eef0f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .char-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .char-img.no-img {
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .char-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .char-badge.main {
+    background: var(--accent-1);
+  }
+
+  .char-badge.sub {
+    background: #64748b;
+  }
+
+  .char-name {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
   footer {
     text-align: center;
     font-size: 11px;
@@ -405,6 +469,11 @@
 
   <div id="result"></div>
 
+  <section id="charactersSection" hidden>
+    <h2><span class="bar"></span>登場キャラクター（AniDB）</h2>
+    <div id="characterCards" class="cards-grid"></div>
+  </section>
+
   <footer>生成結果は誤りを含む可能性があります。重要な情報は必ず自身でも確認してください。</footer>
 </main>
 
@@ -470,6 +539,12 @@
   const DEFAULT_MODEL_ID = "gemma-4-31b-it";
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 
+  const CORS_PROXIES = [
+    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
+  ];
+
   const openSettingsButton = document.getElementById("openSettings");
   const closeSettingsButton = document.getElementById("closeSettings");
   const settingsDialog = document.getElementById("settingsDialog");
@@ -485,6 +560,8 @@
   const generateStatus = document.getElementById("generateStatus");
   const timerBox = document.getElementById("timer");
   const resultBox = document.getElementById("result");
+  const charactersSection = document.getElementById("charactersSection");
+  const characterCards = document.getElementById("characterCards");
 
   let timerInterval = null;
   let timerStart = 0;
@@ -581,44 +658,212 @@
     return doc.body.textContent || "";
   }
 
-  function extractFinalJapanese(text) {
-    const marker = "【一言紹介】";
-    const requiredHeadings = ["【あらすじ】", "【主な登場人物】", "【見どころ】", "【こんな人におすすめ】"];
-    let best = -1;
-    let searchFrom = 0;
-    let idx = text.indexOf(marker, searchFrom);
+  async function fetchViaProxy(url) {
+    let lastError = null;
 
-    while (idx !== -1) {
-      const rest = text.slice(idx);
-      let prev = 0;
-      let ok = true;
+    for (const wrap of CORS_PROXIES) {
+      try {
+        const response = await fetch(wrap(url));
 
-      for (const heading of requiredHeadings) {
-        const pos = rest.indexOf(heading, prev);
-
-        if (pos === -1) {
-          ok = false;
-          break;
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
 
-        prev = pos + heading.length;
-      }
+        const text = await response.text();
 
-      if (ok) {
-        best = idx;
+        if (text) {
+          return text;
+        }
+      } catch (error) {
+        lastError = error;
       }
-
-      searchFrom = idx + marker.length;
-      idx = text.indexOf(marker, searchFrom);
     }
 
-    const body = best !== -1 ? text.slice(best) : text;
+    throw lastError || new Error("どのプロキシでも取得できませんでした。");
+  }
 
-    return body
-      .split("\n")
-      .map(line => line.trimStart())
-      .join("\n")
-      .trim();
+  async function findAniDBAnimeId(title) {
+    const urls = [
+      `https://anidb.net/search/?q=${encodeURIComponent(title)}&entity=anime`,
+      `https://anidb.net/search/?q=${encodeURIComponent(title)}&entity=anime&do.search=1`
+    ];
+
+    for (const url of urls) {
+      const html = await fetchViaProxy(url);
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const anchors = [...doc.querySelectorAll("a[href]")];
+
+      for (const a of anchors) {
+        const m = (a.getAttribute("href") || "").match(/\/anime\/(\d+)/);
+
+        if (m) {
+          return m[1];
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function normalizeImgSrc(imgEl) {
+    const src = imgEl.getAttribute("src") || imgEl.getAttribute("data-src") || "";
+
+    if (!src) {
+      return null;
+    }
+
+    if (src.startsWith("//")) {
+      return `https:${src}`;
+    }
+
+    return src;
+  }
+
+  function findCharacterImg(anchor) {
+    let node = anchor;
+
+    for (let depth = 0; depth < 4 && node; depth++) {
+      if (node.querySelectorAll) {
+        const imgs = [...node.querySelectorAll("img")];
+
+        if (imgs.length === 1) {
+          return normalizeImgSrc(imgs[0]);
+        }
+
+        if (imgs.length > 1) {
+          return null;
+        }
+      }
+
+      node = node.parentElement;
+    }
+
+    return null;
+  }
+
+  function parseAniDBCharacters(doc) {
+    const headingEls = [...doc.querySelectorAll("h1,h2,h3,h4,h5,h6,div,span,p,td,th,b,strong,em")]
+      .filter(el => {
+        const t = (el.textContent || "").trim().toLowerCase();
+        return t === "main cast" || t === "secondary cast";
+      });
+
+    const anchors = [...doc.querySelectorAll('a[href*="/character/"]')];
+    const seen = new Set();
+    const chars = [];
+
+    for (const a of anchors) {
+      const m = (a.getAttribute("href") || "").match(/\/character\/(\d+)/);
+
+      if (!m) {
+        continue;
+      }
+
+      const id = m[1];
+
+      if (seen.has(id)) {
+        continue;
+      }
+
+      const name = (a.textContent || "").replace(/\s+/g, " ").trim();
+
+      if (!name) {
+        continue;
+      }
+
+      let type = null;
+
+      for (const h of headingEls) {
+        const pos = h.compareDocumentPosition(a);
+
+        if (pos & Node.DOCUMENT_POSITION_FOLLOWING) {
+          type = (h.textContent || "").trim().toLowerCase();
+        }
+      }
+
+      if (type !== "main cast" && type !== "secondary cast") {
+        continue;
+      }
+
+      seen.add(id);
+      chars.push({
+        id,
+        name,
+        type,
+        img: findCharacterImg(a)
+      });
+    }
+
+    return chars;
+  }
+
+  function formatAniDBForPrompt(chars) {
+    if (!chars.length) {
+      return "";
+    }
+
+    const main = chars.filter(c => c.type === "main cast").map(c => c.name);
+    const sub = chars.filter(c => c.type === "secondary cast").map(c => c.name);
+    const parts = [];
+
+    if (main.length) {
+      parts.push(`main cast: ${main.join(", ")}`);
+    }
+
+    if (sub.length) {
+      parts.push(`secondary cast: ${sub.join(", ")}`);
+    }
+
+    return parts.join("\n");
+  }
+
+  function renderCharacterCards(chars) {
+    charactersSection.hidden = chars.length === 0;
+    characterCards.innerHTML = "";
+
+    for (const c of chars) {
+      const card = document.createElement("div");
+      card.className = "char-card";
+
+      const imgWrap = document.createElement("div");
+      imgWrap.className = "char-img";
+
+      if (c.img) {
+        const img = document.createElement("img");
+        img.alt = c.name;
+        img.loading = "lazy";
+        img.src = c.img;
+
+        img.onerror = () => {
+          if (img.dataset.fallback !== "1") {
+            img.dataset.fallback = "1";
+            img.src = `https://api.allorigins.win/raw?url=${encodeURIComponent(c.img)}`;
+          } else {
+            img.remove();
+            imgWrap.classList.add("no-img");
+            imgWrap.textContent = c.name.charAt(0);
+          }
+        };
+
+        imgWrap.appendChild(img);
+      } else {
+        imgWrap.classList.add("no-img");
+        imgWrap.textContent = c.name.charAt(0);
+      }
+
+      const badge = document.createElement("span");
+      badge.className = `char-badge ${c.type === "main cast" ? "main" : "sub"}`;
+      badge.textContent = c.type === "main cast" ? "MAIN" : "SUB";
+      imgWrap.appendChild(badge);
+
+      const nameEl = document.createElement("p");
+      nameEl.className = "char-name";
+      nameEl.textContent = c.name;
+
+      card.appendChild(imgWrap);
+      card.appendChild(nameEl);
+      characterCards.appendChild(card);
+    }
   }
 
   async function searchWikipedia(query) {
@@ -677,7 +922,7 @@
     }).join("\n\n");
   }
 
-  function buildPrompt(animeTitle, searchResultsText) {
+  function buildPrompt(animeTitle, searchResultsText, aniDBText) {
     const lines = [
       "あなたはアニメ作品に詳しい紹介ライターです。",
       "以下のアニメについて、未視聴者向けに日本語でネタバレなしの紹介を作成してください。",
@@ -696,7 +941,8 @@
       "- 【一言紹介】の行から直接始めてください。それより前に何も書かないでください。",
       "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
       "- 出力は指定された見出しのみを使用してください。",
-      "- 検索結果がある場合は、検索結果の表記と内容を優先してください。"
+      "- 検索結果がある場合は、検索結果の表記と内容を優先してください。",
+      "- AniDBのキャラクター一覧がある場合は、登場人物の名前としてその表記を最優先で使ってください。"
     ];
 
     if (searchResultsText) {
@@ -711,6 +957,14 @@
       );
     }
 
+    if (aniDBText) {
+      lines.push(
+        "",
+        "AniDBのキャラクター一覧:",
+        aniDBText
+      );
+    }
+
     lines.push(
       "",
       "出力形式:",
@@ -721,7 +975,7 @@
       "冒頭〜序盤の設定を中心に、ネタバレなしで4〜6文で書いてください。",
       "",
       "【主な登場人物】",
-      "主要キャラクターを必ず3〜5人、各キャラクターを1行で書いてください。",
+      "主要キャラクターを各1行で書いてください。人数の上限はなく、作品にとって重要な人物はすべて挙げてください。",
       "検索結果に名前が少ない場合は、自分の知識から書いてください。不確実な場合にのみ（要確認）を付けてください。",
       "形式: キャラクター名 / 立場や特徴（ネタバレ禁止）",
       "",
@@ -755,6 +1009,18 @@
     return parts.map(part => part?.text ?? "").join("").trim();
   }
 
+  async function fetchAniDBCharacters(animeTitle) {
+    const animeId = await findAniDBAnimeId(animeTitle);
+
+    if (!animeId) {
+      return [];
+    }
+
+    const html = await fetchViaProxy(`https://anidb.net/anime/${animeId}`);
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return parseAniDBCharacters(doc);
+  }
+
   async function generateAnimeIntro() {
     const apiKey = apiKeyInput.value.trim();
     const modelId = normalizeModelId(getEffectiveModelId());
@@ -763,6 +1029,7 @@
 
     resultBox.textContent = "";
     resultBox.classList.remove("filled");
+    renderCharacterCards([]);
     setGenerateStatus("");
     timerBox.hidden = true;
     stopTimer();
@@ -782,7 +1049,9 @@
     startTimer();
     const totalStart = performance.now();
     let searchMs = null;
+    let aniDBMs = null;
     let searchResultsText = "";
+    let aniDBText = "";
 
     if (useSearchCheckbox.checked) {
       setGenerateStatus("Wikipedia検索中...");
@@ -803,6 +1072,25 @@
       searchMs = performance.now() - searchStart;
     }
 
+    setGenerateStatus("AniDB取得中...");
+    const aniDBStart = performance.now();
+
+    try {
+      const chars = await fetchAniDBCharacters(animeTitle);
+      aniDBText = formatAniDBForPrompt(chars);
+      renderCharacterCards(chars);
+
+      if (!chars.length) {
+        setGenerateStatus("AniDBからキャラクターを取得できませんでした。AIのみで続行します。");
+      }
+    } catch (error) {
+      console.error(error);
+      renderCharacterCards([]);
+      setGenerateStatus(`AniDBの取得に失敗したため、なしで続行します: ${error.message}`, true);
+    }
+
+    aniDBMs = performance.now() - aniDBStart;
+
     setGenerateStatus("AIに送信中...");
     const aiStart = performance.now();
 
@@ -819,7 +1107,7 @@
             {
               parts: [
                 {
-                  text: buildPrompt(animeTitle, searchResultsText)
+                  text: buildPrompt(animeTitle, searchResultsText, aniDBText)
                 }
               ]
             }
@@ -857,10 +1145,11 @@
       const aiMs = performance.now() - aiStart;
       const totalMs = performance.now() - totalStart;
       const searchLabel = searchMs === null ? "検索 -" : `検索 ${formatDuration(searchMs)}`;
+      const aniDBLabel = `AniDB ${formatDuration(aniDBMs)}`;
 
       stopTimer();
       timerBox.textContent = `合計 ${formatDuration(totalMs)}`;
-      setGenerateStatus(`生成しました。（${searchLabel} / AI ${formatDuration(aiMs)}）`, false, true);
+      setGenerateStatus(`生成しました。（${searchLabel} / ${aniDBLabel} / AI ${formatDuration(aiMs)}）`, false, true);
     } catch (error) {
       const totalMs = performance.now() - totalStart;
       console.error(error);
@@ -871,6 +1160,46 @@
     } finally {
       generateButton.disabled = false;
     }
+  }
+
+  function extractFinalJapanese(text) {
+    const marker = "【一言紹介】";
+    const requiredHeadings = ["【あらすじ】", "【主な登場人物】", "【見どころ】", "【こんな人におすすめ】"];
+    let best = -1;
+    let searchFrom = 0;
+    let idx = text.indexOf(marker, searchFrom);
+
+    while (idx !== -1) {
+      const rest = text.slice(idx);
+      let prev = 0;
+      let ok = true;
+
+      for (const heading of requiredHeadings) {
+        const pos = rest.indexOf(heading, prev);
+
+        if (pos === -1) {
+          ok = false;
+          break;
+        }
+
+        prev = pos + heading.length;
+      }
+
+      if (ok) {
+        best = idx;
+      }
+
+      searchFrom = idx + marker.length;
+      idx = text.indexOf(marker, searchFrom);
+    }
+
+    const body = best !== -1 ? text.slice(best) : text;
+
+    return body
+      .split("\n")
+      .map(line => line.trimStart())
+      .join("\n")
+      .trim();
   }
 
   openSettingsButton.addEventListener("click", () => settingsDialog.showModal());
