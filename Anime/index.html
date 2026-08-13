@@ -566,4 +566,155 @@
       "",
       "【主な登場人物】",
       "主要キャラクターを5人以内で、各キャラクターを1行で書いてください。",
-      "形式: キャラ
+      "形式: キャラクター名 / 立場や特徴（ネタバレ禁止）",
+      "",
+      "【見どころ】",
+      "作画、物語、キャラ、世界観など魅力を3〜5個の箇条書きで書いてください。",
+      "",
+      "【こんな人におすすめ】",
+      "どんな気分や嗜好の人に向くか、2〜4個の箇条書きで書いてください。"
+    );
+
+    return lines.join("\n");
+  }
+
+  function extractModelText(data) {
+    const candidate = data?.candidates?.[0];
+
+    if (!candidate) {
+      const blockReason = data?.promptFeedback?.blockReason;
+      if (blockReason) {
+        throw new Error(`安全性設定によりブロックされました: ${blockReason}`);
+      }
+      throw new Error("候補が返却されませんでした。");
+    }
+
+    const parts = candidate?.content?.parts;
+
+    if (!Array.isArray(parts) || parts.length === 0) {
+      throw new Error("本文が見つかりませんでした。");
+    }
+
+    return parts.map(part => part?.text ?? "").join("").trim();
+  }
+
+  async function generateAnimeIntro() {
+    const apiKey = apiKeyInput.value.trim();
+    const modelId = normalizeModelId(getEffectiveModelId());
+    const apiBase = normalizeApiBase(apiBaseInput.value);
+    const animeTitle = animeTitleInput.value.trim();
+
+    resultBox.textContent = "";
+    resultBox.classList.remove("filled");
+    setGenerateStatus("");
+
+    // 【修正】バリデーションを disabled=true より先に実行
+    if (!apiKey) {
+      setGenerateStatus("APIキーがありません。API設定で入力して保存してください。", true);
+      return;
+    }
+
+    if (!animeTitle) {
+      setGenerateStatus("アニメ名を入力してください。", true);
+      return;
+    }
+
+    // 入力が正しい場合のみボタンをロック
+    generateButton.disabled = true;
+    const totalStart = performance.now();
+    let searchMs = null;
+    let searchResultsText = "";
+
+    if (useSearchCheckbox.checked) {
+      setGenerateStatus("Wikipedia検索中...");
+      const searchStart = performance.now();
+
+      try {
+        const results = await getWikipediaSearchResults(animeTitle);
+        searchResultsText = formatSearchResults(results);
+
+        if (!searchResultsText) {
+          setGenerateStatus("検索結果がなかったので、AIのみで生成します。");
+        }
+      } catch (error) {
+        console.error(error);
+        setGenerateStatus(`Wikipedia検索に失敗したため、検索なしで続行します: ${error.message}`, true);
+      }
+
+      searchMs = performance.now() - searchStart;
+    }
+
+    setGenerateStatus("AIに送信中...");
+    const aiStart = performance.now();
+
+    try {
+      const url = `${apiBase}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: buildPrompt(animeTitle, searchResultsText)
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 2048
+          }
+        })
+      });
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok) {
+        const apiMessage = data?.error?.message || `HTTP ${response.status}`;
+        throw new Error(apiMessage);
+      }
+
+      const text = extractModelText(data);
+      resultBox.textContent = text || "AIの応答が空でした。";
+      resultBox.classList.add("filled");
+
+      const aiMs = performance.now() - aiStart;
+      const totalMs = performance.now() - totalStart;
+      const searchLabel = searchMs === null ? "検索 -" : `検索 ${formatDuration(searchMs)}`;
+
+      setGenerateStatus(`生成しました。合計 ${formatDuration(totalMs)}（${searchLabel} / AI ${formatDuration(aiMs)}）`, false, true);
+    } catch (error) {
+      const totalMs = performance.now() - totalStart;
+      console.error(error);
+      resultBox.textContent = "";
+      setGenerateStatus(`失敗（${formatDuration(totalMs)}）: ${error.message}`, true);
+    } finally {
+      generateButton.disabled = false;
+    }
+  }
+
+  saveSettingsButton.addEventListener("click", saveSettings);
+  generateButton.addEventListener("click", generateAnimeIntro);
+  modelSelect.addEventListener("change", syncModelInput);
+
+  animeTitleInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      generateAnimeIntro();
+    }
+  });
+
+  loadSettings();
+</script>
+</body>
+</html>
