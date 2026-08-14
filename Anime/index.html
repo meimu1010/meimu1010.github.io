@@ -11,7 +11,7 @@
   :root { color-scheme: light; --bg:#f6f7fc; --card:#fff; --card-border:#e7e9f2; --text:#1c2333; --muted:#667085; --accent-1:#7c3aed; --accent-2:#ec4899; --accent-3:#0e7490; --danger:#dc2626; --success:#16a34a; }
   * { box-sizing: border-box; }
   body { margin:0; min-height:100vh; padding:64px 20px 72px; font-family:"Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
-  main { max-width:920px; margin:0 auto; display:grid; gap:20px; position:relative; z-index:1; }
+  main { max-width:1160px; margin:0 auto; display:grid; gap:20px; position:relative; z-index:1; }
   .hero-bg { position:fixed; top:0; left:0; right:0; height:62vh; background-size:cover; background-position:center 30%; opacity:0; transition:opacity .8s ease; pointer-events:none; z-index:0; }
   .hero-bg::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(246,247,252,.15) 0%, rgba(246,247,252,.6) 55%, var(--bg) 100%); }
   body.has-banner .hero-bg { opacity:1; }
@@ -21,7 +21,7 @@
   .hero-eyebrow { margin:0 0 14px; font-size:11px; font-weight:700; letter-spacing:.35em; color:var(--accent-3); }
   h1 { margin:0 0 12px; font-family:"Zen Old Mincho",serif; font-size:clamp(30px,5vw,44px); font-weight:900; background:linear-gradient(92deg,#312e81 10%,#7c3aed 55%,#db2777 90%); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .hero-lead { margin:0; font-size:14px; color:var(--muted); }
-  .search-box { display:flex; gap:10px; max-width:620px; margin:28px auto 0; }
+  .search-box { display:flex; gap:10px; max-width:720px; margin:28px auto 0; }
   .search-box input { flex:1; padding:14px 20px; border:1px solid #d7dbe7; border-radius:999px; background:#fff; color:var(--text); font-size:16px; font-family:inherit; outline:none; box-shadow:0 6px 18px rgba(28,35,51,.06); transition:border-color .2s, box-shadow .2s; }
   .search-box input:focus { border-color:var(--accent-1); box-shadow:0 0 0 3px rgba(124,58,237,.18); }
   @media (max-width:560px) { .search-box { flex-direction:column; } .search-box .btn { width:100%; } }
@@ -41,15 +41,19 @@
   .chip { padding:4px 12px; border-radius:999px; background:#fff; border:1px solid var(--card-border); font-size:12px; font-weight:600; color:#47536b; box-shadow:0 2px 8px rgba(28,35,51,.06); }
   .chip.score { background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:#fff; border:0; }
   .chip.genre { background:#eef2ff; color:#4338ca; border-color:#e0e7ff; }
-  #result { padding:24px; border:1px solid #e9e4f6; border-radius:16px; background:var(--card); box-shadow:0 12px 32px rgba(28,35,51,.06); font-size:14.5px; }
+  #result { display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:14.5px; }
   #result:empty { display:none; }
   #result.filled { animation:fadeUp .35s ease; }
-  .res-h { display:flex; align-items:center; gap:8px; margin:20px 0 10px; font-size:15px; color:#334155; }
+  .block { background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:20px 22px; box-shadow:0 12px 32px rgba(28,35,51,.06); animation:fadeUp .4s ease both; }
+  .block-intro { grid-column:1 / -1; text-align:center; background:linear-gradient(120deg, rgba(124,58,237,.08), rgba(236,72,153,.10)); border-color:#e5defa; }
+  .block-intro .res-h { justify-content:center; }
+  .block-intro .res-p { font-size:16px; font-weight:600; margin:0; }
+  .res-h { display:flex; align-items:center; gap:8px; margin:0 0 12px; font-size:15px; color:#334155; }
   .res-h::before { content:""; width:4px; height:16px; border-radius:2px; background:linear-gradient(180deg,var(--accent-1),var(--accent-2)); }
-  .res-h:first-child { margin-top:0; }
-  .res-p { margin:0 0 10px; line-height:1.9; }
-  .res-ul { margin:0 0 12px; padding-left:1.2em; display:grid; gap:6px; line-height:1.7; }
-  .res-p.warn { color:var(--danger); font-size:12.5px; }
+  .res-p { margin:0 0 8px; line-height:1.9; }
+  .res-ul { margin:0; padding-left:1.2em; display:grid; gap:6px; line-height:1.7; }
+  .res-p.warn { grid-column:1 / -1; color:var(--danger); font-size:12.5px; }
+  @media (max-width:860px) { #result { grid-template-columns:1fr; } }
   .section-title { display:flex; align-items:center; gap:10px; margin:0 0 4px; font-size:16px; color:#334155; }
   .section-title .bar { width:4px; height:18px; border-radius:2px; background:linear-gradient(180deg,var(--accent-1),var(--accent-2)); }
   .cards-row { display:grid; grid-auto-flow:column; grid-auto-columns:160px; gap:14px; overflow-x:auto; scroll-snap-type:x mandatory; padding:4px 4px 12px; }
@@ -426,6 +430,26 @@
 
   function renderResult(text) {
     resultBox.innerHTML = "";
+    let block = null;
+    let blockIndex = 0;
+
+    const addBlock = (title) => {
+      block = document.createElement("section");
+      block.className = "block";
+      block.style.animationDelay = `${blockIndex * 60}ms`;
+      blockIndex++;
+
+      if (title.includes("一言紹介")) {
+        block.classList.add("block-intro");
+      }
+
+      const h = document.createElement("h3");
+      h.className = "res-h";
+      h.textContent = title;
+      block.appendChild(h);
+      resultBox.appendChild(block);
+    };
+
     for (const rawLine of text.split("\n")) {
       const t = rawLine.trim();
 
@@ -434,17 +458,21 @@
       }
 
       if (/^【.+】$/.test(t)) {
-        const h = document.createElement("h3");
-        h.className = "res-h";
-        h.textContent = t;
-        resultBox.appendChild(h);
-      } else if (/^[・\-•]/.test(t)) {
-        let ul = resultBox.lastElementChild;
+        addBlock(t);
+        continue;
+      }
+
+      if (!block) {
+        addBlock("【紹介】");
+      }
+
+      if (/^[・\-•]/.test(t)) {
+        let ul = block.lastElementChild;
 
         if (!ul || ul.tagName !== "UL") {
           ul = document.createElement("ul");
           ul.className = "res-ul";
-          resultBox.appendChild(ul);
+          block.appendChild(ul);
         }
 
         const li = document.createElement("li");
@@ -454,7 +482,7 @@
         const p = document.createElement("p");
         p.className = "res-p";
         p.textContent = t;
-        resultBox.appendChild(p);
+        block.appendChild(p);
       }
     }
   }
