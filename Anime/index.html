@@ -162,8 +162,7 @@
   const DEFAULT_MODEL_ID = "gemma-4-31b-it";
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
   const ANILIST_ENDPOINT = "https://graphql.anilist.co";
-  const SUB_FAV_RATIO = 0.2;
-  const SUB_FAV_FLOOR = 30;
+  const SUB_MAX = 6;
 
   const heroBg = document.getElementById("heroBg");
   const openSettingsButton = document.getElementById("openSettings");
@@ -299,23 +298,38 @@
     if (!media) return null;
 
     const edges = media.characters?.edges || [];
-    const mains = edges.filter(e => e?.role === "MAIN");
-    const maxMainFav = mains.reduce((m, e) => Math.max(m, e?.node?.favourites || 0), 0);
-    const subThreshold = Math.max(SUB_FAV_FLOOR, Math.floor(maxMainFav * SUB_FAV_RATIO));
+
+    const toChar = (edge) => {
+      const node = edge?.node || {};
+      return {
+        name: node?.name?.full || "",
+        native: node?.name?.native || "",
+        type: edge?.role === "MAIN" ? "main" : "supporting",
+        img: node?.image?.large || null,
+        fav: node?.favourites || 0
+      };
+    };
 
     const seen = new Set();
-    const chars = [];
+    const dedupe = (list) => {
+      const out = [];
+      for (const c of list) {
+        const key = c.native || c.name;
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        out.push(c);
+      }
+      return out;
+    };
 
-    for (const edge of edges) {
-      const role = edge?.role;
-      if (role !== "MAIN" && role !== "SUPPORTING") continue;
-      const node = edge?.node || {};
-      const name = node?.name?.full || "";
-      const native = node?.name?.native || "";
-      const key = native || name;
-      if (!key || seen.has(key)) continue;
-      if (role === "SUPPORTING" && (node?.favourites || 0) < subThreshold) continue;
-      seen.add(key);
+    const mains = dedupe(edges.filter(e => e?.role === "MAIN").map(toChar));
+    const subs = dedupe(
+      edges.filter(e => e?.role === "SUPPORTING").map(toChar)
+        .sort((a, b) => b.fav - a.fav)
+        .slice(0, SUB_MAX)
+    );
+
+    const chars = [...mains, ...subs];
       chars.push({ name, native, type: role === "MAIN" ? "main" : "supporting", img: node?.image?.large || null });
     }
 
