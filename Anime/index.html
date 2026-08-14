@@ -13,7 +13,7 @@
   body { margin:0; min-height:100vh; padding:64px 20px 72px; font-family:"Noto Sans JP",system-ui,sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
   main { max-width:1160px; margin:0 auto; display:grid; gap:20px; position:relative; z-index:1; }
   .hero-bg { position:fixed; top:0; left:0; right:0; height:62vh; background-size:cover; background-position:center 30%; opacity:0; transition:opacity .8s ease; pointer-events:none; z-index:0; }
-  .hero-bg::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(246,247,252,.15) 0%, rgba(246,247,252,.6) 55%, var(--bg) 100%); }
+  .hero-bg::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(246,247,252,.65) 0%, rgba(246,247,252,.8) 45%, var(--bg) 100%); }
   body.has-banner .hero-bg { opacity:1; }
   .orb { position:fixed; border-radius:50%; filter:blur(90px); z-index:0; pointer-events:none; }
   .orb-1 { width:420px; height:420px; background:rgba(124,58,237,.16); top:-120px; left:-120px; animation:drift 14s ease-in-out infinite alternate; }
@@ -27,7 +27,8 @@
   .hero { text-align:center; padding:8px 0 4px; }
   .hero-eyebrow { margin:0 0 14px; font-size:11px; font-weight:700; letter-spacing:.35em; color:var(--accent-3); }
   h1 { margin:0 0 12px; font-family:"Zen Old Mincho",serif; font-size:clamp(30px,5vw,44px); font-weight:900; background:linear-gradient(92deg,#312e81 10%,#7c3aed 55%,#db2777 90%); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .hero-lead { margin:0; font-size:14px; color:var(--muted); }
+  .hero-lead { margin:0; font-size:14px; color:#47536b; text-shadow:0 1px 6px rgba(246,247,252,.9); }
+  h1 { filter:drop-shadow(0 2px 6px rgba(255,255,255,.55)); }
   .search-box { display:flex; gap:10px; max-width:720px; margin:28px auto 0; }
   .search-box input { flex:1; padding:14px 20px; border:1px solid #d7dbe7; border-radius:999px; background:#fff; color:var(--text); font-size:16px; font-family:inherit; outline:none; box-shadow:0 6px 18px rgba(28,35,51,.06); transition:border-color .2s, box-shadow .2s; }
   .search-box input:focus { border-color:var(--accent-1); box-shadow:0 0 0 3px rgba(124,58,237,.18); }
@@ -36,7 +37,7 @@
   .btn:hover { transform:translateY(-1px); box-shadow:0 10px 28px rgba(236,72,153,.3); }
   .btn:disabled { opacity:.55; cursor:wait; transform:none; }
   .btn.small { padding:9px 16px; font-size:12.5px; margin-top:0; box-shadow:0 4px 14px rgba(124,58,237,.25); }
-  .meta-line { display:flex; align-items:center; justify-content:center; gap:12px; min-height:32px; flex-wrap:wrap; }
+  .meta-line { display:flex; align-items:center; justify-content:center; gap:12px; min-height:32px; flex-wrap:wrap; width:max-content; max-width:92vw; margin:0 auto; padding:4px 16px; border-radius:999px; background:rgba(255,255,255,.7); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 4px 14px rgba(28,35,51,.08); }
   .status { margin-top:8px; min-height:20px; font-size:13px; color:var(--muted); }
   .error { color:var(--danger); }
   .success { color:var(--success); }
@@ -482,10 +483,9 @@
     return a;
   }
 
-  function appendInfoBlock(media) {
-    if (!media) return;
-
+  function buildInfoRows(media) {
     const rows = [];
+    if (!media) return rows;
     if (media.source) rows.push(["原作", SOURCE_JA[media.source] || media.source]);
     if (media.studios.length) rows.push(["アニメ制作", media.studios.join(" / ")]);
 
@@ -498,6 +498,13 @@
     }
 
     if (media.popularity) rows.push(["人気ランク", `#${media.popularity}`]);
+    return rows;
+  }
+
+  function appendInfoBlock(media) {
+    if (!media) return;
+
+    const rows = buildInfoRows(media);
 
     const links = media.links || [];
     const official = links.find(l => /official site/i.test(l.site || ""));
@@ -781,10 +788,31 @@
     });
   }
 
+  function drawHeading(ctx, text, x, y) {
+    ctx.fillStyle = "#ec4899";
+    ctx.fillRect(x, y - 22, 6, 26);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 26px 'Noto Sans JP', sans-serif";
+    ctx.fillText(text, x + 18, y);
+    return y + 42;
+  }
+
+  function drawWrapped(ctx, text, x, y, maxW, lh, maxLines, maxY) {
+    const all = wrapCanvasText(ctx, text, maxW);
+    const lines = all.slice(0, maxLines);
+    if (all.length > lines.length) lines[lines.length - 1] += "…";
+    for (const line of lines) {
+      if (y > maxY) break;
+      ctx.fillText(line, x, y);
+      y += lh;
+    }
+    return y;
+  }
+
   async function generateShareImage() {
     if (!shareData) return;
 
-    const { media, intro, highlights, charNames, portraits } = shareData;
+    const { media, intro, synopsis, highlights, recommends, infoRows, officialUrl, charNames, portraits } = shareData;
     const W = 1920, H = 1080;
     const canvas = document.createElement("canvas");
     canvas.width = W;
@@ -802,16 +830,16 @@
 
     if (banner) {
       ctx.save();
-      ctx.globalAlpha = 0.38;
+      ctx.globalAlpha = 0.30;
       const scale = Math.max(W / banner.width, H / banner.height);
       const bw = banner.width * scale, bh = banner.height * scale;
       ctx.drawImage(banner, (W - bw) / 2, (H - bh) / 2, bw, bh);
       ctx.restore();
 
       const veil = ctx.createLinearGradient(0, 0, 0, H);
-      veil.addColorStop(0, "rgba(23,18,51,.55)");
-      veil.addColorStop(0.5, "rgba(23,18,51,.72)");
-      veil.addColorStop(1, "rgba(23,18,51,.92)");
+      veil.addColorStop(0, "rgba(23,18,51,.6)");
+      veil.addColorStop(0.5, "rgba(23,18,51,.78)");
+      veil.addColorStop(1, "rgba(23,18,51,.94)");
       ctx.fillStyle = veil;
       ctx.fillRect(0, 0, W, H);
     }
@@ -820,25 +848,25 @@
     acc.addColorStop(0, "#8b5cf6");
     acc.addColorStop(1, "#ec4899");
     ctx.fillStyle = acc;
-    ctx.fillRect(90, 96, 120, 8);
+    ctx.fillRect(90, 78, 120, 8);
 
     ctx.fillStyle = "#7dd3fc";
-    ctx.font = "700 26px 'Noto Sans JP', sans-serif";
-    ctx.fillText("S P O I L E R - F R E E   A N I M E   G U I D E", 90, 152);
+    ctx.font = "700 24px 'Noto Sans JP', sans-serif";
+    ctx.fillText("S P O I L E R - F R E E   A N I M E   G U I D E", 90, 128);
 
     ctx.textAlign = "right";
     ctx.fillStyle = "rgba(255,255,255,.6)";
-    ctx.font = "700 28px 'Noto Sans JP', sans-serif";
-    ctx.fillText("ネタバレなしアニメ紹介", W - 90, 130);
+    ctx.font = "700 26px 'Noto Sans JP', sans-serif";
+    ctx.fillText("ネタバレなしアニメ紹介", W - 90, 118);
     ctx.textAlign = "left";
 
     ctx.fillStyle = "#ffffff";
-    ctx.font = "900 76px 'Zen Old Mincho', serif";
-    ctx.fillText(media?.native || media?.romaji || "", 90, 258);
+    ctx.font = "900 64px 'Zen Old Mincho', serif";
+    ctx.fillText(media?.native || media?.romaji || "", 90, 208);
 
     ctx.fillStyle = "rgba(255,255,255,.6)";
-    ctx.font = "500 26px 'Noto Sans JP', sans-serif";
-    ctx.fillText((media?.romaji || "").toUpperCase(), 92, 302);
+    ctx.font = "500 22px 'Noto Sans JP', sans-serif";
+    ctx.fillText((media?.romaji || "").toUpperCase(), 92, 246);
 
     let cx = 90;
     const chipTexts = [];
@@ -846,66 +874,115 @@
     if (media?.episodes) chipTexts.push(`全${media.episodes}話`);
     if (media?.format) chipTexts.push(formatJa(media.format));
     if (media?.averageScore) chipTexts.push(`★ ${(media.averageScore / 10).toFixed(1)}`);
-    ctx.font = "600 26px 'Noto Sans JP', sans-serif";
+    ctx.font = "600 24px 'Noto Sans JP', sans-serif";
 
     for (const t of chipTexts) {
-      const w = ctx.measureText(t).width + 40;
+      const w = ctx.measureText(t).width + 36;
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(cx, 336, w, 52, 26); else ctx.rect(cx, 336, w, 52);
+      if (ctx.roundRect) ctx.roundRect(cx, 272, w, 48, 24); else ctx.rect(cx, 272, w, 48);
       ctx.fillStyle = "rgba(255,255,255,.14)";
       ctx.fill();
       ctx.fillStyle = "#ffffff";
-      ctx.fillText(t, cx + 20, 372);
-      cx += w + 14;
+      ctx.fillText(t, cx + 18, 305);
+      cx += w + 12;
     }
 
+    ctx.font = "700 30px 'Noto Sans JP', sans-serif";
+    const introLines = wrapCanvasText(ctx, intro, W - 270).slice(0, 2);
+    const boxH = introLines.length * 46 + 34;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(90, 348, W - 180, boxH, 18); else ctx.rect(90, 348, W - 180, boxH);
+    ctx.fillStyle = "rgba(255,255,255,.10)";
+    ctx.fill();
     ctx.fillStyle = "#f5f3ff";
-    ctx.font = "600 40px 'Noto Sans JP', sans-serif";
-    let iy = 480;
-    for (const line of wrapCanvasText(ctx, intro, 1400).slice(0, 3)) {
-      ctx.fillText(line, 90, iy);
-      iy += 58;
+    introLines.forEach((l, i) => ctx.fillText(l, 130, 348 + 52 + i * 46));
+
+    const colTop = 348 + boxH + 56;
+    const colBottom = 930;
+
+    let ly = drawHeading(ctx, "あらすじ", 90, colTop + 20);
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.font = "500 24px 'Noto Sans JP', sans-serif";
+
+    for (const para of synopsis) {
+      if (ly > colBottom) break;
+      ly = drawWrapped(ctx, para, 90, ly, 900, 38, 12, colBottom);
+      ly += 10;
     }
 
-    ctx.font = "500 30px 'Noto Sans JP', sans-serif";
-    let hy = iy + 46;
+    if (ly + 80 <= colBottom) {
+      ly = drawHeading(ctx, "こんな人におすすめ", 90, ly + 26);
+      ctx.font = "500 22px 'Noto Sans JP', sans-serif";
 
-    for (const hline of highlights.slice(0, 3)) {
-      const clean = hline.replace(/^[・\-•]\s*/, "");
+      for (const rline of recommends.slice(0, 3)) {
+        if (ly > colBottom) break;
+        ctx.fillStyle = "#8b5cf6";
+        ctx.fillText("◆", 90, ly);
+        ctx.fillStyle = "rgba(255,255,255,.88)";
+        ly = drawWrapped(ctx, rline.replace(/^[・\-•]\s*/, ""), 124, ly, 866, 30, 2, colBottom);
+        ly += 6;
+      }
+    }
+
+    const RX = 1050, RW = 780;
+    let ry = drawHeading(ctx, "見どころ", RX, colTop + 20);
+    ctx.font = "500 22px 'Noto Sans JP', sans-serif";
+
+    for (const hline of highlights.slice(0, 4)) {
+      if (ry > colBottom) break;
       ctx.fillStyle = "#ec4899";
-      ctx.fillText("★", 92, hy);
+      ctx.fillText("★", RX, ry);
       ctx.fillStyle = "rgba(255,255,255,.88)";
-      const wrapped = wrapCanvasText(ctx, clean, 1320);
-      ctx.fillText(wrapped[0] + (wrapped.length > 1 ? "…" : ""), 140, hy);
-      hy += 50;
+      ry = drawWrapped(ctx, hline.replace(/^[・\-•]\s*/, ""), RX + 34, ry, RW - 40, 30, 2, colBottom);
+      ry += 6;
+    }
+
+    if (ry + 60 <= colBottom && infoRows.length) {
+      ry = drawHeading(ctx, "作品情報", RX, ry + 26);
+      ctx.font = "500 20px 'Noto Sans JP', sans-serif";
+
+      for (const [k, v] of infoRows.slice(0, 4)) {
+        if (ry > colBottom) break;
+        ctx.fillStyle = "rgba(255,255,255,.65)";
+        ctx.fillText(k, RX, ry);
+        ctx.fillStyle = "rgba(255,255,255,.88)";
+        drawWrapped(ctx, v, RX + 130, ry, RW - 140, 28, 1, colBottom);
+        ry += 30;
+      }
     }
 
     const loadedPortraits = await Promise.all((portraits || []).slice(0, 6).map(u => loadImgSafe(u)));
     let px = 90;
-    const py = H - 210;
+    const py = H - 96;
 
     for (const p of loadedPortraits) {
       if (!p) continue;
       ctx.save();
       ctx.beginPath();
-      ctx.arc(px + 52, py, 52, 0, Math.PI * 2);
+      ctx.arc(px + 40, py, 40, 0, Math.PI * 2);
       ctx.clip();
-      ctx.drawImage(p, px, py - 52, 104, 104);
+      ctx.drawImage(p, px, py - 40, 80, 80);
       ctx.restore();
       ctx.beginPath();
-      ctx.arc(px + 52, py, 52, 0, Math.PI * 2);
+      ctx.arc(px + 40, py, 40, 0, Math.PI * 2);
       ctx.strokeStyle = "rgba(255,255,255,.5)";
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
-      px += 124;
+      px += 94;
     }
 
     ctx.fillStyle = "rgba(255,255,255,.75)";
-    ctx.font = "500 26px 'Noto Sans JP', sans-serif";
-    const castLine = charNames.slice(0, 8).join(" / ");
-    wrapCanvasText(ctx, castLine, 1740).slice(0, 2).forEach((l, i) => {
-      ctx.fillText(l, 90, H - 96 + i * 38);
-    });
+    ctx.font = "500 20px 'Noto Sans JP', sans-serif";
+    const castX = px + 20;
+    drawWrapped(ctx, charNames.slice(0, 8).join(" / "), castX, py - 8, W - 90 - castX, 30, 2, H - 40);
+
+    if (officialUrl) {
+      ctx.textAlign = "right";
+      ctx.fillStyle = "rgba(255,255,255,.5)";
+      ctx.font = "500 18px 'Noto Sans JP', sans-serif";
+      ctx.fillText(officialUrl, W - 90, H - 30);
+      ctx.textAlign = "left";
+    }
 
     try {
       const a = document.createElement("a");
@@ -1246,7 +1323,17 @@
       const charNames = sortedChars.map(c => c.native || c.name);
       const portraits = sortedChars.map(c => c.img).filter(Boolean);
 
-      shareData = { media: aniMedia, intro, highlights, charNames, portraits };
+      shareData = {
+        media: aniMedia,
+        intro,
+        synopsis: getSectionLines(text, "あらすじ"),
+        highlights,
+        recommends: getSectionLines(text, "こんな人におすすめ"),
+        infoRows: buildInfoRows(aniMedia),
+        officialUrl: (aniMedia?.links || []).find(l => /official site/i.test(l.site || ""))?.url || "",
+        charNames,
+        portraits
+      };
       saveImageButton.hidden = false;
 
       const aiMs = performance.now() - aiStart;
