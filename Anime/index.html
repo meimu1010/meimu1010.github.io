@@ -277,10 +277,10 @@
           bannerImage
           coverImage { extraLarge large }
           format episodes season seasonYear averageScore genres
-          characters(sort: ROLE, perPage: 25) {
+          characters(sort: [ROLE, ID], perPage: 25) {
             edges {
               role
-              node { name { full native } image { large } favourites }
+              node { id name { full native } image { large } }
             }
           }
         }
@@ -314,8 +314,10 @@
       if (!key || seen.has(key)) continue;
 
       seen.add(key);
-      chars.push({ name, native, img: node?.image?.large || null });
+      chars.push({ id: node?.id || 0, name, native, img: node?.image?.large || null });
     }
+
+    chars.sort((a, b) => a.id - b.id);
 
     return {
       native: media.title?.native || "",
