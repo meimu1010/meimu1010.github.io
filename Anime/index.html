@@ -63,9 +63,6 @@
   .char-img { position:relative; width:76px; height:76px; flex-shrink:0; border-radius:12px; background:#eef0f7; display:flex; align-items:center; justify-content:center; overflow:hidden; }
   .char-img img { width:100%; height:100%; object-fit:cover; display:block; }
   .char-img.no-img { font-size:26px; font-weight:700; color:var(--muted); }
-  .char-badge { position:absolute; top:8px; left:8px; padding:2px 9px; border-radius:999px; font-size:10px; font-weight:700; color:#fff; }
-  .char-badge.main { background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); }
-  .char-badge.sub { background:#64748b; }
   .char-body { min-width:0; }
   .char-name { margin:0; font-size:13.5px; font-weight:700; line-height:1.4; }
   .char-sub { margin:1px 0 0; font-size:10.5px; color:var(--muted); }
@@ -81,7 +78,7 @@
   input[type="text"], input[type="password"], select { width:100%; padding:11px 14px; border:1px solid #d7dbe7; border-radius:12px; background:#fff; color:var(--text); font-size:15px; font-family:inherit; outline:none; transition:border-color .2s, box-shadow .2s; }
   input[type="text"]:focus, input[type="password"]:focus, select:focus { border-color:var(--accent-1); box-shadow:0 0 0 3px rgba(124,58,237,.18); }
   #modelId { margin-top:8px; }
-  input:disabled { opacity:.6; background:#f0f1f6; }
+  input:disabled { opacity:.6; background:#f0f1f6; cursor:not-allowed; }
   .hint { margin:6px 0 0; font-size:11.5px; color:var(--muted); }
   .switch { display:flex; align-items:center; gap:12px; margin:16px 0 0; cursor:pointer; }
   .switch input { display:none; }
@@ -150,7 +147,7 @@
   <p class="hint">実際のモデルIDは環境により異なる可能性があります。エラーが出る場合はカスタムを選択してください。</p>
   <label for="apiBase">APIベースURL</label>
   <input id="apiBase" type="text" placeholder="https://generativelanguage.googleapis.com/v1beta" />
-  <p class="hint">通常はデフォルトのままで問題ありません。</p>
+  <p class="hint">カスタムモデル選択時のみ編集可能です。</p>
   <label class="switch">
     <input id="useSearch" type="checkbox" checked />
     <span class="slider"></span>
@@ -193,6 +190,22 @@
 
   let timerInterval = null;
   let timerStart = 0;
+
+  async function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      return response;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error(`タイムアウト（${timeoutMs/1000}秒経過）`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
 
   function startTimer() {
     stopTimer();
@@ -287,11 +300,11 @@
       }
     `;
 
-    const response = await fetch(ANILIST_ENDPOINT, {
+    const response = await fetchWithTimeout(ANILIST_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({ query, variables: { search: animeTitle } })
-    });
+    }, 15000); // 15秒タイムアウト
 
     if (!response.ok) throw new Error(`AniList HTTP ${response.status}`);
 
@@ -528,9 +541,7 @@
   async function searchWikipedia(query) {
     const url = `https://ja.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=5&format=json&origin=*&srprop=snippet`;
 
-    const response = await fetch(url, {
-      method: "GET"
-    });
+    const response = await fetchWithTimeout(url, { method: "GET" }, 10000); // 10秒タイムアウト
 
     let data = null;
 
@@ -754,7 +765,7 @@
         }
       } catch (error) {
         console.error(error);
-        setGenerateStatus(`Wikipedia検索に失敗したため、検索なしで続行します: ${error.message}`, true);
+        setGenerateStatus(`Wikipedia検索失敗: ${error.message}`, true);
       }
 
       searchMs = performance.now() - searchStart;
@@ -772,26 +783,26 @@
         charactersText = formatCharactersForPrompt(media.chars);
 
         if (!media.chars.length) {
-          setGenerateStatus("AniListからキャラクターを取得できませんでした。AIのみで続行します。");
+          setGenerateStatus("AniListからキャラを取得できませんでした。");
         }
       } else {
-        setGenerateStatus("AniListで作品が見つかりませんでした。AIのみで続行します。");
+        setGenerateStatus("AniListで作品が見つかりませんでした。");
       }
     } catch (error) {
       console.error(error);
-      renderCharacterCards([]);
-      setGenerateStatus(`AniListの取得に失敗したため、なしで続行します: ${error.message}`, true);
+      setGenerateStatus(`AniList取得失敗: ${error.message}`, true);
     }
 
     charMs = performance.now() - charStart;
 
-    setGenerateStatus("AIに送信中...");
+    setGenerateStatus("AI生成中（数分かかる場合があります）...");
     const aiStart = performance.now();
 
     try {
       const url = `${apiBase}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-      const response = await fetch(url, {
+      // AI生成は時間がかかるため3分（180秒）のタイムアウトを設定
+      const response = await fetchWithTimeout(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -811,7 +822,7 @@
             maxOutputTokens: 8192
           }
         })
-      });
+      }, 180000);
 
       let data = null;
 
@@ -853,11 +864,11 @@
       setGenerateStatus(`生成しました。（${searchLabel} / ${charLabel} / AI ${formatDuration(aiMs)}）`, false, true);
     } catch (error) {
       const totalMs = performance.now() - totalStart;
-      console.error(error);
+      console.error("AI生成エラー:", error);
       resultBox.innerHTML = "";
       stopTimer();
       timerBox.textContent = `${formatDuration(totalMs)} で停止`;
-      setGenerateStatus(`失敗: ${error.message}`, true);
+      setGenerateStatus(`AI生成失敗: ${error.message}`, true);
     } finally {
       generateButton.disabled = false;
     }
