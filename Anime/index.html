@@ -40,7 +40,9 @@
   .chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px; }
   .chip { padding:4px 12px; border-radius:999px; background:#fff; border:1px solid var(--card-border); font-size:12px; font-weight:600; color:#47536b; box-shadow:0 2px 8px rgba(28,35,51,.06); }
   .chip.score { background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:#fff; border:0; }
-  .chip.genre { background:#eef2ff; color:#4338ca; border-color:#e0e7ff; }
+  .chip.genre { position:relative; cursor:help; background:#eef2ff; color:#4338ca; border-color:#e0e7ff; }
+  .chip.genre::after { content:attr(data-tip); position:absolute; left:50%; top:calc(100% + 6px); transform:translateX(-50%); background:#1f2430; color:#fff; font-size:11px; font-weight:500; padding:6px 10px; border-radius:8px; width:max-content; max-width:220px; white-space:normal; opacity:0; pointer-events:none; transition:opacity .15s; z-index:20; }
+  .chip.genre:hover::after, .chip.genre:focus::after { opacity:1; }
   #result { display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:14.5px; }
   #result:empty { display:none; }
   #result.filled { animation:fadeUp .35s ease; }
@@ -53,6 +55,12 @@
   .res-p { margin:0 0 8px; line-height:1.9; }
   .res-ul { margin:0; padding-left:1.2em; display:grid; gap:6px; line-height:1.7; }
   .res-p.warn { grid-column:1 / -1; color:var(--danger); font-size:12.5px; }
+  .info-row { display:flex; gap:8px; margin:0 0 8px; font-size:13px; line-height:1.6; }
+  .info-k { flex-shrink:0; min-width:88px; font-weight:700; color:#334155; }
+  .info-v { min-width:0; }
+  .link-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+  .link-pill { padding:8px 14px; border-radius:999px; background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:#fff; font-size:12.5px; font-weight:700; text-decoration:none; box-shadow:0 4px 14px rgba(124,58,237,.3); transition:filter .15s; }
+  .link-pill:hover { filter:brightness(1.08); }
   @media (max-width:860px) { #result { grid-template-columns:1fr; } }
   .section-title { display:flex; align-items:center; gap:10px; margin:0 0 4px; font-size:16px; color:#334155; }
   .section-title .bar { width:4px; height:18px; border-radius:2px; background:linear-gradient(180deg,var(--accent-1),var(--accent-2)); }
@@ -199,9 +207,7 @@
       const response = await fetch(url, { ...options, signal: controller.signal });
       return response;
     } catch (error) {
-      if (error.name === 'AbortError') {
-        throw new Error(`タイムアウト（${timeoutMs/1000}秒経過）`);
-      }
+      if (error.name === "AbortError") throw new Error(`タイムアウト（${timeoutMs / 1000}秒経過）`);
       throw error;
     } finally {
       clearTimeout(timeoutId);
@@ -256,7 +262,6 @@
     const isCustom = modelSelect.value === "custom";
     modelIdInput.hidden = !isCustom;
     apiBaseInput.disabled = !isCustom;
-
     if (!isCustom) {
       modelIdInput.value = modelSelect.value;
       apiBaseInput.value = DEFAULT_API_BASE;
@@ -283,6 +288,30 @@
   function seasonJa(s) { return ({ WINTER:"冬", SPRING:"春", SUMMER:"夏", FALL:"秋" })[s] || s; }
   function formatJa(f) { return ({ TV:"TV", MOVIE:"劇場版", OVA:"OVA", ONA:"ONA", SPECIAL:"スペシャル" })[f] || f; }
 
+  const GENRE_INFO = {
+    Action:{ label:"アクション", tip:"戦闘や激しいアクションシーンが中心" },
+    Adventure:{ label:"アドベンチャー", tip:"広大な世界での冒険や探検を描く" },
+    Comedy:{ label:"コメディ", tip:"ユーモアやギャグ中心の明るい作品" },
+    Drama:{ label:"ドラマ", tip:"人間ドラマや感情的な対立をシリアスに描く" },
+    Fantasy:{ label:"ファンタジー", tip:"架空世界・魔法・超自然的な設定" },
+    Horror:{ label:"ホラー", tip:"恐怖や戦慄を感じさせる作品" },
+    "Mahou Shoujo":{ label:"魔法少女", tip:"魔法少女が中心の作品" },
+    Mecha:{ label:"メカ", tip:"ロボット・機械兵器が登場" },
+    Music:{ label:"音楽", tip:"音楽や演奏がテーマ" },
+    Mystery:{ label:"ミステリー", tip:"謎解きやサスペンス要素が中心" },
+    Psychological:{ label:"サイコロジー", tip:"心理描写・精神的葛藤を深く描く" },
+    Romance:{ label:"ロマンス", tip:"恋愛物語が中心" },
+    "Sci-Fi":{ label:"SF", tip:"科学技術に基づく空想作品" },
+    "Slice of Life":{ label:"日常", tip:"キャラクターの日常を穏やかに描く" },
+    Sports:{ label:"スポーツ", tip:"競技や試合、成長がテーマ" },
+    Supernatural:{ label:"スーパーナチュラル", tip:"常識を超えた超常現象が登場" },
+    Thriller:{ label:"スリラー", tip:"緊迫感で目が離せない展開" }
+  };
+
+  const SOURCE_JA = { ORIGINAL:"オリジナル", MANGA:"漫画", LIGHT_NOVEL:"ライトノベル", VISUAL_NOVEL:"ビジュアルノベル", VIDEO_GAME:"ゲーム", GAME:"ゲーム", NOVEL:"小説", COMIC:"コミック", BOOK:"書籍", OTHER:"その他" };
+  const STAFF_ROLE_JA = { "Director":"監督", "Series Composition":"シリーズ構成", "Original Creator":"原作", "Music":"音楽", "Character Design":"キャラクターデザイン" };
+  const RELATION_JA = { SEQUEL:"続編", PREQUEL:"前日譚", ADAPTATION:"原作", SIDE_STORY:"外伝", SPIN_OFF:"スピンオフ", ALTERNATIVE:"別バージョン", SUMMARY:"総集編", PARENT:"本編", CHARACTER:"キャラクター" };
+
   async function fetchAniListMedia(animeTitle) {
     const query = `
       query ($search: String) {
@@ -291,11 +320,13 @@
           bannerImage
           coverImage { extraLarge large }
           format episodes season seasonYear averageScore genres
+          source popularity favourites
+          studios(isAnimationStudio: true, perPage: 5) { nodes { name } }
+          staff(perPage: 12) { edges { role node { name { full native } } } }
+          relations { edges { relationType node { title { native romaji } } } }
+          externalLinks { site url }
           characters(sort: [ROLE, ID], perPage: 25) {
-            edges {
-              role
-              node { id name { full native } image { large } }
-            }
+            edges { role node { id name { full native } image { large } } }
           }
         }
       }
@@ -305,7 +336,7 @@
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({ query, variables: { search: animeTitle } })
-    }, 15000); // 15秒タイムアウト
+    }, 15000);
 
     if (!response.ok) throw new Error(`AniList HTTP ${response.status}`);
 
@@ -319,14 +350,11 @@
 
     for (const edge of edges) {
       if (edge?.role !== "MAIN") continue;
-
       const node = edge?.node || {};
       const name = node?.name?.full || "";
       const native = node?.name?.native || "";
       const key = native || name;
-
       if (!key || seen.has(key)) continue;
-
       seen.add(key);
       chars.push({ id: node?.id || 0, name, native, img: node?.image?.large || null });
     }
@@ -339,7 +367,15 @@
       banner: media.bannerImage || media.coverImage?.extraLarge || media.coverImage?.large || null,
       format: media.format, episodes: media.episodes, season: media.season,
       seasonYear: media.seasonYear, averageScore: media.averageScore,
-      genres: media.genres || [], chars
+      genres: media.genres || [],
+      source: media.source || null,
+      popularity: media.popularity || null,
+      favourites: media.favourites || null,
+      studios: (media.studios?.nodes || []).map(n => n?.name).filter(Boolean),
+      staff: (media.staff?.edges || []).map(e => ({ role: e?.role || "", name: e?.node?.name?.native || e?.node?.name?.full || "" })).filter(s => s.name),
+      relations: (media.relations?.edges || []).map(e => ({ type: e?.relationType || "", title: e?.node?.title?.native || e?.node?.title?.romaji || "" })).filter(r => r.title),
+      links: media.externalLinks || [],
+      chars
     };
   }
 
@@ -376,11 +412,94 @@
     for (const g of media.genres.slice(0, 6)) {
       const el = document.createElement("span");
       el.className = "chip genre";
-      el.textContent = g;
+      const info = GENRE_INFO[g];
+      el.textContent = info ? info.label : g;
+      if (info) {
+        el.dataset.tip = info.tip;
+        el.tabIndex = 0;
+      }
       animeGenres.appendChild(el);
     }
 
     animeMeta.hidden = false;
+  }
+
+  function makeLinkPill(url, label) {
+    const a = document.createElement("a");
+    a.className = "link-pill";
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = label;
+    return a;
+  }
+
+  function appendInfoBlock(media) {
+    if (!media) return;
+
+    const rows = [];
+    if (media.source) rows.push(["原作", SOURCE_JA[media.source] || media.source]);
+    if (media.studios.length) rows.push(["アニメ制作", media.studios.join(" / ")]);
+
+    const seenRoles = new Set();
+    for (const s of media.staff) {
+      const ja = STAFF_ROLE_JA[s.role];
+      if (!ja || seenRoles.has(ja)) continue;
+      seenRoles.add(ja);
+      rows.push([ja, s.name]);
+    }
+
+    if (media.popularity) rows.push(["人気ランク", `#${media.popularity}`]);
+
+    const links = media.links || [];
+    const official = links.find(l => /official site/i.test(l.site || ""));
+    const social = links.find(l => /^(twitter|x)$/i.test((l.site || "").trim()));
+    const rels = media.relations.filter(r => RELATION_JA[r.type]).slice(0, 4);
+
+    if (!rows.length && !official && !social && !rels.length) return;
+
+    const block = document.createElement("section");
+    block.className = "block";
+
+    const h = document.createElement("h3");
+    h.className = "res-h";
+    h.textContent = "作品情報";
+    block.appendChild(h);
+
+    for (const [k, v] of rows) {
+      const row = document.createElement("p");
+      row.className = "info-row";
+      const kEl = document.createElement("span");
+      kEl.className = "info-k";
+      kEl.textContent = k;
+      const vEl = document.createElement("span");
+      vEl.className = "info-v";
+      vEl.textContent = v;
+      row.appendChild(kEl);
+      row.appendChild(vEl);
+      block.appendChild(row);
+    }
+
+    if (rels.length) {
+      const ul = document.createElement("ul");
+      ul.className = "res-ul";
+      for (const r of rels) {
+        const li = document.createElement("li");
+        li.textContent = `${RELATION_JA[r.type]}: ${r.title}`;
+        ul.appendChild(li);
+      }
+      block.appendChild(ul);
+    }
+
+    if (official || social) {
+      const wrap = document.createElement("div");
+      wrap.className = "link-row";
+      if (official) wrap.appendChild(makeLinkPill(official.url, "オフィシャルサイト"));
+      if (social) wrap.appendChild(makeLinkPill(social.url, "公式X（Twitter）"));
+      block.appendChild(wrap);
+    }
+
+    resultBox.appendChild(block);
   }
 
   function formatCharactersForPrompt(chars) {
@@ -509,9 +628,7 @@
     for (const rawLine of text.split("\n")) {
       const t = rawLine.trim();
 
-      if (!t) {
-        continue;
-      }
+      if (!t) continue;
 
       if (/^【.+】$/.test(t)) {
         if (t.includes("キャラ紹介")) {
@@ -524,13 +641,9 @@
         continue;
       }
 
-      if (swallow) {
-        continue;
-      }
+      if (swallow) continue;
 
-      if (!block) {
-        addBlock("【紹介】");
-      }
+      if (!block) addBlock("【紹介】");
 
       if (/^[・\-•]/.test(t)) {
         let ul = block.lastElementChild;
@@ -556,7 +669,7 @@
   async function searchWikipedia(query) {
     const url = `https://ja.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=5&format=json&origin=*&srprop=snippet`;
 
-    const response = await fetchWithTimeout(url, { method: "GET" }, 10000); // 10秒タイムアウト
+    const response = await fetchWithTimeout(url, { method: "GET" }, 10000);
 
     let data = null;
 
@@ -590,9 +703,7 @@
   }
 
   function formatSearchResults(results) {
-    if (!results.length) {
-      return "";
-    }
+    if (!results.length) return "";
 
     return results.map((item, index) => {
       const title = item.title || "";
@@ -622,6 +733,7 @@
       "- 事実関係が不確実な場合は断定せず「要確認」と書いてください。",
       "- 存在しない作品や判断できない場合は、その旨を正直に書いてください。",
       "- 必ず日本語のみで回答してください。固有名詞は日本語表記を優先してください。",
+      "- 地名・人名・用語など、初見では読めない特殊な読み方をする語には、必ずひらがなで読みを括弧付けしてください。例: 雛見沢村(ひなみざわむら)",
       "- いきなり最終的な日本語出力だけを出力してください。",
       "- 【一言紹介】の行から直接始めてください。それより前に何も書かないでください。",
       "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
@@ -767,6 +879,7 @@
     let searchResultsText = "";
     let charactersText = "";
     let aniChars = [];
+    let aniMedia = null;
 
     if (useSearchCheckbox.checked) {
       setGenerateStatus("Wikipedia検索中...");
@@ -795,6 +908,7 @@
 
       if (media) {
         applyMediaInfo(media);
+        aniMedia = media;
         aniChars = media.chars;
         charactersText = formatCharactersForPrompt(media.chars);
 
@@ -817,7 +931,6 @@
     try {
       const url = `${apiBase}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-      // AI生成は時間がかかるため3分（180秒）のタイムアウトを設定
       const response = await fetchWithTimeout(url, {
         method: "POST",
         headers: {
@@ -861,6 +974,7 @@
       renderResult(text || "AIの応答が空でした。");
       const descMap = parseCharacterDescs(text);
       renderCharacterCards(sortCharsByDesc(aniChars, descMap), descMap);
+      appendInfoBlock(aniMedia);
 
       if (truncated) {
         const warn = document.createElement("p");
