@@ -44,7 +44,7 @@
   #result { display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:14.5px; }
   #result:empty { display:none; }
   #result.filled { animation:fadeUp .35s ease; }
-  .block { background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:20px 22px; box-shadow:0 12px 32px rgba(28,35,51,.06); animation:fadeUp .4s ease both; }
+  .block { min-width:0; background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:20px 22px; box-shadow:0 12px 32px rgba(28,35,51,.06); animation:fadeUp .4s ease both; }
   .block-intro { grid-column:1 / -1; text-align:center; background:linear-gradient(120deg, rgba(124,58,237,.08), rgba(236,72,153,.10)); border-color:#e5defa; }
   .block-intro .res-h { justify-content:center; }
   .block-intro .res-p { font-size:16px; font-weight:600; margin:0; }
@@ -56,8 +56,10 @@
   @media (max-width:860px) { #result { grid-template-columns:1fr; } }
   .section-title { display:flex; align-items:center; gap:10px; margin:0 0 4px; font-size:16px; color:#334155; }
   .section-title .bar { width:4px; height:18px; border-radius:2px; background:linear-gradient(180deg,var(--accent-1),var(--accent-2)); }
-  .cards-row { display:grid; grid-auto-flow:column; grid-auto-columns:160px; gap:14px; overflow-x:auto; scroll-snap-type:x mandatory; padding:4px 4px 12px; }
-  .char-card { scroll-snap-align:start; border:1px solid var(--card-border); border-radius:14px; background:var(--card); box-shadow:0 8px 24px rgba(28,35,51,.06); overflow:hidden; animation:fadeUp .35s ease both; transition:transform .2s, box-shadow .2s; }
+  .cards-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+  @media (max-width:900px) { .cards-grid { grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width:600px) { .cards-grid { grid-template-columns:1fr; } }
+  .char-card { min-width:0; border:1px solid var(--card-border); border-radius:14px; background:var(--card); box-shadow:0 8px 24px rgba(28,35,51,.06); overflow:hidden; animation:fadeUp .35s ease both; transition:transform .2s, box-shadow .2s; }
   .char-card:hover { transform:translateY(-4px); box-shadow:0 14px 30px rgba(28,35,51,.12); }
   .char-img { position:relative; aspect-ratio:3/4; background:#eef0f7; display:flex; align-items:center; justify-content:center; }
   .char-img img { width:100%; height:100%; object-fit:cover; display:block; }
@@ -68,6 +70,7 @@
   .char-body { padding:10px 12px; }
   .char-name { margin:0; font-size:14px; font-weight:700; line-height:1.4; }
   .char-sub { margin:2px 0 0; font-size:11px; color:var(--muted); }
+  .char-desc { margin:8px 0 0; font-size:12px; line-height:1.6; color:#47536b; }
   footer { text-align:center; font-size:11px; color:var(--muted); }
   @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
   dialog.settings-dialog { width:min(480px,calc(100vw - 32px)); padding:24px; border:none; border-radius:20px; background:var(--card); color:var(--text); box-shadow:0 24px 64px rgba(28,35,51,.25); }
@@ -122,7 +125,7 @@
 
   <section id="charactersSection" hidden>
     <h2 class="section-title"><span class="bar"></span>登場キャラクター</h2>
-    <div id="characterCards" class="cards-row"></div>
+    <div id="characterCards" class="cards-grid"></div>
   </section>
 
   <footer>生成結果は誤りを含む可能性があります。重要な情報は必ず自身でも確認してください。</footer>
@@ -162,7 +165,6 @@
   const DEFAULT_MODEL_ID = "gemma-4-31b-it";
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
   const ANILIST_ENDPOINT = "https://graphql.anilist.co";
-  const SUB_MAX = 6;
 
   const heroBg = document.getElementById("heroBg");
   const openSettingsButton = document.getElementById("openSettings");
@@ -298,38 +300,22 @@
     if (!media) return null;
 
     const edges = media.characters?.edges || [];
-
-    const toChar = (edge) => {
-      const node = edge?.node || {};
-      return {
-        name: node?.name?.full || "",
-        native: node?.name?.native || "",
-        type: edge?.role === "MAIN" ? "main" : "supporting",
-        img: node?.image?.large || null,
-        fav: node?.favourites || 0
-      };
-    };
-
     const seen = new Set();
-    const dedupe = (list) => {
-      const out = [];
-      for (const c of list) {
-        const key = c.native || c.name;
-        if (!key || seen.has(key)) continue;
-        seen.add(key);
-        out.push(c);
-      }
-      return out;
-    };
+    const chars = [];
 
-    const mains = dedupe(edges.filter(e => e?.role === "MAIN").map(toChar));
-    const subs = dedupe(
-      edges.filter(e => e?.role === "SUPPORTING").map(toChar)
-        .sort((a, b) => b.fav - a.fav)
-        .slice(0, SUB_MAX)
-    );
+    for (const edge of edges) {
+      if (edge?.role !== "MAIN") continue;
 
-    const chars = [...mains, ...subs];
+      const node = edge?.node || {};
+      const name = node?.name?.full || "";
+      const native = node?.name?.native || "";
+      const key = native || name;
+
+      if (!key || seen.has(key)) continue;
+
+      seen.add(key);
+      chars.push({ name, native, img: node?.image?.large || null });
+    }
 
     return {
       native: media.title?.native || "",
@@ -383,17 +369,36 @@
 
   function formatCharactersForPrompt(chars) {
     if (!chars.length) return "";
-    const main = chars.filter(c => c.type === "main").map(c => c.native || c.name);
-    const sub = chars.filter(c => c.type === "supporting").map(c => c.native || c.name);
-    const parts = [];
-    if (main.length) parts.push(`main cast: ${main.join(", ")}`);
-    if (sub.length) parts.push(`supporting cast: ${sub.join(", ")}`);
-    return parts.join("\n");
+    return `main cast: ${chars.map(c => c.native || c.name).join(", ")}`;
   }
 
-  function renderCharacterCards(chars) {
+  function parseCharacterDescs(text) {
+    const map = new Map();
+    let inSection = false;
+
+    for (const raw of text.split("\n")) {
+      const t = raw.trim();
+
+      if (/^【.+】$/.test(t)) {
+        inSection = t.includes("キャラ紹介");
+        continue;
+      }
+
+      if (!inSection || !t) continue;
+
+      const m = t.match(/^(.+?)\s*[/／]\s*(.+)$/);
+      if (!m) continue;
+
+      map.set(m[1].replace(/\s+/g, ""), m[2].trim());
+    }
+
+    return map;
+  }
+
+  function renderCharacterCards(chars, descMap = new Map()) {
     charactersSection.hidden = chars.length === 0;
     characterCards.innerHTML = "";
+
     chars.forEach((c, i) => {
       const card = document.createElement("div");
       card.className = "char-card";
@@ -401,6 +406,7 @@
 
       const imgWrap = document.createElement("div");
       imgWrap.className = "char-img";
+
       if (c.img) {
         const img = document.createElement("img");
         img.alt = c.native || c.name;
@@ -416,22 +422,29 @@
         imgWrap.classList.add("no-img");
         imgWrap.textContent = (c.native || c.name).charAt(0);
       }
-      const badge = document.createElement("span");
-      badge.className = `char-badge ${c.type === "main" ? "main" : "sub"}`;
-      badge.textContent = c.type === "main" ? "MAIN" : "SUPPORTING";
-      imgWrap.appendChild(badge);
 
       const body = document.createElement("div");
       body.className = "char-body";
+
       const nameEl = document.createElement("p");
       nameEl.className = "char-name";
       nameEl.textContent = c.native || c.name;
       body.appendChild(nameEl);
+
       if (c.native && c.name) {
         const subEl = document.createElement("p");
         subEl.className = "char-sub";
         subEl.textContent = c.name;
         body.appendChild(subEl);
+      }
+
+      const desc = descMap.get((c.native || c.name).replace(/\s+/g, "")) || descMap.get(c.name.replace(/\s+/g, "")) || "";
+
+      if (desc) {
+        const descEl = document.createElement("p");
+        descEl.className = "char-desc";
+        descEl.textContent = desc;
+        body.appendChild(descEl);
       }
 
       card.appendChild(imgWrap);
@@ -444,6 +457,7 @@
     resultBox.innerHTML = "";
     let block = null;
     let blockIndex = 0;
+    let swallow = false;
 
     const addBlock = (title) => {
       block = document.createElement("section");
@@ -470,7 +484,17 @@
       }
 
       if (/^【.+】$/.test(t)) {
-        addBlock(t);
+        if (t.includes("キャラ紹介")) {
+          block = null;
+          swallow = true;
+        } else {
+          swallow = false;
+          addBlock(t);
+        }
+        continue;
+      }
+
+      if (swallow) {
         continue;
       }
 
@@ -607,10 +631,9 @@
       "【あらすじ】",
       "冒頭〜序盤の設定を中心に、ネタバレなしで4〜6文で書いてください。",
       "",
-      "【主な登場人物】",
-      "主要キャラクターを各1行で書いてください。人数の上限はなく、作品にとって重要な人物はすべて挙げてください。",
-      "検索結果に名前が少ない場合は、自分の知識から書いてください。不確実な場合にのみ（要確認）を付けてください。",
-      "形式: キャラクター名 / 立場や特徴（ネタバレ禁止）",
+      "【キャラ紹介】",
+      "AniListのキャラクター一覧の各キャラについて、「キャラクター名 / ネタバレなしの一行説明（約50文字）」の形式で1行ずつ書いてください。",
+      "キャラクター名はAniListの表記をそのまま使ってください。説明にネタバレを含めないでください。",
       "",
       "【見どころ】",
       "作画、物語、キャラ、世界観など魅力を4〜5個の箇条書きで書いてください。",
@@ -644,7 +667,7 @@
 
   function extractFinalJapanese(text) {
     const marker = "【一言紹介】";
-    const requiredHeadings = ["【あらすじ】", "【主な登場人物】", "【見どころ】", "【こんな人におすすめ】"];
+    const requiredHeadings = ["【あらすじ】", "【キャラ紹介】", "【見どころ】", "【こんな人におすすめ】"];
     let best = -1;
     let searchFrom = 0;
     let idx = text.indexOf(marker, searchFrom);
@@ -714,6 +737,7 @@
     let charMs = null;
     let searchResultsText = "";
     let charactersText = "";
+    let aniChars = [];
 
     if (useSearchCheckbox.checked) {
       setGenerateStatus("Wikipedia検索中...");
@@ -742,8 +766,9 @@
 
       if (media) {
         applyMediaInfo(media);
+        aniChars = media.chars;
         charactersText = formatCharactersForPrompt(media.chars);
-        renderCharacterCards(media.chars);
+        renderCharacterCards(aniChars);
 
         if (!media.chars.length) {
           setGenerateStatus("AniListからキャラクターを取得できませんでした。AIのみで続行します。");
@@ -806,6 +831,7 @@
       const truncated = finishReason === "MAX_TOKENS";
 
       renderResult(text || "AIの応答が空でした。");
+      renderCharacterCards(aniChars, parseCharacterDescs(text));
 
       if (truncated) {
         const warn = document.createElement("p");
