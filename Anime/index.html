@@ -45,7 +45,7 @@
   #result:empty { display:none; }
   #result.filled { animation:fadeUp .35s ease; }
   .block { min-width:0; background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:20px 22px; box-shadow:0 12px 32px rgba(28,35,51,.06); animation:fadeUp .4s ease both; }
-  .block-intro { grid-column:1 / -1; text-align:center; background:linear-gradient(120deg, rgba(124,58,237,.08), rgba(236,72,153,.10)); border-color:#e5defa; }
+  .block-intro { grid-column:1 / -1; text-align:center; background:linear-gradient(120deg,#f5f1ff,#fdeff8); border-color:#e5defa; }
   .block-intro .res-h { justify-content:center; }
   .block-intro .res-p { font-size:16px; font-weight:600; margin:0; }
   .res-h { display:flex; align-items:center; gap:8px; margin:0 0 12px; font-size:15px; color:#334155; }
@@ -56,8 +56,9 @@
   @media (max-width:860px) { #result { grid-template-columns:1fr; } }
   .section-title { display:flex; align-items:center; gap:10px; margin:0 0 4px; font-size:16px; color:#334155; }
   .section-title .bar { width:4px; height:18px; border-radius:2px; background:linear-gradient(180deg,var(--accent-1),var(--accent-2)); }
-  .cards-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; }
-  @media (max-width:700px) { .cards-grid { grid-template-columns:1fr; } }
+  .cards-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  @media (max-width:900px) { .cards-grid { grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width:600px) { .cards-grid { grid-template-columns:1fr; } }
   .char-card { min-width:0; display:flex; gap:12px; padding:12px; border:1px solid var(--card-border); border-radius:14px; background:var(--card); box-shadow:0 8px 24px rgba(28,35,51,.06); animation:fadeUp .35s ease both; transition:transform .2s, box-shadow .2s; }
   .char-card:hover { transform:translateY(-3px); box-shadow:0 12px 26px rgba(28,35,51,.12); }
   .char-img { position:relative; width:76px; height:76px; flex-shrink:0; border-radius:12px; background:#eef0f7; display:flex; align-items:center; justify-content:center; overflow:hidden; }
@@ -408,6 +409,20 @@
     }
 
     return map;
+  }
+
+  function sortCharsByDesc(chars, descMap) {
+    const keys = [...descMap.keys()];
+
+    const orderOf = (c) => {
+      const native = (c.native || "").replace(/\s+/g, "");
+      const full = (c.name || "").replace(/\s+/g, "");
+      let i = native ? keys.indexOf(native) : -1;
+      if (i === -1 && full) i = keys.indexOf(full);
+      return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+    };
+
+    return [...chars].sort((a, b) => orderOf(a) - orderOf(b));
   }
 
   function renderCharacterCards(chars, descMap = new Map()) {
@@ -843,7 +858,8 @@
       const truncated = finishReason === "MAX_TOKENS";
 
       renderResult(text || "AIの応答が空でした。");
-      renderCharacterCards(aniChars, parseCharacterDescs(text));
+      const descMap = parseCharacterDescs(text);
+      renderCharacterCards(sortCharsByDesc(aniChars, descMap), descMap);
 
       if (truncated) {
         const warn = document.createElement("p");
