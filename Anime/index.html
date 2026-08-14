@@ -330,8 +330,6 @@
     );
 
     const chars = [...mains, ...subs];
-      chars.push({ name, native, type: role === "MAIN" ? "main" : "supporting", img: node?.image?.large || null });
-    }
 
     return {
       native: media.title?.native || "",
