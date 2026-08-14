@@ -38,6 +38,8 @@
   .btn:disabled { opacity:.55; cursor:wait; transform:none; }
   .btn.small { padding:9px 16px; font-size:12.5px; margin-top:0; box-shadow:0 4px 14px rgba(124,58,237,.25); }
   .meta-line { display:flex; align-items:center; justify-content:center; gap:12px; min-height:32px; flex-wrap:wrap; width:max-content; max-width:92vw; margin:0 auto; padding:4px 16px; border-radius:999px; background:rgba(255,255,255,.7); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:0 4px 14px rgba(28,35,51,.08); }
+  .meta-line[hidden] { display:none; }
+  .meta-line .status, .meta-line .timer { margin-top:0; }
   .status { margin-top:8px; min-height:20px; font-size:13px; color:var(--muted); }
   .error { color:var(--danger); }
   .success { color:var(--success); }
@@ -137,7 +139,7 @@
       <input id="animeTitle" type="text" placeholder="例：葬送のフリーレン" />
       <button id="generate" class="btn">ネタバレなしで調べる</button>
     </div>
-    <div class="meta-line">
+    <div class="meta-line" id="metaLine" hidden>
       <div id="generateStatus" class="status"></div>
       <div id="timer" class="timer" hidden></div>
       <button id="saveImage" class="btn small" hidden>📸 画像として保存（16:9）</button>
@@ -205,6 +207,7 @@
   const generateStatus = document.getElementById("generateStatus");
   const timerBox = document.getElementById("timer");
   const saveImageButton = document.getElementById("saveImage");
+  const metaLine = document.getElementById("metaLine");
   const resultBox = document.getElementById("result");
   const animeMeta = document.getElementById("animeMeta");
   const animeTitleNative = document.getElementById("animeTitleNative");
@@ -236,6 +239,7 @@
     stopTimer();
     timerStart = performance.now();
     timerBox.hidden = false;
+    metaLine.hidden = false;
     timerBox.textContent = "経過 0.0秒";
     timerInterval = setInterval(() => {
       timerBox.textContent = `経過 ${((performance.now() - timerStart) / 1000).toFixed(1)}秒`;
@@ -269,6 +273,7 @@
   function setGenerateStatus(message, isError = false, isSuccess = false) {
     generateStatus.textContent = message;
     generateStatus.className = isError ? "status error" : isSuccess ? "status success" : "status";
+    if (message) metaLine.hidden = false;
   }
 
   function getEffectiveModelId() {
@@ -1189,6 +1194,7 @@
     setGenerateStatus("");
     timerBox.hidden = true;
     saveImageButton.hidden = true;
+    metaLine.hidden = true;
     shareData = null;
     stopTimer();
 
@@ -1335,6 +1341,7 @@
         portraits
       };
       saveImageButton.hidden = false;
+      metaLine.hidden = false;
 
       const aiMs = performance.now() - aiStart;
       const totalMs = performance.now() - totalStart;
