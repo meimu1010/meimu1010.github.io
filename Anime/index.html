@@ -15,8 +15,12 @@
   .hero-bg { position:fixed; top:0; left:0; right:0; height:62vh; background-size:cover; background-position:center 30%; opacity:0; transition:opacity .8s ease; pointer-events:none; z-index:0; }
   .hero-bg::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(246,247,252,.15) 0%, rgba(246,247,252,.6) 55%, var(--bg) 100%); }
   body.has-banner .hero-bg { opacity:1; }
-  .top-bar { position:fixed; top:16px; right:16px; z-index:10; display:flex; align-items:center; gap:10px; }
-  .model-select { width:auto; max-width:52vw; padding:9px 12px; border-radius:12px; border:1px solid var(--card-border); background:var(--card); font-family:inherit; font-size:12.5px; font-weight:600; color:var(--text); box-shadow:0 6px 18px rgba(28,35,51,.08); outline:none; cursor:pointer; }
+  .orb { position:fixed; border-radius:50%; filter:blur(90px); z-index:0; pointer-events:none; }
+  .orb-1 { width:420px; height:420px; background:rgba(124,58,237,.16); top:-120px; left:-120px; animation:drift 14s ease-in-out infinite alternate; }
+  .orb-2 { width:380px; height:380px; background:rgba(236,72,153,.14); bottom:-100px; right:-100px; animation:drift 18s ease-in-out infinite alternate-reverse; }
+  @keyframes drift { from { transform:translate(0,0) scale(1); } to { transform:translate(40px,30px) scale(1.15); } }
+  .top-bar { position:fixed; top:16px; right:16px; z-index:10; display:flex; align-items:center; gap:10px; padding:8px; border-radius:16px; border:1px solid var(--card-border); background:rgba(255,255,255,.75); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); box-shadow:0 6px 18px rgba(28,35,51,.08); }
+  .model-select { width:auto; max-width:52vw; padding:9px 12px; border-radius:12px; border:1px solid transparent; background:transparent; font-family:inherit; font-size:12.5px; font-weight:600; color:var(--text); outline:none; cursor:pointer; }
   .model-select:focus { border-color:var(--accent-1); }
   .gear { width:40px; height:40px; display:flex; align-items:center; justify-content:center; border:1px solid var(--card-border); border-radius:12px; background:var(--card); color:var(--muted); cursor:pointer; box-shadow:0 6px 18px rgba(28,35,51,.08); transition:color .2s, transform .2s; }
   .gear:hover { color:var(--accent-1); transform:rotate(30deg); }
@@ -31,7 +35,8 @@
   .btn { padding:14px 24px; border:0; border-radius:999px; background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:#fff; font-family:inherit; font-size:14px; font-weight:700; letter-spacing:.04em; cursor:pointer; box-shadow:0 8px 24px rgba(124,58,237,.25); transition:transform .15s, box-shadow .2s, opacity .2s; }
   .btn:hover { transform:translateY(-1px); box-shadow:0 10px 28px rgba(236,72,153,.3); }
   .btn:disabled { opacity:.55; cursor:wait; transform:none; }
-  .meta-line { display:flex; align-items:center; justify-content:center; gap:12px; min-height:32px; }
+  .btn.small { padding:9px 16px; font-size:12.5px; margin-top:0; box-shadow:0 4px 14px rgba(124,58,237,.25); }
+  .meta-line { display:flex; align-items:center; justify-content:center; gap:12px; min-height:32px; flex-wrap:wrap; }
   .status { margin-top:8px; min-height:20px; font-size:13px; color:var(--muted); }
   .error { color:var(--danger); }
   .success { color:var(--success); }
@@ -49,12 +54,14 @@
   #result { display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:14.5px; }
   #result:empty { display:none; }
   #result.filled { animation:fadeUp .35s ease; }
-  .block { min-width:0; background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:20px 22px; box-shadow:0 12px 32px rgba(28,35,51,.06); animation:fadeUp .4s ease both; }
+  .block { min-width:0; background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:20px 22px; box-shadow:0 12px 32px rgba(28,35,51,.06); animation:fadeUp .4s ease both; transition:transform .2s, box-shadow .2s, border-color .2s; }
+  .block:hover { transform:translateY(-3px); box-shadow:0 16px 36px rgba(28,35,51,.10); border-color:#d9cffa; }
   .block-intro { grid-column:1 / -1; text-align:center; background:linear-gradient(120deg,#f5f1ff,#fdeff8); border-color:#e5defa; }
   .block-intro .res-h { justify-content:center; }
   .block-intro .res-p { font-size:16px; font-weight:600; margin:0; }
   .res-h { display:flex; align-items:center; gap:8px; margin:0 0 12px; font-size:15px; color:#334155; }
   .res-h::before { content:""; width:4px; height:16px; border-radius:2px; background:linear-gradient(180deg,var(--accent-1),var(--accent-2)); }
+  .res-ico { font-size:15px; }
   .res-p { margin:0 0 8px; line-height:1.9; }
   .res-ul { margin:0; padding-left:1.2em; display:grid; gap:6px; line-height:1.7; }
   .res-p.warn { grid-column:1 / -1; color:var(--danger); font-size:12.5px; }
@@ -104,6 +111,8 @@
 </head>
 <body>
 <div class="hero-bg" id="heroBg"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
 <div class="top-bar">
   <select id="modelSelect" class="model-select" aria-label="モデル">
     <option value="gemini-3.7-flash">Gemini 3.7 Flash（速い / 性能:高）</option>
@@ -130,6 +139,7 @@
     <div class="meta-line">
       <div id="generateStatus" class="status"></div>
       <div id="timer" class="timer" hidden></div>
+      <button id="saveImage" class="btn small" hidden>📸 画像として保存（16:9）</button>
     </div>
     <div id="animeMeta" class="anime-meta" hidden>
       <h2 id="animeTitleNative"></h2>
@@ -176,6 +186,7 @@
   const DEFAULT_MODEL_ID = "gemma-4-31b-it";
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
   const ANILIST_ENDPOINT = "https://graphql.anilist.co";
+  const HEAD_ICON = { "一言紹介":"✨", "あらすじ":"📖", "見どころ":"🌟", "こんな人におすすめ":"💡", "作品情報":"🎬", "紹介":"📺" };
 
   const heroBg = document.getElementById("heroBg");
   const openSettingsButton = document.getElementById("openSettings");
@@ -192,6 +203,7 @@
   const generateButton = document.getElementById("generate");
   const generateStatus = document.getElementById("generateStatus");
   const timerBox = document.getElementById("timer");
+  const saveImageButton = document.getElementById("saveImage");
   const resultBox = document.getElementById("result");
   const animeMeta = document.getElementById("animeMeta");
   const animeTitleNative = document.getElementById("animeTitleNative");
@@ -203,6 +215,7 @@
 
   let timerInterval = null;
   let timerStart = 0;
+  let shareData = null;
 
   async function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
     const controller = new AbortController();
@@ -498,7 +511,11 @@
 
     const h = document.createElement("h3");
     h.className = "res-h";
-    h.textContent = "作品情報";
+    const ico = document.createElement("span");
+    ico.className = "res-ico";
+    ico.textContent = HEAD_ICON["作品情報"];
+    h.appendChild(ico);
+    h.appendChild(document.createTextNode("作品情報"));
     block.appendChild(h);
 
     for (const [k, v] of rows) {
@@ -670,7 +687,11 @@
 
       const h = document.createElement("h3");
       h.className = "res-h";
-      h.textContent = title;
+      const ico = document.createElement("span");
+      ico.className = "res-ico";
+      ico.textContent = HEAD_ICON[title.replace(/[【】]/g, "")] || "📺";
+      h.appendChild(ico);
+      h.appendChild(document.createTextNode(title));
       block.appendChild(h);
       resultBox.appendChild(block);
     };
@@ -713,6 +734,187 @@
         p.textContent = t;
         block.appendChild(p);
       }
+    }
+  }
+
+  function getSectionLines(text, heading) {
+    const out = [];
+    let on = false;
+
+    for (const raw of text.split("\n")) {
+      const t = raw.trim();
+      if (/^【.+】$/.test(t)) { on = t.includes(heading); continue; }
+      if (on && t) out.push(t);
+    }
+
+    return out;
+  }
+
+  function wrapCanvasText(ctx, text, maxWidth) {
+    const lines = [];
+    let line = "";
+
+    for (const ch of [...(text || "")]) {
+      if (ctx.measureText(line + ch).width > maxWidth && line) {
+        lines.push(line);
+        line = ch;
+      } else {
+        line += ch;
+      }
+    }
+
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function loadImgSafe(url, timeoutMs = 5000) {
+    return new Promise((resolve) => {
+      if (!url) return resolve(null);
+      const img = new Image();
+      let done = false;
+      const finish = (v) => { if (!done) { done = true; resolve(v); } };
+      img.crossOrigin = "anonymous";
+      img.onload = () => finish(img);
+      img.onerror = () => finish(null);
+      setTimeout(() => finish(null), timeoutMs);
+      img.src = url;
+    });
+  }
+
+  async function generateShareImage() {
+    if (!shareData) return;
+
+    const { media, intro, highlights, charNames, portraits } = shareData;
+    const W = 1920, H = 1080;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, "#171233");
+    bg.addColorStop(0.55, "#241546");
+    bg.addColorStop(1, "#3b1d5a");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    const banner = await loadImgSafe(media?.banner);
+
+    if (banner) {
+      ctx.save();
+      ctx.globalAlpha = 0.38;
+      const scale = Math.max(W / banner.width, H / banner.height);
+      const bw = banner.width * scale, bh = banner.height * scale;
+      ctx.drawImage(banner, (W - bw) / 2, (H - bh) / 2, bw, bh);
+      ctx.restore();
+
+      const veil = ctx.createLinearGradient(0, 0, 0, H);
+      veil.addColorStop(0, "rgba(23,18,51,.55)");
+      veil.addColorStop(0.5, "rgba(23,18,51,.72)");
+      veil.addColorStop(1, "rgba(23,18,51,.92)");
+      ctx.fillStyle = veil;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    const acc = ctx.createLinearGradient(90, 0, 700, 0);
+    acc.addColorStop(0, "#8b5cf6");
+    acc.addColorStop(1, "#ec4899");
+    ctx.fillStyle = acc;
+    ctx.fillRect(90, 96, 120, 8);
+
+    ctx.fillStyle = "#7dd3fc";
+    ctx.font = "700 26px 'Noto Sans JP', sans-serif";
+    ctx.fillText("S P O I L E R - F R E E   A N I M E   G U I D E", 90, 152);
+
+    ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(255,255,255,.6)";
+    ctx.font = "700 28px 'Noto Sans JP', sans-serif";
+    ctx.fillText("ネタバレなしアニメ紹介", W - 90, 130);
+    ctx.textAlign = "left";
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 76px 'Zen Old Mincho', serif";
+    ctx.fillText(media?.native || media?.romaji || "", 90, 258);
+
+    ctx.fillStyle = "rgba(255,255,255,.6)";
+    ctx.font = "500 26px 'Noto Sans JP', sans-serif";
+    ctx.fillText((media?.romaji || "").toUpperCase(), 92, 302);
+
+    let cx = 90;
+    const chipTexts = [];
+    if (media?.seasonYear && media?.season) chipTexts.push(`${media.seasonYear}年${seasonJa(media.season)}`);
+    if (media?.episodes) chipTexts.push(`全${media.episodes}話`);
+    if (media?.format) chipTexts.push(formatJa(media.format));
+    if (media?.averageScore) chipTexts.push(`★ ${(media.averageScore / 10).toFixed(1)}`);
+    ctx.font = "600 26px 'Noto Sans JP', sans-serif";
+
+    for (const t of chipTexts) {
+      const w = ctx.measureText(t).width + 40;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(cx, 336, w, 52, 26); else ctx.rect(cx, 336, w, 52);
+      ctx.fillStyle = "rgba(255,255,255,.14)";
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(t, cx + 20, 372);
+      cx += w + 14;
+    }
+
+    ctx.fillStyle = "#f5f3ff";
+    ctx.font = "600 40px 'Noto Sans JP', sans-serif";
+    let iy = 480;
+    for (const line of wrapCanvasText(ctx, intro, 1400).slice(0, 3)) {
+      ctx.fillText(line, 90, iy);
+      iy += 58;
+    }
+
+    ctx.font = "500 30px 'Noto Sans JP', sans-serif";
+    let hy = iy + 46;
+
+    for (const hline of highlights.slice(0, 3)) {
+      const clean = hline.replace(/^[・\-•]\s*/, "");
+      ctx.fillStyle = "#ec4899";
+      ctx.fillText("★", 92, hy);
+      ctx.fillStyle = "rgba(255,255,255,.88)";
+      const wrapped = wrapCanvasText(ctx, clean, 1320);
+      ctx.fillText(wrapped[0] + (wrapped.length > 1 ? "…" : ""), 140, hy);
+      hy += 50;
+    }
+
+    const loadedPortraits = await Promise.all((portraits || []).slice(0, 6).map(u => loadImgSafe(u)));
+    let px = 90;
+    const py = H - 210;
+
+    for (const p of loadedPortraits) {
+      if (!p) continue;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(px + 52, py, 52, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(p, px, py - 52, 104, 104);
+      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(px + 52, py, 52, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,255,.5)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      px += 124;
+    }
+
+    ctx.fillStyle = "rgba(255,255,255,.75)";
+    ctx.font = "500 26px 'Noto Sans JP', sans-serif";
+    const castLine = charNames.slice(0, 8).join(" / ");
+    wrapCanvasText(ctx, castLine, 1740).slice(0, 2).forEach((l, i) => {
+      ctx.fillText(l, 90, H - 96 + i * 38);
+    });
+
+    try {
+      const a = document.createElement("a");
+      a.download = `${(media?.native || "anime").replace(/[\\/:*?"<>|]/g, "_")}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    } catch (error) {
+      console.error(error);
+      alert("画像の保存に失敗しました。");
     }
   }
 
@@ -909,6 +1111,8 @@
     resetMediaInfo();
     setGenerateStatus("");
     timerBox.hidden = true;
+    saveImageButton.hidden = true;
+    shareData = null;
     stopTimer();
 
     if (!apiKey) {
@@ -1024,7 +1228,8 @@
 
       renderResult(text || "AIの応答が空でした。");
       const descMap = parseCharacterDescs(text);
-      renderCharacterCards(sortCharsByDesc(aniChars, descMap), descMap);
+      const sortedChars = sortCharsByDesc(aniChars, descMap);
+      renderCharacterCards(sortedChars, descMap);
       appendInfoBlock(aniMedia);
 
       if (truncated) {
@@ -1035,6 +1240,14 @@
       }
 
       resultBox.classList.add("filled");
+
+      const intro = getSectionLines(text, "一言紹介").join(" ") || getSectionLines(text, "紹介").join(" ");
+      const highlights = getSectionLines(text, "見どころ");
+      const charNames = sortedChars.map(c => c.native || c.name);
+      const portraits = sortedChars.map(c => c.img).filter(Boolean);
+
+      shareData = { media: aniMedia, intro, highlights, charNames, portraits };
+      saveImageButton.hidden = false;
 
       const aiMs = performance.now() - aiStart;
       const totalMs = performance.now() - totalStart;
@@ -1060,6 +1273,7 @@
   closeSettingsButton.addEventListener("click", () => settingsDialog.close());
   saveSettingsButton.addEventListener("click", saveSettings);
   generateButton.addEventListener("click", generateAnimeIntro);
+  saveImageButton.addEventListener("click", generateShareImage);
   modelSelect.addEventListener("change", syncModelInput);
 
   animeTitleInput.addEventListener("keydown", (event) => {
