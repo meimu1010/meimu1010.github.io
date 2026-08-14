@@ -56,22 +56,20 @@
   @media (max-width:860px) { #result { grid-template-columns:1fr; } }
   .section-title { display:flex; align-items:center; gap:10px; margin:0 0 4px; font-size:16px; color:#334155; }
   .section-title .bar { width:4px; height:18px; border-radius:2px; background:linear-gradient(180deg,var(--accent-1),var(--accent-2)); }
-  .cards-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
-  @media (max-width:900px) { .cards-grid { grid-template-columns:repeat(2, 1fr); } }
-  @media (max-width:600px) { .cards-grid { grid-template-columns:1fr; } }
-  .char-card { min-width:0; border:1px solid var(--card-border); border-radius:14px; background:var(--card); box-shadow:0 8px 24px rgba(28,35,51,.06); overflow:hidden; animation:fadeUp .35s ease both; transition:transform .2s, box-shadow .2s; }
-  .char-card:hover { transform:translateY(-4px); box-shadow:0 14px 30px rgba(28,35,51,.12); }
-  .char-img { position:relative; aspect-ratio:3/4; background:#eef0f7; display:flex; align-items:center; justify-content:center; }
+  .cards-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; }
+  @media (max-width:700px) { .cards-grid { grid-template-columns:1fr; } }
+  .char-card { min-width:0; display:flex; gap:12px; padding:12px; border:1px solid var(--card-border); border-radius:14px; background:var(--card); box-shadow:0 8px 24px rgba(28,35,51,.06); animation:fadeUp .35s ease both; transition:transform .2s, box-shadow .2s; }
+  .char-card:hover { transform:translateY(-3px); box-shadow:0 12px 26px rgba(28,35,51,.12); }
+  .char-img { position:relative; width:76px; height:76px; flex-shrink:0; border-radius:12px; background:#eef0f7; display:flex; align-items:center; justify-content:center; overflow:hidden; }
   .char-img img { width:100%; height:100%; object-fit:cover; display:block; }
-  .char-img.no-img { font-size:40px; font-weight:700; color:var(--muted); }
+  .char-img.no-img { font-size:26px; font-weight:700; color:var(--muted); }
   .char-badge { position:absolute; top:8px; left:8px; padding:2px 9px; border-radius:999px; font-size:10px; font-weight:700; color:#fff; }
   .char-badge.main { background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); }
   .char-badge.sub { background:#64748b; }
-  .char-body { padding:10px 12px; }
-  .char-name { margin:0; font-size:14px; font-weight:700; line-height:1.4; }
-  .char-sub { margin:2px 0 0; font-size:11px; color:var(--muted); }
-  .char-desc { margin:8px 0 0; font-size:12px; line-height:1.6; color:#47536b; }
-  footer { text-align:center; font-size:11px; color:var(--muted); }
+  .char-body { min-width:0; }
+  .char-name { margin:0; font-size:13.5px; font-weight:700; line-height:1.4; }
+  .char-sub { margin:1px 0 0; font-size:10.5px; color:var(--muted); }
+  .char-desc { margin:4px 0 0; font-size:11.5px; line-height:1.6; color:#47536b; }
   @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
   dialog.settings-dialog { width:min(480px,calc(100vw - 32px)); padding:24px; border:none; border-radius:20px; background:var(--card); color:var(--text); box-shadow:0 24px 64px rgba(28,35,51,.25); }
   dialog.settings-dialog::backdrop { background:rgba(15,23,42,.45); backdrop-filter:blur(2px); }
@@ -768,7 +766,6 @@
         applyMediaInfo(media);
         aniChars = media.chars;
         charactersText = formatCharactersForPrompt(media.chars);
-        renderCharacterCards(aniChars);
 
         if (!media.chars.length) {
           setGenerateStatus("AniListからキャラクターを取得できませんでした。AIのみで続行します。");
