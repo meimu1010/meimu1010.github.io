@@ -35,8 +35,7 @@
   .timer { margin-top:8px; padding:4px 12px; border-radius:999px; background:#eef2ff; color:#4338ca; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
   .timer[hidden] { display:none; }
   .anime-meta { margin:26px auto 0; max-width:680px; }
-  /* 修正：タイトルが長い場合の折り返し対策 */
-  .anime-meta h2 { margin:0 0 4px; font-family:"Zen Old Mincho",serif; font-size:clamp(24px,4vw,34px); color:#1f2430; word-break: break-word; overflow-wrap: break-word; }
+  .anime-meta h2 { margin:0 0 4px; font-family:"Zen Old Mincho",serif; font-size:clamp(24px,4vw,34px); color:#1f2430; }
   .anime-meta .romaji { margin:0; font-size:12px; letter-spacing:.12em; color:var(--muted); text-transform:uppercase; }
   .chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px; }
   .chip { padding:4px 12px; border-radius:999px; background:#fff; border:1px solid var(--card-border); font-size:12px; font-weight:600; color:#47536b; box-shadow:0 2px 8px rgba(28,35,51,.06); }
@@ -371,7 +370,6 @@
     return `main cast: ${chars.map(c => c.native || c.name).join(", ")}`;
   }
 
-  // 修正: キャラクターと説明のパースロジックを強化（/、-、：に対応）
   function parseCharacterDescs(text) {
     const map = new Map();
     let inSection = false;
@@ -380,19 +378,16 @@
       const t = raw.trim();
 
       if (/^【.+】$/.test(t)) {
-        inSection = t.includes("キャラ紹介") || t.includes("キャラクター紹介");
+        inSection = t.includes("キャラ紹介");
         continue;
       }
 
       if (!inSection || !t) continue;
 
-      // / または - または ： をセパレータとして認識
-      const m = t.match(/^(.+?)\s*[\/\-:]\s*(.+)$/);
+      const m = t.match(/^(.+?)\s*[/／]\s*(.+)$/);
       if (!m) continue;
 
-      // 名前の空白を削除してキーとして扱う（レンダリング時の柔軟性を向上）
-      const key = m[1].replace(/\s+/g, "");
-      map.set(key, m[2].trim());
+      map.set(m[1].replace(/\s+/g, ""), m[2].trim());
     }
 
     return map;
@@ -462,23 +457,6 @@
     let blockIndex = 0;
     let swallow = false;
 
-    // 修正: テキストが空の場合はダミーメッセージを表示
-    if (!text) {
-      const dummyBlock = document.createElement("section");
-      dummyBlock.className = "block block-intro";
-      dummyBlock.style.animationDelay = "0ms";
-      const h = document.createElement("h3");
-      h.className = "res-h";
-      h.textContent = "【結果が空です】";
-      dummyBlock.appendChild(h);
-      const p = document.createElement("p");
-      p.className = "res-p";
-      p.textContent = "AIが応答を返さなかったか、出力が適切にパースできませんでした。設定やモデルをご確認ください。";
-      dummyBlock.appendChild(p);
-      resultBox.appendChild(dummyBlock);
-      return;
-    }
-
     const addBlock = (title) => {
       block = document.createElement("section");
       block.className = "block";
@@ -504,7 +482,7 @@
       }
 
       if (/^【.+】$/.test(t)) {
-        if (t.includes("キャラ紹介") || t.includes("キャラクター紹介")) {
+        if (t.includes("キャラ紹介")) {
           block = null;
           swallow = true;
         } else {
