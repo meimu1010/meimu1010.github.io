@@ -312,36 +312,67 @@
   const STAFF_ROLE_JA = { "Director":"監督", "Series Composition":"シリーズ構成", "Original Creator":"原作", "Music":"音楽", "Character Design":"キャラクターデザイン" };
   const RELATION_JA = { SEQUEL:"続編", PREQUEL:"前日譚", ADAPTATION:"原作", SIDE_STORY:"外伝", SPIN_OFF:"スピンオフ", ALTERNATIVE:"別バージョン", SUMMARY:"総集編", PARENT:"本編", CHARACTER:"キャラクター" };
 
-  async function fetchAniListMedia(animeTitle) {
-    const query = `
-      query ($search: String) {
-        Media(search: $search, type: ANIME) {
-          title { romaji native }
-          bannerImage
-          coverImage { extraLarge large }
-          format episodes season seasonYear averageScore genres
-          source popularity favourites
-          studios(isAnimationStudio: true, perPage: 5) { nodes { name } }
-          staff(perPage: 12) { edges { role node { name { full native } } } }
-          relations { edges { relationType node { title { native romaji } } } }
-          externalLinks { site url }
-          characters(sort: [ROLE, ID], perPage: 25) {
-            edges { role node { id name { full native } image { large } } }
-          }
+  const ANILIST_FULL_QUERY = `
+    query ($search: String) {
+      Media(search: $search, type: ANIME) {
+        title { romaji native }
+        bannerImage
+        coverImage { extraLarge large }
+        format episodes season seasonYear averageScore genres
+        source popularity favourites
+        studios(isAnimationStudio: true, perPage: 5) { nodes { name } }
+        staff(perPage: 12) { edges { role node { name { full native } } } }
+        relations { edges { relationType node { title { native romaji } } } }
+        externalLinks { site url }
+        characters(sort: [ROLE, ID], perPage: 25) {
+          edges { role node { id name { full native } image { large } } }
         }
       }
-    `;
+    }
+  `;
 
+  const ANILIST_BASIC_QUERY = `
+    query ($search: String) {
+      Media(search: $search, type: ANIME) {
+        title { romaji native }
+        bannerImage
+        coverImage { extraLarge large }
+        format episodes season seasonYear averageScore genres
+        externalLinks { site url }
+        characters(sort: [ROLE, ID], perPage: 25) {
+          edges { role node { id name { full native } image { large } } }
+        }
+      }
+    }
+  `;
+
+  async function queryAniList(query, animeTitle) {
     const response = await fetchWithTimeout(ANILIST_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body: JSON.stringify({ query, variables: { search: animeTitle } })
     }, 15000);
 
-    if (!response.ok) throw new Error(`AniList HTTP ${response.status}`);
+    const data = await response.json().catch(() => null);
 
-    const data = await response.json();
-    const media = data?.data?.Media;
+    if (!response.ok || data?.errors) {
+      const msg = data?.errors?.[0]?.message || `AniList HTTP ${response.status}`;
+      throw new Error(msg);
+    }
+
+    return data?.data?.Media || null;
+  }
+
+  async function fetchAniListMedia(animeTitle) {
+    let media;
+
+    try {
+      media = await queryAniList(ANILIST_FULL_QUERY, animeTitle);
+    } catch (error) {
+      console.error("AniList詳細クエリ失敗（基本クエリにフォールバック）:", error.message);
+      media = await queryAniList(ANILIST_BASIC_QUERY, animeTitle);
+    }
+
     if (!media) return null;
 
     const edges = media.characters?.edges || [];
