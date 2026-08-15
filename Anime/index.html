@@ -1468,7 +1468,10 @@
   saveSettingsButton.addEventListener("click", saveSettings);
   generateButton.addEventListener("click", generateAnimeIntro);
   saveImageButton.addEventListener("click", generateShareImage);
-  modelSelect.addEventListener("change", syncModelInput);
+  modelSelect.addEventListener("change", () => {
+    syncModelInput();
+    localStorage.setItem(STORAGE_KEYS.modelId, getEffectiveModelId());
+  });
 
   animeTitleInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
