@@ -189,6 +189,7 @@
   const DEFAULT_MODEL_ID = "gemma-4-31b-it";
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
   const ANILIST_ENDPOINT = "https://graphql.anilist.co";
+  const JIKAN_BASE = "https://api.jikan.moe/v4";
   const HEAD_ICON = { "一言紹介":"✨", "あらすじ":"📖", "見どころ":"🌟", "こんな人におすすめ":"💡", "作品情報":"🎬", "紹介":"📺" };
 
   const heroBg = document.getElementById("heroBg");
@@ -1021,6 +1022,50 @@
     return data?.query?.search || [];
   }
 
+  async function fetchJikanData(animeTitle) {
+    const searchRes = await fetchWithTimeout(`${JIKAN_BASE}/anime?q=${encodeURIComponent(animeTitle)}&limit=1&sfw=true`, { method: "GET" }, 10000);
+
+    if (!searchRes.ok) throw new Error(`Jikan HTTP ${searchRes.status}`);
+
+    const searchData = await searchRes.json().catch(() => null);
+    const anime = searchData?.data?.[0];
+
+    if (!anime) return null;
+
+    const result = {
+      japaneseTitle: (anime.titles || []).find(t => t.type === "Japanese")?.title || anime.title || "",
+      synopsis: anime.synopsis || "",
+      characters: []
+    };
+
+    try {
+      const charRes = await fetchWithTimeout(`${JIKAN_BASE}/anime/${anime.mal_id}/characters`, { method: "GET" }, 10000);
+
+      if (charRes.ok) {
+        const charData = await charRes.json().catch(() => null);
+        result.characters = (charData?.data || [])
+          .filter(e => e?.role === "Main")
+          .slice(0, 10)
+          .map(e => ({ name: e?.character?.name || "", kanji: e?.character?.name_kanji || "" }))
+          .filter(c => c.name);
+      }
+    } catch (error) {
+      console.error("Jikanキャラ取得失敗:", error.message);
+    }
+
+    return result;
+  }
+
+  function formatJikanForPrompt(j) {
+    if (!j) return "";
+
+    const parts = [];
+    if (j.japaneseTitle) parts.push(`日本語タイトル: ${j.japaneseTitle}`);
+    if (j.synopsis) parts.push(`synopsis(en): ${j.synopsis.slice(0, 1200)}`);
+    if (j.characters.length) parts.push(`characters: ${j.characters.map(c => c.kanji ? `${c.name} (${c.kanji})` : c.name).join(", ")}`);
+    return parts.join("\n");
+  }
+
   async function getWikipediaSearchResults(animeTitle) {
     const normalizedTitle = animeTitle.trim();
     const queryWithAnime = normalizedTitle.includes("アニメ")
@@ -1052,7 +1097,7 @@
     }).join("\n\n");
   }
 
-  function buildPrompt(animeTitle, searchResultsText, charactersText) {
+  function buildPrompt(animeTitle, searchResultsText, charactersText, jikanText) {
     const lines = [
       "あなたはアニメ作品に詳しい紹介ライターです。",
       "以下のアニメについて、未視聴者向けに日本語でネタバレなしの紹介を作成してください。",
@@ -1094,6 +1139,16 @@
         "",
         "AniListのキャラクター一覧:",
         charactersText
+      );
+    }
+
+    if (jikanText) {
+      lines.push(
+        "",
+        "参考情報（MyAnimeList）:",
+        jikanText,
+        "",
+        "上記は英語の参考情報です。事実関係の補強にのみ使い、出力は必ず日本語で書いてください。"
       );
     }
 
@@ -1214,8 +1269,10 @@
     const totalStart = performance.now();
     let searchMs = null;
     let charMs = null;
+    let jikanMs = null;
     let searchResultsText = "";
     let charactersText = "";
+    let jikanText = "";
     let aniChars = [];
     let aniMedia = null;
 
@@ -1237,6 +1294,18 @@
 
       searchMs = performance.now() - searchStart;
     }
+
+    setGenerateStatus("Jikan（MyAnimeList）取得中...");
+    const jikanStart = performance.now();
+
+    try {
+      jikanText = formatJikanForPrompt(await fetchJikanData(animeTitle));
+    } catch (error) {
+      console.error(error);
+      setGenerateStatus(`Jikan取得に失敗したため、なしで続行します: ${error.message}`, true);
+    }
+
+    jikanMs = performance.now() - jikanStart;
 
     setGenerateStatus("AniList取得中...");
     const charStart = performance.now();
@@ -1279,7 +1348,7 @@
             {
               parts: [
                 {
-                  text: buildPrompt(animeTitle, searchResultsText, charactersText)
+                  text: buildPrompt(animeTitle, searchResultsText, charactersText, jikanText)
                 }
               ]
             }
@@ -1346,11 +1415,12 @@
       const aiMs = performance.now() - aiStart;
       const totalMs = performance.now() - totalStart;
       const searchLabel = searchMs === null ? "検索 -" : `検索 ${formatDuration(searchMs)}`;
+      const jikanLabel = `Jikan ${formatDuration(jikanMs)}`;
       const charLabel = `AniList ${formatDuration(charMs)}`;
 
       stopTimer();
       timerBox.textContent = `合計 ${formatDuration(totalMs)}`;
-      setGenerateStatus(`生成しました。（${searchLabel} / ${charLabel} / AI ${formatDuration(aiMs)}）`, false, true);
+      setGenerateStatus(`生成しました。（${searchLabel} / ${jikanLabel} / ${charLabel} / AI ${formatDuration(aiMs)}）`, false, true);
     } catch (error) {
       const totalMs = performance.now() - totalStart;
       console.error("AI生成エラー:", error);
