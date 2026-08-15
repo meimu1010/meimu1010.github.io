@@ -348,7 +348,7 @@
         staff(perPage: 12) { edges { role node { name { full native } } } }
         relations { edges { relationType node { title { native romaji } } } }
         externalLinks { site url }
-        rankings: media.rankings || [],
+        rankings { rank type year allTime }
         characters(sort: [ROLE, ID], perPage: 25) {
           edges { role node { id name { full native } image { large } } }
         }
@@ -364,6 +364,7 @@
         coverImage { extraLarge large }
         format episodes season seasonYear averageScore genres
         externalLinks { site url }
+        rankings { rank type year allTime }
         characters(sort: [ROLE, ID], perPage: 25) {
           edges { role node { id name { full native } image { large } } }
         }
@@ -791,9 +792,11 @@
     return new Promise((resolve) => {
       if (!url) return resolve(null);
 
+      const bare = url.replace(/^https?:\/\//, "");
       const candidates = [
         url,
-        `https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//, ""))}`,
+        `https://i0.wp.com/${bare}`,
+        `https://images.weserv.nl/?url=${encodeURIComponent(bare)}`,
         `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
       ];
       let idx = 0;
@@ -951,12 +954,15 @@
 
     let ly = drawHeading(ctx, "あらすじ", 90, colTop + 20);
     ctx.fillStyle = "#374151";
-    ctx.font = "500 21px 'Noto Sans JP', sans-serif";
+    ctx.font = "500 20px 'Noto Sans JP', sans-serif";
 
-    for (const para of synopsis) {
-      if (ly > colBottom) break;
-      ly = drawWrapped(ctx, para, 90, ly, 560, 30, 13, colBottom);
-      ly += 8;
+    const synAll = wrapCanvasText(ctx, synopsis.join(" "), 560);
+    const synMax = Math.max(4, Math.floor((colBottom - ly) / 28));
+    const synLines = synAll.slice(0, synMax);
+    if (synAll.length > synLines.length) synLines[synLines.length - 1] += "…";
+    for (const line of synLines) {
+      ctx.fillText(line, 90, ly);
+      ly += 28;
     }
 
     const MX = 700, MW = 560;
@@ -1065,7 +1071,12 @@
   }
 
   async function fetchJikanData(animeTitle) {
-    const searchRes = await fetchWithTimeout(`${JIKAN_BASE}/anime?q=${encodeURIComponent(animeTitle)}&limit=1&sfw=true`, { method: "GET" }, 10000);
+    let searchRes = await fetchWithTimeout(`${JIKAN_BASE}/anime?q=${encodeURIComponent(animeTitle)}&limit=1&sfw=true`, { method: "GET" }, 10000);
+
+    if (searchRes.status >= 500) {
+      await new Promise(r => setTimeout(r, 1200));
+      searchRes = await fetchWithTimeout(`${JIKAN_BASE}/anime?q=${encodeURIComponent(animeTitle)}&limit=1&sfw=true`, { method: "GET" }, 10000);
+    }
 
     if (!searchRes.ok) throw new Error(`Jikan HTTP ${searchRes.status}`);
 
