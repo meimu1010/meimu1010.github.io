@@ -186,17 +186,23 @@
     <span class="switch-label">Jikan（MyAnimeList）検索を使う</span>
   </label>
   <p class="hint">英語のあらすじ・キャラ情報を補強用に取得します。APIが不安定な場合はオフにしてください。</p>
+  <label class="switch">
+    <input id="useSpoiler" type="checkbox" />
+    <span class="slider"></span>
+    <span class="switch-label">ネタバレありモード（全話ネタバレ）</span>
+  </label>
+  <p class="hint">結末・キャラクターの結末等重大なネタバレを含みます。アニメ版の情報のみ使用します。オンの方は「画像として保存」が無効になります。</p>
   <button id="saveSettings" class="btn">設定を保存</button>
   <div id="settingsStatus" class="status"></div>
 </dialog>
 
 <script>
-  const STORAGE_KEYS = { apiKey:"anime_intro_google_api_key", modelId:"anime_intro_model_id", apiBase:"anime_intro_api_base", useSearch:"anime_intro_use_wikipedia_search", useJikan:"anime_intro_use_jikan" };
+  const STORAGE_KEYS = { apiKey:"anime_intro_google_api_key", modelId:"anime_intro_model_id", apiBase:"anime_intro_api_base", useSearch:"anime_intro_use_wikipedia_search", useJikan:"anime_intro_use_jikan", spoiler:"anime_intro_spoiler_mode" };
   const DEFAULT_MODEL_ID = "gemma-4-31b-it";
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
   const ANILIST_ENDPOINT = "https://graphql.anilist.co";
   const JIKAN_BASE = "https://api.jikan.moe/v4";
-  const HEAD_ICON = { "一言紹介":"✨", "あらすじ":"📖", "見どころ":"🌟", "こんな人におすすめ":"💡", "作品情報":"🎬", "紹介":"📺" };
+  const HEAD_ICON = { "一言紹介":"✨", "あらすじ":"📖", "見どころ":"🌟", "こんな人におすすめ":"💡", "作品情報":"🎬", "紹介":"📺", "話数別重大ネタバレ":"🔥", "真相と核心の謎":"🔍", "キャラクターの結末":"🕊️", "追加情報":"📚" };
 
   const heroBg = document.getElementById("heroBg");
   const openSettingsButton = document.getElementById("openSettings");
@@ -208,6 +214,7 @@
   const apiBaseInput = document.getElementById("apiBase");
   const useSearchCheckbox = document.getElementById("useSearch");
   const useJikanCheckbox = document.getElementById("useJikan");
+  const useSpoilerCheckbox = document.getElementById("useSpoiler");
   const saveSettingsButton = document.getElementById("saveSettings");
   const settingsStatus = document.getElementById("settingsStatus");
   const animeTitleInput = document.getElementById("animeTitle");
@@ -273,6 +280,8 @@
     useSearchCheckbox.checked = savedUseSearch === null ? true : savedUseSearch === "true";
     const savedUseJikan = localStorage.getItem(STORAGE_KEYS.useJikan);
     useJikanCheckbox.checked = savedUseJikan === null ? true : savedUseJikan === "true";
+    const savedSpoiler = localStorage.getItem(STORAGE_KEYS.spoiler);
+    useSpoilerCheckbox.checked = savedSpoiler === "true";
   }
 
   function setSettingsStatus(message, isError = false) {
@@ -307,6 +316,7 @@
     localStorage.setItem(STORAGE_KEYS.apiBase, apiBaseInput.value.trim() || DEFAULT_API_BASE);
     localStorage.setItem(STORAGE_KEYS.useSearch, useSearchCheckbox.checked ? "true" : "false");
     localStorage.setItem(STORAGE_KEYS.useJikan, useJikanCheckbox.checked ? "true" : "false");
+    localStorage.setItem(STORAGE_KEYS.spoiler, useSpoilerCheckbox.checked ? "true" : "false");
     setSettingsStatus("設定をlocalStorageに保存しました。");
   }
 
@@ -1149,30 +1159,53 @@
     }).join("\n\n");
   }
 
-  function buildPrompt(animeTitle, searchResultsText, charactersText, jikanText) {
-    const lines = [
-      "あなたはアニメ作品に詳しい紹介ライターです。",
-      "以下のアニメについて、未視聴者向けに日本語でネタバレなしの紹介を作成してください。",
-      "",
-      "アニメ名:",
-      animeTitle,
-      "",
-      "必須ルール:",
-      "- 重大な結末、死亡、裏切り、犯人、どんでん返し、後半の重要な展開は書かないでください。",
-      "- 登場人物の説明でもネタバレになる伏線や運命の確定は避けてください。",
-      "- 作品を知らない人が「見るかどうか判断できる」情報に絞ってください。",
-      "- 事実関係が不確実な場合は断定せず「要確認」と書いてください。",
-      "- 存在しない作品や判断できない場合は、その旨を正直に書いてください。",
-      "- 必ず日本語のみで回答してください。固有名詞は日本語表記を優先してください。",
-      "- 登場するキャラクター名には、初出時のみひらがなで読みを括弧付けしてください。実在しない地名・造語・当て字など初見で読めない語にも初出時のみ読みを付けてください。",
-      "- 2回目以降の登場には読みを付けないでください。日常的に読める一般的な語（雪、街、記憶など）には絶対に読みを付けないでください。",
-      "- いきなり最終的な日本語出力だけを出力してください。",
-      "- 【一言紹介】の行から直接始めてください。それより前に何も書かないでください。",
-      "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
-      "- 出力は指定された見出しのみを使用してください。",
-      "- 検索結果がある場合は、検索結果の表記と内容を優先してください。",
-      "- AniListのキャラクター一覧がある場合は、登場人物の名前としてその表記を最優先で使ってください。"
-    ];
+  function buildPrompt(animeTitle, searchResultsText, charactersText, jikanText, spoilerMode) {
+    const lines = [];
+
+    if (spoilerMode) {
+      lines.push(
+        "あなたはアニメ作品に詳しい紹介ライターです。",
+        "以下のアニメについて、視聴済み・ネタバレ容認の方向けに、全話のネタバレを含む完全な振り返り紹介を作成してください。",
+        "",
+        "アニメ名:",
+        animeTitle,
+        "",
+        "必須ルール（ネタバレありモード）:",
+        "- あらゆる重大なネタバレを含めてください: 死亡、裏切り、犯人、どんでん返し、真相、結末、キャラクターの結末まで全て。",
+        "- アニメ版で描かれた情報だけを使ってください。漫画・小説・ゲームなど、アニメで描かれていない原作の情報・展開・結末は絶対に含めないでください。",
+        "- アニメで描かれたか確実でない情報は断定せず（要確認）と書いてください。",
+        "- AniListのキャラクター一覧がある場合は、登場人物の名前としてその表記を最優先で使ってください。",
+        "- 登場するキャラクター名には、初出時のみひらがなで読みを括弧付けしてください。日常的に読める一般的な語には読みを付けないでください。",
+        "- いきなり最終的な日本語出力だけを出力してください。",
+        "- 【一言紹介】の行から直接始めてください。それより前に何も書かないでください。",
+        "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
+        "- 見出しは必ず【あらすじ】のように【】で囲んでください。指定見出しに加えて、新しい【】見出しを自由に作成して追加してかまいません。"
+      );
+    } else {
+      lines.push(
+        "あなたはアニメ作品に詳しい紹介ライターです。",
+        "以下のアニメについて、未視聴者向けに日本語でネタバレなしの紹介を作成してください。",
+        "",
+        "アニメ名:",
+        animeTitle,
+        "",
+        "必須ルール:",
+        "- 重大な結末、死亡、裏切り、犯人、どんでん返し、後半の重要な展開は書かないでください。",
+        "- 登場人物の説明でもネタバレになる伏線や運命の確定は避けてください。",
+        "- 作品を知らない人が「見るかどうか判断できる」情報に絞ってください。",
+        "- 事実関係が不確実な場合は断定せず「要確認」と書いてください。",
+        "- 存在しない作品や判断できない場合は、その旨を正直に書いてください。",
+        "- 必ず日本語のみで回答してください。固有名詞は日本語表記を優先してください。",
+        "- 登場するキャラクター名には、初出時のみひらがなで読みを括弧付けしてください。実在しない地名・造語・当て字など初見で読めない語にも初出時のみ読みを付けてください。",
+        "- 2回目以降の登場には読みを付けないでください。日常的に読める一般的な語（雪、街、記憶など）には絶対に読みを付けないでください。",
+        "- いきなり最終的な日本語出力だけを出力してください。",
+        "- 【一言紹介】の行から直接始めてください。それより前に何も書かないでください。",
+        "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
+        "- 出力は指定された見出しのみを使用してください。",
+        "- 検索結果がある場合は、検索結果の表記と内容を優先してください。",
+        "- AniListのキャラクター一覧がある場合は、登場人物の名前としてその表記を最優先で使ってください。"
+      );
+    }
 
     if (searchResultsText) {
       lines.push(
@@ -1181,7 +1214,9 @@
         searchResultsText,
         "",
         "検索結果を参考にする場合、検索結果にない情報を断定せず、不明な点は要確認としてください。",
-        "検索結果にネタバレが含まれる可能性がある場合は、ネタバレ部分を無視してください。",
+        spoilerMode
+          ? "検索結果に含まれる漫画・原作由来の情報は無視し、アニメ版で描かれた内容のみを使ってください。"
+          : "検索結果にネタバレが含まれる可能性がある場合は、ネタバレ部分を無視してください。",
         "登場人物などの情報が検索結果に不足している場合は、自分の知識で補ってかまいません。その場合、不確実な情報には（要確認）を付けてください。"
       );
     }
@@ -1204,26 +1239,52 @@
       );
     }
 
-    lines.push(
-      "",
-      "出力形式:",
-      "【一言紹介】",
-      "物語・世界観・キャラクターの魅力が伝わるように1〜2文で端的に書いてください。監督・脚本・制作会社などの制作スタッフを主語にした文にしないでください。",
-      "",
-      "【あらすじ】",
-      "冒頭〜序盤の設定を中心に、ネタバレなしで4〜6文で書いてください。",
-      "",
-      "【キャラ紹介】",
-      "AniListのキャラクター一覧の各キャラについて、「キャラクター名（ひらがなの読み） / ネタバレなしの一行説明（約50文字）」の形式で1行ずつ書いてください。読みが分からない場合は名前だけでかまいません。",
-      "順番は必ず主人公（最も中心的な人物）を1行目にし、その後は物語への重要度順にしてください。上記一覧の並び順には従わないでください。",
-      "キャラクター名はAniListの表記をそのまま使ってください。説明にネタバレを含めないでください。",
-      "",
-      "【見どころ】",
-      "作画、物語、キャラ、世界観など魅力を4〜5個の箇条書きで書いてください。",
-      "",
-      "【こんな人におすすめ】",
-      "どんな気分や嗜好の人に向くか、3〜4個の箇条書きで書いてください。"
-    );
+    if (spoilerMode) {
+      lines.push(
+        "",
+        "出力形式:",
+        "【一言紹介】",
+        "ネタバレを含めて、作品を1〜2文で総括してください。",
+        "",
+        "【あらすじ】",
+        "冒頭から結末まで、完結した物語全体を8〜12文で書いてください。",
+        "",
+        "【キャラ紹介】",
+        "AniListのキャラクター一覧の各キャラについて、「キャラクター名（ひらがなの読み） / 結末を含む一行説明（約50文字）」の形式で1行ずつ書いてください。",
+        "順番は必ず主人公（最も中心的な人物）を1行目にし、その後は物語への重要度順にしてください。",
+        "",
+        "【見どころ】",
+        "作画、物語、キャラ、世界観など魅力を4〜5個の箇条書きで書いてください（ネタバレ込みでかまいません）。",
+        "",
+        "【こんな人におすすめ】",
+        "どんな気分や嗜好の人に向くか、3〜4個の箇条書きで書いてください。",
+        "",
+        "その後に、ネタバレ内容の量や性質に合わせて、適切な【】見出しを自由に作成して追加してください。",
+        "例: 【話数別重大ネタバレ】【キャラクターの結末】【真相と謎】【世界観解説】【追加情報】など。",
+        "【】見出しはすべて自動で独立したブロックとして表示されるため、情報量を抑えず、読みやすく整理してください。"
+      );
+    } else {
+      lines.push(
+        "",
+        "出力形式:",
+        "【一言紹介】",
+        "物語・世界観・キャラクターの魅力が伝わるように1〜2文で端的に書いてください。監督・脚本・制作会社などの制作スタッフを主語にした文にしないでください。",
+        "",
+        "【あらすじ】",
+        "冒頭〜序盤の設定を中心に、ネタバレなしで4〜6文で書いてください。",
+        "",
+        "【キャラ紹介】",
+        "AniListのキャラクター一覧の各キャラについて、「キャラクター名（ひらがなの読み） / ネタバレなしの一行説明（約50文字）」の形式で1行ずつ書いてください。読みが分からない場合は名前だけでかまいません。",
+        "順番は必ず主人公（最も中心的な人物）を1行目にし、その後は物語への重要度順にしてください。上記一覧の並び順には従わないでください。",
+        "キャラクター名はAniListの表記をそのまま使ってください。説明にネタバレを含めないでください。",
+        "",
+        "【見どころ】",
+        "作画、物語、キャラ、世界観など魅力を4〜5個の箇条書きで書いてください。",
+        "",
+        "【こんな人におすすめ】",
+        "どんな気分や嗜好の人に向くか、3〜4個の箇条書きで書いてください。"
+      );
+    }
 
     return lines.join("\n");
   }
@@ -1402,7 +1463,7 @@
             {
               parts: [
                 {
-                  text: buildPrompt(animeTitle, searchResultsText, charactersText, jikanText)
+                  text: buildPrompt(animeTitle, searchResultsText, charactersText, jikanText, useSpoilerCheckbox.checked)
                 }
               ]
             }
@@ -1451,18 +1512,23 @@
       const highlights = getSectionLines(text, "見どころ");
       const charNames = sortedChars.map(c => c.native || c.name);
 
-      shareData = {
-        media: aniMedia,
-        intro,
-        synopsis: getSectionLines(text, "あらすじ"),
-        highlights,
-        recommends: getSectionLines(text, "こんな人におすすめ"),
-        infoRows: buildInfoRows(aniMedia),
-        officialUrl: (aniMedia?.links || []).find(l => /official site/i.test(l.site || ""))?.url || "",
-        charNames
-      };
-      shareData.bannerPromise = fetchImgSafe(aniMedia?.banner);
-      saveImageButton.hidden = false;
+      if (useSpoilerCheckbox.checked) {
+        shareData = null;
+        saveImageButton.hidden = true;
+      } else {
+        shareData = {
+          media: aniMedia,
+          intro,
+          synopsis: getSectionLines(text, "あらすじ"),
+          highlights,
+          recommends: getSectionLines(text, "こんな人におすすめ"),
+          infoRows: buildInfoRows(aniMedia),
+          officialUrl: (aniMedia?.links || []).find(l => /official site/i.test(l.site || ""))?.url || "",
+          charNames,
+        };
+        shareData.bannerPromise = fetchImgSafe(aniMedia?.banner);
+        saveImageButton.hidden = false;
+      }
       metaLine.hidden = false;
 
       const aiMs = performance.now() - aiStart;
@@ -1496,6 +1562,13 @@
   modelSelect.addEventListener("change", () => {
     syncModelInput();
     localStorage.setItem(STORAGE_KEYS.modelId, getEffectiveModelId());
+  });
+
+  useSpoilerCheckbox.addEventListener("change", () => {
+    if (useSpoilerCheckbox.checked) {
+      shareData = null;
+      saveImageButton.hidden = true;
+    }
   });
 
   animeTitleInput.addEventListener("keydown", (event) => {
