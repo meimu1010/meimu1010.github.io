@@ -68,6 +68,7 @@
   .res-p { margin:0 0 8px; line-height:1.9; }
   .res-ul { margin:0; padding-left:1.2em; display:grid; gap:6px; line-height:1.7; }
   .res-p.warn { color:var(--danger); font-size:12.5px; }
+  #result strong, .char-desc strong { color:#6d28d9; }
   @media (max-width:860px) { #result { columns:1; } }
   .info-row { display:flex; gap:8px; margin:0 0 8px; font-size:13px; line-height:1.6; }
   .info-k { flex-shrink:0; min-width:88px; font-weight:700; color:#334155; }
@@ -704,7 +705,7 @@
       if (desc) {
         const descEl = document.createElement("p");
         descEl.className = "char-desc";
-        descEl.textContent = desc;
+        renderRichText(descEl, desc);
         body.appendChild(descEl);
       }
 
@@ -771,12 +772,12 @@
         }
 
         const li = document.createElement("li");
-        li.textContent = t.replace(/^[・\-•]\s*/, "");
+        renderRichText(li, t.replace(/^[・\-•]\s*/, ""));
         ul.appendChild(li);
       } else {
         const p = document.createElement("p");
         p.className = "res-p";
-        p.textContent = t;
+        renderRichText(p, t);
         block.appendChild(p);
       }
     }
@@ -789,10 +790,18 @@
     for (const raw of text.split("\n")) {
       const t = raw.trim();
       if (/^【.+】$/.test(t)) { on = t.includes(heading); continue; }
-      if (on && t) out.push(t);
+      if (on && t) out.push(t.replace(/\*\*/g, ""));
     }
 
     return out;
+  }
+
+  function renderRichText(el, text) {
+    const escaped = (text || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    el.innerHTML = escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   }
 
   function wrapCanvasText(ctx, text, maxWidth) {
@@ -1180,7 +1189,8 @@
         "- いきなり最終的な日本語出力だけを出力してください。",
         "- 【一言紹介】の行から直接始めてください。それより前に何も書かないでください。",
         "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
-        "- 見出しは必ず【あらすじ】のように【】で囲んでください。指定見出しに加えて、新しい【】見出しを自由に作成して追加してかまいません。"
+        "- 見出しは必ず【あらすじ】のように【】で囲んでください。指定見出しに加えて、新しい【】見出しを自由に作成して追加してかまいません。",
+        "- 特に重要な語（キャラクター名、作品独自の用語、重大な真相）のみを ** で囲んで太字にしてください。乱用せず、各見出しの数カ所までにしてください。"
       );
     } else {
       lines.push(
@@ -1204,7 +1214,8 @@
         "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
         "- 出力は指定された見出しのみを使用してください。",
         "- 検索結果がある場合は、検索結果の表記と内容を優先してください。",
-        "- AniListのキャラクター一覧がある場合は、登場人物の名前としてその表記を最優先で使ってください。"
+        "- AniListのキャラクター一覧がある場合は、登場人物の名前としてその表記を最優先で使ってください。",
+        "- 特に重要な語（初出のキャラクター名、作品独自の用語、重要な設定）のみを ** で囲んで太字にしてください。乱用せず、各見出しの数カ所までにしてください。"
       );
     }
 
