@@ -655,6 +655,78 @@
     return [...chars].sort((a, b) => orderOf(a) - orderOf(b));
   }
 
+  function romajiToHiragana(src) {
+    const MAP = [
+      ["kya","きゃ"],["kyu","きゅ"],["kyo","きょ"],["gya","ぎゃ"],["gyu","ぎゅ"],["gyo","ぎょ"],
+      ["sha","しゃ"],["shu","しゅ"],["sho","しょ"],["ja","じゃ"],["ju","じゅ"],["jo","じょ"],
+      ["cha","ちゃ"],["chu","ちゅ"],["cho","ちょ"],["nya","にゃ"],["nyu","にゅ"],["nyo","にょ"],
+      ["hya","ひゃ"],["hyu","ひゅ"],["hyo","ひょ"],["bya","びゃ"],["byu","びゅ"],["byo","びょ"],
+      ["pya","ぴゃ"],["pyu","ぴゅ"],["pyo","ぴょ"],["mya","みゃ"],["myu","みゅ"],["myo","みょ"],
+      ["rya","りゃ"],["ryu","りゅ"],["ryo","りょ"],
+      ["shi","し"],["chi","ち"],["tsu","つ"],["fu","ふ"],["ji","じ"],
+      ["ka","か"],["ki","き"],["ku","く"],["ke","け"],["ko","こ"],
+      ["ga","が"],["gi","ぎ"],["gu","ぐ"],["ge","げ"],["go","ご"],
+      ["sa","さ"],["si","し"],["su","す"],["se","せ"],["so","そ"],
+      ["za","ざ"],["zi","じ"],["zu","ず"],["ze","ぜ"],["zo","ぞ"],
+      ["ta","た"],["ti","ち"],["tu","つ"],["te","て"],["to","と"],
+      ["da","だ"],["de","で"],["do","ど"],
+      ["na","な"],["ni","に"],["nu","ぬ"],["ne","ね"],["no","の"],
+      ["ha","は"],["hi","ひ"],["hu","ふ"],["he","へ"],["ho","ほ"],
+      ["ba","ば"],["bi","び"],["bu","ぶ"],["be","べ"],["bo","ぼ"],
+      ["pa","ぱ"],["pi","ぴ"],["pu","ぷ"],["pe","ぺ"],["po","ぽ"],
+      ["ma","ま"],["mi","み"],["mu","む"],["me","め"],["mo","も"],
+      ["ya","や"],["yu","ゆ"],["yo","よ"],
+      ["ra","ら"],["ri","り"],["ru","る"],["re","れ"],["ro","ろ"],
+      ["wa","わ"],["wi","ゐ"],["we","ゑ"],["wo","を"],
+      ["nn","ん"],["n'","ん"],["n","ん"],
+      ["a","あ"],["i","い"],["u","う"],["e","え"],["o","お"],
+      ["-","ー"]
+    ];
+    const s = (src || "").toLowerCase().trim();
+    let out = "";
+    let i = 0;
+
+    while (i < s.length) {
+      const c = s[i];
+
+      if (i + 1 < s.length && c === s[i + 1] && "bcdfghjkmpqrstvwxz".includes(c)) {
+        out += "っ";
+        i++;
+        continue;
+      }
+
+      if (s.startsWith("tch", i)) {
+        out += "っ";
+        i++;
+        continue;
+      }
+
+      let matched = false;
+      for (const [r, h] of MAP) {
+        if (s.startsWith(r, i)) {
+          out += h;
+          i += r.length;
+          matched = true;
+          break;
+        }
+      }
+
+      if (!matched) i++;
+    }
+
+    return out;
+  }
+
+  function deriveReading(fullRomaji) {
+    if (!fullRomaji) return "";
+    const parts = fullRomaji.trim().split(/\s+/);
+    if (parts.length < 2) return "";
+    const given = romajiToHiragana(parts[0]);
+    const family = romajiToHiragana(parts.slice(1).join(" "));
+    if (!given || !family) return "";
+    return `${family} ${given}`;
+  }
+
   function renderCharacterCards(chars, descMap = new Map()) {
     charactersSection.hidden = chars.length === 0;
     characterCards.innerHTML = "";
@@ -700,7 +772,7 @@
 
       const entry = descMap.get((c.native || c.name).replace(/\s+/g, "")) || descMap.get(c.name.replace(/\s+/g, "")) || null;
       const desc = entry?.desc || "";
-      const reading = entry?.reading || "";
+      const reading = deriveReading(c.name) || entry?.reading || "";
 
       if (reading) {
         nameEl.textContent = `${c.native || c.name}(${reading})`;
@@ -1271,7 +1343,9 @@
         "",
         "【キャラ紹介】",
         "このセクションは必須です。必ず出力してください。",
-        "AniListのキャラクター一覧の全キャラについて、省略せず1行ずつ書いてください。形式: 「キャラクター名（ひらがなの読み） / 立場・性格・作中での役割・結末を含む説明（約200文字）」",
+        "AniListのキャラクター一覧の全キャラについて、省略せず1行ずつ書いてください。形式: 「キャラクター名 / 立場・性格・作中での役割・結末を含む説明」",
+        "説明は必ず100文字以上200文字以内で書いてください。",
+        "「（約○○文字）」のような文字数の注記は出力に含めないでください。",
         "順番は必ず主人公（最も中心的な人物）を1行目にし、その後は物語への重要度順にしてください。",
         "",
         "【見どころ】",
@@ -1295,7 +1369,8 @@
         "冒頭〜序盤の設定を中心に、ネタバレなしで4〜6文で書いてください。",
         "",
         "【キャラ紹介】",
-        "AniListのキャラクター一覧の各キャラについて、「キャラクター名（ひらがなの読み） / ネタバレなしの一行説明（約50文字）」の形式で1行ずつ書いてください。読みが分からない場合は名前だけでかまいません。",
+        "AniListのキャラクター一覧の各キャラについて、「キャラクター名 / ネタバレなしの一行説明（50〜80文字）」の形式で1行ずつ書いてください。",
+        "「（約○○文字）」のような文字数の注記は出力に含めないでください。",
         "順番は必ず主人公（最も中心的な人物）を1行目にし、その後は物語への重要度順にしてください。上記一覧の並び順には従わないでください。",
         "キャラクター名はAniListの表記をそのまま使ってください。説明にネタバレを含めないでください。",
         "",
