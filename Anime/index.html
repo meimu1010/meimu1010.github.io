@@ -980,4 +980,518 @@
         if (my > colBottom) break;
         ctx.fillStyle = "#6b7280";
         ctx.fillText(k, MX, my);
-        ctx.fillStyle = "#3
+        ctx.fillStyle = "#374151";
+        drawWrapped(ctx, v, MX + 120, my, MW - 126, 26, 1, colBottom);
+        my += 28;
+      }
+    }
+
+    const RX = 1310, RW = 520;
+    let ry = drawHeading(ctx, "こんな人におすすめ", RX, colTop + 20);
+    ctx.font = "500 20px 'Noto Sans JP', sans-serif";
+
+    for (const rline of recommends.slice(0, 4)) {
+      if (ry > colBottom) break;
+      ctx.fillStyle = "#7c3aed";
+      ctx.fillText("◆", RX, ry);
+      ctx.fillStyle = "#4b5563";
+      ry = drawWrapped(ctx, rline.replace(/^[・\-•]\s*/, ""), RX + 30, ry, RW - 36, 28, 3, colBottom);
+      ry += 6;
+    }
+
+    const loadedPortraits = await Promise.all((portraits || []).slice(0, 6).map(u => loadImgSafe(u)));
+    let px = 90;
+    const py = H - 96;
+
+    for (const p of loadedPortraits) {
+      if (!p) continue;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(px + 40, py, 40, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(p, px, py - 40, 80, 80);
+      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(px + 40, py, 40, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(124,58,237,.45)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      px += 94;
+    }
+
+    ctx.fillStyle = "#4b5563";
+    ctx.font = "500 20px 'Noto Sans JP', sans-serif";
+    const castX = px + 20;
+    drawWrapped(ctx, charNames.slice(0, 8).join(" / "), castX, py - 8, W - 90 - castX, 30, 2, H - 40);
+
+    if (officialUrl) {
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#9ca3af";
+      ctx.font = "500 18px 'Noto Sans JP', sans-serif";
+      ctx.fillText(officialUrl, W - 90, H - 30);
+      ctx.textAlign = "left";
+    }
+
+    try {
+      const a = document.createElement("a");
+      a.download = `${(media?.native || "anime").replace(/[\\/:*?"<>|]/g, "_")}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    } catch (error) {
+      console.error(error);
+      alert("画像の保存に失敗しました。");
+    }
+  }
+
+  async function searchWikipedia(query) {
+    const url = `https://ja.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=5&format=json&origin=*&srprop=snippet`;
+
+    const response = await fetchWithTimeout(url, { method: "GET" }, 10000);
+
+    let data = null;
+
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
+      const apiMessage = data?.error?.info || `HTTP ${response.status}`;
+      throw new Error(apiMessage);
+    }
+
+    return data?.query?.search || [];
+  }
+
+  async function fetchJikanData(animeTitle) {
+    const searchRes = await fetchWithTimeout(`${JIKAN_BASE}/anime?q=${encodeURIComponent(animeTitle)}&limit=1&sfw=true`, { method: "GET" }, 10000);
+
+    if (!searchRes.ok) throw new Error(`Jikan HTTP ${searchRes.status}`);
+
+    const searchData = await searchRes.json().catch(() => null);
+    const anime = searchData?.data?.[0];
+
+    if (!anime) return null;
+
+    const result = {
+      japaneseTitle: (anime.titles || []).find(t => t.type === "Japanese")?.title || anime.title || "",
+      synopsis: anime.synopsis || "",
+      characters: []
+    };
+
+    try {
+      const charRes = await fetchWithTimeout(`${JIKAN_BASE}/anime/${anime.mal_id}/characters`, { method: "GET" }, 10000);
+
+      if (charRes.ok) {
+        const charData = await charRes.json().catch(() => null);
+        result.characters = (charData?.data || [])
+          .filter(e => e?.role === "Main")
+          .slice(0, 10)
+          .map(e => ({ name: e?.character?.name || "", kanji: e?.character?.name_kanji || "" }))
+          .filter(c => c.name);
+      }
+    } catch (error) {
+      console.error("Jikanキャラ取得失敗:", error.message);
+    }
+
+    return result;
+  }
+
+  function formatJikanForPrompt(j) {
+    if (!j) return "";
+
+    const parts = [];
+    if (j.japaneseTitle) parts.push(`日本語タイトル: ${j.japaneseTitle}`);
+    if (j.synopsis) parts.push(`synopsis(en): ${j.synopsis.slice(0, 1200)}`);
+    if (j.characters.length) parts.push(`characters: ${j.characters.map(c => c.kanji ? `${c.name} (${c.kanji})` : c.name).join(", ")}`);
+    return parts.join("\n");
+  }
+
+  async function getWikipediaSearchResults(animeTitle) {
+    const normalizedTitle = animeTitle.trim();
+    const queryWithAnime = normalizedTitle.includes("アニメ")
+      ? normalizedTitle
+      : `${normalizedTitle} アニメ`;
+
+    let results = await searchWikipedia(queryWithAnime);
+
+    if (!results.length) {
+      results = await searchWikipedia(normalizedTitle);
+    }
+
+    return results;
+  }
+
+  function formatSearchResults(results) {
+    if (!results.length) return "";
+
+    return results.map((item, index) => {
+      const title = item.title || "";
+      const snippet = stripHtml(item.snippet || "").replace(/\s+/g, " ").trim();
+      const url = item.pageid ? `https://ja.wikipedia.org/?curid=${item.pageid}` : "";
+
+      return [
+        `${index + 1}. タイトル: ${title}`,
+        `   概要: ${snippet || "概要を取得できませんでした。"}`,
+        url ? `   URL: ${url}` : ""
+      ].filter(Boolean).join("\n");
+    }).join("\n\n");
+  }
+
+  function buildPrompt(animeTitle, searchResultsText, charactersText, jikanText) {
+    const lines = [
+      "あなたはアニメ作品に詳しい紹介ライターです。",
+      "以下のアニメについて、未視聴者向けに日本語でネタバレなしの紹介を作成してください。",
+      "",
+      "アニメ名:",
+      animeTitle,
+      "",
+      "必須ルール:",
+      "- 重大な結末、死亡、裏切り、犯人、どんでん返し、後半の重要な展開は書かないでください。",
+      "- 登場人物の説明でもネタバレになる伏線や運命の確定は避けてください。",
+      "- 作品を知らない人が「見るかどうか判断できる」情報に絞ってください。",
+      "- 事実関係が不確実な場合は断定せず「要確認」と書いてください。",
+      "- 存在しない作品や判断できない場合は、その旨を正直に書いてください。",
+      "- 必ず日本語のみで回答してください。固有名詞は日本語表記を優先してください。",
+      "- 登場するキャラクター名には、初出時のみひらがなで読みを括弧付けしてください。実在しない地名・造語・当て字など初見で読めない語にも初出時のみ読みを付けてください。",
+      "- 2回目以降の登場には読みを付けないでください。日常的に読める一般的な語（雪、街、記憶など）には絶対に読みを付けないでください。",
+      "- いきなり最終的な日本語出力だけを出力してください。",
+      "- 【一言紹介】の行から直接始めてください。それより前に何も書かないでください。",
+      "- 計画・思考過程・下書き・役割設定・確認事項を出力しないでください。",
+      "- 出力は指定された見出しのみを使用してください。",
+      "- 検索結果がある場合は、検索結果の表記と内容を優先してください。",
+      "- AniListのキャラクター一覧がある場合は、登場人物の名前としてその表記を最優先で使ってください。"
+    ];
+
+    if (searchResultsText) {
+      lines.push(
+        "",
+        "参考にできる検索結果:",
+        searchResultsText,
+        "",
+        "検索結果を参考にする場合、検索結果にない情報を断定せず、不明な点は要確認としてください。",
+        "検索結果にネタバレが含まれる可能性がある場合は、ネタバレ部分を無視してください。",
+        "登場人物などの情報が検索結果に不足している場合は、自分の知識で補ってかまいません。その場合、不確実な情報には（要確認）を付けてください。"
+      );
+    }
+
+    if (charactersText) {
+      lines.push(
+        "",
+        "AniListのキャラクター一覧:",
+        charactersText
+      );
+    }
+
+    if (jikanText) {
+      lines.push(
+        "",
+        "参考情報（MyAnimeList）:",
+        jikanText,
+        "",
+        "上記は英語の参考情報です。事実関係の補強にのみ使い、出力は必ず日本語で書いてください。"
+      );
+    }
+
+    lines.push(
+      "",
+      "出力形式:",
+      "【一言紹介】",
+      "物語・世界観・キャラクターの魅力が伝わるように1〜2文で端的に書いてください。監督・脚本・制作会社などの制作スタッフを主語にした文にしないでください。",
+      "",
+      "【あらすじ】",
+      "冒頭〜序盤の設定を中心に、ネタバレなしで4〜6文で書いてください。",
+      "",
+      "【キャラ紹介】",
+      "AniListのキャラクター一覧の各キャラについて、「キャラクター名（ひらがなの読み） / ネタバレなしの一行説明（約50文字）」の形式で1行ずつ書いてください。読みが分からない場合は名前だけでかまいません。",
+      "順番は必ず主人公（最も中心的な人物）を1行目にし、その後は物語への重要度順にしてください。上記一覧の並び順には従わないでください。",
+      "キャラクター名はAniListの表記をそのまま使ってください。説明にネタバレを含めないでください。",
+      "",
+      "【見どころ】",
+      "作画、物語、キャラ、世界観など魅力を4〜5個の箇条書きで書いてください。",
+      "",
+      "【こんな人におすすめ】",
+      "どんな気分や嗜好の人に向くか、3〜4個の箇条書きで書いてください。"
+    );
+
+    return lines.join("\n");
+  }
+
+  function extractModelText(data) {
+    const candidate = data?.candidates?.[0];
+
+    if (!candidate) {
+      const blockReason = data?.promptFeedback?.blockReason;
+      if (blockReason) {
+        throw new Error(`安全性設定によりブロックされました: ${blockReason}`);
+      }
+      throw new Error("候補が返却されませんでした。");
+    }
+
+    const parts = candidate?.content?.parts;
+
+    if (!Array.isArray(parts) || parts.length === 0) {
+      throw new Error("本文が見つかりませんでした。");
+    }
+
+    return parts.map(part => part?.text ?? "").join("").trim();
+  }
+
+  function extractFinalJapanese(text) {
+    const marker = "【一言紹介】";
+    const requiredHeadings = ["【あらすじ】", "【キャラ紹介】", "【見どころ】", "【こんな人におすすめ】"];
+    let best = -1;
+    let searchFrom = 0;
+    let idx = text.indexOf(marker, searchFrom);
+
+    while (idx !== -1) {
+      const rest = text.slice(idx);
+      let prev = 0;
+      let ok = true;
+
+      for (const heading of requiredHeadings) {
+        const pos = rest.indexOf(heading, prev);
+
+        if (pos === -1) {
+          ok = false;
+          break;
+        }
+
+        prev = pos + heading.length;
+      }
+
+      if (ok) {
+        best = idx;
+      }
+
+      searchFrom = idx + marker.length;
+      idx = text.indexOf(marker, searchFrom);
+    }
+
+    const body = best !== -1 ? text.slice(best) : text;
+
+    return body
+      .split("\n")
+      .map(line => line.trimStart())
+      .join("\n")
+      .trim();
+  }
+
+  async function generateAnimeIntro() {
+    const apiKey = apiKeyInput.value.trim();
+    const modelId = normalizeModelId(getEffectiveModelId());
+    const apiBase = normalizeApiBase(apiBaseInput.value);
+    const animeTitle = animeTitleInput.value.trim();
+
+    resultBox.innerHTML = "";
+    resultBox.classList.remove("filled");
+    renderCharacterCards([]);
+    resetMediaInfo();
+    setGenerateStatus("");
+    timerBox.hidden = true;
+    saveImageButton.hidden = true;
+    metaLine.hidden = true;
+    shareData = null;
+    stopTimer();
+
+    if (!apiKey) {
+      setGenerateStatus("APIキーがありません。右上の歯車から設定してください。", true);
+      settingsDialog.showModal();
+      return;
+    }
+
+    if (!animeTitle) {
+      setGenerateStatus("アニメ名を入力してください。", true);
+      return;
+    }
+
+    generateButton.disabled = true;
+    startTimer();
+    const totalStart = performance.now();
+    let searchMs = null;
+    let charMs = null;
+    let jikanMs = null;
+    let searchResultsText = "";
+    let charactersText = "";
+    let jikanText = "";
+    let aniChars = [];
+    let aniMedia = null;
+
+    if (useSearchCheckbox.checked) {
+      setGenerateStatus("Wikipedia検索中...");
+      const searchStart = performance.now();
+
+      try {
+        const results = await getWikipediaSearchResults(animeTitle);
+        searchResultsText = formatSearchResults(results);
+
+        if (!searchResultsText) {
+          setGenerateStatus("検索結果がなかったので、AIのみで生成します。");
+        }
+      } catch (error) {
+        console.error(error);
+        setGenerateStatus(`Wikipedia検索失敗: ${error.message}`, true);
+      }
+
+      searchMs = performance.now() - searchStart;
+    }
+
+    setGenerateStatus("Jikan（MyAnimeList）取得中...");
+    const jikanStart = performance.now();
+
+    try {
+      jikanText = formatJikanForPrompt(await fetchJikanData(animeTitle));
+    } catch (error) {
+      console.error(error);
+      setGenerateStatus(`Jikan取得に失敗したため、なしで続行します: ${error.message}`, true);
+    }
+
+    jikanMs = performance.now() - jikanStart;
+
+    setGenerateStatus("AniList取得中...");
+    const charStart = performance.now();
+
+    try {
+      const media = await fetchAniListMedia(animeTitle);
+
+      if (media) {
+        applyMediaInfo(media);
+        aniMedia = media;
+        aniChars = media.chars;
+        charactersText = formatCharactersForPrompt(media.chars);
+
+        if (!media.chars.length) {
+          setGenerateStatus("AniListからキャラを取得できませんでした。");
+        }
+      } else {
+        setGenerateStatus("AniListで作品が見つかりませんでした。");
+      }
+    } catch (error) {
+      console.error(error);
+      setGenerateStatus(`AniList取得失敗: ${error.message}`, true);
+    }
+
+    charMs = performance.now() - charStart;
+
+    setGenerateStatus("AI生成中（数分かかる場合があります）...");
+    const aiStart = performance.now();
+
+    try {
+      const url = `${apiBase}/models/${encodeURIComponent(modelId)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+      const response = await fetchWithTimeout(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: buildPrompt(animeTitle, searchResultsText, charactersText, jikanText)
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 8192
+          }
+        })
+      }, 180000);
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok) {
+        const apiMessage = data?.error?.message || `HTTP ${response.status}`;
+        throw new Error(apiMessage);
+      }
+
+      const rawText = extractModelText(data);
+      const text = extractFinalJapanese(rawText);
+      const finishReason = data?.candidates?.[0]?.finishReason || "";
+      const truncated = finishReason === "MAX_TOKENS";
+
+      renderResult(text || "AIの応答が空でした。");
+      const descMap = parseCharacterDescs(text);
+      const sortedChars = sortCharsByDesc(aniChars, descMap);
+      renderCharacterCards(sortedChars, descMap);
+      appendInfoBlock(aniMedia);
+
+      if (truncated) {
+        const warn = document.createElement("p");
+        warn.className = "res-p warn";
+        warn.textContent = "（注意: 出力が途中で切れた可能性があります）";
+        resultBox.appendChild(warn);
+      }
+
+      resultBox.classList.add("filled");
+
+      const intro = getSectionLines(text, "一言紹介").join(" ") || getSectionLines(text, "紹介").join(" ");
+      const highlights = getSectionLines(text, "見どころ");
+      const charNames = sortedChars.map(c => c.native || c.name);
+      const portraits = sortedChars.map(c => c.img).filter(Boolean);
+
+      shareData = {
+        media: aniMedia,
+        intro,
+        synopsis: getSectionLines(text, "あらすじ"),
+        highlights,
+        recommends: getSectionLines(text, "こんな人におすすめ"),
+        infoRows: buildInfoRows(aniMedia),
+        officialUrl: (aniMedia?.links || []).find(l => /official site/i.test(l.site || ""))?.url || "",
+        charNames,
+        portraits
+      };
+      saveImageButton.hidden = false;
+      metaLine.hidden = false;
+
+      const aiMs = performance.now() - aiStart;
+      const totalMs = performance.now() - totalStart;
+      const searchLabel = searchMs === null ? "検索 -" : `検索 ${formatDuration(searchMs)}`;
+      const jikanLabel = `Jikan ${formatDuration(jikanMs)}`;
+      const charLabel = `AniList ${formatDuration(charMs)}`;
+
+      stopTimer();
+      timerBox.textContent = `合計 ${formatDuration(totalMs)}`;
+      setGenerateStatus(`生成しました。（${searchLabel} / ${jikanLabel} / ${charLabel} / AI ${formatDuration(aiMs)}）`, false, true);
+    } catch (error) {
+      const totalMs = performance.now() - totalStart;
+      console.error("AI生成エラー:", error);
+      resultBox.innerHTML = "";
+      stopTimer();
+      timerBox.textContent = `${formatDuration(totalMs)} で停止`;
+      setGenerateStatus(`AI生成失敗: ${error.message}`, true);
+    } finally {
+      generateButton.disabled = false;
+    }
+  }
+
+  openSettingsButton.addEventListener("click", () => settingsDialog.showModal());
+  closeSettingsButton.addEventListener("click", () => settingsDialog.close());
+  saveSettingsButton.addEventListener("click", saveSettings);
+  generateButton.addEventListener("click", generateAnimeIntro);
+  saveImageButton.addEventListener("click", generateShareImage);
+  modelSelect.addEventListener("change", () => {
+    syncModelInput();
+    localStorage.setItem(STORAGE_KEYS.modelId, getEffectiveModelId());
+  });
+
+  animeTitleInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      generateAnimeIntro();
+    }
+  });
+
+  loadSettings();
+</script>
+</body>
+</html>
