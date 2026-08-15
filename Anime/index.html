@@ -344,7 +344,7 @@
         coverImage { extraLarge large }
         format episodes season seasonYear averageScore genres
         source popularity favourites
-        studios(isAnimationStudio: true, perPage: 5) { nodes { name } }
+        studios(perPage: 8) { nodes { name isAnimationStudio } }
         staff(perPage: 12) { edges { role node { name { full native } } } }
         relations { edges { relationType node { title { native romaji } } } }
         externalLinks { site url }
@@ -428,7 +428,11 @@
       source: media.source || null,
       popularity: media.popularity || null,
       favourites: media.favourites || null,
-      studios: (media.studios?.nodes || []).map(n => n?.name).filter(Boolean),
+      studios: (() => {
+        const nodes = media.studios?.nodes || [];
+        const anim = nodes.filter(n => n?.isAnimationStudio).map(n => n?.name).filter(Boolean);
+        return anim.length ? anim : nodes.map(n => n?.name).filter(Boolean);
+      })(),
       staff: (media.staff?.edges || []).map(e => ({ role: e?.role || "", name: e?.node?.name?.native || e?.node?.name?.full || "" })).filter(s => s.name),
       relations: (media.relations?.edges || []).map(e => ({ type: e?.relationType || "", title: e?.node?.title?.native || e?.node?.title?.romaji || "" })).filter(r => r.title),
       links: media.externalLinks || [],
@@ -839,7 +843,7 @@
   async function generateShareImage() {
     if (!shareData) return;
 
-    const { media, intro, synopsis, highlights, recommends, infoRows, officialUrl, charNames, portraits } = shareData;
+    const { media, intro, synopsis, highlights, recommends, infoRows, officialUrl, charNames } = shareData;
     const W = 1920, H = 1080;
     const canvas = document.createElement("canvas");
     canvas.width = W;
@@ -861,9 +865,9 @@
       ctx.drawImage(banner, (W - bw) / 2, (H - bh) / 2, bw, bh);
 
       const veil = ctx.createLinearGradient(0, 0, 0, H);
-      veil.addColorStop(0, "rgba(248,247,255,.45)");
-      veil.addColorStop(0.45, "rgba(248,247,255,.8)");
-      veil.addColorStop(0.8, "rgba(248,247,255,.96)");
+      veil.addColorStop(0, "rgba(248,247,255,.3)");
+      veil.addColorStop(0.45, "rgba(248,247,255,.62)");
+      veil.addColorStop(0.8, "rgba(248,247,255,.92)");
       veil.addColorStop(1, "rgba(248,247,255,1)");
       ctx.fillStyle = veil;
       ctx.fillRect(0, 0, W, H);
@@ -1002,30 +1006,9 @@
       ry += 6;
     }
 
-    const loadedPortraits = (await Promise.all(shareData.portraitPromises || [])).filter(Boolean);
-    let px = 90;
-    const py = H - 96;
-
-    for (const p of loadedPortraits) {
-      if (!p) continue;
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(px + 40, py, 40, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(p, px, py - 40, 80, 80);
-      ctx.restore();
-      ctx.beginPath();
-      ctx.arc(px + 40, py, 40, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(124,58,237,.45)";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      px += 94;
-    }
-
     ctx.fillStyle = "#4b5563";
     ctx.font = "500 20px 'Noto Sans JP', sans-serif";
-    const castX = px + 20;
-    drawWrapped(ctx, charNames.slice(0, 8).join(" / "), castX, py - 8, W - 90 - castX, 30, 2, H - 40);
+    drawWrapped(ctx, charNames.slice(0, 10).join(" / "), 90, H - 64, W - 180, 30, 2, H - 30);
 
     if (officialUrl) {
       ctx.textAlign = "right";
@@ -1446,7 +1429,6 @@
       const intro = getSectionLines(text, "一言紹介").join(" ") || getSectionLines(text, "紹介").join(" ");
       const highlights = getSectionLines(text, "見どころ");
       const charNames = sortedChars.map(c => c.native || c.name);
-      const portraits = sortedChars.map(c => c.img).filter(Boolean);
 
       shareData = {
         media: aniMedia,
@@ -1456,11 +1438,9 @@
         recommends: getSectionLines(text, "こんな人におすすめ"),
         infoRows: buildInfoRows(aniMedia),
         officialUrl: (aniMedia?.links || []).find(l => /official site/i.test(l.site || ""))?.url || "",
-        charNames,
-        portraits
+        charNames
       };
       shareData.bannerPromise = fetchImgSafe(aniMedia?.banner);
-      shareData.portraitPromises = portraits.slice(0, 6).map(u => fetchImgSafe(u));
       saveImageButton.hidden = false;
       metaLine.hidden = false;
 
