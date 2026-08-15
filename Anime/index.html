@@ -344,7 +344,7 @@
 
   const SOURCE_JA = { ORIGINAL:"オリジナル", MANGA:"漫画", LIGHT_NOVEL:"ライトノベル", VISUAL_NOVEL:"ビジュアルノベル", VIDEO_GAME:"ゲーム", GAME:"ゲーム", NOVEL:"小説", COMIC:"コミック", BOOK:"書籍", OTHER:"その他" };
   const STAFF_ROLE_JA = { "Director":"監督", "Series Composition":"シリーズ構成", "Original Creator":"原作", "Music":"音楽", "Character Design":"キャラクターデザイン" };
-  const RELATION_JA = { SEQUEL:"続編", PREQUEL:"前日譚", ADAPTATION:"原作", SIDE_STORY:"外伝", SPIN_OFF:"スピンオフ", ALTERNATIVE:"別バージョン", SUMMARY:"総集編", PARENT:"本編", CHARACTER:"キャラクター" };
+  const RELATION_JA = { SEQUEL:"続編", PREQUEL:"前日譚", ADAPTATION:"原作", SIDE_STORY:"外伝", SPIN_OFF:"スピンオフ", ALTERNATIVE:"別バージョン", SUMMARY:"総集編", PARENT:"本編" };
 
   const ANILIST_FULL_QUERY = `
     query ($search: String) {
@@ -514,7 +514,6 @@
   function buildInfoRows(media) {
     const rows = [];
     if (!media) return rows;
-    if (media.source) rows.push(["原作", SOURCE_JA[media.source] || media.source]);
     if (media.studios.length) rows.push(["アニメ制作", media.studios.join(" / ")]);
 
     const seenRoles = new Set();
@@ -990,7 +989,7 @@
     let my = drawHeading(ctx, "見どころ", MX, colTop + 20);
     ctx.font = "500 21px 'Noto Sans JP', sans-serif";
 
-    for (const hline of highlights.slice(0, 4)) {
+    for (const hline of highlights.slice(0, 3)) {
       if (my > colBottom) break;
       ctx.fillStyle = "#ec4899";
       ctx.fillText("★", MX, my);
@@ -1003,13 +1002,13 @@
       my = drawHeading(ctx, "作品情報", MX, my + 24);
       ctx.font = "500 19px 'Noto Sans JP', sans-serif";
 
-      for (const [k, v] of infoRows.slice(0, 3)) {
+      for (const [k, v] of infoRows.slice(0, 4)) {
         if (my > colBottom) break;
         ctx.fillStyle = "#6b7280";
         ctx.fillText(k, MX, my);
         ctx.fillStyle = "#374151";
         drawWrapped(ctx, v, MX + 120, my, MW - 126, 26, 1, colBottom);
-        my += 28;
+        my += 26;
       }
     }
 
@@ -1468,13 +1467,15 @@
 
       const aiMs = performance.now() - aiStart;
       const totalMs = performance.now() - totalStart;
-      const searchLabel = searchMs === null ? "検索 -" : `検索 ${formatDuration(searchMs)}`;
-      const jikanLabel = jikanMs === null ? "Jikan -" : `Jikan ${formatDuration(jikanMs)}`;
-      const charLabel = `AniList ${formatDuration(charMs)}`;
+      const labels = [];
+      if (searchMs !== null) labels.push(`検索 ${formatDuration(searchMs)}`);
+      if (jikanMs !== null) labels.push(`Jikan ${formatDuration(jikanMs)}`);
+      labels.push(`AniList ${formatDuration(charMs)}`);
+      labels.push(`AI ${formatDuration(aiMs)}`);
 
       stopTimer();
       timerBox.textContent = `合計 ${formatDuration(totalMs)}`;
-      setGenerateStatus(`生成しました。（${searchLabel} / ${jikanLabel} / ${charLabel} / AI ${formatDuration(aiMs)}）`, false, true);
+      setGenerateStatus(`生成しました。（${labels.join(" / ")}）`, false, true);
     } catch (error) {
       const totalMs = performance.now() - totalStart;
       console.error("AI生成エラー:", error);
