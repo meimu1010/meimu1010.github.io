@@ -1557,6 +1557,11 @@
 
   openSettingsButton.addEventListener("click", () => settingsDialog.showModal());
   closeSettingsButton.addEventListener("click", () => settingsDialog.close());
+  settingsDialog.addEventListener("click", (event) => {
+    const rect = settingsDialog.getBoundingClientRect();
+    const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+    if (!inside) settingsDialog.close();
+  });
   saveSettingsButton.addEventListener("click", saveSettings);
   generateButton.addEventListener("click", generateAnimeIntro);
   saveImageButton.addEventListener("click", generateShareImage);
