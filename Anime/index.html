@@ -783,21 +783,34 @@
   function loadImgSafe(url, timeoutMs = 5000) {
     return new Promise((resolve) => {
       if (!url) return resolve(null);
-      const img = new Image();
-      let done = false;
-      const finish = (v) => { if (!done) { done = true; resolve(v); } };
-      img.crossOrigin = "anonymous";
-      img.onload = () => finish(img);
-      img.onerror = () => finish(null);
-      setTimeout(() => finish(null), timeoutMs);
-      img.src = url;
+
+      const candidates = [
+        url,
+        `https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//, ""))}`
+      ];
+      let idx = 0;
+
+      const tryNext = () => {
+        if (idx >= candidates.length) return resolve(null);
+        const src = candidates[idx++];
+        const img = new Image();
+        let done = false;
+        const finish = (v) => { if (!done) { done = true; v ? resolve(v) : tryNext(); } };
+        img.crossOrigin = "anonymous";
+        img.onload = () => finish(img);
+        img.onerror = () => finish(null);
+        setTimeout(() => finish(null), timeoutMs);
+        img.src = src;
+      };
+
+      tryNext();
     });
   }
 
   function drawHeading(ctx, text, x, y) {
     ctx.fillStyle = "#ec4899";
     ctx.fillRect(x, y - 22, 6, 26);
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#334155";
     ctx.font = "700 26px 'Noto Sans JP', sans-serif";
     ctx.fillText(text, x + 18, y);
     return y + 42;
@@ -826,26 +839,24 @@
     const ctx = canvas.getContext("2d");
 
     const bg = ctx.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, "#171233");
-    bg.addColorStop(0.55, "#241546");
-    bg.addColorStop(1, "#3b1d5a");
+    bg.addColorStop(0, "#f8f7ff");
+    bg.addColorStop(0.6, "#f3eefe");
+    bg.addColorStop(1, "#fdeef7");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
     const banner = await loadImgSafe(media?.banner);
 
     if (banner) {
-      ctx.save();
-      ctx.globalAlpha = 0.30;
       const scale = Math.max(W / banner.width, H / banner.height);
       const bw = banner.width * scale, bh = banner.height * scale;
       ctx.drawImage(banner, (W - bw) / 2, (H - bh) / 2, bw, bh);
-      ctx.restore();
 
       const veil = ctx.createLinearGradient(0, 0, 0, H);
-      veil.addColorStop(0, "rgba(23,18,51,.6)");
-      veil.addColorStop(0.5, "rgba(23,18,51,.78)");
-      veil.addColorStop(1, "rgba(23,18,51,.94)");
+      veil.addColorStop(0, "rgba(248,247,255,.62)");
+      veil.addColorStop(0.45, "rgba(248,247,255,.86)");
+      veil.addColorStop(0.8, "rgba(248,247,255,.97)");
+      veil.addColorStop(1, "rgba(248,247,255,1)");
       ctx.fillStyle = veil;
       ctx.fillRect(0, 0, W, H);
     }
@@ -856,21 +867,21 @@
     ctx.fillStyle = acc;
     ctx.fillRect(90, 78, 120, 8);
 
-    ctx.fillStyle = "#7dd3fc";
+    ctx.fillStyle = "#0e7490";
     ctx.font = "700 24px 'Noto Sans JP', sans-serif";
     ctx.fillText("S P O I L E R - F R E E   A N I M E   G U I D E", 90, 128);
 
     ctx.textAlign = "right";
-    ctx.fillStyle = "rgba(255,255,255,.6)";
+    ctx.fillStyle = "#667085";
     ctx.font = "700 26px 'Noto Sans JP', sans-serif";
     ctx.fillText("ネタバレなしアニメ紹介", W - 90, 118);
     ctx.textAlign = "left";
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#1f2430";
     ctx.font = "900 64px 'Zen Old Mincho', serif";
     ctx.fillText(media?.native || media?.romaji || "", 90, 208);
 
-    ctx.fillStyle = "rgba(255,255,255,.6)";
+    ctx.fillStyle = "#667085";
     ctx.font = "500 22px 'Noto Sans JP', sans-serif";
     ctx.fillText((media?.romaji || "").toUpperCase(), 92, 246);
 
@@ -879,18 +890,34 @@
     if (media?.seasonYear && media?.season) chipTexts.push(`${media.seasonYear}年${seasonJa(media.season)}`);
     if (media?.episodes) chipTexts.push(`全${media.episodes}話`);
     if (media?.format) chipTexts.push(formatJa(media.format));
-    if (media?.averageScore) chipTexts.push(`★ ${(media.averageScore / 10).toFixed(1)}`);
+    const scoreText = media?.averageScore ? `★ ${(media.averageScore / 10).toFixed(1)}` : "";
     ctx.font = "600 24px 'Noto Sans JP', sans-serif";
 
     for (const t of chipTexts) {
       const w = ctx.measureText(t).width + 36;
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(cx, 272, w, 48, 24); else ctx.rect(cx, 272, w, 48);
-      ctx.fillStyle = "rgba(255,255,255,.14)";
+      ctx.fillStyle = "rgba(255,255,255,.85)";
       ctx.fill();
-      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#e7e9f2";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = "#47536b";
       ctx.fillText(t, cx + 18, 305);
       cx += w + 12;
+    }
+
+    if (scoreText) {
+      const w = ctx.measureText(scoreText).width + 36;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(cx, 272, w, 48, 24); else ctx.rect(cx, 272, w, 48);
+      const sg = ctx.createLinearGradient(cx, 0, cx + w, 0);
+      sg.addColorStop(0, "#7c3aed");
+      sg.addColorStop(1, "#ec4899");
+      ctx.fillStyle = sg;
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(scoreText, cx + 18, 305);
     }
 
     ctx.font = "700 30px 'Noto Sans JP', sans-serif";
@@ -898,16 +925,19 @@
     const boxH = introLines.length * 46 + 34;
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect(90, 348, W - 180, boxH, 18); else ctx.rect(90, 348, W - 180, boxH);
-    ctx.fillStyle = "rgba(255,255,255,.10)";
+    ctx.fillStyle = "rgba(255,255,255,.78)";
     ctx.fill();
-    ctx.fillStyle = "#f5f3ff";
+    ctx.strokeStyle = "#e5defa";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = "#1f2430";
     introLines.forEach((l, i) => ctx.fillText(l, 130, 348 + 52 + i * 46));
 
     const colTop = 348 + boxH + 56;
     const colBottom = 930;
 
     let ly = drawHeading(ctx, "あらすじ", 90, colTop + 20);
-    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.fillStyle = "#374151";
     ctx.font = "500 24px 'Noto Sans JP', sans-serif";
 
     for (const para of synopsis) {
@@ -922,9 +952,9 @@
 
       for (const rline of recommends.slice(0, 3)) {
         if (ly > colBottom) break;
-        ctx.fillStyle = "#8b5cf6";
+        ctx.fillStyle = "#7c3aed";
         ctx.fillText("◆", 90, ly);
-        ctx.fillStyle = "rgba(255,255,255,.88)";
+        ctx.fillStyle = "#4b5563";
         ly = drawWrapped(ctx, rline.replace(/^[・\-•]\s*/, ""), 124, ly, 866, 30, 2, colBottom);
         ly += 6;
       }
@@ -938,7 +968,7 @@
       if (ry > colBottom) break;
       ctx.fillStyle = "#ec4899";
       ctx.fillText("★", RX, ry);
-      ctx.fillStyle = "rgba(255,255,255,.88)";
+      ctx.fillStyle = "#4b5563";
       ry = drawWrapped(ctx, hline.replace(/^[・\-•]\s*/, ""), RX + 34, ry, RW - 40, 30, 2, colBottom);
       ry += 6;
     }
@@ -949,9 +979,9 @@
 
       for (const [k, v] of infoRows.slice(0, 4)) {
         if (ry > colBottom) break;
-        ctx.fillStyle = "rgba(255,255,255,.65)";
+        ctx.fillStyle = "#6b7280";
         ctx.fillText(k, RX, ry);
-        ctx.fillStyle = "rgba(255,255,255,.88)";
+        ctx.fillStyle = "#374151";
         drawWrapped(ctx, v, RX + 130, ry, RW - 140, 28, 1, colBottom);
         ry += 30;
       }
@@ -971,20 +1001,20 @@
       ctx.restore();
       ctx.beginPath();
       ctx.arc(px + 40, py, 40, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(255,255,255,.5)";
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = "rgba(124,58,237,.45)";
+      ctx.lineWidth = 3;
       ctx.stroke();
       px += 94;
     }
 
-    ctx.fillStyle = "rgba(255,255,255,.75)";
+    ctx.fillStyle = "#4b5563";
     ctx.font = "500 20px 'Noto Sans JP', sans-serif";
     const castX = px + 20;
     drawWrapped(ctx, charNames.slice(0, 8).join(" / "), castX, py - 8, W - 90 - castX, 30, 2, H - 40);
 
     if (officialUrl) {
       ctx.textAlign = "right";
-      ctx.fillStyle = "rgba(255,255,255,.5)";
+      ctx.fillStyle = "#9ca3af";
       ctx.font = "500 18px 'Noto Sans JP', sans-serif";
       ctx.fillText(officialUrl, W - 90, H - 30);
       ctx.textAlign = "left";
@@ -1156,7 +1186,7 @@
       "",
       "出力形式:",
       "【一言紹介】",
-      "1〜2文で作品の魅力を端的に書いてください。",
+      "物語・世界観・キャラクターの魅力が伝わるように1〜2文で端的に書いてください。監督・脚本・制作会社などの制作スタッフを主語にした文にしないでください。",
       "",
       "【あらすじ】",
       "冒頭〜序盤の設定を中心に、ネタバレなしで4〜6文で書いてください。",
