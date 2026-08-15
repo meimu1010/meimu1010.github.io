@@ -132,8 +132,8 @@
 
 <main>
   <header class="hero">
-    <p class="hero-eyebrow">SPOILER-FREE ANIME GUIDE</p>
-    <h1>ネタバレなしアニメ紹介</h1>
+    <p class="hero-eyebrow" id="heroEyebrow">SPOILER-FREE ANIME GUIDE</p>
+    <h1 id="heroTitle">ネタバレなしアニメ紹介</h1>
     <p class="hero-lead">見たいアニメ名を入力すると、ネタバレなしのあらすじ・魅力・登場人物をAIがまとめます。</p>
     <div class="search-box">
       <input id="animeTitle" type="text" placeholder="例：葬送のフリーレン" />
@@ -197,7 +197,7 @@
 </dialog>
 
 <script>
-  const STORAGE_KEYS = { apiKey:"anime_intro_google_api_key", modelId:"anime_intro_model_id", apiBase:"anime_intro_api_base", useSearch:"anime_intro_use_wikipedia_search", useJikan:"anime_intro_use_jikan", spoiler:"anime_intro_spoiler_mode" };
+  const STORAGE_KEYS = { apiKey:"anime_intro_google_api_key", modelId:"anime_intro_model_id", apiBase:"anime_intro_api_base", useSearch:"anime_intro_use_wikipedia_search", useJikan:"anime_intro_use_jikan" };
   const DEFAULT_MODEL_ID = "gemma-4-31b-it";
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
   const ANILIST_ENDPOINT = "https://graphql.anilist.co";
@@ -215,6 +215,8 @@
   const useSearchCheckbox = document.getElementById("useSearch");
   const useJikanCheckbox = document.getElementById("useJikan");
   const useSpoilerCheckbox = document.getElementById("useSpoiler");
+  const heroEyebrow = document.getElementById("heroEyebrow");
+  const heroTitle = document.getElementById("heroTitle");
   const saveSettingsButton = document.getElementById("saveSettings");
   const settingsStatus = document.getElementById("settingsStatus");
   const animeTitleInput = document.getElementById("animeTitle");
@@ -280,8 +282,7 @@
     useSearchCheckbox.checked = savedUseSearch === null ? true : savedUseSearch === "true";
     const savedUseJikan = localStorage.getItem(STORAGE_KEYS.useJikan);
     useJikanCheckbox.checked = savedUseJikan === null ? true : savedUseJikan === "true";
-    const savedSpoiler = localStorage.getItem(STORAGE_KEYS.spoiler);
-    useSpoilerCheckbox.checked = savedSpoiler === "true";
+    useSpoilerCheckbox.checked = false;
   }
 
   function setSettingsStatus(message, isError = false) {
@@ -316,7 +317,6 @@
     localStorage.setItem(STORAGE_KEYS.apiBase, apiBaseInput.value.trim() || DEFAULT_API_BASE);
     localStorage.setItem(STORAGE_KEYS.useSearch, useSearchCheckbox.checked ? "true" : "false");
     localStorage.setItem(STORAGE_KEYS.useJikan, useJikanCheckbox.checked ? "true" : "false");
-    localStorage.setItem(STORAGE_KEYS.spoiler, useSpoilerCheckbox.checked ? "true" : "false");
     setSettingsStatus("設定をlocalStorageに保存しました。");
   }
 
@@ -1564,12 +1564,18 @@
     localStorage.setItem(STORAGE_KEYS.modelId, getEffectiveModelId());
   });
 
-  useSpoilerCheckbox.addEventListener("change", () => {
-    if (useSpoilerCheckbox.checked) {
+  function applySpoilerMode() {
+    const on = useSpoilerCheckbox.checked;
+    heroEyebrow.textContent = on ? "SPOILER-FULL ANIME GUIDE" : "SPOILER-FREE ANIME GUIDE";
+    heroTitle.textContent = on ? "ネタバレありアニメ紹介" : "ネタバレなしアニメ紹介";
+
+    if (on) {
       shareData = null;
       saveImageButton.hidden = true;
     }
-  });
+  }
+
+  useSpoilerCheckbox.addEventListener("change", applySpoilerMode);
 
   animeTitleInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
