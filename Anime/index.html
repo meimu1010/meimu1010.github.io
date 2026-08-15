@@ -54,12 +54,12 @@
   .chip.genre { position:relative; cursor:help; background:#eef2ff; color:#4338ca; border-color:#e0e7ff; }
   .chip.genre::after { content:attr(data-tip); position:absolute; left:50%; top:calc(100% + 6px); transform:translateX(-50%); background:#1f2430; color:#fff; font-size:11px; font-weight:500; padding:6px 10px; border-radius:8px; width:max-content; max-width:220px; white-space:normal; opacity:0; pointer-events:none; transition:opacity .15s; z-index:20; }
   .chip.genre:hover::after, .chip.genre:focus::after { opacity:1; }
-  #result { display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:14.5px; }
+  #result { columns:2; column-gap:16px; font-size:14.5px; }
   #result:empty { display:none; }
   #result.filled { animation:fadeUp .35s ease; }
-  .block { min-width:0; background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:20px 22px; box-shadow:0 12px 32px rgba(28,35,51,.06); animation:fadeUp .4s ease both; transition:transform .2s, box-shadow .2s, border-color .2s; }
+  .block { break-inside:avoid; -webkit-column-break-inside:avoid; margin:0 0 16px; min-width:0; background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:20px 22px; box-shadow:0 12px 32px rgba(28,35,51,.06); animation:fadeUp .4s ease both; transition:transform .2s, box-shadow .2s, border-color .2s; }
   .block:hover { transform:translateY(-3px); box-shadow:0 16px 36px rgba(28,35,51,.10); border-color:#d9cffa; }
-  .block-intro { grid-column:1 / -1; text-align:center; background:linear-gradient(120deg,#f5f1ff,#fdeff8); border-color:#e5defa; }
+  .block-intro { column-span:all; text-align:center; background:linear-gradient(120deg,#f5f1ff,#fdeff8); border-color:#e5defa; }
   .block-intro .res-h { justify-content:center; }
   .block-intro .res-p { font-size:16px; font-weight:600; margin:0; }
   .res-h { display:flex; align-items:center; gap:8px; margin:0 0 12px; font-size:15px; color:#334155; }
@@ -67,7 +67,8 @@
   .res-ico { font-size:15px; }
   .res-p { margin:0 0 8px; line-height:1.9; }
   .res-ul { margin:0; padding-left:1.2em; display:grid; gap:6px; line-height:1.7; }
-  .res-p.warn { grid-column:1 / -1; color:var(--danger); font-size:12.5px; }
+  .res-p.warn { color:var(--danger); font-size:12.5px; }
+  @media (max-width:860px) { #result { columns:1; } }
   .info-row { display:flex; gap:8px; margin:0 0 8px; font-size:13px; line-height:1.6; }
   .info-k { flex-shrink:0; min-width:88px; font-weight:700; color:#334155; }
   .info-v { min-width:0; }
