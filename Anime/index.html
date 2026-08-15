@@ -792,32 +792,25 @@
     if (!url) return null;
 
     const bare = url.replace(/^https?:\/\//, "");
-    const candidates = [
-      `https://i0.wp.com/${bare}`,
-      `https://images.weserv.nl/?url=${encodeURIComponent(bare)}`,
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-    ];
 
-    for (const src of candidates) {
-      try {
-        const res = await fetchWithTimeout(src, { method: "GET" }, timeoutMs);
-        if (!res.ok) continue;
+    try {
+      const res = await fetchWithTimeout(`https://i0.wp.com/${bare}`, { method: "GET" }, timeoutMs);
+      if (!res.ok) return null;
 
-        const blob = await res.blob();
-        if (!blob || !blob.type.startsWith("image")) continue;
+      const blob = await res.blob();
+      if (!blob || !blob.type.startsWith("image")) return null;
 
-        const objUrl = URL.createObjectURL(blob);
-        const img = await new Promise((resolve) => {
-          const i = new Image();
-          i.onload = () => resolve(i);
-          i.onerror = () => resolve(null);
-          i.src = objUrl;
-        });
+      const objUrl = URL.createObjectURL(blob);
+      const img = await new Promise((resolve) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => resolve(null);
+        i.src = objUrl;
+      });
 
-        if (img) return img;
-        URL.revokeObjectURL(objUrl);
-      } catch (e) { /* 次の候補へ */ }
-    }
+      if (img) return img;
+      URL.revokeObjectURL(objUrl);
+    } catch (e) { /* 画像なしで続行 */ }
 
     return null;
   }
