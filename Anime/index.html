@@ -348,6 +348,7 @@
         staff(perPage: 12) { edges { role node { name { full native } } } }
         relations { edges { relationType node { title { native romaji } } } }
         externalLinks { site url }
+        rankings: media.rankings || [],
         characters(sort: [ROLE, ID], perPage: 25) {
           edges { role node { id name { full native } image { large } } }
         }
@@ -430,6 +431,7 @@
       staff: (media.staff?.edges || []).map(e => ({ role: e?.role || "", name: e?.node?.name?.native || e?.node?.name?.full || "" })).filter(s => s.name),
       relations: (media.relations?.edges || []).map(e => ({ type: e?.relationType || "", title: e?.node?.title?.native || e?.node?.title?.romaji || "" })).filter(r => r.title),
       links: media.externalLinks || [],
+      rankings: media.rankings || [],
       chars
     };
   }
@@ -456,6 +458,11 @@
     if (media.episodes) chips.push({ text: `全${media.episodes}話` });
     if (media.format) chips.push({ text: formatJa(media.format) });
     if (media.averageScore) chips.push({ text: `★ ${(media.averageScore / 10).toFixed(1)}`, cls: "score" });
+    for (const r of (media.rankings || []).slice(0, 2)) {
+      const typeJa = r.type === "POPULAR" ? "人気" : "評価";
+      const when = r.allTime ? "歴代" : (r.year || "");
+      chips.push({ text: `${typeJa} #${r.rank}（${when}）` });
+    }
     for (const c of chips) {
       const el = document.createElement("span");
       el.className = `chip ${c.cls || ""}`;
@@ -891,6 +898,11 @@
     if (media?.episodes) chipTexts.push(`全${media.episodes}話`);
     if (media?.format) chipTexts.push(formatJa(media.format));
     const scoreText = media?.averageScore ? `★ ${(media.averageScore / 10).toFixed(1)}` : "";
+    for (const r of (media.rankings || []).slice(0, 2)) {
+      const typeJa = r.type === "POPULAR" ? "人気" : "評価";
+      const when = r.allTime ? "歴代" : (r.year || "");
+      chipTexts.push(`${typeJa} #${r.rank}（${when}）`);
+    }
     ctx.font = "600 24px 'Noto Sans JP', sans-serif";
 
     for (const t of chipTexts) {
@@ -934,57 +946,56 @@
     introLines.forEach((l, i) => ctx.fillText(l, 130, 348 + 52 + i * 46));
 
     const colTop = 348 + boxH + 56;
-    const colBottom = 930;
+    const colBottom = 940;
 
     let ly = drawHeading(ctx, "あらすじ", 90, colTop + 20);
     ctx.fillStyle = "#374151";
-    ctx.font = "500 24px 'Noto Sans JP', sans-serif";
+    ctx.font = "500 21px 'Noto Sans JP', sans-serif";
 
     for (const para of synopsis) {
       if (ly > colBottom) break;
-      ly = drawWrapped(ctx, para, 90, ly, 900, 38, 12, colBottom);
-      ly += 10;
+      ly = drawWrapped(ctx, para, 90, ly, 560, 30, 13, colBottom);
+      ly += 8;
     }
 
-    if (ly + 80 <= colBottom) {
-      ly = drawHeading(ctx, "こんな人におすすめ", 90, ly + 26);
-      ctx.font = "500 22px 'Noto Sans JP', sans-serif";
-
-      for (const rline of recommends.slice(0, 3)) {
-        if (ly > colBottom) break;
-        ctx.fillStyle = "#7c3aed";
-        ctx.fillText("◆", 90, ly);
-        ctx.fillStyle = "#4b5563";
-        ly = drawWrapped(ctx, rline.replace(/^[・\-•]\s*/, ""), 124, ly, 866, 30, 2, colBottom);
-        ly += 6;
-      }
-    }
-
-    const RX = 1050, RW = 780;
-    let ry = drawHeading(ctx, "見どころ", RX, colTop + 20);
-    ctx.font = "500 22px 'Noto Sans JP', sans-serif";
+    const MX = 700, MW = 560;
+    let my = drawHeading(ctx, "見どころ", MX, colTop + 20);
+    ctx.font = "500 20px 'Noto Sans JP', sans-serif";
 
     for (const hline of highlights.slice(0, 4)) {
-      if (ry > colBottom) break;
+      if (my > colBottom) break;
       ctx.fillStyle = "#ec4899";
-      ctx.fillText("★", RX, ry);
+      ctx.fillText("★", MX, my);
       ctx.fillStyle = "#4b5563";
-      ry = drawWrapped(ctx, hline.replace(/^[・\-•]\s*/, ""), RX + 34, ry, RW - 40, 30, 2, colBottom);
-      ry += 6;
+      my = drawWrapped(ctx, hline.replace(/^[・\-•]\s*/, ""), MX + 30, my, MW - 36, 28, 3, colBottom);
+      my += 6;
     }
 
-    if (ry + 60 <= colBottom && infoRows.length) {
-      ry = drawHeading(ctx, "作品情報", RX, ry + 26);
-      ctx.font = "500 20px 'Noto Sans JP', sans-serif";
+    if (my + 60 <= colBottom && infoRows.length) {
+      my = drawHeading(ctx, "作品情報", MX, my + 24);
+      ctx.font = "500 19px 'Noto Sans JP', sans-serif";
 
-      for (const [k, v] of infoRows.slice(0, 4)) {
-        if (ry > colBottom) break;
+      for (const [k, v] of infoRows.slice(0, 3)) {
+        if (my > colBottom) break;
         ctx.fillStyle = "#6b7280";
-        ctx.fillText(k, RX, ry);
+        ctx.fillText(k, MX, my);
         ctx.fillStyle = "#374151";
-        drawWrapped(ctx, v, RX + 130, ry, RW - 140, 28, 1, colBottom);
-        ry += 30;
+        drawWrapped(ctx, v, MX + 120, my, MW - 126, 26, 1, colBottom);
+        my += 28;
       }
+    }
+
+    const RX = 1310, RW = 520;
+    let ry = drawHeading(ctx, "こんな人におすすめ", RX, colTop + 20);
+    ctx.font = "500 20px 'Noto Sans JP', sans-serif";
+
+    for (const rline of recommends.slice(0, 4)) {
+      if (ry > colBottom) break;
+      ctx.fillStyle = "#7c3aed";
+      ctx.fillText("◆", RX, ry);
+      ctx.fillStyle = "#4b5563";
+      ry = drawWrapped(ctx, rline.replace(/^[・\-•]\s*/, ""), RX + 30, ry, RW - 36, 28, 3, colBottom);
+      ry += 6;
     }
 
     const loadedPortraits = await Promise.all((portraits || []).slice(0, 6).map(u => loadImgSafe(u)));
