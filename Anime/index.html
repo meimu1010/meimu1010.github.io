@@ -788,34 +788,38 @@
     return lines;
   }
 
-  function loadImgSafe(url, timeoutMs = 8000) {
-    return new Promise((resolve) => {
-      if (!url) return resolve(null);
+  async function fetchImgSafe(url, timeoutMs = 8000) {
+    if (!url) return null;
 
-      const bare = url.replace(/^https?:\/\//, "");
-      const candidates = [
-        url,
-        `https://i0.wp.com/${bare}`,
-        `https://images.weserv.nl/?url=${encodeURIComponent(bare)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-      ];
-      let idx = 0;
+    const bare = url.replace(/^https?:\/\//, "");
+    const candidates = [
+      `https://i0.wp.com/${bare}`,
+      `https://images.weserv.nl/?url=${encodeURIComponent(bare)}`,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    ];
 
-      const tryNext = () => {
-        if (idx >= candidates.length) return resolve(null);
-        const src = candidates[idx++];
-        const img = new Image();
-        let done = false;
-        const finish = (v) => { if (!done) { done = true; v ? resolve(v) : tryNext(); } };
-        img.crossOrigin = "anonymous";
-        img.onload = () => finish(img);
-        img.onerror = () => finish(null);
-        setTimeout(() => finish(null), timeoutMs);
-        img.src = src;
-      };
+    for (const src of candidates) {
+      try {
+        const res = await fetchWithTimeout(src, { method: "GET" }, timeoutMs);
+        if (!res.ok) continue;
 
-      tryNext();
-    });
+        const blob = await res.blob();
+        if (!blob || !blob.type.startsWith("image")) continue;
+
+        const objUrl = URL.createObjectURL(blob);
+        const img = await new Promise((resolve) => {
+          const i = new Image();
+          i.onload = () => resolve(i);
+          i.onerror = () => resolve(null);
+          i.src = objUrl;
+        });
+
+        if (img) return img;
+        URL.revokeObjectURL(objUrl);
+      } catch (e) { /* 次の候補へ */ }
+    }
+
+    return null;
   }
 
   function drawHeading(ctx, text, x, y) {
@@ -856,7 +860,7 @@
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    const banner = await loadImgSafe(media?.banner);
+    const banner = await (shareData.bannerPromise || fetchImgSafe(media?.banner));
 
     if (banner) {
       const scale = Math.max(W / banner.width, H / banner.height);
@@ -1005,7 +1009,7 @@
       ry += 6;
     }
 
-    const loadedPortraits = await Promise.all((portraits || []).slice(0, 6).map(u => loadImgSafe(u)));
+    const loadedPortraits = (await Promise.all(shareData.portraitPromises || [])).filter(Boolean);
     let px = 90;
     const py = H - 96;
 
@@ -1462,6 +1466,8 @@
         charNames,
         portraits
       };
+      shareData.bannerPromise = fetchImgSafe(aniMedia?.banner);
+      shareData.portraitPromises = portraits.slice(0, 6).map(u => fetchImgSafe(u));
       saveImageButton.hidden = false;
       metaLine.hidden = false;
 
