@@ -180,12 +180,18 @@
     <span class="switch-label">Wikipedia検索を使う（APIキー不要）</span>
   </label>
   <p class="hint">日本語Wikipediaを検索して、その結果をAIに渡します。検索結果自体にネタバレが混ざる可能性はあります。</p>
+  <label class="switch">
+    <input id="useJikan" type="checkbox" checked />
+    <span class="slider"></span>
+    <span class="switch-label">Jikan（MyAnimeList）検索を使う</span>
+  </label>
+  <p class="hint">英語のあらすじ・キャラ情報を補強用に取得します。APIが不安定な場合はオフにしてください。</p>
   <button id="saveSettings" class="btn">設定を保存</button>
   <div id="settingsStatus" class="status"></div>
 </dialog>
 
 <script>
-  const STORAGE_KEYS = { apiKey:"anime_intro_google_api_key", modelId:"anime_intro_model_id", apiBase:"anime_intro_api_base", useSearch:"anime_intro_use_wikipedia_search" };
+  const STORAGE_KEYS = { apiKey:"anime_intro_google_api_key", modelId:"anime_intro_model_id", apiBase:"anime_intro_api_base", useSearch:"anime_intro_use_wikipedia_search", useJikan:"anime_intro_use_jikan" };
   const DEFAULT_MODEL_ID = "gemma-4-31b-it";
   const DEFAULT_API_BASE = "https://generativelanguage.googleapis.com/v1beta";
   const ANILIST_ENDPOINT = "https://graphql.anilist.co";
@@ -201,6 +207,7 @@
   const modelIdInput = document.getElementById("modelId");
   const apiBaseInput = document.getElementById("apiBase");
   const useSearchCheckbox = document.getElementById("useSearch");
+  const useJikanCheckbox = document.getElementById("useJikan");
   const saveSettingsButton = document.getElementById("saveSettings");
   const settingsStatus = document.getElementById("settingsStatus");
   const animeTitleInput = document.getElementById("animeTitle");
@@ -264,6 +271,8 @@
     syncModelInput();
     const savedUseSearch = localStorage.getItem(STORAGE_KEYS.useSearch);
     useSearchCheckbox.checked = savedUseSearch === null ? true : savedUseSearch === "true";
+    const savedUseJikan = localStorage.getItem(STORAGE_KEYS.useJikan);
+    useJikanCheckbox.checked = savedUseJikan === null ? true : savedUseJikan === "true";
   }
 
   function setSettingsStatus(message, isError = false) {
@@ -297,6 +306,7 @@
     localStorage.setItem(STORAGE_KEYS.modelId, getEffectiveModelId());
     localStorage.setItem(STORAGE_KEYS.apiBase, apiBaseInput.value.trim() || DEFAULT_API_BASE);
     localStorage.setItem(STORAGE_KEYS.useSearch, useSearchCheckbox.checked ? "true" : "false");
+    localStorage.setItem(STORAGE_KEYS.useJikan, useJikanCheckbox.checked ? "true" : "false");
     setSettingsStatus("設定をlocalStorageに保存しました。");
   }
 
@@ -344,7 +354,7 @@
         coverImage { extraLarge large }
         format episodes season seasonYear averageScore genres
         source popularity favourites
-        studios(perPage: 8) { nodes { name isAnimationStudio } }
+        studios { nodes { name isAnimationStudio } }
         staff(perPage: 12) { edges { role node { name { full native } } } }
         relations { edges { relationType node { title { native romaji } } } }
         externalLinks { site url }
@@ -776,13 +786,23 @@
   }
 
   function wrapCanvasText(ctx, text, maxWidth) {
+    const GOOD_BREAK = new Set(["、", "。", "，", "・", "」", "）", "〕", "》", " ", "ー"]);
     const lines = [];
     let line = "";
 
     for (const ch of [...(text || "")]) {
       if (ctx.measureText(line + ch).width > maxWidth && line) {
-        lines.push(line);
-        line = ch;
+        let cut = -1;
+        for (let i = line.length - 1; i >= Math.floor(line.length * 0.55); i--) {
+          if (GOOD_BREAK.has(line[i])) { cut = i + 1; break; }
+        }
+        if (cut > 0) {
+          lines.push(line.slice(0, cut));
+          line = line.slice(cut) + ch;
+        } else {
+          lines.push(line);
+          line = ch;
+        }
       } else {
         line += ch;
       }
@@ -955,28 +975,28 @@
 
     let ly = drawHeading(ctx, "あらすじ", 90, colTop + 20);
     ctx.fillStyle = "#374151";
-    ctx.font = "500 20px 'Noto Sans JP', sans-serif";
+    ctx.font = "500 22px 'Noto Sans JP', sans-serif";
 
     const synAll = wrapCanvasText(ctx, synopsis.join(" "), 560);
-    const synMax = Math.max(4, Math.floor((colBottom - ly) / 28));
+    const synMax = Math.max(4, Math.floor((colBottom - ly) / 32));
     const synLines = synAll.slice(0, synMax);
     if (synAll.length > synLines.length) synLines[synLines.length - 1] += "…";
     for (const line of synLines) {
       ctx.fillText(line, 90, ly);
-      ly += 28;
+      ly += 32;
     }
 
     const MX = 700, MW = 560;
     let my = drawHeading(ctx, "見どころ", MX, colTop + 20);
-    ctx.font = "500 20px 'Noto Sans JP', sans-serif";
+    ctx.font = "500 21px 'Noto Sans JP', sans-serif";
 
     for (const hline of highlights.slice(0, 4)) {
       if (my > colBottom) break;
       ctx.fillStyle = "#ec4899";
       ctx.fillText("★", MX, my);
       ctx.fillStyle = "#4b5563";
-      my = drawWrapped(ctx, hline.replace(/^[・\-•]\s*/, ""), MX + 30, my, MW - 36, 28, 3, colBottom);
-      my += 6;
+      my = drawWrapped(ctx, hline.replace(/^[・\-•]\s*/, ""), MX + 30, my, MW - 36, 30, 3, colBottom);
+      my += 8;
     }
 
     if (my + 60 <= colBottom && infoRows.length) {
@@ -995,15 +1015,15 @@
 
     const RX = 1310, RW = 520;
     let ry = drawHeading(ctx, "こんな人におすすめ", RX, colTop + 20);
-    ctx.font = "500 20px 'Noto Sans JP', sans-serif";
+    ctx.font = "500 21px 'Noto Sans JP', sans-serif";
 
     for (const rline of recommends.slice(0, 4)) {
       if (ry > colBottom) break;
       ctx.fillStyle = "#7c3aed";
       ctx.fillText("◆", RX, ry);
       ctx.fillStyle = "#4b5563";
-      ry = drawWrapped(ctx, rline.replace(/^[・\-•]\s*/, ""), RX + 30, ry, RW - 36, 28, 3, colBottom);
-      ry += 6;
+      ry = drawWrapped(ctx, rline.replace(/^[・\-•]\s*/, ""), RX + 30, ry, RW - 36, 30, 3, colBottom);
+      ry += 8;
     }
 
     ctx.fillStyle = "#4b5563";
@@ -1328,17 +1348,19 @@
       searchMs = performance.now() - searchStart;
     }
 
-    setGenerateStatus("Jikan（MyAnimeList）取得中...");
-    const jikanStart = performance.now();
+    if (useJikanCheckbox.checked) {
+      setGenerateStatus("Jikan（MyAnimeList）取得中...");
+      const jikanStart = performance.now();
 
-    try {
-      jikanText = formatJikanForPrompt(await fetchJikanData(animeTitle));
-    } catch (error) {
-      console.error(error);
-      setGenerateStatus(`Jikan取得に失敗したため、なしで続行します: ${error.message}`, true);
+      try {
+        jikanText = formatJikanForPrompt(await fetchJikanData(animeTitle));
+      } catch (error) {
+        console.error(error);
+        setGenerateStatus(`Jikan取得に失敗したため、なしで続行します: ${error.message}`, true);
+      }
+
+      jikanMs = performance.now() - jikanStart;
     }
-
-    jikanMs = performance.now() - jikanStart;
 
     setGenerateStatus("AniList取得中...");
     const charStart = performance.now();
@@ -1447,7 +1469,7 @@
       const aiMs = performance.now() - aiStart;
       const totalMs = performance.now() - totalStart;
       const searchLabel = searchMs === null ? "検索 -" : `検索 ${formatDuration(searchMs)}`;
-      const jikanLabel = `Jikan ${formatDuration(jikanMs)}`;
+      const jikanLabel = jikanMs === null ? "Jikan -" : `Jikan ${formatDuration(jikanMs)}`;
       const charLabel = `AniList ${formatDuration(charMs)}`;
 
       stopTimer();
