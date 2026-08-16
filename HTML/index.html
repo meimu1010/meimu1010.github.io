@@ -3,120 +3,79 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>自動置換ツール</title>
+<title>Auto Replace Tool</title>
 <style>
-  body{
-    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-    margin:16px;
-    background:#f7f7fb;
-    color:#222;
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --border: #e2e6ef;
+    --accent: #4f6ef7;
+    --accent-hover: #3b57d9;
+    --text: #1e2a3a;
+    --muted: #6b7a90;
+    --code-bg: #111827;
+    --code-fg: #d1fae5;
   }
-  h1{
-    font-size:20px;
-    margin-bottom:6px;
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
   }
-  h2{
-    font-size:15px;
-    margin:0 0 8px;
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px; margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
   }
-  .card{
-    background:#fff;
-    border:1px solid #ddd;
-    border-radius:12px;
-    padding:12px;
-    margin-bottom:12px;
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  label.field { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  textarea {
+    width: 100%; height: 340px; padding: 12px;
+    border: 1px solid var(--border); border-radius: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px; line-height: 1.55; resize: vertical;
+    background: #fafbfd; transition: border-color .15s;
   }
-  .grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
+  textarea:focus { outline: none; border-color: var(--accent); }
+  .options { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-bottom: 12px; }
+  .options label { font-size: 13px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+  button {
+    padding: 8px 14px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--card); font-size: 13px; cursor: pointer; transition: all .15s;
   }
-  @media (max-width:900px){
-    .grid{
-      grid-template-columns:1fr;
-    }
+  button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  #status {
+    margin-top: 12px; padding: 12px 14px; border-radius: 10px;
+    background: var(--code-bg); color: var(--code-fg);
+    font-family: ui-monospace, monospace; font-size: 12px;
+    white-space: pre-wrap; min-height: 22px; line-height: 1.6;
   }
-  textarea{
-    width:100%;
-    box-sizing:border-box;
-    height:320px;
-    padding:10px;
-    border:1px solid #bbb;
-    border-radius:10px;
-    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-size:13px;
-    line-height:1.5;
-    resize:vertical;
-  }
-  .options,
-  .toolbar{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    align-items:center;
-    margin:8px 0;
-  }
-  label{
-    font-size:13px;
-    display:inline-flex;
-    gap:4px;
-    align-items:center;
-  }
-  button{
-    padding:8px 12px;
-    border-radius:10px;
-    border:1px solid #999;
-    background:#fff;
-    cursor:pointer;
-  }
-  button.primary{
-    background:#2563eb;
-    border-color:#2563eb;
-    color:#fff;
-  }
-  button:disabled{
-    opacity:.5;
-    cursor:not-allowed;
-  }
-  #status{
-    white-space:pre-wrap;
-    background:#111;
-    color:#d8ffd8;
-    padding:10px;
-    border-radius:10px;
-    font-family:ui-monospace,monospace;
-    font-size:12px;
-    min-height:20px;
-  }
-  .small{
-    color:#555;
-    font-size:12px;
-    line-height:1.6;
-  }
-  code{
-    background:#f0f0f0;
-    padding:0 4px;
-    border-radius:4px;
-  }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-right: 4px; }
+  .tag-hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
 </style>
 </head>
 <body>
 
-<h1>自動置換ツール</h1>
-<div class="small">
-  左に最新コード、右に「探す / 置き換え」形式の指示を貼って使います。PythonでもHTMLでもテキストなら動きます。<br>
-  指示形式: <code>探す</code> の行、検索内容、<code>置き換え</code> の行、置換後内容。複数ある場合は空行を挟んで繰り返してください。
-</div>
+<h1>Auto Replace Tool</h1>
+<div class="subtitle">Python / HTML などテキスト対応。「変更N: 探す / 置き換え / この直前に追加 / この直後に追加」形式で一括処理。</div>
 
 <div class="card">
   <div class="grid">
     <div>
-      <h2>最新コード</h2>
+      <label class="field" for="code">最新コード</label>
       <textarea id="code" spellcheck="false" placeholder="ここに現在のコードを貼る"></textarea>
     </div>
     <div>
-      <h2>置換指示</h2>
-      <textarea id="instructions" spellcheck="false" placeholder="探す / 置き換え の形式で貼る"></textarea>
+      <label class="field" for="instructions">置換指示</label>
+      <textarea id="instructions" spellcheck="false" placeholder="変更1: 探す&#10;...&#10;変更1: 置き換え&#10;..."></textarea>
+      <div class="tag-hint">コマンド: <code>探す</code> <code>置き換え</code> <code>この直前に追加</code> <code>この直後に追加</code></div>
     </div>
   </div>
 </div>
@@ -126,19 +85,17 @@
     <label><input type="checkbox" id="ignoreLeading" checked> 先頭空白の違いを無視</label>
     <label><input type="checkbox" id="ignoreTrailing" checked> 末尾空白の違いを無視</label>
     <label><input type="checkbox" id="trimBlocks" checked> ブロック端の空行を無視</label>
-    <label><input type="checkbox" id="replaceAll" checked> すべて置換</label>
-    <label><input type="checkbox" id="autoIndent" checked> 置換後のインデントを一致箇所に合わせる</label>
+    <label><input type="checkbox" id="replaceAll" checked> すべて適用</label>
+    <label><input type="checkbox" id="autoIndent" checked> インデント自動調整</label>
   </div>
-
   <div class="toolbar">
-    <button id="applyButton" class="primary">置換を実行</button>
+    <button id="applyButton" class="primary">実行</button>
     <button id="testButton">検索テスト</button>
     <button id="sampleButton">サンプル</button>
-    <button id="copyButton">コードをコピー</button>
+    <button id="copyButton">コピー</button>
     <button id="downloadButton">ダウンロード</button>
     <button id="undoButton" disabled>元に戻す</button>
   </div>
-
   <div id="status">準備完了</div>
 </div>
 
@@ -146,351 +103,191 @@
 (function() {
   const $ = id => document.getElementById(id);
   const codeArea = $('code');
-  const instructionsArea = $('instructions');
+  const instrArea = $('instructions');
   const statusBox = $('status');
-  const undoButton = $('undoButton');
+  const undoBtn = $('undoButton');
   const history = [];
 
-  function normalizeNewlines(text) {
-    return text.replace(/\r\n?/g, '\n');
-  }
+  const COMMANDS = ['探す', '置き換え', 'この直前に追加', 'この直後に追加'];
 
-  function setStatus(text) {
-    statusBox.textContent = text;
-  }
+  function normNL(t) { return t.replace(/\r\n?/g, '\n'); }
+  function setStatus(h) { statusBox.innerHTML = h; }
+  function pushHist(v) { history.push(v); if (history.length > 100) history.shift(); undoBtn.disabled = !history.length; }
 
-  function pushHistory(value) {
-    history.push(value);
-    if (history.length > 100) history.shift();
-    undoButton.disabled = history.length === 0;
-  }
-
-  function trimEmptyLines(lines) {
-    let start = 0;
-    while (start < lines.length && lines[start].trim() === '') start++;
-
-    let end = lines.length;
-    while (end > start && lines[end - 1].trim() === '') end--;
-
-    return lines.slice(start, end);
-  }
-
-  function parseMarker(trimmedLine, marker) {
-    if (trimmedLine === marker) return '';
-
-    const prefixes = [marker + ':', marker + '：'];
-    for (const prefix of prefixes) {
-      if (trimmedLine.startsWith(prefix)) {
-        return trimmedLine.slice(prefix.length).trim();
-      }
-    }
-
-    return null;
+  function trimEmpty(lines) {
+    let s = 0; while (s < lines.length && lines[s].trim() === '') s++;
+    let e = lines.length; while (e > s && lines[e-1].trim() === '') e--;
+    return lines.slice(s, e);
   }
 
   function parseBlocks(text) {
-    const lines = normalizeNewlines(text).split('\n');
+    const lines = normNL(text).split('\n');
     const blocks = [];
-    let current = null;
+    let cur = null;
     let mode = null;
 
-    for (const rawLine of lines) {
-      const trimmed = rawLine.trim();
+    const LABEL_RE = /^変更(\d+)\s*[:：]\s*(.+)$/;
 
-      // Markdownコードブロックごとコピーされても動くようにフェンス行は無視する。
-      if (trimmed.startsWith('```')) continue;
+    for (const raw of lines) {
+      const t = raw.trim();
+      if (t.startsWith('```')) continue;
 
-      const searchMarker = parseMarker(trimmed, '探す');
-      if (searchMarker !== null) {
-        if (current) blocks.push(current);
-        current = { search: [], replace: [] };
-        mode = 'search';
-        if (searchMarker !== '') current.search.push(searchMarker);
-        continue;
-      }
-
-      if (current && mode === 'search') {
-        const replaceMarker = parseMarker(trimmed, '置き換え');
-        if (replaceMarker !== null) {
-          mode = 'replace';
-          if (replaceMarker !== '') current.replace.push(replaceMarker);
+      const m = t.match(LABEL_RE);
+      if (m) {
+        const num = m[1];
+        const cmd = m[2].trim();
+        if (COMMANDS.includes(cmd)) {
+          if (cmd === '探す') {
+            if (cur) blocks.push(cur);
+            cur = { label: num, search: [], replace: [], before: [], after: [] };
+            mode = 'search';
+          } else if (cur) {
+            if (cmd === '置き換え') mode = 'replace';
+            else if (cmd === 'この直前に追加') mode = 'before';
+            else if (cmd === 'この直後に追加') mode = 'after';
+          }
           continue;
         }
       }
 
-      if (current && mode === 'search') {
-        current.search.push(rawLine);
-      } else if (current && mode === 'replace') {
-        current.replace.push(rawLine);
+      // 旧形式フォールバック
+      if (/^探す\s*[:：]?$/.test(t)) {
+        if (cur) blocks.push(cur);
+        cur = { label: String(blocks.length + 1), search: [], replace: [], before: [], after: [] };
+        mode = 'search'; continue;
       }
-    }
+      if (cur && mode === 'search' && /^置き換え\s*[:：]?$/.test(t)) { mode = 'replace'; continue; }
 
-    if (current) blocks.push(current);
+      if (!cur || !mode) continue;
+      if (mode === 'search') cur.search.push(raw);
+      else if (mode === 'replace') cur.replace.push(raw);
+      else if (mode === 'before') cur.before.push(raw);
+      else if (mode === 'after') cur.after.push(raw);
+    }
+    if (cur) blocks.push(cur);
     return blocks;
   }
 
-  function getIndent(line) {
-    const matched = line.match(/^[ \t]*/);
-    return matched ? matched[0] : '';
-  }
+  function getIndent(l) { const m = l.match(/^[ \t]*/); return m ? m[0] : ''; }
+  function normLine(l, o) { let s = l; if (o.ignoreLeading) s = s.replace(/^[ \t]+/, ''); if (o.ignoreTrailing) s = s.replace(/[ \t]+$/, ''); return s; }
 
-  function normLine(line, opts) {
-    let s = line;
-
-    if (opts.ignoreLeading) {
-      s = s.replace(/^[ \t]+/, '');
-    }
-
-    if (opts.ignoreTrailing) {
-      s = s.replace(/[ \t]+$/, '');
-    }
-
-    return s;
-  }
-
-  function matchAt(lines, start, searchLines, opts) {
-    if (start + searchLines.length > lines.length) return false;
-
-    for (let i = 0; i < searchLines.length; i++) {
-      if (normLine(lines[start + i], opts) !== normLine(searchLines[i], opts)) {
-        return false;
-      }
-    }
-
+  function matchAt(lines, start, search, o) {
+    if (start + search.length > lines.length) return false;
+    for (let i = 0; i < search.length; i++) if (normLine(lines[start+i], o) !== normLine(search[i], o)) return false;
     return true;
   }
 
-  function buildReplacementLines(matchedLines, replaceLines, opts) {
-    if (!opts.autoIndent) return replaceLines.slice();
-    if (replaceLines.length === 0) return [];
-
-    let baseIndent = '';
-    for (const line of matchedLines) {
-      if (line.trim() !== '') {
-        baseIndent = getIndent(line);
-        break;
-      }
-    }
-
-    let baseReplaceIndent = '';
-    let found = false;
-
-    for (const line of replaceLines) {
-      if (line.trim() !== '') {
-        baseReplaceIndent = getIndent(line);
-        found = true;
-        break;
-      }
-    }
-
-    if (!found) {
-      return replaceLines.map(() => '');
-    }
-
-    return replaceLines.map(line => {
-      if (line.trim() === '') return '';
-
-      if (baseReplaceIndent === '') {
-        return baseIndent + line;
-      }
-
-      if (line.startsWith(baseReplaceIndent)) {
-        return baseIndent + line.slice(baseReplaceIndent.length);
-      }
-
-      return baseIndent + line.replace(/^[ \t]+/, '');
+  function adjustIndent(matched, contentLines, o) {
+    if (!o.autoIndent) return contentLines.slice();
+    if (!contentLines.length) return [];
+    let base = '';
+    for (const l of matched) if (l.trim()) { base = getIndent(l); break; }
+    let baseC = '', found = false;
+    for (const l of contentLines) if (l.trim()) { baseC = getIndent(l); found = true; break; }
+    if (!found) return contentLines.map(() => '');
+    return contentLines.map(l => {
+      if (!l.trim()) return '';
+      if (!baseC) return base + l;
+      if (l.startsWith(baseC)) return base + l.slice(baseC.length);
+      return base + l.replace(/^[ \t]+/, '');
     });
   }
 
-  function applyBlock(lines, searchLines, replaceLines, opts, replaceAll) {
-    if (searchLines.length === 0) {
-      return { lines: lines.slice(), count: 0 };
-    }
+  function applyBlock(lines, block, o, all) {
+    const search = o.trimBlocks ? trimEmpty(block.search) : block.search.slice();
+    if (!search.length) return { lines, count: 0, type: 'skip' };
 
-    if (!replaceAll) {
-      for (let i = 0; i <= lines.length - searchLines.length; i++) {
-        if (matchAt(lines, i, searchLines, opts)) {
-          const matched = lines.slice(i, i + searchLines.length);
-          const replacement = buildReplacementLines(matched, replaceLines, opts);
-          const next = lines
-            .slice(0, i)
-            .concat(replacement, lines.slice(i + searchLines.length));
+    const hasReplace = block.replace.length > 0;
+    const hasBefore = block.before.length > 0;
+    const hasAfter = block.after.length > 0;
+    if (!hasReplace && !hasBefore && !hasAfter) return { lines, count: 0, type: 'noop' };
 
-          return { lines: next, count: 1 };
+    const repl = o.trimBlocks ? trimEmpty(block.replace) : block.replace.slice();
+    const bef = o.trimBlocks ? trimEmpty(block.before) : block.before.slice();
+    const aft = o.trimBlocks ? trimEmpty(block.after) : block.after.slice();
+
+    if (!all) {
+      for (let i = 0; i <= lines.length - search.length; i++) {
+        if (matchAt(lines, i, search, o)) {
+          const matched = lines.slice(i, i + search.length);
+          const parts = [];
+          if (hasBefore) parts.push(...adjustIndent(matched, bef, o));
+          if (hasReplace) parts.push(...adjustIndent(matched, repl, o));
+          else parts.push(...matched);
+          if (hasAfter) parts.push(...adjustIndent(matched, aft, o));
+          return { lines: lines.slice(0,i).concat(parts, lines.slice(i+search.length)), count: 1, type: 'ok' };
         }
       }
-
-      return { lines: lines.slice(), count: 0 };
+      return { lines, count: 0, type: 'miss' };
     }
 
-    const out = [];
-    let i = 0;
-    let count = 0;
-
+    const out = []; let i = 0, cnt = 0;
     while (i < lines.length) {
-      if (i + searchLines.length <= lines.length && matchAt(lines, i, searchLines, opts)) {
-        const matched = lines.slice(i, i + searchLines.length);
-        const replacement = buildReplacementLines(matched, replaceLines, opts);
-
-        out.push(...replacement);
-        count++;
-        i += searchLines.length;
-      } else {
-        out.push(lines[i]);
-        i++;
-      }
+      if (i + search.length <= lines.length && matchAt(lines, i, search, o)) {
+        const matched = lines.slice(i, i + search.length);
+        if (hasBefore) out.push(...adjustIndent(matched, bef, o));
+        if (hasReplace) out.push(...adjustIndent(matched, repl, o));
+        else out.push(...matched);
+        if (hasAfter) out.push(...adjustIndent(matched, aft, o));
+        cnt++; i += search.length;
+      } else { out.push(lines[i]); i++; }
     }
-
-    return { lines: out, count: count };
+    return { lines: out, count: cnt, type: cnt ? 'ok' : 'miss' };
   }
 
-  function firstMeaningfulLine(lines) {
-    for (const line of lines) {
-      if (line.trim() !== '') return line.trim();
-    }
-    return '';
-  }
-
-  function shorten(text, max = 50) {
-    if (!text) return '';
-    return text.length > max ? text.slice(0, max) + '...' : text;
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function logLine(label, ok, detail) {
+    const c = ok ? 'background:#22c55e33;color:#4ade80' : 'background:#ef444433;color:#fca5a5';
+    return `<div><span class="badge" style="${c}">変更${esc(label)}</span> ${esc(detail)}</div>`;
   }
 
   function run(replace) {
-    const opts = {
+    const o = {
       ignoreLeading: $('ignoreLeading').checked,
       ignoreTrailing: $('ignoreTrailing').checked,
       trimBlocks: $('trimBlocks').checked,
       autoIndent: $('autoIndent').checked
     };
+    const all = $('replaceAll').checked;
+    const blocks = parseBlocks(instrArea.value);
+    if (!blocks.length) { setStatus('<span style="color:#fca5a5">指示が見つかりません。</span>'); return; }
 
-    const replaceAll = $('replaceAll').checked;
-    const blocks = parseBlocks(instructionsArea.value);
+    let lines = normNL(codeArea.value).split('\n');
+    const before = lines.join('\n');
+    let logs = '', total = 0;
 
-    if (blocks.length === 0) {
-      setStatus('置換指示が見つかりません。\n「探す」「置き換え」という行を使ってください。');
-      return;
+    for (const b of blocks) {
+      const res = applyBlock(lines, b, o, all);
+      lines = res.lines;
+      total += res.count;
+      const detail = res.type === 'skip' ? '検索内容が空' : res.type === 'noop' ? '操作なし' : res.count > 0 ? `${res.count}件適用` : '見つからない';
+      logs += logLine(b.label, res.count > 0, detail);
     }
 
-    let lines = normalizeNewlines(codeArea.value).split('\n');
-    const before = lines.join('\n');
-    const logs = [];
-    let total = 0;
-    let notFound = 0;
-
-    blocks.forEach((block, index) => {
-      const searchLines = opts.trimBlocks
-        ? trimEmptyLines(block.search)
-        : block.search.slice();
-
-      const replaceLines = opts.trimBlocks
-        ? trimEmptyLines(block.replace)
-        : block.replace.slice();
-
-      const label = `#${index + 1}`;
-
-      if (searchLines.length === 0) {
-        logs.push(`${label}: 検索内容が空のためスキップ`);
-        return;
-      }
-
-      const result = applyBlock(lines, searchLines, replaceLines, opts, replaceAll);
-      lines = result.lines;
-      total += result.count;
-
-      if (result.count === 0) {
-        notFound++;
-        logs.push(`${label}: 見つからない / 検索開始行: ${shorten(firstMeaningfulLine(searchLines))}`);
-      } else {
-        logs.push(`${label}: ${result.count}件置換`);
-      }
-    });
-
     const after = lines.join('\n');
-
     if (replace) {
-      if (after !== before) {
-        pushHistory(before);
-        codeArea.value = after;
-      }
-
-      setStatus(
-        logs.join('\n') +
-        `\n合計: ${total}件` +
-        (notFound ? `\n未一致ブロック: ${notFound}` : '')
-      );
+      if (after !== before) { pushHist(before); codeArea.value = after; }
+      setStatus(logs + `<div style="margin-top:6px;color:#94a3b8">合計: ${total}件</div>`);
     } else {
-      setStatus(
-        '【検索テスト】\n' +
-        logs.join('\n') +
-        `\n合計一致: ${total}件` +
-        (notFound ? `\n未一致ブロック: ${notFound}` : '')
-      );
+      setStatus(`<div style="margin-bottom:4px;color:#94a3b8">【検索テスト】</div>` + logs + `<div style="margin-top:6px;color:#94a3b8">合計: ${total}件</div>`);
     }
   }
 
-  $('applyButton').addEventListener('click', () => run(true));
-  $('testButton').addEventListener('click', () => run(false));
-
-  $('undoButton').addEventListener('click', () => {
-    if (history.length === 0) return;
-
-    codeArea.value = history.pop();
-    undoButton.disabled = history.length === 0;
-    setStatus('元に戻しました。');
-  });
-
-  $('copyButton').addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(codeArea.value);
-      setStatus('コードをコピーしました。');
-    } catch (err) {
-      codeArea.focus();
-      codeArea.select();
-      document.execCommand('copy');
-      setStatus('フォールバックでコピーしました。');
-    }
-  });
-
-  $('downloadButton').addEventListener('click', () => {
-    const name = prompt('保存ファイル名を入力してください', 'code.txt');
-    if (!name) return;
-
-    const blob = new Blob([codeArea.value], { type: 'text/plain;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
-
-  $('sampleButton').addEventListener('click', () => {
-    codeArea.value = [
-      'def greet(name):',
-      '    if name:',
-      '        print("Hello " + name)',
-      '    else:',
-      '        print("Hello")'
+  $('applyButton').onclick = () => run(true);
+  $('testButton').onclick = () => run(false);
+  $('undoBtn').onclick = () => { if (!history.length) return; codeArea.value = history.pop(); undoBtn.disabled = !history.length; setStatus('<span style="color:#4ade80">元に戻しました。</span>'); };
+  $('copyButton').onclick = async () => { try { await navigator.clipboard.writeText(codeArea.value); setStatus('<span style="color:#4ade80">コピーしました。</span>'); } catch { codeArea.select(); document.execCommand('copy'); setStatus('<span style="color:#fbbf24">フォールバックでコピー。</span>'); } };
+  $('downloadButton').onclick = () => { const n = prompt('ファイル名','code.txt'); if (!n) return; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([codeArea.value],{type:'text/plain;charset=utf-8'})); a.download = n; a.click(); URL.revokeObjectURL(a.href); };
+  $('sampleButton').onclick = () => {
+    codeArea.value = 'def greet(name):\n    if name:\n        print("Hello")\n    return None';
+    instrArea.value = [
+      '変更1: 探す','def greet(name):','変更1: 置き換え','def greet(name: str) -> str:',
+      '','変更2: 探す','        print("Hello")','変更2: この直前に追加','        msg = f"Hello, {name}!"',
+      '','変更3: 探す','    return None','変更3: この直後に追加','    # end of function'
     ].join('\n');
-
-    instructionsArea.value = [
-      '探す',
-      'if name:',
-      '    print("Hello " + name)',
-      '置き換え',
-      'if name and name.strip():',
-      '    print("Hello, " + name + "!")',
-      '',
-      '探す',
-      'print("Hello")',
-      '置き換え',
-      'print("Hello there")'
-    ].join('\n');
-
-    setStatus('サンプルを読み込みました。「置換を実行」を試してください。');
-  });
+    setStatus('<span style="color:#4ade80">サンプル読込完了。</span>');
+  };
 })();
 </script>
-
 </body>
 </html>
