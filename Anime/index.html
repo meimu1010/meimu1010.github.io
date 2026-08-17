@@ -240,6 +240,7 @@
   let timerInterval = null;
   let timerStart = 0;
   let shareData = null;
+  let lastSearchResultsText = ""; // Wikipedia結果を一時保存
 
   async function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
     const controller = new AbortController();
@@ -606,9 +607,25 @@
     return `main cast: ${chars.map(c => c.native || c.name).join(", ")}`;
   }
 
+  function extractReadingsFromWiki(text) {
+    const map = new Map();
+    if (!text) return map;
+    const regex = /([\p{Script=Han}\p{Script=Katakana}]+)\s*[（(]\s*([\p{Script=Hiragana}\s]+)\s*[)）]/gu;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const name = match[1].trim();
+      const reading = match[2].trim().replace(/\s+/g, " ");
+      if (name && reading) map.set(name, reading);
+    }
+    return map;
+  }
+
   function parseCharacterDescs(text) {
     const map = new Map();
     let inSection = false;
+    
+    // Wikipedia結果から読みを事前抽出
+    const wikiReadings = extractReadingsFromWiki(lastSearchResultsText);
 
     for (const raw of text.split("\n")) {
       const head = raw.trim();
@@ -635,7 +652,11 @@
 
       const key = name.replace(/\*\*/g, "").replace(/\s+/g, "");
       if (!key || map.has(key)) continue;
-      map.set(key, { desc: m[2].trim().replace(/\*\*/g, ""), reading });
+      
+      // Wikipediaの読みがあれば優先採用
+      const finalReading = wikiReadings.get(name) || reading;
+      
+      map.set(key, { desc: m[2].trim().replace(/\*\*/g, ""), reading: finalReading });
     }
 
     return map;
@@ -679,6 +700,7 @@
       ["ma","ま"],["mi","み"],["mu","む"],["me","め"],["mo","も"],
       ["ya","や"],["yu","ゆ"],["yo","よ"],
       ["ra","ら"],["ri","り"],["ru","る"],["re","れ"],["ro","ろ"],
+      ["va","ゔぁ"],["vi","ゔぃ"],["vu","ゔ"],["ve","ゔぇ"],["vo","ゔぉ"],
       ["wa","わ"],["wi","ゐ"],["we","ゑ"],["wo","を"],
       ["nn","ん"],["n'","ん"],["n","ん"],
       ["a","あ"],["i","い"],["u","う"],["e","え"],["o","お"],
@@ -1348,6 +1370,7 @@
         "【キャラ紹介】",
         "このセクションは必須です。必ず出力してください。",
         "AniListのキャラクター一覧の全キャラについて、省略せず1行ずつ書いてください。形式: 「キャラクター名 / 立場・性格・作中での役割・結末を含む説明」",
+        "説明の中にキャラクター名や読みを繰り返さないでください。",
         "説明は必ず100文字以上200文字以内で書いてください。",
         "「（約○○文字）」のような文字数の注記は出力に含めないでください。",
         "順番は必ず主人公（最も中心的な人物）を1行目にし、その後は物語への重要度順にしてください。",
@@ -1374,6 +1397,7 @@
         "",
         "【キャラ紹介】",
         "AniListのキャラクター一覧の各キャラについて、「キャラクター名 / ネタバレなしの一行説明（50〜80文字）」の形式で1行ずつ書いてください。",
+        "説明の中にキャラクター名や読みを繰り返さないでください。",
         "「（約○○文字）」のような文字数の注記は出力に含めないでください。",
         "順番は必ず主人公（最も中心的な人物）を1行目にし、その後は物語への重要度順にしてください。上記一覧の並び順には従わないでください。",
         "キャラクター名はAniListの表記をそのまま使ってください。説明にネタバレを含めないでください。",
@@ -1496,6 +1520,7 @@
       try {
         const results = await getWikipediaSearchResults(animeTitle);
         searchResultsText = formatSearchResults(results);
+        lastSearchResultsText = searchResultsText; // グローバルに保存
 
         if (!searchResultsText) {
           setGenerateStatus("検索結果がなかったので、AIのみで生成します。");
