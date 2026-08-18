@@ -662,6 +662,17 @@
     return map;
   }
 
+  function findDescEntry(descMap, name) {
+    const key = (name || "").replace(/\s+/g, "");
+    if (!key) return null;
+    if (descMap.has(key)) return descMap.get(key);
+
+    for (const [k, v] of descMap) {
+      if (k.includes(key) || key.includes(k)) return v;
+    }
+    return null;
+  }
+
   function sortCharsByDesc(chars, descMap) {
     const keys = [...descMap.keys()];
 
@@ -674,81 +685,6 @@
     };
 
     return [...chars].sort((a, b) => orderOf(a) - orderOf(b));
-  }
-
-  function romajiToHiragana(src) {
-    const MAP = [
-      ["kya","きゃ"],["kyu","きゅ"],["kyo","きょ"],["gya","ぎゃ"],["gyu","ぎゅ"],["gyo","ぎょ"],
-      ["sha","しゃ"],["shu","しゅ"],["sho","しょ"],["ja","じゃ"],["ju","じゅ"],["jo","じょ"],
-      ["cha","ちゃ"],["chu","ちゅ"],["cho","ちょ"],["nya","にゃ"],["nyu","にゅ"],["nyo","にょ"],
-      ["hya","ひゃ"],["hyu","ひゅ"],["hyo","ひょ"],["bya","びゃ"],["byu","びゅ"],["byo","びょ"],
-      ["pya","ぴゃ"],["pyu","ぴゅ"],["pyo","ぴょ"],["mya","みゃ"],["myu","みゅ"],["myo","みょ"],
-      ["rya","りゃ"],["ryu","りゅ"],["ryo","りょ"],
-      ["dri","ぢ"],["dra","ぢゃ"],["dru","ぢゅ"],["dro","ぢょ"], // dr系追加
-      ["va","ゔぁ"],["vi","ゔぃ"],["vu","ゔ"],["ve","ゔぇ"],["vo","ゔぉ"], // v系追加
-      ["shi","し"],["chi","ち"],["tsu","つ"],["fu","ふ"],["ji","じ"],
-      ["ka","か"],["ki","き"],["ku","く"],["ke","け"],["ko","こ"],
-      ["ga","が"],["gi","ぎ"],["gu","ぐ"],["ge","げ"],["go","ご"],
-      ["sa","さ"],["si","し"],["su","す"],["se","せ"],["so","そ"],
-      ["za","ざ"],["zi","じ"],["zu","ず"],["ze","ぜ"],["zo","ぞ"],
-      ["ta","た"],["ti","ち"],["tu","つ"],["te","て"],["to","と"],
-      ["da","だ"],["de","で"],["do","ど"],
-      ["na","な"],["ni","に"],["nu","ぬ"],["ne","ね"],["no","の"],
-      ["ha","は"],["hi","ひ"],["hu","ふ"],["he","へ"],["ho","ほ"],
-      ["ba","ば"],["bi","び"],["bu","ぶ"],["be","べ"],["bo","ぼ"],
-      ["pa","ぱ"],["pi","ぴ"],["pu","ぷ"],["pe","ぺ"],["po","ぽ"],
-      ["ma","ま"],["mi","み"],["mu","む"],["me","め"],["mo","も"],
-      ["ya","や"],["yu","ゆ"],["yo","よ"],
-      ["ra","ら"],["ri","り"],["ru","る"],["re","れ"],["ro","ろ"],
-      ["va","ゔぁ"],["vi","ゔぃ"],["vu","ゔ"],["ve","ゔぇ"],["vo","ゔぉ"],
-      ["wa","わ"],["wi","ゐ"],["we","ゑ"],["wo","を"],
-      ["nn","ん"],["n'","ん"],["n","ん"],
-      ["a","あ"],["i","い"],["u","う"],["e","え"],["o","お"],
-      ["-","ー"]
-    ];
-    const s = (src || "").toLowerCase().trim();
-    let out = "";
-    let i = 0;
-
-    while (i < s.length) {
-      const c = s[i];
-
-      if (i + 1 < s.length && c === s[i + 1] && "bcdfghjkmpqrstvwxz".includes(c)) {
-        out += "っ";
-        i++;
-        continue;
-      }
-
-      if (s.startsWith("tch", i)) {
-        out += "っ";
-        i++;
-        continue;
-      }
-
-      let matched = false;
-      for (const [r, h] of MAP) {
-        if (s.startsWith(r, i)) {
-          out += h;
-          i += r.length;
-          matched = true;
-          break;
-        }
-      }
-
-      if (!matched) i++;
-    }
-
-    return out;
-  }
-
-  function deriveReading(fullRomaji) {
-    if (!fullRomaji) return "";
-    const parts = fullRomaji.trim().split(/\s+/);
-    if (parts.length < 2) return "";
-    const given = romajiToHiragana(parts[0]);
-    const family = romajiToHiragana(parts.slice(1).join(" "));
-    if (!given || !family) return "";
-    return `${family} ${given}`;
   }
 
   function renderCharacterCards(chars, descMap = new Map()) {
@@ -794,9 +730,9 @@
         body.appendChild(subEl);
       }
 
-      const entry = descMap.get((c.native || c.name).replace(/\s+/g, "")) || descMap.get(c.name.replace(/\s+/g, "")) || null;
+      const entry = findDescEntry(descMap, c.native) || findDescEntry(descMap, c.name);
       const desc = entry?.desc || "";
-      const reading = entry?.reading || deriveReading(c.name) || "";
+      const reading = entry?.reading || ""; // 推測変換(deriveReading)は廃止。確定情報のみ採用。
 
       if (reading) {
         nameEl.textContent = `${c.native || c.name}(${reading})`;
@@ -1437,8 +1373,11 @@
     const marker = "【一言紹介】";
     const requiredHeadings = ["【あらすじ】", "【キャラ紹介】", "【見どころ】", "【こんな人におすすめ】"];
     let best = -1;
+    let firstMarkerIdx = -1;
     let searchFrom = 0;
     let idx = text.indexOf(marker, searchFrom);
+
+    if (idx !== -1) firstMarkerIdx = idx;
 
     while (idx !== -1) {
       const rest = text.slice(idx);
@@ -1464,7 +1403,10 @@
       idx = text.indexOf(marker, searchFrom);
     }
 
-    const body = best !== -1 ? text.slice(best) : text;
+    // 厳密一致（4見出しすべて揃っている）が見つからない場合でも、
+    // 最初の【一言紹介】以降だけは切り出す（生出力を丸ごと出すより安全）
+    const startIdx = best !== -1 ? best : firstMarkerIdx;
+    const body = startIdx !== -1 ? text.slice(startIdx) : text;
 
     return body
       .split("\n")
@@ -1513,12 +1455,41 @@
     let aniChars = [];
     let aniMedia = null;
 
+    // ① AniListを最初に確定させ、正規タイトルを得る（Wikipedia検索のズレ防止）
+    setGenerateStatus("AniList取得中...");
+    const charStart = performance.now();
+    let resolvedTitle = animeTitle;
+
+    try {
+      const media = await fetchAniListMedia(animeTitle);
+
+      if (media) {
+        applyMediaInfo(media);
+        aniMedia = media;
+        aniChars = media.chars;
+        charactersText = formatCharactersForPrompt(media.chars);
+        resolvedTitle = media.native || media.romaji || animeTitle;
+
+        if (!media.chars.length) {
+          setGenerateStatus("AniListからキャラを取得できませんでした。");
+        }
+      } else {
+        setGenerateStatus("AniListで作品が見つかりませんでした。");
+      }
+    } catch (error) {
+      console.error(error);
+      setGenerateStatus(`AniList取得失敗: ${error.message}`, true);
+    }
+
+    charMs = performance.now() - charStart;
+
+    // ② Wikipedia検索（AniListで解決した正式名で検索し、作品のズレを防ぐ）
     if (useSearchCheckbox.checked) {
       setGenerateStatus("Wikipedia検索中...");
       const searchStart = performance.now();
 
       try {
-        const results = await getWikipediaSearchResults(animeTitle);
+        const results = await getWikipediaSearchResults(resolvedTitle);
         searchResultsText = formatSearchResults(results);
         lastSearchResultsText = searchResultsText; // グローバルに保存
 
@@ -1546,31 +1517,6 @@
 
       jikanMs = performance.now() - jikanStart;
     }
-
-    setGenerateStatus("AniList取得中...");
-    const charStart = performance.now();
-
-    try {
-      const media = await fetchAniListMedia(animeTitle);
-
-      if (media) {
-        applyMediaInfo(media);
-        aniMedia = media;
-        aniChars = media.chars;
-        charactersText = formatCharactersForPrompt(media.chars);
-
-        if (!media.chars.length) {
-          setGenerateStatus("AniListからキャラを取得できませんでした。");
-        }
-      } else {
-        setGenerateStatus("AniListで作品が見つかりませんでした。");
-      }
-    } catch (error) {
-      console.error(error);
-      setGenerateStatus(`AniList取得失敗: ${error.message}`, true);
-    }
-
-    charMs = performance.now() - charStart;
 
     setGenerateStatus("AI生成中（数分かかる場合があります）...");
     const aiStart = performance.now();
@@ -1620,35 +1566,17 @@
 
       renderResult(text || "AIの応答が空でした。");
       const descMap = parseCharacterDescs(text);
-      
+
       // Wikipedia検索結果から読みを強制抽出・上書き（AIのミスを防止）
       if (searchResultsText) {
         const wikiReadings = extractReadingsFromWiki(searchResultsText);
         for (const [name, reading] of wikiReadings) {
-           const key = name.replace(/\s+/g, "");
-           if (descMap.has(key)) {
-             descMap.get(key).reading = reading;
-           } else {
-             // キャラ紹介に無いキャラでも読みだけ確保したい場合などはここへ
-           }
+          const key = name.replace(/\s+/g, "");
+          if (descMap.has(key)) {
+            descMap.get(key).reading = reading;
+          }
         }
       }
-
-  function extractReadingsFromWiki(text) {
-    const map = new Map();
-    // 「漢字（ひらがな）」または「漢字 (ひらがな)」のパターンを抽出
-    // 例: 能美クドリャフカ（のうみ くどりゃふか）
-    const regex = /([\p{Script=Han}\p{Script=Katakana}]+)\s*[（(]\s*([\p{Script=Hiragana}\s]+)\s*[)）]/gu;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      const name = match[1].trim();
-      const reading = match[2].trim().replace(/\s+/g, " ");
-      if (name && reading) {
-        map.set(name, reading);
-      }
-    }
-    return map;
-  }
 
       const sortedChars = sortCharsByDesc(aniChars, descMap);
       renderCharacterCards(sortedChars, descMap);
