@@ -8,8 +8,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Antique&display=swap');
 
 :root {
-  --card-w-px: 180px;
-  --card-h-px: 252px;
   --bg: #f6f3ec;
   --surface: #ffffff;
   --surface2: #f0ece2;
@@ -81,6 +79,7 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 .btn-danger:hover{background:var(--danger);color:#fff;}
 .btn-success{border-color:var(--success);color:var(--success);}
 .btn-success:hover{background:var(--success);color:#fff;}
+.btn:focus-visible,.theme-toggle:focus-visible,.zoom-btn:focus-visible,.edit-zoom-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 
 /* IMAGE EDITOR CANVAS */
 .img-editor-wrap{position:relative;width:180px;height:252px;border-radius:var(--card-radius);border:2px solid var(--border);overflow:hidden;background:var(--card-bg);cursor:grab;touch-action:none;user-select:none;flex-shrink:0;}
@@ -89,7 +88,7 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 
 /* ZOOM CONTROLS */
 .zoom-controls{display:flex;align-items:center;gap:6px;margin-top:10px;}
-.zoom-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);width:34px;height:34px;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);transition:all 0.2s;flex-shrink:0;line-height:1;font-weight:300;}
+.zoom-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);width:34px;height:34px;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);transition:all 0.2s;flex-shrink:0;line-height:1;font-weight:300;touch-action:manipulation;}
 .zoom-btn:hover{border-color:var(--accent);color:var(--accent);}
 .zoom-input-wrap{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color 0.2s;}
 .zoom-input-wrap:focus-within{border-color:var(--accent);}
@@ -98,7 +97,7 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 
 /* UPLOAD AREA */
 .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:14px;color:var(--muted);}
-.upload-area:hover{border-color:var(--accent);color:var(--accent);}
+.upload-area:hover,.upload-area.dragover{border-color:var(--accent);color:var(--accent);}
 .upload-area input{display:none;}
 .upload-area p{font-size:12px;margin-top:6px;}
 
@@ -106,7 +105,7 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:16px;position:relative;}
 
 /* CARD ITEM */
-.card-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color 0.2s,box-shadow 0.2s,opacity 0.2s;position:relative;box-shadow:var(--shadow);user-select:none;-webkit-user-select:none;}
+.card-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color 0.2s,box-shadow 0.2s,opacity 0.2s;position:relative;box-shadow:var(--shadow);user-select:none;-webkit-user-select:none;touch-action:pan-y;}
 .card-item:hover{border-color:var(--accent);}
 .card-item.selected{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);}
 .card-item img{width:100%;aspect-ratio:63.5/88.9;object-fit:cover;display:block;background:var(--surface2);pointer-events:none;}
@@ -116,20 +115,27 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 
 /* Card action buttons overlay */
 .card-item-actions{position:absolute;bottom:30px;left:0;right:0;display:flex;justify-content:center;gap:4px;opacity:0;transition:opacity 0.15s;pointer-events:none;padding:0 4px;}
-.card-item:hover .card-item-actions{opacity:1;pointer-events:all;}
+.card-item:hover .card-item-actions,.card-item:focus-within .card-item-actions{opacity:1;pointer-events:all;}
 .card-action-btn{background:rgba(0,0,0,0.7);border:none;border-radius:4px;color:#fff;font-size:11px;padding:4px 8px;cursor:pointer;backdrop-filter:blur(4px);white-space:nowrap;}
 .card-action-btn:hover{background:var(--accent);}
 
 /* DRAG GHOST */
-.drag-ghost{position:fixed;pointer-events:none;z-index:9000;border-radius:var(--radius);box-shadow:0 12px 40px rgba(0,0,0,0.35);opacity:0.92;transform:rotate(3deg) scale(1.05);transition:transform 0.1s;overflow:hidden;background:var(--surface);}
+.drag-ghost{position:fixed;pointer-events:none;z-index:9000;border-radius:var(--radius);box-shadow:0 12px 40px rgba(0,0,0,0.35);opacity:0.92;transform:rotate(3deg) scale(1.05);overflow:hidden;background:var(--surface);}
 .drag-ghost img{width:100%;aspect-ratio:63.5/88.9;object-fit:cover;display:block;}
-.drag-ghost-name{padding:5px 8px;font-size:11px;color:var(--text);text-align:center;background:var(--surface);}
+.drag-ghost .card-item-name{padding:5px 8px;font-size:11px;color:var(--text);text-align:center;background:var(--surface);}
 
 /* Drop placeholder */
-.card-item.drag-placeholder{opacity:0;pointer-events:none;}
+.card-item.drag-placeholder{opacity:0.25;pointer-events:none;}
 .card-item.drag-over-before::before,.card-item.drag-over-after::after{content:'';position:absolute;top:0;bottom:0;width:3px;background:var(--accent);border-radius:2px;z-index:10;}
 .card-item.drag-over-before::before{left:-7px;}
 .card-item.drag-over-after::after{right:-7px;}
+
+/* Long-press indicator ring */
+.card-item.pressing::after{
+  content:'';position:absolute;inset:-3px;border-radius:calc(var(--radius) + 3px);
+  border:2px solid var(--accent);animation:pressRing 0.5s linear forwards;pointer-events:none;
+}
+@keyframes pressRing{from{opacity:0;transform:scale(0.94);}to{opacity:1;transform:scale(1);}}
 
 /* TOOLBAR */
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
@@ -151,6 +157,8 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 .diff-card .diff-name{font-size:15px;font-weight:700;color:var(--text);}
 .diff-card .diff-desc{font-size:11px;color:var(--muted);margin-top:4px;}
 .card-selector-label{font-size:13px;color:var(--muted);margin-bottom:8px;text-align:left;}
+.picker-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.picker-bar .btn{font-size:12px;padding:6px 10px;}
 
 /* GAME BOARD */
 .game-board-wrap{position:relative;}
@@ -159,26 +167,30 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 .hud-stat span{color:var(--accent);font-weight:700;font-size:18px;margin-left:6px;}
 .timer-bar-wrap{background:var(--surface2);border-radius:4px;height:4px;overflow:hidden;flex:1;min-width:80px;}
 .timer-bar{height:100%;background:var(--accent);transition:width 0.5s linear,background 0.5s;border-radius:4px;}
-.game-board{display:grid;gap:8px;justify-content:center;margin:0 auto;}
+.game-board{display:grid;justify-content:center;margin:0 auto;}
 
 /* Card flip */
 .gc{cursor:pointer;position:relative;}
+.gc:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:var(--card-radius);}
 .gc-inner{position:absolute;top:0;left:0;width:100%;height:100%;transform-style:preserve-3d;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);}
 .gc.flipped .gc-inner,.gc.matched .gc-inner{transform:rotateY(180deg);}
+.gc.matched{cursor:default;}
 .gc.matched .gc-front{border-color:var(--success);box-shadow:0 0 10px rgba(46,139,63,0.35);}
 .gc.wrong .gc-front{border-color:var(--danger);}
 .gc-front,.gc-back{border-radius:var(--card-radius);position:absolute;top:0;left:0;width:100%;height:100%;-webkit-backface-visibility:hidden;backface-visibility:hidden;border:2px solid var(--border);}
 .gc-front{transform:rotateY(180deg);background:var(--card-bg);overflow:hidden;}
-.gc-front img{width:100%;height:calc(100% - 26px);object-fit:cover;display:block;}
-.gc-front .gc-label{height:26px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text);background:var(--surface);padding:0 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gc-front img{width:100%;height:calc(100% - var(--label-h,26px));object-fit:cover;display:block;}
+.gc-front .gc-label{height:var(--label-h,26px);display:flex;align-items:center;justify-content:center;font-size:var(--label-fs,10px);color:var(--text);background:var(--surface);padding:0 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gc-front .img-error{width:100%;height:calc(100% - var(--label-h,26px));display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted);background:var(--surface2);}
 .gc-back{display:flex;align-items:center;justify-content:center;border-color:var(--accent);background:linear-gradient(135deg,var(--back-grad-1) 0%,var(--back-grad-2) 100%);overflow:hidden;}
 .gc-back-default{width:80%;height:80%;border:1px solid var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0.6;}
 
 /* RESULT OVERLAY */
-.game-result-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:20;}
-.game-result-overlay.show{pointer-events:all;}
-.game-result-box{background:var(--surface);border:2px solid var(--accent);border-radius:16px;padding:48px 40px;text-align:center;box-shadow:var(--shadow-strong);transform:scale(0.8);opacity:0;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s;}
-.game-result-overlay.show .game-result-box{transform:scale(1);opacity:1;}
+.game-result-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:300;background:rgba(0,0,0,0.45);padding:20px;}
+.game-result-overlay.show{display:flex;}
+.game-result-box{background:var(--surface);border:2px solid var(--accent);border-radius:16px;padding:44px 36px;text-align:center;box-shadow:var(--shadow-strong);}
+.game-result-overlay.show .game-result-box{animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;}
+@keyframes popIn{from{transform:scale(0.85);opacity:0;}to{transform:scale(1);opacity:1;}}
 .game-result-box h2{font-family:'Zen Antique',serif;font-size:32px;color:var(--accent);margin-bottom:12px;}
 .game-result-box p{color:var(--muted);margin-bottom:24px;font-size:15px;}
 .result-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
@@ -205,12 +217,13 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 
 /* EDIT MODAL */
 .edit-modal-layout{display:flex;gap:20px;align-items:flex-start;}
+@media(max-width:520px){.edit-modal-layout{flex-direction:column;align-items:center;}.edit-modal-fields{width:100%;}}
 .edit-modal-preview{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;}
 .edit-card-wrap{position:relative;width:140px;height:196px;border-radius:var(--card-radius);border:2px solid var(--border);overflow:hidden;background:var(--card-bg);cursor:grab;touch-action:none;user-select:none;}
 .edit-card-wrap:active{cursor:grabbing;}
 .edit-card-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;}
 .edit-zoom-controls{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;}
-.edit-zoom-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);width:28px;height:28px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);transition:all 0.2s;flex-shrink:0;line-height:1;}
+.edit-zoom-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);width:28px;height:28px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);transition:all 0.2s;flex-shrink:0;line-height:1;touch-action:manipulation;}
 .edit-zoom-btn:hover{border-color:var(--accent);color:var(--accent);}
 .edit-zoom-input-wrap{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
 .edit-zoom-input-wrap:focus-within{border-color:var(--accent);}
@@ -218,23 +231,8 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 .edit-zoom-unit{font-size:12px;color:var(--muted);padding-right:6px;}
 .edit-modal-fields{flex:1;min-width:0;display:flex;flex-direction:column;gap:0;}
 
-/* Long-press indicator ring */
-.card-item.pressing::after{
-  content:'';
-  position:absolute;
-  inset:-3px;
-  border-radius:calc(var(--radius) + 3px);
-  border:2px solid var(--accent);
-  animation:pressRing 0.5s linear forwards;
-}
-@keyframes pressRing{
-  from{opacity:0;transform:scale(0.9);}
-  to{opacity:1;transform:scale(1);}
-}
-
 @media(max-width:800px){
   .home-hero h1{font-size:30px;}
-  .game-board{gap:5px;}
 }
 </style>
 </head>
@@ -243,7 +241,7 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 <div class="topbar">
   <div class="topbar-title" onclick="showHome()">🃏 神経衰弱</div>
   <div class="topbar-actions">
-    <button class="theme-toggle" onclick="toggleTheme()" title="テーマ切替">
+    <button class="theme-toggle" onclick="toggleTheme()" title="テーマ切替" aria-label="テーマ切替">
       <svg id="themeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       <svg id="themeIconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
@@ -282,14 +280,14 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
   <div class="editor-layout">
     <div class="panel">
       <h3>新しいカードを作成</h3>
-      <label>カード名</label>
+      <label for="cardName">カード名</label>
       <input type="text" id="cardName" placeholder="例：赤いバラ" maxlength="30">
-      <label>画像URL（imgurなど）</label>
-      <input type="url" id="cardUrl" placeholder="https://i.imgur.com/eUc3fTt.png" oninput="editorLoadUrl()">
-      <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+      <label for="cardUrl">画像URL（imgurなど）</label>
+      <input type="url" id="cardUrl" placeholder="https://i.imgur.com/eUc3fTt.png" oninput="editorLoadUrlDebounced()">
+      <div class="upload-area" id="editorDrop" onclick="document.getElementById('fileInput').click()">
         <input type="file" id="fileInput" accept="image/*" onchange="editorLoadFile(this)">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto;display:block;opacity:0.6"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <p>クリックして画像をアップロード</p>
+        <p>クリック、またはここに画像をドロップ</p>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="saveCard()">💾 保存</button>
@@ -297,7 +295,7 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
       </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-      <div style="font-size:12px;color:var(--muted);">表面プレビュー（ドラッグ＆スクロールでズーム）</div>
+      <div style="font-size:12px;color:var(--muted);">表面プレビュー（ドラッグで移動・ホイールでズーム）</div>
       <div class="img-editor-wrap" id="editorCanvas">
         <canvas id="frontCanvas"></canvas>
         <div id="frontPlaceholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0.3;">
@@ -305,12 +303,12 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
         </div>
       </div>
       <div class="zoom-controls" id="frontControls" style="display:none;">
-        <button class="zoom-btn" onpointerdown="startZoomHold(-1)" onpointerup="stopZoomHold()" onpointerleave="stopZoomHold()">−</button>
+        <button class="zoom-btn" aria-label="縮小" onpointerdown="startZoomHold(-1)" onpointerup="stopZoomHold()" onpointerleave="stopZoomHold()" onpointercancel="stopZoomHold()">−</button>
         <div class="zoom-input-wrap">
-          <input type="number" class="zoom-input" id="frontZoomInput" value="100" min="10" max="1000" step="1" oninput="onZoomInputChange()" onchange="onZoomInputChange()">
+          <input type="number" class="zoom-input" id="frontZoomInput" value="100" min="10" max="1000" step="1" oninput="onZoomInputChange()" onchange="onZoomInputChange()" aria-label="ズーム率">
           <span class="zoom-unit">%</span>
         </div>
-        <button class="zoom-btn" onpointerdown="startZoomHold(1)" onpointerup="stopZoomHold()" onpointerleave="stopZoomHold()">＋</button>
+        <button class="zoom-btn" aria-label="拡大" onpointerdown="startZoomHold(1)" onpointerup="stopZoomHold()" onpointerleave="stopZoomHold()" onpointercancel="stopZoomHold()">＋</button>
         <button class="btn" onclick="editorResetTransform()" style="font-size:12px;padding:5px 10px;">リセット</button>
       </div>
     </div>
@@ -327,9 +325,11 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
     <button class="btn" id="storageToggleBtn" onclick="toggleStorageMode()" style="font-size:12px;padding:7px 12px;"></button>
     <div class="toolbar-sep"></div>
     <span id="selectedCount" style="font-size:13px;color:var(--muted);"></span>
+    <button class="btn" onclick="librarySelectAll()" style="font-size:12px;padding:7px 12px;">全選択</button>
+    <button class="btn" onclick="libraryClearSelection()" style="font-size:12px;padding:7px 12px;">選択解除</button>
     <button class="btn btn-danger" onclick="deleteSelected()">🗑 削除</button>
   </div>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">💡 ホバーで編集ボタン表示 ／ 長押しで順番を入れ替え</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">💡 クリックで選択 ／ ホバーで編集ボタン表示 ／ 長押しドラッグで順番を入れ替え</div>
   <div id="cardGrid" class="card-grid"></div>
 </div>
 
@@ -340,7 +340,7 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
     <p>難易度とカードを選んでゲームを始めましょう</p>
     <div class="difficulty-cards">
       <div class="diff-card active" data-diff="easy" onclick="selectDiff(this)">
-        <div class="diff-icon">🌱</div><div class="diff-name">初級</div><div class="diff-desc">8ペア（16枚）</div>
+        <div class="diff-icon">🌱</div><div class="diff-name">初級</div><div class="diff-desc">8ペア（16枚）4列</div>
       </div>
       <div class="diff-card" data-diff="normal" onclick="selectDiff(this)">
         <div class="diff-icon">⚔️</div><div class="diff-name">中級</div><div class="diff-desc">15ペア（30枚）6列</div>
@@ -350,7 +350,13 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
       </div>
     </div>
     <p class="card-selector-label">使用するカードを選択（未選択の場合は全カードからランダム）</p>
-    <div id="gameCardPicker" class="card-grid" style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:20px;background:var(--surface);"></div>
+    <div class="picker-bar">
+      <span id="pickCount" style="font-size:12px;color:var(--muted);"></span>
+      <div style="flex:1;"></div>
+      <button class="btn" onclick="pickAll(true)">全選択</button>
+      <button class="btn" onclick="pickAll(false)">選択解除</button>
+    </div>
+    <div id="gameCardPicker" class="card-grid" style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:20px;background:var(--surface);margin-top:0;"></div>
     <button class="btn btn-primary" onclick="startGame()" style="font-size:16px;padding:12px 32px;">▶ ゲームスタート</button>
   </div>
   <div id="gameBoard" class="game-board-wrap" style="display:none;">
@@ -364,14 +370,16 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
       </div>
     </div>
     <div id="board" class="game-board"></div>
-    <div class="game-result-overlay" id="gameResultOverlay">
-      <div class="game-result-box">
-        <h2 id="resultTitle"></h2><p id="resultBody"></p>
-        <div class="result-btns">
-          <button class="btn btn-primary" onclick="startGame()">もう一度</button>
-          <button class="btn" onclick="backToSetup()">設定に戻る</button>
-        </div>
-      </div>
+  </div>
+</div>
+
+<!-- RESULT OVERLAY (fixed, 画面中央) -->
+<div class="game-result-overlay" id="gameResultOverlay">
+  <div class="game-result-box">
+    <h2 id="resultTitle"></h2><p id="resultBody"></p>
+    <div class="result-btns">
+      <button class="btn btn-primary" onclick="startGame()">もう一度</button>
+      <button class="btn" onclick="backToSetup()">設定に戻る</button>
     </div>
   </div>
 </div>
@@ -404,28 +412,26 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
   <div class="modal">
     <h3>✏️ カードを編集</h3>
     <div class="edit-modal-layout">
-      <!-- left: preview + zoom -->
       <div class="edit-modal-preview">
         <div style="font-size:11px;color:var(--muted);">プレビュー</div>
         <div class="edit-card-wrap" id="editCanvas">
           <canvas id="editFrontCanvas"></canvas>
         </div>
         <div class="edit-zoom-controls">
-          <button class="edit-zoom-btn" onpointerdown="startEditZoomHold(-1)" onpointerup="stopEditZoomHold()" onpointerleave="stopEditZoomHold()">−</button>
+          <button class="edit-zoom-btn" aria-label="縮小" onpointerdown="startEditZoomHold(-1)" onpointerup="stopEditZoomHold()" onpointerleave="stopEditZoomHold()" onpointercancel="stopEditZoomHold()">−</button>
           <div class="edit-zoom-input-wrap">
-            <input type="number" class="edit-zoom-input" id="editZoomInput" value="100" min="10" max="1000" step="1" oninput="onEditZoomInputChange()" onchange="onEditZoomInputChange()">
+            <input type="number" class="edit-zoom-input" id="editZoomInput" value="100" min="10" max="1000" step="1" oninput="onEditZoomInputChange()" onchange="onEditZoomInputChange()" aria-label="ズーム率">
             <span class="edit-zoom-unit">%</span>
           </div>
-          <button class="edit-zoom-btn" onpointerdown="startEditZoomHold(1)" onpointerup="stopEditZoomHold()" onpointerleave="stopEditZoomHold()">＋</button>
+          <button class="edit-zoom-btn" aria-label="拡大" onpointerdown="startEditZoomHold(1)" onpointerup="stopEditZoomHold()" onpointerleave="stopEditZoomHold()" onpointercancel="stopEditZoomHold()">＋</button>
         </div>
         <button class="btn" onclick="editResetTransform()" style="font-size:11px;padding:4px 10px;width:100%;">↺ リセット</button>
       </div>
-      <!-- right: fields -->
       <div class="edit-modal-fields">
-        <label>カード名</label>
+        <label for="editCardName">カード名</label>
         <input type="text" id="editCardName" placeholder="カード名" maxlength="30">
-        <label>新しい画像URL（変更する場合）</label>
-        <input type="url" id="editCardUrl" placeholder="https://i.imgur.com/..." oninput="editLoadUrl()">
+        <label for="editCardUrl">新しい画像URL（変更する場合）</label>
+        <input type="url" id="editCardUrl" placeholder="https://i.imgur.com/..." oninput="editLoadUrlDebounced()">
         <div class="upload-area" onclick="document.getElementById('editFileInput').click()">
           <input type="file" id="editFileInput" accept="image/*" onchange="editLoadFile(this)">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto;display:block;opacity:0.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -443,6 +449,7 @@ input[type=text]:focus,input[type=url]:focus,input[type=number]:not(.zoom-input)
 <div class="toast" id="toast"></div>
 
 <script>
+'use strict';
 // ============================================================
 // STORAGE
 // ============================================================
@@ -452,60 +459,80 @@ const MODE_KEY    = 'memory_game_storage_mode';
 let storageMode = localStorage.getItem(MODE_KEY) || 'local';
 let idbDb = null;
 
-function openIDB() {
-  return new Promise((res, rej) => {
-    if (idbDb) { res(idbDb); return; }
-    const req = indexedDB.open('memory_game_db', 2);
-    req.onupgradeneeded = e => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('cards')) db.createObjectStore('cards', { keyPath: 'id' });
-    };
-    req.onsuccess = e => { idbDb = e.target.result; res(idbDb); };
-    req.onerror = () => rej(req.error);
+function openIDB(){
+  return new Promise((res,rej)=>{
+    if(idbDb){res(idbDb);return;}
+    const req=indexedDB.open('memory_game_db',2);
+    req.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('cards'))db.createObjectStore('cards',{keyPath:'id'});};
+    req.onsuccess=e=>{idbDb=e.target.result;res(idbDb);};
+    req.onerror=()=>rej(req.error);
   });
 }
-async function idbGetAll(store) {
-  const db = await openIDB();
+async function idbGetAll(store){
+  const db=await openIDB();
   return new Promise((res,rej)=>{const tx=db.transaction(store,'readonly');const req=tx.objectStore(store).getAll();req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error);});
 }
-async function idbPutAll(store, items) {
-  const db = await openIDB();
+async function idbPutAll(store,items){
+  const db=await openIDB();
   return new Promise((res,rej)=>{const tx=db.transaction(store,'readwrite');const os=tx.objectStore(store);items.forEach(i=>os.put(i));tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});
 }
-async function idbClear(store) {
-  const db = await openIDB();
+async function idbClear(store){
+  const db=await openIDB();
   return new Promise((res,rej)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).clear();tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});
 }
 
-async function loadCards() {
-  if (storageMode==='idb'){try{return await idbGetAll('cards');}catch{return[];}}
-  try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');}catch{return[];}
+// 並び順を保持するため order を付けて保存 / 復元する
+async function loadCards(){
+  if(storageMode==='idb'){
+    try{
+      const rows=await idbGetAll('cards');
+      rows.sort((a,b)=>(a.order??0)-(b.order??0));
+      return rows.map(({order,...c})=>c);
+    }catch{ return []; }
+  }
+  try{
+    const arr=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    return Array.isArray(arr)?arr:[];
+  }catch{ return []; }
 }
-async function saveCards(cards) {
-  if (storageMode==='idb'){await idbClear('cards');if(cards.length)await idbPutAll('cards',cards);}
-  else localStorage.setItem(STORAGE_KEY,JSON.stringify(cards));
+async function saveCards(cards){
+  if(storageMode==='idb'){
+    try{
+      await idbClear('cards');
+      if(cards.length)await idbPutAll('cards',cards.map((c,i)=>({...c,order:i})));
+      return true;
+    }catch(e){ toast('IndexedDBへの保存に失敗しました','error'); return false; }
+  }
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(cards));
+    return true;
+  }catch(e){
+    toast('localStorageの空き容量が足りません。🗄IndexedDBに切り替えてください','error');
+    return false;
+  }
 }
 
-async function toggleStorageMode() {
-  const newMode = storageMode==='local'?'idb':'local';
-  const cards = await loadCards();
-  storageMode = newMode;
-  localStorage.setItem(MODE_KEY, newMode);
-  await saveCards(cards);
+async function toggleStorageMode(){
+  const prevMode=storageMode;
+  const newMode=storageMode==='local'?'idb':'local';
+  const cards=await loadCards();
+  storageMode=newMode;
+  const ok=await saveCards(cards);
+  if(!ok){ storageMode=prevMode; toast('切り替えに失敗しました（データは元のまま）','error'); }
+  else{ localStorage.setItem(MODE_KEY,newMode); toast(`${newMode==='idb'?'IndexedDB':'localStorage'} に切り替えました`,'success'); }
   updateStorageToggleBtn();
   await updateStorageBar();
-  toast(`${newMode==='idb'?'IndexedDB':'localStorage'} に切り替えました`,'success');
 }
-function updateStorageToggleBtn() {
-  const btn = document.getElementById('storageToggleBtn');
-  if(btn) btn.textContent = storageMode==='idb'?'💾 localStorageに切替':'🗄 IndexedDBに切替';
+function updateStorageToggleBtn(){
+  const btn=document.getElementById('storageToggleBtn');
+  if(btn)btn.textContent=storageMode==='idb'?'💾 localStorageに切替':'🗄 IndexedDBに切替';
 }
-async function updateStorageBar() {
-  const el = document.getElementById('storageInfo');
-  if(!el) return;
-  if(storageMode==='idb'){el.innerHTML=`<span style="font-size:12px;color:var(--success);">🗄 IndexedDB使用中</span>`;return;}
+async function updateStorageBar(){
+  const el=document.getElementById('storageInfo');
+  if(!el)return;
+  if(storageMode==='idb'){el.innerHTML='<span style="font-size:12px;color:var(--success);">🗄 IndexedDB使用中</span>';return;}
   let used=0;
-  try{for(let k in localStorage)if(localStorage.hasOwnProperty(k))used+=(localStorage[k].length+k.length)*2;}catch{}
+  try{for(const k in localStorage)if(Object.prototype.hasOwnProperty.call(localStorage,k))used+=(localStorage[k].length+k.length)*2;}catch{}
   const pct=Math.min(100,Math.round(used/5242880*100));
   const col=pct>80?'var(--danger)':pct>60?'var(--accent2)':'var(--success)';
   el.innerHTML=`<span>localStorage</span><div class="storage-bar-wrap"><div class="storage-bar" style="width:${pct}%;background:${col};"></div></div><span>${pct}%</span>`;
@@ -514,64 +541,89 @@ async function updateStorageBar() {
 // ============================================================
 // THEME
 // ============================================================
-function applyTheme(t) {
-  if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');document.getElementById('themeIconSun').style.display='block';document.getElementById('themeIconMoon').style.display='none';}
-  else{document.documentElement.removeAttribute('data-theme');document.getElementById('themeIconSun').style.display='none';document.getElementById('themeIconMoon').style.display='block';}
+function applyTheme(t){
+  const sun=document.getElementById('themeIconSun'), moon=document.getElementById('themeIconMoon');
+  if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');sun.style.display='block';moon.style.display='none';}
+  else{document.documentElement.removeAttribute('data-theme');sun.style.display='none';moon.style.display='block';}
 }
-function toggleTheme(){const c=document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';const n=c==='dark'?'light':'dark';localStorage.setItem(THEME_KEY,n);applyTheme(n);}
+function toggleTheme(){
+  const n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  localStorage.setItem(THEME_KEY,n);applyTheme(n);
+}
 applyTheme(localStorage.getItem(THEME_KEY)||'light');
 
 // ============================================================
 // NAVIGATION
 // ============================================================
+let currentTab='home';
+
 function showHome(){
+  leaveTab();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-home').classList.add('active');
   document.getElementById('tabs').classList.add('hidden');
+  currentTab='home';
   window.scrollTo(0,0);
 }
+function leaveTab(){
+  // ゲーム中に別タブへ移動したらタイマーを一時停止
+  if(currentTab==='game')pauseTimer();
+}
 function showTab(id,btnEl){
+  leaveTab();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
   document.getElementById('tabs').classList.remove('hidden');
   const btn=btnEl||document.querySelector(`.tab-btn[data-tab="${id}"]`);
   if(btn)btn.classList.add('active');
+  currentTab=id;
+
   if(id==='library'){renderLibrary();updateStorageBar();updateStorageToggleBtn();}
-  if(id==='game')renderGamePicker();
+  if(id==='game'){
+    if(gameState){ resumeTimer(); layoutBoard(); }   // 進行中のゲームは維持する
+    else renderGamePicker();
+  }
   window.scrollTo(0,0);
 }
 
 // ============================================================
 // TOAST
 // ============================================================
+let toastTimer=null;
 function toast(msg,type=''){
-  const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;
-  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+type;
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
 }
 
 // ============================================================
 // IMAGE EDITOR FACTORY
 // ============================================================
-function makeImgEditor(canvasEl, wrapEl, onScaleChange, W, H) {
-  W = W||180; H = H||252;
-  canvasEl.width=W; canvasEl.height=H;
+const EXPORT_RES=2; // 内部解像度を2倍にして書き出し画質を確保
+
+function makeImgEditor(canvasEl,wrapEl,onScaleChange,W,H){
+  W=W||180;H=H||252;
+  canvasEl.width=W*EXPORT_RES;canvasEl.height=H*EXPORT_RES;
   const ctx=canvasEl.getContext('2d');
-  let img=null, tx=0, ty=0, scale=1;
-  let dragging=false, lastX=0, lastY=0, pinchDist=null;
+  ctx.setTransform(EXPORT_RES,0,0,EXPORT_RES,0,0);
+  ctx.imageSmoothingQuality='high';
+
+  let img=null,tx=0,ty=0,scale=1;
+  let dragging=false,lastX=0,lastY=0,pinchDist=null;
 
   function clamp(){
     if(!img)return;
-    const iw=img.naturalWidth*scale, ih=img.naturalHeight*scale;
-    const mx=Math.min(W*0.5,iw*0.5), my=Math.min(H*0.5,ih*0.5);
-    tx=Math.max(W-iw+(iw-W)/2-mx, Math.min(mx+(iw-W)/2, tx));
-    ty=Math.max(H-ih+(ih-H)/2-my, Math.min(my+(ih-H)/2, ty));
+    const iw=img.naturalWidth*scale,ih=img.naturalHeight*scale;
+    const mx=Math.min(W*0.5,iw*0.5),my=Math.min(H*0.5,ih*0.5);
+    tx=Math.max(W-iw+(iw-W)/2-mx,Math.min(mx+(iw-W)/2,tx));
+    ty=Math.max(H-ih+(ih-H)/2-my,Math.min(my+(ih-H)/2,ty));
   }
   function draw(){
     ctx.clearRect(0,0,W,H);
     if(!img)return;
-    const dw=img.naturalWidth*scale, dh=img.naturalHeight*scale;
+    const dw=img.naturalWidth*scale,dh=img.naturalHeight*scale;
     ctx.drawImage(img,(W-dw)/2+tx,(H-dh)/2+ty,dw,dh);
   }
   function notify(){if(onScaleChange)onScaleChange(Math.round(scale*100));}
@@ -580,37 +632,39 @@ function makeImgEditor(canvasEl, wrapEl, onScaleChange, W, H) {
     return new Promise(res=>{
       const i=new Image();
       i.crossOrigin='anonymous';
-      i.onload=()=>{
-        img=i;
-        scale=Math.max(W/i.naturalWidth,H/i.naturalHeight);
-        tx=0;ty=0;clamp();draw();notify();res();
-      };
-      i.onerror=()=>{toast('画像の読み込みに失敗しました','error');res();};
+      i.onload=()=>{img=i;scale=Math.max(W/i.naturalWidth,H/i.naturalHeight);tx=0;ty=0;clamp();draw();notify();res(true);};
+      i.onerror=()=>{toast('画像の読み込みに失敗しました（URLやCORS設定を確認してください）','error');res(false);};
       i.src=src;
     });
   }
   function setZoom(s,cx,cy){
+    if(!img)return;
     const prev=scale;
     scale=Math.max(0.1,Math.min(10,s));
-    if(cx!==undefined){tx+=(cx-W/2)*(1-scale/prev);ty+=(cy-H/2)*(1-scale/prev);}
+    if(cx!==undefined&&prev>0){tx+=(cx-W/2)*(1-scale/prev);ty+=(cy-H/2)*(1-scale/prev);}
     clamp();draw();notify();
   }
   function resetTransform(){if(!img)return;scale=Math.max(W/img.naturalWidth,H/img.naturalHeight);tx=0;ty=0;clamp();draw();notify();}
-  function exportDataUrl(){return canvasEl.toDataURL('image/jpeg',0.92);}
-  function hasImage(){return!!img;}
+  function clearImage(){img=null;scale=1;tx=0;ty=0;draw();notify();}
+  function exportDataUrl(){return canvasEl.toDataURL('image/jpeg',0.85);}
+  function hasImage(){return !!img;}
   function getScalePct(){return Math.round(scale*100);}
 
-  // Mouse
+  // Mouse（window リスナーは1エディタにつき1組だけ）
+  const onMouseMove=e=>{if(!dragging)return;tx+=e.clientX-lastX;ty+=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;clamp();draw();};
+  const onMouseUp=()=>{dragging=false;};
   wrapEl.addEventListener('mousedown',e=>{if(!img)return;dragging=true;lastX=e.clientX;lastY=e.clientY;e.preventDefault();});
-  window.addEventListener('mousemove',e=>{if(!dragging)return;tx+=e.clientX-lastX;ty+=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;clamp();draw();});
-  window.addEventListener('mouseup',()=>dragging=false);
+  window.addEventListener('mousemove',onMouseMove);
+  window.addEventListener('mouseup',onMouseUp);
+
   wrapEl.addEventListener('wheel',e=>{
+    if(!img)return;
     e.preventDefault();
     const r=wrapEl.getBoundingClientRect();
-    // 1% per wheel notch (deltaY is typically ±100 for one notch)
     const notches=e.deltaY/100;
-    setZoom(scale-notches*0.01,e.clientX-r.left,e.clientY-r.top);
+    setZoom(scale-notches*0.02,e.clientX-r.left,e.clientY-r.top);
   },{passive:false});
+
   // Touch
   wrapEl.addEventListener('touchstart',e=>{
     if(!img)return;
@@ -620,59 +674,74 @@ function makeImgEditor(canvasEl, wrapEl, onScaleChange, W, H) {
   },{passive:false});
   wrapEl.addEventListener('touchmove',e=>{
     if(!img)return;
-    if(e.touches.length===1&&dragging){tx+=e.touches[0].clientX-lastX;ty+=e.touches[0].clientY-lastY;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;clamp();draw();}
-    else if(e.touches.length===2&&pinchDist!==null){
+    if(e.touches.length===1&&dragging){
+      tx+=e.touches[0].clientX-lastX;ty+=e.touches[0].clientY-lastY;
+      lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;clamp();draw();
+    }else if(e.touches.length===2&&pinchDist){
+      const r=wrapEl.getBoundingClientRect();
       const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-      const mid={x:(e.touches[0].clientX+e.touches[1].clientX)/2-wrapEl.getBoundingClientRect().left,y:(e.touches[0].clientY+e.touches[1].clientY)/2-wrapEl.getBoundingClientRect().top};
-      setZoom(scale*(d/pinchDist),mid.x,mid.y);pinchDist=d;
+      const mx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;
+      const my=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;
+      setZoom(scale*(d/pinchDist),mx,my);pinchDist=d;
     }
     e.preventDefault();
   },{passive:false});
   wrapEl.addEventListener('touchend',()=>{dragging=false;pinchDist=null;});
+  wrapEl.addEventListener('touchcancel',()=>{dragging=false;pinchDist=null;});
 
-  return{loadImage,setZoom,resetTransform,exportDataUrl,hasImage,getScalePct};
+  return {loadImage,setZoom,resetTransform,clearImage,exportDataUrl,hasImage,getScalePct};
 }
 
 // ============================================================
-// FRONT CARD EDITOR
+// FRONT CARD EDITOR (作成タブ)
 // ============================================================
 let frontEditor=null;
-let zoomHoldTimer=null, zoomHoldInterval=null;
+let zoomHoldTimer=null,zoomHoldInterval=null;
+let urlDebounce=null,editUrlDebounce=null;
 
 function initFrontEditor(){
-  if(frontEditor)return;
+  if(frontEditor)return frontEditor;
   frontEditor=makeImgEditor(
     document.getElementById('frontCanvas'),
     document.getElementById('editorCanvas'),
     pct=>{document.getElementById('frontZoomInput').value=pct;}
   );
+  return frontEditor;
 }
-
+function showFrontControls(show){
+  document.getElementById('frontPlaceholder').style.display=show?'none':'flex';
+  document.getElementById('frontControls').style.display=show?'flex':'none';
+}
+function editorLoadUrlDebounced(){
+  clearTimeout(urlDebounce);
+  urlDebounce=setTimeout(editorLoadUrl,500);
+}
 function editorLoadUrl(){
   const url=document.getElementById('cardUrl').value.trim();
   if(!url)return;
-  initFrontEditor();
-  frontEditor.loadImage(url).then(()=>{
-    document.getElementById('frontPlaceholder').style.display='none';
-    document.getElementById('frontControls').style.display='flex';
-  });
+  initFrontEditor().loadImage(url).then(ok=>{if(ok)showFrontControls(true);});
 }
 function editorLoadFile(input){
-  const file=input.files[0];if(!file)return;
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('画像ファイルを選択してください','error');return;}
   const r=new FileReader();
-  r.onload=e=>{document.getElementById('cardUrl').value='';initFrontEditor();frontEditor.loadImage(e.target.result).then(()=>{document.getElementById('frontPlaceholder').style.display='none';document.getElementById('frontControls').style.display='flex';});};
+  r.onload=e=>{
+    document.getElementById('cardUrl').value='';
+    initFrontEditor().loadImage(e.target.result).then(ok=>{if(ok)showFrontControls(true);});
+  };
+  r.onerror=()=>toast('ファイルの読み込みに失敗しました','error');
   r.readAsDataURL(file);
 }
 function onZoomInputChange(){
   if(!frontEditor)return;
-  const v=parseInt(document.getElementById('frontZoomInput').value)||100;
-  frontEditor.setZoom(v/100);
+  const v=parseInt(document.getElementById('frontZoomInput').value,10);
+  if(!isNaN(v))frontEditor.setZoom(v/100);
 }
 function editorResetTransform(){if(frontEditor)frontEditor.resetTransform();}
-
 function startZoomHold(dir){
   stopZoomHold();
-  const step=()=>{if(!frontEditor)return;const v=frontEditor.getScalePct();frontEditor.setZoom((v+dir)/100);};
+  const step=()=>{if(!frontEditor)return;frontEditor.setZoom((frontEditor.getScalePct()+dir)/100);};
   step();
   zoomHoldTimer=setTimeout(()=>{zoomHoldInterval=setInterval(step,60);},400);
 }
@@ -681,13 +750,12 @@ function stopZoomHold(){clearTimeout(zoomHoldTimer);clearInterval(zoomHoldInterv
 async function saveCard(){
   const name=document.getElementById('cardName').value.trim();
   if(!name){toast('カード名を入力してください','error');return;}
-  initFrontEditor();
-  if(!frontEditor.hasImage()){toast('画像を選択してください','error');return;}
+  if(!frontEditor||!frontEditor.hasImage()){toast('画像を選択してください','error');return;}
   const dataUrl=frontEditor.exportDataUrl();
   const cards=await loadCards();
-  const id=Date.now().toString()+Math.floor(Math.random()*1000);
-  cards.push({id,name,image:dataUrl});
-  await saveCards(cards);
+  cards.push({id:newId(),name,image:dataUrl});
+  if(!(await saveCards(cards)))return;
+  await updateStorageBar();
   toast(`「${name}」を保存しました`,'success');
   clearEditor();
 }
@@ -695,12 +763,24 @@ function clearEditor(){
   document.getElementById('cardName').value='';
   document.getElementById('cardUrl').value='';
   document.getElementById('fileInput').value='';
-  frontEditor=null;
-  const c=document.getElementById('frontCanvas');
-  c.getContext('2d').clearRect(0,0,c.width,c.height);
-  document.getElementById('frontPlaceholder').style.display='flex';
-  document.getElementById('frontControls').style.display='none';
+  if(frontEditor)frontEditor.clearImage();
+  showFrontControls(false);
 }
+
+// 作成タブへのドラッグ＆ドロップ
+(function initDrop(){
+  const drop=document.getElementById('editorDrop');
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('dragover');}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('dragover');}));
+  drop.addEventListener('drop',e=>{
+    const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(!f)return;
+    if(!f.type.startsWith('image/')){toast('画像ファイルをドロップしてください','error');return;}
+    const r=new FileReader();
+    r.onload=ev2=>{document.getElementById('cardUrl').value='';initFrontEditor().loadImage(ev2.target.result).then(ok=>{if(ok)showFrontControls(true);});};
+    r.readAsDataURL(f);
+  });
+})();
 
 // ============================================================
 // LIBRARY
@@ -708,122 +788,126 @@ function clearEditor(){
 let selectedIds=new Set();
 
 async function renderLibrary(){
-  selectedIds.clear();updateSelectedCount();
   const cards=await loadCards();
+  const ids=new Set(cards.map(c=>c.id));
+  [...selectedIds].forEach(id=>{if(!ids.has(id))selectedIds.delete(id);});
+  updateSelectedCount();
+
   const grid=document.getElementById('cardGrid');
   if(!cards.length){
-    grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🃏</div><p>カードがありません<br>「カード作成」で作成してください</p></div>`;
+    grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🃏</div><p>カードがありません<br>「カード作成」で作成してください</p></div>';
     return;
   }
-  grid.innerHTML=cards.map((c,i)=>`
-    <div class="card-item" data-id="${c.id}" data-idx="${i}">
+  // 注意: data-idx はゲーム盤面のセレクタと衝突するため使わない
+  grid.innerHTML=cards.map(c=>`
+    <div class="card-item${selectedIds.has(c.id)?' selected':''}" data-id="${escAttr(c.id)}">
       <div class="select-check">✓</div>
-      <img src="${c.image}" loading="lazy" onerror="this.style.opacity='0.3'" draggable="false">
+      <img src="${escAttr(c.image)}" loading="lazy" onerror="this.style.opacity='0.3'" draggable="false" alt="">
       <div class="card-item-name">${escHtml(c.name)}</div>
       <div class="card-item-actions">
-        <button class="card-action-btn" onclick="openEditModal('${c.id}',event)">✏️ 編集</button>
+        <button class="card-action-btn" data-edit="${escAttr(c.id)}">✏️ 編集</button>
       </div>
     </div>`).join('');
 
-  // Attach events
-  grid.querySelectorAll('.card-item').forEach(el=>{
-    setupCardItemEvents(el);
+  grid.querySelectorAll('.card-item').forEach(setupCardItemEvents);
+  grid.querySelectorAll('[data-edit]').forEach(btn=>{
+    btn.addEventListener('click',e=>{e.stopPropagation();openEditModal(btn.dataset.edit);});
   });
 }
-
 function updateSelectedCount(){
   const el=document.getElementById('selectedCount');
   if(el)el.textContent=selectedIds.size?`${selectedIds.size}枚選択中`:'';
 }
+function librarySelectAll(){
+  document.querySelectorAll('#cardGrid .card-item').forEach(el=>{el.classList.add('selected');selectedIds.add(el.dataset.id);});
+  updateSelectedCount();
+}
+function libraryClearSelection(){
+  document.querySelectorAll('#cardGrid .card-item').forEach(el=>el.classList.remove('selected'));
+  selectedIds.clear();updateSelectedCount();
+}
 
 // ============================================================
-// CARD ITEM EVENTS (select + long-press drag)
+// CARD ITEM EVENTS (選択 + 長押しドラッグ並び替え)
 // ============================================================
-let dragState=null; // {sourceId, ghost, sourceEl, origIdx}
+let dragState=null;
 
 function setupCardItemEvents(el){
-  let pressTimer=null;
-  let pressStartX=0, pressStartY=0;
-  let didDrag=false;
+  let pressTimer=null,startX=0,startY=0,pressed=false;
 
   function startPress(x,y){
-    pressStartX=x; pressStartY=y; didDrag=false;
-    pressTimer=setTimeout(()=>{
-      beginDrag(el,x,y);
-    },500);
+    startX=x;startY=y;pressed=true;
+    el.classList.add('pressing');
+    pressTimer=setTimeout(()=>{pressTimer=null;el.classList.remove('pressing');beginDrag(el,x,y);},500);
   }
   function cancelPress(){
-    clearTimeout(pressTimer); pressTimer=null;
+    clearTimeout(pressTimer);pressTimer=null;pressed=false;el.classList.remove('pressing');
   }
 
   // Mouse
   el.addEventListener('mousedown',e=>{
-    if(e.button!==0)return;
-    if(e.target.closest('.card-action-btn'))return;
+    if(e.button!==0||e.target.closest('.card-action-btn'))return;
     startPress(e.clientX,e.clientY);
   });
   el.addEventListener('mousemove',e=>{
     if(!pressTimer)return;
-    if(Math.hypot(e.clientX-pressStartX,e.clientY-pressStartY)>8)cancelPress();
+    if(Math.hypot(e.clientX-startX,e.clientY-startY)>8)cancelPress();
   });
   el.addEventListener('mouseup',e=>{
-    if(pressTimer){cancelPress();if(!didDrag)handleCardClick(el,e);}
+    if(e.target.closest('.card-action-btn'))return;
+    if(pressTimer){cancelPress();toggleLibrarySelect(el);}
+    else cancelPress();
   });
-  el.addEventListener('mouseleave',()=>{if(pressTimer&&!dragState)cancelPress();});
+  el.addEventListener('mouseleave',()=>{if(!dragState)cancelPress();});
 
-  // Touch
+  // Touch（スクロールを妨げないため touchstart では preventDefault しない）
   el.addEventListener('touchstart',e=>{
     if(e.target.closest('.card-action-btn'))return;
     const t=e.touches[0];startPress(t.clientX,t.clientY);
-    e.preventDefault();
-  },{passive:false});
+  },{passive:true});
   el.addEventListener('touchmove',e=>{
     if(dragState){moveDrag(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();return;}
     if(!pressTimer)return;
     const t=e.touches[0];
-    if(Math.hypot(t.clientX-pressStartX,t.clientY-pressStartY)>8)cancelPress();
+    if(Math.hypot(t.clientX-startX,t.clientY-startY)>8)cancelPress();
   },{passive:false});
   el.addEventListener('touchend',e=>{
     if(dragState){endDrag();return;}
-    if(pressTimer){cancelPress();handleCardClick(el,e);}
+    if(pressTimer){cancelPress();toggleLibrarySelect(el);e.preventDefault();}
+    else cancelPress();
   });
+  el.addEventListener('touchcancel',()=>{if(dragState)endDrag();else cancelPress();});
 }
 
-function handleCardClick(el,e){
-  if(e.target.closest('.card-action-btn'))return;
+function toggleLibrarySelect(el){
   const id=el.dataset.id;
   el.classList.toggle('selected');
-  if(el.classList.contains('selected'))selectedIds.add(id);
-  else selectedIds.delete(id);
+  if(el.classList.contains('selected'))selectedIds.add(id);else selectedIds.delete(id);
   updateSelectedCount();
 }
 
-function beginDrag(sourceEl, startX, startY){
-  const id=sourceEl.dataset.id;
-  // Create ghost
+function beginDrag(sourceEl,startX,startY){
   const ghost=document.createElement('div');
   ghost.className='drag-ghost';
   ghost.style.width=sourceEl.offsetWidth+'px';
-  ghost.innerHTML=sourceEl.innerHTML;
-  ghost.querySelector('.card-item-actions')?.remove();
-  ghost.querySelector('.select-check')?.remove();
+  const img=sourceEl.querySelector('img'), nameEl=sourceEl.querySelector('.card-item-name');
+  ghost.innerHTML=`<img src="${escAttr(img?img.getAttribute('src'):'')}" alt=""><div class="card-item-name">${nameEl?nameEl.textContent:''}</div>`;
   document.body.appendChild(ghost);
 
   const rect=sourceEl.getBoundingClientRect();
-  const offX=startX-rect.left, offY=startY-rect.top;
-
-  ghost.style.left=(startX-offX)+'px';
-  ghost.style.top=(startY-offY)+'px';
+  const offX=startX-rect.left,offY=startY-rect.top;
+  ghost.style.left=rect.left+'px';
+  ghost.style.top=rect.top+'px';
 
   sourceEl.classList.add('drag-placeholder');
-  dragState={id, ghost, sourceEl, offX, offY, currentTarget:null};
-  didDrag=true;
+  document.body.style.touchAction='none';
 
-  // Mousemove / mouseup for desktop drag
-  function onMove(e){moveDrag(e.clientX,e.clientY);}
-  function onUp(){endDrag();window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);}
+  const onMove=e=>moveDrag(e.clientX,e.clientY);
+  const onUp=()=>endDrag();
   window.addEventListener('mousemove',onMove);
   window.addEventListener('mouseup',onUp);
+
+  dragState={id:sourceEl.dataset.id,ghost,sourceEl,offX,offY,currentTarget:null,onMove,onUp};
 }
 
 function moveDrag(x,y){
@@ -832,45 +916,47 @@ function moveDrag(x,y){
   ghost.style.left=(x-offX)+'px';
   ghost.style.top=(y-offY)+'px';
 
-  // Find target card under cursor
-  ghost.style.pointerEvents='none';
   const under=document.elementFromPoint(x,y);
-  ghost.style.pointerEvents='';
-  const target=under?.closest('.card-item:not(.drag-placeholder)');
+  const target=under?under.closest('#cardGrid .card-item:not(.drag-placeholder)'):null;
 
-  document.querySelectorAll('.card-item').forEach(el=>{el.classList.remove('drag-over-before','drag-over-after');});
-  if(target&&dragState){
-    dragState.currentTarget=target;
+  document.querySelectorAll('#cardGrid .card-item').forEach(el=>el.classList.remove('drag-over-before','drag-over-after'));
+  dragState.currentTarget=target||null;
+  if(target){
     const r=target.getBoundingClientRect();
-    if(x<r.left+r.width/2)target.classList.add('drag-over-before');
-    else target.classList.add('drag-over-after');
-  } else if(dragState){
-    dragState.currentTarget=null;
+    target.classList.add(x<r.left+r.width/2?'drag-over-before':'drag-over-after');
   }
+  // 端に近づいたら自動スクロール
+  const edge=70;
+  if(y<edge)window.scrollBy(0,-12);
+  else if(y>window.innerHeight-edge)window.scrollBy(0,12);
 }
 
 async function endDrag(){
   if(!dragState)return;
-  const {id,ghost,sourceEl,currentTarget}=dragState;
+  const {id,ghost,sourceEl,currentTarget,onMove,onUp}=dragState;
   dragState=null;
 
+  window.removeEventListener('mousemove',onMove);
+  window.removeEventListener('mouseup',onUp);
+  document.body.style.touchAction='';
   ghost.remove();
   sourceEl.classList.remove('drag-placeholder');
-  document.querySelectorAll('.card-item').forEach(el=>el.classList.remove('drag-over-before','drag-over-after'));
 
-  if(currentTarget&&currentTarget.dataset.id!==id){
-    const targetId=currentTarget.dataset.id;
+  let insertAfter=false,targetId=null;
+  if(currentTarget){
+    targetId=currentTarget.dataset.id;
+    insertAfter=currentTarget.classList.contains('drag-over-after');
+  }
+  document.querySelectorAll('#cardGrid .card-item').forEach(el=>el.classList.remove('drag-over-before','drag-over-after'));
+
+  if(targetId&&targetId!==id){
     const cards=await loadCards();
     const fromIdx=cards.findIndex(c=>c.id===id);
-    let toIdx=cards.findIndex(c=>c.id===targetId);
-    if(fromIdx!==-1&&toIdx!==-1){
-      const r=currentTarget.getBoundingClientRect();
-      // We compare ghost final position to decide before/after
-      const insertAfter=currentTarget.classList.contains('drag-over-after');
+    if(fromIdx!==-1&&cards.some(c=>c.id===targetId)){
       const [moved]=cards.splice(fromIdx,1);
-      let newTo=cards.findIndex(c=>c.id===targetId);
-      if(insertAfter)newTo++;
-      cards.splice(newTo,0,moved);
+      let to=cards.findIndex(c=>c.id===targetId);
+      if(insertAfter)to++;
+      cards.splice(to,0,moved);
       await saveCards(cards);
     }
   }
@@ -880,55 +966,55 @@ async function endDrag(){
 // ============================================================
 // EDIT CARD MODAL
 // ============================================================
-let editEditor=null;
-let editCardId=null;
-let editZoomHoldTimer=null, editZoomHoldInterval=null;
+let editEditor=null,editCardId=null;
+let editZoomHoldTimer=null,editZoomHoldInterval=null;
 
-async function openEditModal(id, e){
-  e.stopPropagation();
-  editCardId=id;
-  const cards=await loadCards();
-  const card=cards.find(c=>c.id===id);
-  if(!card)return;
-
-  document.getElementById('editCardName').value=card.name;
-  document.getElementById('editCardUrl').value='';
-  document.getElementById('editFileInput').value='';
-  document.getElementById('editModal').classList.remove('hidden');
-
-  // init editor with smaller card size (140x196 = same ratio 63.5:88.9)
+function initEditEditor(){
+  if(editEditor)return editEditor;
   editEditor=makeImgEditor(
     document.getElementById('editFrontCanvas'),
     document.getElementById('editCanvas'),
     pct=>{document.getElementById('editZoomInput').value=pct;},
-    140, 196
+    140,196
   );
-  await editEditor.loadImage(card.image);
+  return editEditor;
 }
-
+async function openEditModal(id){
+  const cards=await loadCards();
+  const card=cards.find(c=>c.id===id);
+  if(!card){toast('カードが見つかりません','error');return;}
+  editCardId=id;
+  document.getElementById('editCardName').value=card.name;
+  document.getElementById('editCardUrl').value='';
+  document.getElementById('editFileInput').value='';
+  document.getElementById('editModal').classList.remove('hidden');
+  await initEditEditor().loadImage(card.image);
+}
 function closeEditModal(){
   document.getElementById('editModal').classList.add('hidden');
-  editEditor=null; editCardId=null;
+  if(editEditor)editEditor.clearImage();
+  editCardId=null;
 }
-
+function editLoadUrlDebounced(){clearTimeout(editUrlDebounce);editUrlDebounce=setTimeout(editLoadUrl,500);}
 function editLoadUrl(){
   const url=document.getElementById('editCardUrl').value.trim();
   if(!url||!editEditor)return;
   editEditor.loadImage(url);
 }
 function editLoadFile(input){
-  const file=input.files[0];if(!file||!editEditor)return;
+  const file=input.files&&input.files[0];
+  if(!file||!editEditor)return;
+  if(!file.type.startsWith('image/')){toast('画像ファイルを選択してください','error');return;}
   const r=new FileReader();
   r.onload=e=>{document.getElementById('editCardUrl').value='';editEditor.loadImage(e.target.result);};
   r.readAsDataURL(file);
 }
 function onEditZoomInputChange(){
   if(!editEditor)return;
-  const v=parseInt(document.getElementById('editZoomInput').value)||100;
-  editEditor.setZoom(v/100);
+  const v=parseInt(document.getElementById('editZoomInput').value,10);
+  if(!isNaN(v))editEditor.setZoom(v/100);
 }
 function editResetTransform(){if(editEditor)editEditor.resetTransform();}
-
 function startEditZoomHold(dir){
   stopEditZoomHold();
   const step=()=>{if(!editEditor)return;editEditor.setZoom((editEditor.getScalePct()+dir)/100);};
@@ -946,7 +1032,7 @@ async function saveEditCard(){
   const idx=cards.findIndex(c=>c.id===editCardId);
   if(idx===-1){toast('カードが見つかりません','error');return;}
   cards[idx]={...cards[idx],name,image:dataUrl};
-  await saveCards(cards);
+  if(!(await saveCards(cards)))return;
   await updateStorageBar();
   toast(`「${name}」を更新しました`,'success');
   closeEditModal();
@@ -958,10 +1044,12 @@ async function saveEditCard(){
 // ============================================================
 async function deleteSelected(){
   if(!selectedIds.size){toast('カードを選択してください','error');return;}
-  if(!confirm(`${selectedIds.size}枚のカードを削除しますか？`))return;
   const count=selectedIds.size;
+  if(!confirm(`${count}枚のカードを削除しますか？`))return;
   const cards=(await loadCards()).filter(c=>!selectedIds.has(c.id));
-  await saveCards(cards);
+  if(!(await saveCards(cards)))return;
+  selectedIds.forEach(id=>gamePickerSelected.delete(id));
+  selectedIds.clear();
   await updateStorageBar();
   toast(`${count}枚を削除しました`);
   renderLibrary();
@@ -978,8 +1066,11 @@ async function exportAll(){
 }
 function doExportJSON(cards,label){
   const blob=new Blob([JSON.stringify(cards,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`memory_cards_${label}.json`;a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`memory_cards_${label}.json`;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
   toast(`${cards.length}枚をエクスポートしました`,'success');
 }
 function openImportModal(){document.getElementById('importModal').classList.remove('hidden');}
@@ -989,247 +1080,345 @@ function closeImportModal(){
   document.getElementById('importFileInput').value='';
 }
 function importFromFile(input){
-  const file=input.files[0];
+  const file=input.files&&input.files[0];
   if(!file)return;
   const r=new FileReader();
-  r.onload=e=>{
-    document.getElementById('importText').value=e.target.result;
-    toast(`「${file.name}」を読み込みました`);
-  };
+  r.onload=e=>{document.getElementById('importText').value=e.target.result;toast(`「${file.name}」を読み込みました`);};
   r.onerror=()=>toast('ファイルの読み込みに失敗しました','error');
   r.readAsText(file,'utf-8');
 }
 async function doImport(){
   const raw=document.getElementById('importText').value.trim();
   let imported;
-  try{imported=JSON.parse(raw);if(!Array.isArray(imported))throw new Error();}
+  try{imported=JSON.parse(raw);if(!Array.isArray(imported))throw new Error('not array');}
   catch{toast('JSONの形式が正しくありません','error');return;}
-  const valid=imported.filter(c=>c.name&&c.image);
+  const valid=imported.filter(c=>c&&typeof c.name==='string'&&typeof c.image==='string'&&c.name&&c.image);
   if(!valid.length){toast('有効なカードがありません','error');return;}
   const cards=await loadCards();
-  const existingIds=new Set(cards.map(c=>c.id));
+  const existing=new Set(cards.map(c=>c.id));
   let added=0;
   valid.forEach(c=>{
-    let id=c.id;if(!id||existingIds.has(id))id=Date.now().toString()+Math.floor(Math.random()*10000);
-    cards.push({id,name:c.name,image:c.image});existingIds.add(id);added++;
+    let id=c.id;
+    if(!id||existing.has(id))id=newId();
+    cards.push({id,name:String(c.name).slice(0,30),image:c.image});
+    existing.add(id);added++;
   });
-  await saveCards(cards);await updateStorageBar();
-  closeImportModal();toast(`${added}枚をインポートしました`,'success');renderLibrary();
+  if(!(await saveCards(cards)))return;
+  await updateStorageBar();
+  closeImportModal();
+  toast(`${added}枚をインポートしました`,'success');
+  renderLibrary();
 }
 
 // ============================================================
 // GAME
 // ============================================================
-const DIFF={easy:{pairs:8,cols:4},normal:{pairs:15,cols:6},hard:{pairs:24,cols:8}};
-let selectedDiff='easy',gamePickerSelected=new Set(),gameState=null,gameTimer=null,gameSeconds=0,timeLimit=0;
-let gameSession=0, pendingFlipTimeouts=[];
+const DIFF={easy:{pairs:8,cols:4,time:120},normal:{pairs:15,cols:6,time:240},hard:{pairs:24,cols:8,time:420}};
+let selectedDiff='easy';
+let gamePickerSelected=new Set();
+let gameState=null;
+let gameEls=[];                 // 盤面カードのDOM参照（querySelector衝突を避ける）
+let gameTimer=null,gameSeconds=0,timeLimit=0;
+let gameSession=0,pendingTimeouts=[];
 
-function selectDiff(el){document.querySelectorAll('.diff-card').forEach(d=>d.classList.remove('active'));el.classList.add('active');selectedDiff=el.dataset.diff;}
+function selectDiff(el){
+  document.querySelectorAll('.diff-card').forEach(d=>d.classList.remove('active'));
+  el.classList.add('active');
+  selectedDiff=el.dataset.diff;
+}
 
 async function renderGamePicker(){
-  gamePickerSelected.clear();
   const cards=await loadCards();
+  const ids=new Set(cards.map(c=>c.id));
+  [...gamePickerSelected].forEach(id=>{if(!ids.has(id))gamePickerSelected.delete(id);});
+
   const picker=document.getElementById('gameCardPicker');
-  if(!cards.length){picker.innerHTML=`<div class="empty" style="grid-column:1/-1;padding:20px"><p>カードがありません</p></div>`;return;}
+  if(!cards.length){
+    picker.innerHTML='<div class="empty" style="grid-column:1/-1;padding:20px"><p>カードがありません<br>「カード作成」で作成してください</p></div>';
+    updatePickCount();return;
+  }
   picker.innerHTML=cards.map(c=>`
-    <div class="card-item" data-id="${c.id}" onclick="toggleGamePick(this,'${c.id}')">
+    <div class="card-item${gamePickerSelected.has(c.id)?' selected':''}" data-id="${escAttr(c.id)}">
       <div class="select-check">✓</div>
-      <img src="${c.image}" loading="lazy">
+      <img src="${escAttr(c.image)}" loading="lazy" alt="" draggable="false">
       <div class="card-item-name">${escHtml(c.name)}</div>
     </div>`).join('');
+  picker.querySelectorAll('.card-item').forEach(el=>{
+    el.addEventListener('click',()=>{
+      el.classList.toggle('selected');
+      if(el.classList.contains('selected'))gamePickerSelected.add(el.dataset.id);
+      else gamePickerSelected.delete(el.dataset.id);
+      updatePickCount();
+    });
+  });
+  updatePickCount();
 }
-function toggleGamePick(el,id){
-  el.classList.toggle('selected');
-  if(el.classList.contains('selected'))gamePickerSelected.add(id);else gamePickerSelected.delete(id);
+function pickAll(v){
+  document.querySelectorAll('#gameCardPicker .card-item').forEach(el=>{
+    el.classList.toggle('selected',v);
+    if(v)gamePickerSelected.add(el.dataset.id);else gamePickerSelected.delete(el.dataset.id);
+  });
+  updatePickCount();
+}
+function updatePickCount(){
+  const el=document.getElementById('pickCount');
+  if(el)el.textContent=gamePickerSelected.size?`${gamePickerSelected.size}種類を選択中`:'未選択（全カードから抽選）';
+}
+
+function clearGameTimeouts(){
+  pendingTimeouts.forEach(clearTimeout);
+  pendingTimeouts=[];
+}
+function later(ms,fn){
+  const session=gameSession;
+  const t=setTimeout(()=>{if(session!==gameSession||!gameState)return;fn();},ms);
+  pendingTimeouts.push(t);
+  return t;
 }
 
 async function startGame(){
-  // 前のラウンドの判定待ちタイマーが新しいラウンドに漏れ込まないようにする
-  gameSession++;
-  pendingFlipTimeouts.forEach(clearTimeout);
-  pendingFlipTimeouts=[];
+  gameSession++;              // 旧ラウンドのタイマーを無効化
+  clearGameTimeouts();
+  stopTimer();
 
-  const diff=DIFF[selectedDiff];
+  const conf=DIFF[selectedDiff];
   const allCards=await loadCards();
   if(!allCards.length){toast('先にカードを作成してください','error');return;}
-  let pool=gamePickerSelected.size>0?allCards.filter(c=>gamePickerSelected.has(c.id)):[...allCards];
-  if(pool.length<diff.pairs){
-    const orig=[...pool];let ci=1;
-    while(pool.length<diff.pairs){orig.forEach(c=>{if(pool.length<diff.pairs)pool.push({...c,id:c.id+'_c'+ci,name:c.name+' ('+(ci+1)+')'});});ci++;}
-  }
-  pool=shuffle(pool).slice(0,diff.pairs);
-  const withKey=pool.map((c,i)=>({...c,_mk:'k'+i}));
-  const deck=shuffle([...withKey,...withKey.map(c=>({...c}))]);
 
-  gameState={deck,diff,flipped:[],matched:new Set(),moves:0,pairs:0,locked:false};
-  timeLimit={easy:120,normal:240,hard:420}[selectedDiff];
+  let pool=gamePickerSelected.size?allCards.filter(c=>gamePickerSelected.has(c.id)):allCards.slice();
+  if(!pool.length)pool=allCards.slice();
+
+  let pairs=conf.pairs;
+  if(pool.length<pairs){
+    pairs=pool.length;        // 同じ画像を複製すると成立しないペアができるため枚数を合わせる
+    toast(`使えるカードが${pool.length}種類のため${pairs}ペアで開始します`);
+  }
+  const cols=Math.max(2,Math.min(conf.cols,pairs*2));
+
+  const picked=shuffle(pool).slice(0,pairs).map((c,i)=>({...c,_mk:'k'+i}));
+  const deck=shuffle([...picked,...picked.map(c=>({...c}))]);
+
+  gameState={deck,cols,totalPairs:pairs,flipped:[],matched:new Set(),moves:0,pairs:0,locked:false,finished:false};
+  timeLimit=Math.max(45,Math.round(conf.time*pairs/conf.pairs));
   gameSeconds=0;
 
   document.getElementById('gameSetup').style.display='none';
   document.getElementById('gameBoard').style.display='block';
   document.getElementById('gameResultOverlay').classList.remove('show');
-  document.getElementById('board').style.opacity='1';
   document.getElementById('hudMoves').textContent='0';
   document.getElementById('hudPairs').textContent='0';
-  document.getElementById('hudTotal').textContent=diff.pairs;
+  document.getElementById('hudTotal').textContent=pairs;
   document.getElementById('hudTime').textContent='0:00';
-  document.getElementById('timerBar').style.width='100%';
-  document.getElementById('timerBar').style.background='var(--accent)';
+  const bar=document.getElementById('timerBar');
+  bar.style.width='100%';bar.style.background='var(--accent)';
 
-  renderBoard(deck,diff);
-
-  clearInterval(gameTimer);
-  gameTimer=setInterval(()=>{
-    gameSeconds++;
-    const m=Math.floor(gameSeconds/60),s=gameSeconds%60;
-    document.getElementById('hudTime').textContent=`${m}:${s.toString().padStart(2,'0')}`;
-    const pct=Math.max(0,100-gameSeconds/timeLimit*100);
-    const bar=document.getElementById('timerBar');
-    bar.style.width=pct+'%';
-    bar.style.background=pct<30?'var(--danger)':pct<60?'var(--accent2)':'var(--accent)';
-    if(gameSeconds>=timeLimit){clearInterval(gameTimer);showResult(false);}
-  },1000);
+  renderBoard();
+  startTimer();
 }
 
-function renderBoard(deck,diff){
+function renderBoard(){
   const board=document.getElementById('board');
-  const boardWrap=document.getElementById('gameBoard');
-  const hud=boardWrap.querySelector('.game-hud');
+  board.innerHTML=gameState.deck.map((c,i)=>`
+    <div class="gc" data-gi="${i}" role="button" tabindex="0" aria-label="カード${i+1}">
+      <div class="gc-inner">
+        <div class="gc-back"><div class="gc-back-default"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color:var(--accent)"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div></div>
+        <div class="gc-front"><img src="${escAttr(c.image)}" loading="lazy" alt="" draggable="false"><div class="gc-label">${escHtml(c.name)}</div></div>
+      </div>
+    </div>`).join('');
+  gameEls=Array.from(board.querySelectorAll('.gc'));
+  gameEls.forEach(el=>{
+    const img=el.querySelector('.gc-front img');
+    if(img)img.addEventListener('error',()=>{
+      const d=document.createElement('div');
+      d.className='img-error';d.textContent='画像読込失敗';
+      img.replaceWith(d);
+    });
+  });
+  layoutBoard();
+}
 
-  // Measure available space accurately
-  const pageEl=document.getElementById('tab-game');
-  const pagePad=40; // 20px each side
-  const availW=(pageEl.clientWidth||window.innerWidth)-pagePad;
-  const hudH=hud?hud.offsetHeight+16:70;
-  // Use viewport height minus topbar(63) + tabs(45) + page padding(20) + hud
-  const availH=window.innerHeight-63-45-20-hudH-8;
+function layoutBoard(){
+  if(!gameState)return;
+  const board=document.getElementById('board');
+  const cols=gameState.cols,n=gameState.deck.length;
+  const rows=Math.ceil(n/cols);
+  const gap=window.innerWidth<600?4:8;
 
-  const rows=Math.ceil(deck.length/diff.cols);
-  const gap=6;
+  const page=document.getElementById('tab-game');
+  const availW=(page.clientWidth||window.innerWidth)-40;
+  const topbarH=document.querySelector('.topbar').offsetHeight||63;
+  const tabsEl=document.getElementById('tabs');
+  const tabsH=tabsEl.classList.contains('hidden')?0:(tabsEl.offsetHeight||45);
+  const hudH=document.querySelector('.game-hud').offsetHeight||60;
+  const availH=window.innerHeight-topbarH-tabsH-hudH-56;
 
-  // Fit by width
-  let cw=Math.floor((availW-gap*(diff.cols-1))/diff.cols);
+  let cw=Math.floor((availW-gap*(cols-1))/cols);
   let ch=Math.round(cw*88.9/63.5);
-  // Fit by height
-  const neededH=rows*ch+(rows-1)*gap;
-  if(neededH>availH){
+  if(rows*ch+(rows-1)*gap>availH){
     ch=Math.floor((availH-(rows-1)*gap)/rows);
     cw=Math.round(ch*63.5/88.9);
   }
-  // Clamp: never smaller than 50px wide, never larger than 180px
-  cw=Math.max(50,Math.min(180,cw));
+  cw=Math.max(44,Math.min(180,cw));
   ch=Math.round(cw*88.9/63.5);
 
-  board.style.gridTemplateColumns=`repeat(${diff.cols},${cw}px)`;
-  board.style.width=`${cw*diff.cols+gap*(diff.cols-1)}px`;
-
-  board.innerHTML=deck.map((c,i)=>`
-    <div class="gc" data-idx="${i}" onclick="flipCard(${i})" style="width:${cw}px;height:${ch}px;position:relative;">
-      <div class="gc-inner">
-        <div class="gc-back"><div class="gc-back-default"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color:var(--accent)"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div></div>
-        <div class="gc-front"><img src="${c.image}" loading="lazy" onerror="this.replaceWith(document.createTextNode('画像読込失敗'))"><div class="gc-label">${escHtml(c.name)}</div></div>
-      </div>
-    </div>`).join('');
+  const labelH=ch>=150?26:ch>=100?Math.round(ch*0.15):0;   // 小さいカードでは名前欄を省略
+  board.style.gap=gap+'px';
+  board.style.gridTemplateColumns=`repeat(${cols},${cw}px)`;
+  board.style.width=(cw*cols+gap*(cols-1))+'px';
+  board.style.setProperty('--label-h',labelH+'px');
+  board.style.setProperty('--label-fs',(ch<130?8:10)+'px');
+  gameEls.forEach(el=>{el.style.width=cw+'px';el.style.height=ch+'px';});
 }
 
-function flipCard(idx){
-  if(!gameState||gameState.locked)return;
-  // DOM-authoritative check: reject if visually already flipped or matched
-  const el=document.querySelector(`[data-idx="${idx}"]`);
+// 盤面はイベント委譲（1回だけ登録）
+document.getElementById('board').addEventListener('click',e=>{
+  const el=e.target.closest('.gc');
+  if(el)flipCard(Number(el.dataset.gi));
+});
+document.getElementById('board').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  const el=e.target.closest('.gc');
+  if(el){e.preventDefault();flipCard(Number(el.dataset.gi));}
+});
+
+function flipCard(i){
+  if(!gameState||gameState.locked||gameState.finished)return;
+  const el=gameEls[i];
   if(!el)return;
-  if(el.classList.contains('flipped')||el.classList.contains('matched'))return;
-  if(gameState.matched.has(idx))return;
+  if(gameState.matched.has(i)||gameState.flipped.includes(i))return;
   if(gameState.flipped.length>=2)return;
 
   el.classList.add('flipped');
-  gameState.flipped.push(idx);
+  gameState.flipped.push(i);
+  if(gameState.flipped.length<2)return;
 
-  if(gameState.flipped.length===2){
-    // Lock immediately before any async, preventing double-click race
-    gameState.locked=true;
-    gameState.moves++;
-    document.getElementById('hudMoves').textContent=gameState.moves;
-    const[a,b]=gameState.flipped;
-    const ca=gameState.deck[a],cb=gameState.deck[b];
-    // このラウンド固有のセッションIDを閉じ込め、
-    // 「もう一度」等で新しいゲームが始まった後に
-    // 古いタイマーが新しいボードを誤操作しないようにする
-    const session=gameSession;
-    if(ca._mk===cb._mk&&a!==b){
-      const tid=setTimeout(()=>{
-        if(!gameState||session!==gameSession)return;
-        const ea=document.querySelector(`[data-idx="${a}"]`);
-        const eb=document.querySelector(`[data-idx="${b}"]`);
-        if(ea)ea.classList.add('matched');
-        if(eb)eb.classList.add('matched');
-        gameState.matched.add(a);gameState.matched.add(b);
-        gameState.pairs++;
-        document.getElementById('hudPairs').textContent=gameState.pairs;
-        gameState.flipped=[];gameState.locked=false;
-        if(gameState.pairs===gameState.diff.pairs){
-          clearInterval(gameTimer);
-          const tid3=setTimeout(()=>{if(session===gameSession)showResult(true);},600);
-          pendingFlipTimeouts.push(tid3);
-        }
-      },600);
-      pendingFlipTimeouts.push(tid);
-    }else{
-      const tid=setTimeout(()=>{
-        if(!gameState||session!==gameSession)return;
-        const ea=document.querySelector(`[data-idx="${a}"]`);
-        const eb=document.querySelector(`[data-idx="${b}"]`);
-        if(ea)ea.classList.add('wrong');
-        if(eb)eb.classList.add('wrong');
-        // Unlock only AFTER DOM is fully reset — never before
-        const tid2=setTimeout(()=>{
-          if(session!==gameSession)return;
-          if(ea)ea.classList.remove('flipped','wrong');
-          if(eb)eb.classList.remove('flipped','wrong');
-          if(gameState){gameState.flipped=[];gameState.locked=false;}
-        },380);
-        pendingFlipTimeouts.push(tid2);
-      },900);
-      pendingFlipTimeouts.push(tid);
-    }
+  // 2枚目をめくった時点で即ロック（連打対策）
+  gameState.locked=true;
+  gameState.moves++;
+  document.getElementById('hudMoves').textContent=gameState.moves;
+
+  const [a,b]=gameState.flipped;
+  const ea=gameEls[a],eb=gameEls[b];
+  const isMatch=gameState.deck[a]._mk===gameState.deck[b]._mk;
+
+  if(isMatch){
+    later(600,()=>{
+      ea.classList.add('matched');eb.classList.add('matched');
+      gameState.matched.add(a);gameState.matched.add(b);
+      gameState.pairs++;
+      document.getElementById('hudPairs').textContent=gameState.pairs;
+      gameState.flipped=[];gameState.locked=false;
+      if(gameState.pairs===gameState.totalPairs){
+        stopTimer();
+        later(500,()=>showResult(true));
+      }
+    });
+  }else{
+    later(900,()=>{
+      ea.classList.add('wrong');eb.classList.add('wrong');
+      later(380,()=>{
+        ea.classList.remove('flipped','wrong');
+        eb.classList.remove('flipped','wrong');
+        gameState.flipped=[];gameState.locked=false;   // DOM復帰後に解除
+      });
+    });
   }
 }
+
+function startTimer(){stopTimer();gameTimer=setInterval(tick,1000);}
+function pauseTimer(){if(gameTimer){clearInterval(gameTimer);gameTimer=null;}}
+function resumeTimer(){if(gameState&&!gameState.finished&&!gameTimer)gameTimer=setInterval(tick,1000);}
+function stopTimer(){if(gameTimer){clearInterval(gameTimer);gameTimer=null;}}
+function tick(){
+  gameSeconds++;
+  updateTimerUI();
+  if(gameSeconds>=timeLimit){stopTimer();showResult(false);}
+}
+function updateTimerUI(){
+  document.getElementById('hudTime').textContent=fmtTime(gameSeconds);
+  const pct=Math.max(0,100-gameSeconds/timeLimit*100);
+  const bar=document.getElementById('timerBar');
+  bar.style.width=pct+'%';
+  bar.style.background=pct<30?'var(--danger)':pct<60?'var(--accent2)':'var(--accent)';
+}
+
 function showResult(win){
-  clearInterval(gameTimer);
-  const m=Math.floor(gameSeconds/60),s=gameSeconds%60;
+  if(!gameState||gameState.finished)return;
+  gameState.finished=true;
+  gameState.locked=true;
+  stopTimer();
   document.getElementById('resultTitle').textContent=win?'🎉 クリア！':'⏰ タイムアップ';
-  document.getElementById('resultBody').textContent=win?`手数: ${gameState.moves}回　時間: ${m}:${s.toString().padStart(2,'0')}`:`ペア: ${gameState.pairs}/${gameState.diff.pairs}　手数: ${gameState.moves}回`;
+  document.getElementById('resultBody').textContent=win
+    ? `手数: ${gameState.moves}回　時間: ${fmtTime(gameSeconds)}`
+    : `ペア: ${gameState.pairs}/${gameState.totalPairs}　手数: ${gameState.moves}回`;
   document.getElementById('gameResultOverlay').classList.add('show');
 }
+
 function backToSetup(){
   gameSession++;
-  pendingFlipTimeouts.forEach(clearTimeout);
-  pendingFlipTimeouts=[];
-  clearInterval(gameTimer);gameState=null;
+  clearGameTimeouts();
+  stopTimer();
+  gameState=null;gameEls=[];
+  document.getElementById('gameResultOverlay').classList.remove('show');
   document.getElementById('gameSetup').style.display='block';
   document.getElementById('gameBoard').style.display='none';
+  document.getElementById('board').innerHTML='';
   renderGamePicker();
 }
 
 // ============================================================
+// GLOBAL EVENTS
+// ============================================================
+let resizeTimer=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(layoutBoard,120);   // 画面サイズ変更時に盤面を再フィット（状態は保持）
+});
+window.addEventListener('orientationchange',()=>setTimeout(layoutBoard,300));
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)pauseTimer();
+  else if(currentTab==='game'&&document.getElementById('gameBoard').style.display!=='none')resumeTimer();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if(!document.getElementById('editModal').classList.contains('hidden')){closeEditModal();return;}
+  if(!document.getElementById('importModal').classList.contains('hidden')){closeImportModal();return;}
+  if(document.getElementById('gameResultOverlay').classList.contains('show'))backToSetup();
+});
+// モーダル背景クリックで閉じる
+document.getElementById('editModal').addEventListener('mousedown',e=>{if(e.target.id==='editModal')closeEditModal();});
+document.getElementById('importModal').addEventListener('mousedown',e=>{if(e.target.id==='importModal')closeImportModal();});
+
+// ============================================================
 // UTILS
 // ============================================================
-function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+function fmtTime(sec){const m=Math.floor(sec/60),s=sec%60;return `${m}:${String(s).padStart(2,'0')}`;}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function escAttr(s){return escHtml(s);}
 
 // ============================================================
 // INIT
 // ============================================================
 updateStorageToggleBtn();
+updateStorageBar();
 showHome();
 
 // ============================================================
 // CHEAT HOOK — expose internals for userscripts
 // ============================================================
-window.__memGame = {
-  getState: () => gameState,
-  flip: (idx) => flipCard(idx),
-  getDeck: () => gameState ? gameState.deck : null,
-  getMatched: () => gameState ? gameState.matched : null,
+window.__memGame={
+  getState:()=>gameState,
+  flip:(i)=>flipCard(i),
+  getDeck:()=>gameState?gameState.deck:null,
+  getMatched:()=>gameState?gameState.matched:null,
+  getEls:()=>gameEls,
+  relayout:()=>layoutBoard(),
 };
 </script>
 </body>
