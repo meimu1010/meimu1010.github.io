@@ -1022,6 +1022,7 @@ async function doImport(){
 // ============================================================
 const DIFF={easy:{pairs:8,cols:4},normal:{pairs:15,cols:6},hard:{pairs:24,cols:8}};
 let selectedDiff='easy',gamePickerSelected=new Set(),gameState=null,gameTimer=null,gameSeconds=0,timeLimit=0;
+let gameSession=0, pendingFlipTimeouts=[];
 
 function selectDiff(el){document.querySelectorAll('.diff-card').forEach(d=>d.classList.remove('active'));el.classList.add('active');selectedDiff=el.dataset.diff;}
 
@@ -1043,6 +1044,11 @@ function toggleGamePick(el,id){
 }
 
 async function startGame(){
+  // 前のラウンドの判定待ちタイマーが新しいラウンドに漏れ込まないようにする
+  gameSession++;
+  pendingFlipTimeouts.forEach(clearTimeout);
+  pendingFlipTimeouts=[];
+
   const diff=DIFF[selectedDiff];
   const allCards=await loadCards();
   if(!allCards.length){toast('先にカードを作成してください','error');return;}
@@ -1121,7 +1127,7 @@ function renderBoard(deck,diff){
     <div class="gc" data-idx="${i}" onclick="flipCard(${i})" style="width:${cw}px;height:${ch}px;position:relative;">
       <div class="gc-inner">
         <div class="gc-back"><div class="gc-back-default"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color:var(--accent)"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div></div>
-        <div class="gc-front"><img src="${c.image}" loading="lazy"><div class="gc-label">${escHtml(c.name)}</div></div>
+        <div class="gc-front"><img src="${c.image}" loading="lazy" onerror="this.replaceWith(document.createTextNode('画像読込失敗'))"><div class="gc-label">${escHtml(c.name)}</div></div>
       </div>
     </div>`).join('');
 }
@@ -1145,9 +1151,13 @@ function flipCard(idx){
     document.getElementById('hudMoves').textContent=gameState.moves;
     const[a,b]=gameState.flipped;
     const ca=gameState.deck[a],cb=gameState.deck[b];
+    // このラウンド固有のセッションIDを閉じ込め、
+    // 「もう一度」等で新しいゲームが始まった後に
+    // 古いタイマーが新しいボードを誤操作しないようにする
+    const session=gameSession;
     if(ca._mk===cb._mk&&a!==b){
-      setTimeout(()=>{
-        if(!gameState)return;
+      const tid=setTimeout(()=>{
+        if(!gameState||session!==gameSession)return;
         const ea=document.querySelector(`[data-idx="${a}"]`);
         const eb=document.querySelector(`[data-idx="${b}"]`);
         if(ea)ea.classList.add('matched');
@@ -1156,22 +1166,30 @@ function flipCard(idx){
         gameState.pairs++;
         document.getElementById('hudPairs').textContent=gameState.pairs;
         gameState.flipped=[];gameState.locked=false;
-        if(gameState.pairs===gameState.diff.pairs){clearInterval(gameTimer);setTimeout(()=>showResult(true),600);}
+        if(gameState.pairs===gameState.diff.pairs){
+          clearInterval(gameTimer);
+          const tid3=setTimeout(()=>{if(session===gameSession)showResult(true);},600);
+          pendingFlipTimeouts.push(tid3);
+        }
       },600);
+      pendingFlipTimeouts.push(tid);
     }else{
-      setTimeout(()=>{
-        if(!gameState)return;
+      const tid=setTimeout(()=>{
+        if(!gameState||session!==gameSession)return;
         const ea=document.querySelector(`[data-idx="${a}"]`);
         const eb=document.querySelector(`[data-idx="${b}"]`);
         if(ea)ea.classList.add('wrong');
         if(eb)eb.classList.add('wrong');
         // Unlock only AFTER DOM is fully reset — never before
-        setTimeout(()=>{
+        const tid2=setTimeout(()=>{
+          if(session!==gameSession)return;
           if(ea)ea.classList.remove('flipped','wrong');
           if(eb)eb.classList.remove('flipped','wrong');
           if(gameState){gameState.flipped=[];gameState.locked=false;}
         },380);
+        pendingFlipTimeouts.push(tid2);
       },900);
+      pendingFlipTimeouts.push(tid);
     }
   }
 }
@@ -1183,6 +1201,9 @@ function showResult(win){
   document.getElementById('gameResultOverlay').classList.add('show');
 }
 function backToSetup(){
+  gameSession++;
+  pendingFlipTimeouts.forEach(clearTimeout);
+  pendingFlipTimeouts=[];
   clearInterval(gameTimer);gameState=null;
   document.getElementById('gameSetup').style.display='block';
   document.getElementById('gameBoard').style.display='none';
