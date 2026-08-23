@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver3.13 - Gemini</title>
+    <title>全自動人狼 Ver3.14 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -137,8 +137,8 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.13</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — ランダム会話・超スロー</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.14</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 発言順を保持・超スロー</span>
             </div>
             <div class="api-area">
                 <i class="fas fa-key" style="color:#6a8aaa;"></i>
@@ -238,7 +238,7 @@
 
     <script>
         // ================================================================
-        //  Ver3.13 ランダム会話順・超スロー
+        //  Ver3.14 AI発言順（因果関係を保持）・超スロー
         // ================================================================
 
         // -------- 状態 --------
@@ -612,7 +612,7 @@
 
             renderCards();
             document.getElementById('messageArea').innerHTML = '';
-            addSystemMessage('🐺 Ver3.13 ゲームを開始！（ランダム会話順・超スロー）', 'info');
+            addSystemMessage('🐺 Ver3.14 ゲームを開始！（会話の発言順を保持・超スロー）', 'info');
             assignRoles();
             gameLoop().catch(handleGameLoopError);
         }
@@ -797,7 +797,6 @@
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
 
-            // プロンプトに「発言順は自由」という指示を追加（任意）
             const prompt = buildDayPrompt(round);
             const response = await callGemini(prompt);
 
@@ -810,9 +809,14 @@
                 return;
             }
 
+            // ★重要: JSONのキー順＝AIが決めた発言順として扱う（ここを崩すと「発言順の因果関係」が壊れ、
+            // まだ喋っていない相手にまるで喋ったかのように話しかける不自然な会話になる）。
+            // alive配列の固定順で作り直したり、後からシャッフルしたりしないこと。
+            const nameToIdx = new Map(alive.map(idx => [STATE.characters[idx].name, idx]));
             let conversations = [];
-            for (const idx of alive) {
-                const name = STATE.characters[idx].name;
+            for (const name of Object.keys(parsed)) {
+                const idx = nameToIdx.get(name);
+                if (idx === undefined) continue; // 死亡者や存在しない名前のキーは無視
                 let speech = parsed[name] || '';
                 if (!speech || speech.match(/^(…|...|（.*沈黙.*）|（.*何も言わ.*）|…（.*）)$/)) {
                     continue;
@@ -828,13 +832,7 @@
                 conversations.map(c => ({ name: c.name, speech: c.speech }))
             );
 
-            // ★ 会話リストをシャッフル（ランダム順）
-            for (let i = conversations.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [conversations[i], conversations[j]] = [conversations[j], conversations[i]];
-            }
-
-            // ★ シャッフルした順に表示（文字数遅延）
+            // ★ AIが決めた発言順（会話としての因果関係）のまま表示（文字数に応じた遅延）
             for (const conv of conversations) {
                 addConversationMessage(conv.idx, conv.speech);
                 renderCards();
@@ -1071,13 +1069,14 @@
         ## ゲーム進行上の指示
         6. 各キャラの**役職と性格**を踏まえて発言してください。村人は疑わしい人物を推理し、人狼は自分が疑われないよう自然に振る舞ってください。
         7. 前回の発言がある場合は、**話の内容には自然に関連させつつ、言い回し自体は前回と変えて**ください（触れなくてもよい発言があってもOKです）。
-        8. 発言の順番は決まっていません。各キャラが自由に発言し、自然な会話の流れを作ってください。
-        9. キャラクターとして不自然になるくらいなら、推理を控えめにしてでもキャラらしさを優先してください。
+        8. **出力するJSONのキーの並び順が、そのまま実際の発言順（会話の時系列）として扱われます。** 誰から話し始めても構いませんが、後ろに書くキャラは「自分より前に書かれたキャラの発言」にだけ反応してよく、**まだ書いていない（自分より後に登場する）キャラの発言や態度には絶対に言及しないでください。** まだ発言していない相手について「〜だね」「そんなこと言って」のように既に喋ったかのように扱うのは矛盾なので厳禁です。
+        9. 発言順は毎回変えてよく、むしろ数ラウンド連続で同じ並び順（同じ人が毎回最初に喋る等）にならないようにしてください。
+        10. キャラクターとして不自然になるくらいなら、推理を控えめにしてでもキャラらしさを優先してください。
 
-        ## 出力（JSON。前置き・説明・コードブロック以外の文章は一切不要）
+        ## 出力（JSON。前置き・説明・コードブロック以外の文章は一切不要。キーの並び順＝発言順）
         {
-          "キャラ名1": "セリフ",
-          "キャラ名2": "セリフ",
+          "最初に発言するキャラ名": "セリフ",
+          "次に発言するキャラ名": "セリフ",
           ...
         }
         `;
