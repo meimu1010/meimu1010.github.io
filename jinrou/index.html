@@ -1364,7 +1364,8 @@
 
         async function callGemini(prompt) {
             if (!STATE.apiKey) throw new Error('APIキーなし');
-            const models = ['gemini-2.0-flash-lite', 'gemini-1.5-flash'];
+            // ★ モデルをあなた指定のものに変更
+            const models = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
             let lastError = null;
             for (const model of models) {
                 try {
@@ -1396,10 +1397,12 @@
                 } catch (e) {
                     lastError = e;
                     console.warn(`モデル ${model} 失敗:`, e);
+                    // ★ エラーログは表示しない（静かに次のモデルへ）
                     continue;
                 }
             }
-            addLog('info', `⚠️ API呼び出しエラー: ${lastError?.message}`);
+            // すべてのモデルが失敗した場合のみ、1回だけ簡潔に通知
+            addLog('info', '⚠️ APIが利用できません。後でもう一度お試しください。');
             return '{}';
         }
 
