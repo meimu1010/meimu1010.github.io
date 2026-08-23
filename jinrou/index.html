@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver3.10 - Gemini</title>
+    <title>全自動人狼 Ver3.12 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -658,8 +658,8 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.10</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — スライダー反転・初期左端</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.12</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 文字数遅延・一人ずつ表示</span>
             </div>
             <div class="api-area">
                 <i class="fas fa-key" style="color:#6a8aaa;"></i>
@@ -759,7 +759,7 @@
 
     <script>
         // ================================================================
-        //  Ver3.10 スライダー反転（左＝遅い、右＝速い）・初期左端
+        //  Ver3.12 文字数遅延・一人ずつ表示
         // ================================================================
 
         // -------- 状態 --------
@@ -773,7 +773,7 @@
             paused: false,
             running: false,
             log: [],
-            speed: 0, // 0=遅い（最大待機）、10=速い（最小待機）
+            speed: 0,
             aliveIndices: [],
             werewolfIndices: [],
             fortuneTellerIndex: -1,
@@ -797,7 +797,6 @@
 
             loadLibrary();
 
-            // スライダー初期値0（左端＝遅い）
             document.getElementById('speedSlider').value = 0;
             STATE.speed = 0;
 
@@ -819,8 +818,6 @@
             document.getElementById('resetBtn').addEventListener('click', resetGame);
             document.getElementById('speedSlider').addEventListener('input', (e) => {
                 STATE.speed = parseInt(e.target.value);
-                // 値をログに表示（デバッグ用）
-                console.log('Speed value:', STATE.speed);
             });
 
             window.copyPromptFromInput = copyPromptFromInput;
@@ -850,7 +847,7 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE.library));
         }
 
-        // -------- サンプルキャラ（詳細説明文） --------
+        // -------- サンプルキャラ --------
         function addSampleCharacters() {
             const samples = [
                 { 
@@ -1150,7 +1147,7 @@
 
             renderCards();
             document.getElementById('messageArea').innerHTML = '';
-            addSystemMessage('🐺 Ver3.10 ゲームを開始！（スライダー反転・初期左端）', 'info');
+            addSystemMessage('🐺 Ver3.12 ゲームを開始！（文字数遅延・一人ずつ表示）', 'info');
             assignRoles();
             gameLoop();
         }
@@ -1318,7 +1315,7 @@
             await wait(STATE.speed);
         }
 
-        // -------- 昼の議論（会話を一括表示） --------
+        // ★★★ 一人ずつ・文字数遅延で表示 ★★★
         async function dayDiscussion(round) {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
@@ -1353,15 +1350,33 @@
                 conversations.map(c => ({ name: c.name, speech: c.speech }))
             );
 
-            if (conversations.length > 0) {
-                for (const conv of conversations) {
-                    addConversationMessage(conv.idx, conv.speech);
-                }
+            // ★ 一人ずつ、文字数に応じた遅延で表示
+            for (const conv of conversations) {
+                addConversationMessage(conv.idx, conv.speech);
                 renderCards();
-                await wait(STATE.speed);
-            } else {
-                await wait(STATE.speed);
+                // 文字数に応じて遅延（1文字あたり50ms、最小500ms、最大4000ms）
+                const delay = Math.min(4000, Math.max(500, conv.speech.length * 50));
+                await waitFor(delay);
             }
+
+            // 全員表示後、フェーズ待機（スライダー値に応じる）
+            await wait(STATE.speed);
+        }
+
+        // ミリ秒単位の待機（ポーズ対応）
+        function waitFor(ms) {
+            return new Promise(r => {
+                if (STATE.paused) {
+                    const iv = setInterval(() => {
+                        if (!STATE.paused) {
+                            clearInterval(iv);
+                            setTimeout(r, ms);
+                        }
+                    }, 100);
+                } else {
+                    setTimeout(r, ms);
+                }
+            });
         }
 
         // -------- 投票フェーズ --------
@@ -1717,9 +1732,8 @@
             document.getElementById('phaseDisplay').innerHTML = text;
         }
 
-        // ★★★ スライダー値が0（左端）で最大待機（10秒）、10（右端）で最小待機（1秒） ★★★
+        // ★ スライダー値0で最大待機（10秒）、値10で最小（1秒）
         function wait(seconds) {
-            // seconds: 0 → 10秒, 10 → 1秒 に変換
             const inverted = 10 - seconds;
             const base = 1.0 + (inverted / 10) * 9.0;
             const delay = STATE.paused ? 100 : base * 1000;
