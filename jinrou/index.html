@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver3.4 - Gemini</title>
+    <title>全自動人狼 Ver3.6 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -509,8 +509,8 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.7rem;color:#6a8aaa;">Ver3.4</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 表示遅延・初日夜襲撃なし</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.7rem;color:#6a8aaa;">Ver3.6</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 会話速度大幅調整版</span>
             </div>
             <div class="api-area">
                 <i class="fas fa-key" style="color:#6a8aaa;"></i>
@@ -594,7 +594,8 @@
                 <div class="game-controls">
                     <div class="speed-wrap">
                         <i class="fas fa-tachometer-alt"></i>
-                        <input type="range" id="speedSlider" min="0" max="10" value="5" />
+                        <input type="range" id="speedSlider" min="0" max="10" value="3" />
+                        <span id="speedLabel">ゆっくり</span>
                     </div>
                     <button class="btn btn-danger btn-sm" id="pauseBtn"><i class="fas fa-pause"></i> 一時停止</button>
                     <button class="btn btn-outline btn-sm" id="resetBtn"><i class="fas fa-redo-alt"></i> リセット</button>
@@ -608,7 +609,7 @@
 
     <script>
         // ================================================================
-        //  Ver3.4 完全版 - 表示遅延追加 + 初日夜襲撃なし
+        //  Ver3.6 完全版 - 会話速度を大幅に遅く調整
         // ================================================================
 
         // -------- 状態 --------
@@ -622,7 +623,7 @@
             paused: false,
             running: false,
             log: [],
-            speed: 5,
+            speed: 3,
             aliveIndices: [],
             werewolfIndices: [],
             fortuneTellerIndex: -1,
@@ -630,7 +631,7 @@
             fortuneSecret: '',
             editingId: null,
             conversationLog: [],
-            isFirstNight: true, // ★ 初日夜フラグ
+            isFirstNight: true,
         };
 
         const STORAGE_KEY = 'werewolf_library';
@@ -664,6 +665,7 @@
             document.getElementById('resetBtn').addEventListener('click', resetGame);
             document.getElementById('speedSlider').addEventListener('input', (e) => {
                 STATE.speed = parseInt(e.target.value);
+                updateSpeedLabel();
             });
 
             window.copyPromptFromInput = copyPromptFromInput;
@@ -674,7 +676,13 @@
 
             renderLibrary();
             updateSelectedCount();
+            updateSpeedLabel();
         });
+
+        function updateSpeedLabel() {
+            const labels = ['超スロー', 'とてもゆっくり', 'ゆっくり', 'ややゆっくり', '普通より遅い', '標準', 'やや速い', '速い', 'とても速い', '超速い', '最速'];
+            document.getElementById('speedLabel').textContent = labels[STATE.speed] || '標準';
+        }
 
         // -------- ライブラリ読み込み/保存 --------
         function loadLibrary() {
@@ -920,7 +928,7 @@
         }
 
         // ================================================================
-        //  ゲーム開始（ライブラリ選択から）
+        //  ゲーム開始
         // ================================================================
         function startGameFromLibrary() {
             if (!STATE.apiKey) {
@@ -955,7 +963,7 @@
             STATE.paused = false;
             STATE.fortuneSecret = '';
             STATE.conversationLog = [];
-            STATE.isFirstNight = true; // ★ 初日夜フラグをリセット
+            STATE.isFirstNight = true;
 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('[data-tab="game"]').classList.add('active');
@@ -964,7 +972,7 @@
 
             renderCards();
             document.getElementById('logArea').innerHTML = '';
-            addLog('info', '🐺 Ver3.4 ゲームを開始します！（表示遅延・初日夜襲撃なし）');
+            addLog('info', '🐺 Ver3.6 ゲームを開始します！（会話速度大幅調整版）');
             assignRoles();
             gameLoop();
         }
@@ -1004,7 +1012,6 @@
             await setPhase('🌙 夜フェーズ');
             await wait(STATE.speed);
 
-            // ★ 初日夜は襲撃なし
             if (STATE.isFirstNight) {
                 addLog('info', '🌙 初日の夜は平和です（襲撃は発生しません）');
                 STATE.isFirstNight = false;
@@ -1133,7 +1140,7 @@
             await wait(STATE.speed);
         }
 
-        // ★★★ 会話表示に遅延を追加 ★★★
+        // ★★★ 会話表示速度を大幅に調整（文字数に応じた長い遅延 + 各発言間の待機） ★★★
         async function dayDiscussion(round) {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
@@ -1158,42 +1165,48 @@
             for (const idx of alive) {
                 const name = STATE.characters[idx].name;
                 let speech = parsed[name] || '…（沈黙）';
-                if (speech.length > 100) {
-                    speech = speech.slice(0, 100) + '…';
+                if (speech.length > 150) {
+                    speech = speech.slice(0, 150) + '…';
                 }
                 STATE.characters[idx].speech = speech;
                 roundSpeeches.push({ name, speech });
 
-                // ★ 会話を1件ずつ表示（文字数に応じて遅延）
-                addLogWithDelay('conversation', `💬 ${name}: ${speech}`, speech.length);
+                // ★ 1件ずつ表示（表示完了を待ってから次へ）
+                await addLogWithDelayAndWait('conversation', `💬 ${name}: ${speech}`, speech.length);
+
+                // ★ 各発言の間の待機（速度スライダーに連動：1.0秒〜4.0秒）
+                const pauseSeconds = 1.0 + (10 - STATE.speed) * 0.3; // speed0→4.0秒, speed5→2.5秒, speed10→1.0秒
+                await wait(pauseSeconds * 0.5); // waitは秒数を受け取るため0.5倍で調整
                 renderCards();
-                await wait(0.3); // 各発言の間にも少し間隔
             }
 
             STATE.conversationLog = STATE.conversationLog.concat(roundSpeeches);
             await wait(STATE.speed);
         }
 
-        // ★ 文字数に応じて遅延するログ出力関数
-        function addLogWithDelay(type, message, charCount) {
-            const logArea = document.getElementById('logArea');
-            if (!logArea) return;
+        // ★ 文字数に応じて遅延し、完了を待つ関数（Promise版）
+        function addLogWithDelayAndWait(type, message, charCount) {
+            return new Promise((resolve) => {
+                const logArea = document.getElementById('logArea');
+                if (!logArea) { resolve(); return; }
 
-            // 文字数に応じた遅延時間（1文字あたり約50ms、最小500ms、最大3000ms）
-            const delay = Math.min(3000, Math.max(500, charCount * 50));
+                // 文字数に応じた遅延（1文字あたり150ms、最小2.0秒、最大8.0秒）
+                const delay = Math.min(8000, Math.max(2000, charCount * 150));
 
-            setTimeout(() => {
-                const entry = document.createElement('div');
-                entry.className = 'log-entry';
-                const time = new Date().toLocaleTimeString();
-                const cls = type === 'death' ? 'death' : type === 'conversation' ? 'highlight' : type === 'reveal' ? 'reveal' : 'info';
-                entry.innerHTML = `<span class="time">${time}</span><span class="${cls}">${message}</span>`;
-                logArea.appendChild(entry);
-                logArea.scrollTop = logArea.scrollHeight;
-            }, delay);
+                setTimeout(() => {
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry';
+                    const time = new Date().toLocaleTimeString();
+                    const cls = type === 'death' ? 'death' : type === 'conversation' ? 'highlight' : type === 'reveal' ? 'reveal' : 'info';
+                    entry.innerHTML = `<span class="time">${time}</span><span class="${cls}">${message}</span>`;
+                    logArea.appendChild(entry);
+                    logArea.scrollTop = logArea.scrollHeight;
+                    resolve();
+                }, delay);
+            });
         }
 
-        // ★ 通常のログ（即時表示）は従来通り
+        // 通常のログ（即時表示）
         function addLog(type, message) {
             const logArea = document.getElementById('logArea');
             if (!logArea) return;
@@ -1206,7 +1219,7 @@
             logArea.scrollTop = logArea.scrollHeight;
         }
 
-        // -------- プロンプトビルダー（変更なし） --------
+        // -------- プロンプトビルダー --------
         function buildDayPrompt(round) {
             const alive = STATE.aliveIndices;
 
@@ -1326,7 +1339,7 @@
         `;
         }
 
-        // -------- 投票フェーズ（変更なし） --------
+        // -------- 投票フェーズ --------
         async function votingPhase() {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
@@ -1484,6 +1497,7 @@
         }
 
         function wait(seconds) {
+            // 速度スライダーの値を反映（0〜10）
             const base = 0.5 + (seconds / 10) * 5.5;
             const delay = STATE.paused ? 100 : base * 1000;
             return new Promise(r => setTimeout(r, delay));
