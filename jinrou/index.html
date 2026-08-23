@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver3.3 - Gemini</title>
+    <title>全自動人狼 Ver3.4 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -509,8 +509,8 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.7rem;color:#6a8aaa;">Ver3.3</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 会話改善版</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.7rem;color:#6a8aaa;">Ver3.4</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 表示遅延・初日夜襲撃なし</span>
             </div>
             <div class="api-area">
                 <i class="fas fa-key" style="color:#6a8aaa;"></i>
@@ -608,7 +608,7 @@
 
     <script>
         // ================================================================
-        //  Ver3.3 完全版 - モデル修正 + 会話改善 + エラー非表示
+        //  Ver3.4 完全版 - 表示遅延追加 + 初日夜襲撃なし
         // ================================================================
 
         // -------- 状態 --------
@@ -629,7 +629,8 @@
             villagerIndices: [],
             fortuneSecret: '',
             editingId: null,
-            conversationLog: [], // 会話の一貫性を保つためのログ
+            conversationLog: [],
+            isFirstNight: true, // ★ 初日夜フラグ
         };
 
         const STORAGE_KEY = 'werewolf_library';
@@ -692,7 +693,7 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE.library));
         }
 
-        // -------- サンプルキャラ（説明文を短く改善） --------
+        // -------- サンプルキャラ --------
         function addSampleCharacters() {
             const samples = [
                 { anime: 'SPY×FAMILY', name: 'ロイド・フォージャー', imageUrl: '', description: '冷静沈着で計画性のあるスパイ。周囲を常に観察し、嘘を見抜くのが得意。' },
@@ -953,7 +954,8 @@
             STATE.running = true;
             STATE.paused = false;
             STATE.fortuneSecret = '';
-            STATE.conversationLog = []; // 会話ログをリセット
+            STATE.conversationLog = [];
+            STATE.isFirstNight = true; // ★ 初日夜フラグをリセット
 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('[data-tab="game"]').classList.add('active');
@@ -962,13 +964,13 @@
 
             renderCards();
             document.getElementById('logArea').innerHTML = '';
-            addLog('info', '🐺 Ver3.3 ゲームを開始します！（会話改善版）');
+            addLog('info', '🐺 Ver3.4 ゲームを開始します！（表示遅延・初日夜襲撃なし）');
             assignRoles();
             gameLoop();
         }
 
         // ================================================================
-        //  ゲームロジック（Ver2.0 完全版 + 会話改善）
+        //  ゲームロジック
         // ================================================================
 
         function assignRoles() {
@@ -1001,7 +1003,14 @@
 
             await setPhase('🌙 夜フェーズ');
             await wait(STATE.speed);
-            await nightPhase();
+
+            // ★ 初日夜は襲撃なし
+            if (STATE.isFirstNight) {
+                addLog('info', '🌙 初日の夜は平和です（襲撃は発生しません）');
+                STATE.isFirstNight = false;
+            } else {
+                await nightPhase();
+            }
 
             if (checkGameEnd()) return;
 
@@ -1016,7 +1025,7 @@
                 addLog('info', '😴 昨夜は誰も死にませんでした。');
             }
 
-            STATE.conversationLog = []; // 日が変わったのでリセット
+            STATE.conversationLog = [];
             for (let round = 1; round <= 3; round++) {
                 if (!STATE.running) return;
                 if (STATE.paused) await waitUntilResume();
@@ -1038,7 +1047,7 @@
             gameLoop();
         }
 
-        // -------- 夜フェーズ（変更なし） --------
+        // -------- 夜フェーズ（2日目以降） --------
         async function nightPhase() {
             const alive = STATE.aliveIndices;
             const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
@@ -1124,7 +1133,7 @@
             await wait(STATE.speed);
         }
 
-        // ★★★ 最重要修正：会話を人狼ゲームらしく、短く、役職を意識したものに ★★★
+        // ★★★ 会話表示に遅延を追加 ★★★
         async function dayDiscussion(round) {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
@@ -1146,7 +1155,7 @@
             }
 
             let roundSpeeches = [];
-            alive.forEach(idx => {
+            for (const idx of alive) {
                 const name = STATE.characters[idx].name;
                 let speech = parsed[name] || '…（沈黙）';
                 if (speech.length > 100) {
@@ -1154,15 +1163,50 @@
                 }
                 STATE.characters[idx].speech = speech;
                 roundSpeeches.push({ name, speech });
-                addLog('conversation', `💬 ${name}: ${speech}`);
-            });
+
+                // ★ 会話を1件ずつ表示（文字数に応じて遅延）
+                addLogWithDelay('conversation', `💬 ${name}: ${speech}`, speech.length);
+                renderCards();
+                await wait(0.3); // 各発言の間にも少し間隔
+            }
 
             STATE.conversationLog = STATE.conversationLog.concat(roundSpeeches);
-            renderCards();
             await wait(STATE.speed);
         }
 
-        // ★★★ プロンプトを全面的に書き換え（役職を明示、短いセリフを強制、前回の会話を参照） ★★★
+        // ★ 文字数に応じて遅延するログ出力関数
+        function addLogWithDelay(type, message, charCount) {
+            const logArea = document.getElementById('logArea');
+            if (!logArea) return;
+
+            // 文字数に応じた遅延時間（1文字あたり約50ms、最小500ms、最大3000ms）
+            const delay = Math.min(3000, Math.max(500, charCount * 50));
+
+            setTimeout(() => {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                const time = new Date().toLocaleTimeString();
+                const cls = type === 'death' ? 'death' : type === 'conversation' ? 'highlight' : type === 'reveal' ? 'reveal' : 'info';
+                entry.innerHTML = `<span class="time">${time}</span><span class="${cls}">${message}</span>`;
+                logArea.appendChild(entry);
+                logArea.scrollTop = logArea.scrollHeight;
+            }, delay);
+        }
+
+        // ★ 通常のログ（即時表示）は従来通り
+        function addLog(type, message) {
+            const logArea = document.getElementById('logArea');
+            if (!logArea) return;
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString();
+            const cls = type === 'death' ? 'death' : type === 'conversation' ? 'highlight' : type === 'reveal' ? 'reveal' : 'info';
+            entry.innerHTML = `<span class="time">${time}</span><span class="${cls}">${message}</span>`;
+            logArea.appendChild(entry);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        // -------- プロンプトビルダー（変更なし） --------
         function buildDayPrompt(round) {
             const alive = STATE.aliveIndices;
 
@@ -1218,7 +1262,71 @@
         `;
         }
 
-        // 投票フェーズ（変更なしだが、プロンプトを簡潔に）
+        function buildWolfNightPrompt() {
+            const alive = STATE.aliveIndices;
+            const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
+            const charInfo = alive.map(i =>
+                `${STATE.characters[i].name}（${STATE.characters[i].description}）`
+            ).join('\n');
+            const wolfNames = wolves.map(i => STATE.characters[i].name).join('、');
+            return `
+        あなたは人狼です。仲間（${wolfNames}）と協力して村人を襲撃してください。
+        現在の生存者:
+        ${charInfo}
+
+        各人狼が「誰を襲撃したいか」をJSONで返してください。
+        出力:
+        {
+          "人狼Aの名前": "襲撃したいターゲット名",
+          "人狼Bの名前": "襲撃したいターゲット名"
+        }
+        `;
+        }
+
+        function buildFortuneNightPrompt() {
+            const alive = STATE.aliveIndices;
+            const idx = STATE.fortuneTellerIndex;
+            const charInfo = alive.filter(i => i !== idx).map(i =>
+                `${STATE.characters[i].name}（${STATE.characters[i].description}）`
+            ).join('\n');
+            return `
+        あなたは占い師です。今夜誰を占いますか？
+        生存者（自分以外）:
+        ${charInfo}
+
+        出力:
+        {
+          "fortune_teller_target": "占うキャラクターの名前"
+        }
+        `;
+        }
+
+        function buildVotePrompt() {
+            const alive = STATE.aliveIndices;
+            let charInfo = alive.map(i => {
+                let desc = STATE.characters[i].description;
+                if (i === STATE.fortuneTellerIndex && STATE.characters[i].alive && STATE.fortuneSecret) {
+                    desc += ` （秘密: ${STATE.fortuneSecret}）`;
+                }
+                const roleHint = STATE.werewolfIndices.includes(i) ? '（人狼）' : '';
+                return `${STATE.characters[i].name}${roleHint}（${desc}）`;
+            }).join('\n');
+            return `
+        投票フェーズです。各キャラクターが「誰を処刑したいか」を投票してください。
+        生存者:
+        ${charInfo}
+
+        出力:
+        {
+          "投票者A": "被投票者B",
+          "投票者C": "被投票者D",
+          ...
+        }
+        自分自身には投票できません。
+        `;
+        }
+
+        // -------- 投票フェーズ（変更なし） --------
         async function votingPhase() {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
@@ -1297,10 +1405,9 @@
             return false;
         }
 
-        // ★★★ 修正ポイント（モデル指定とエラー非表示化） ★★★
+        // -------- Gemini API --------
         async function callGemini(prompt) {
             if (!STATE.apiKey) throw new Error('APIキーなし');
-            // ご指定のモデルを優先
             const models = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
             let lastError = null;
             for (const model of models) {
@@ -1333,78 +1440,11 @@
                 } catch (e) {
                     lastError = e;
                     console.warn(`モデル ${model} 失敗:`, e);
-                    // エラーログは表示しない（静かに次へ）
                     continue;
                 }
             }
-            // 全滅時のみ1回だけ通知
             addLog('info', '⚠️ APIが利用できません。後でもう一度お試しください。');
             return '{}';
-        }
-
-        // -------- プロンプトビルダー（短く改善） --------
-        function buildWolfNightPrompt() {
-            const alive = STATE.aliveIndices;
-            const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
-            const charInfo = alive.map(i =>
-                `${STATE.characters[i].name}（${STATE.characters[i].description}）`
-            ).join('\n');
-            const wolfNames = wolves.map(i => STATE.characters[i].name).join('、');
-            return `
-        あなたは人狼です。仲間（${wolfNames}）と協力して村人を襲撃してください。
-        現在の生存者:
-        ${charInfo}
-
-        各人狼が「誰を襲撃したいか」をJSONで返してください。
-        出力:
-        {
-          "人狼Aの名前": "襲撃したいターゲット名",
-          "人狼Bの名前": "襲撃したいターゲット名"
-        }
-        `;
-        }
-
-        function buildFortuneNightPrompt() {
-            const alive = STATE.aliveIndices;
-            const idx = STATE.fortuneTellerIndex;
-            const charInfo = alive.filter(i => i !== idx).map(i =>
-                `${STATE.characters[i].name}（${STATE.characters[i].description}）`
-            ).join('\n');
-            return `
-        あなたは占い師です。今夜誰を占いますか？
-        生存者（自分以外）:
-        ${charInfo}
-
-        出力:
-        {
-          "fortune_teller_target": "占うキャラクターの名前"
-        }
-        `;
-        }
-
-        function buildVotePrompt() {
-            const alive = STATE.aliveIndices;
-            let charInfo = alive.map(i => {
-                let desc = STATE.characters[i].description;
-                if (i === STATE.fortuneTellerIndex && STATE.characters[i].alive && STATE.fortuneSecret) {
-                    desc += ` （秘密: ${STATE.fortuneSecret}）`;
-                }
-                const roleHint = STATE.werewolfIndices.includes(i) ? '（人狼）' : '';
-                return `${STATE.characters[i].name}${roleHint}（${desc}）`;
-            }).join('\n');
-            return `
-        投票フェーズです。各キャラクターが「誰を処刑したいか」を投票してください。
-        生存者:
-        ${charInfo}
-
-        出力:
-        {
-          "投票者A": "被投票者B",
-          "投票者C": "被投票者D",
-          ...
-        }
-        自分自身には投票できません。
-        `;
         }
 
         // -------- UIヘルパー --------
@@ -1441,19 +1481,6 @@
 
         async function setPhase(text) {
             document.getElementById('phaseDisplay').innerHTML = text;
-        }
-
-        function addLog(type, message) {
-            const logArea = document.getElementById('logArea');
-            if (!logArea) return;
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            const time = new Date().toLocaleTimeString();
-            const cls = type === 'death' ? 'death' : type === 'conversation' ? 'highlight' : type === 'reveal' ? 'reveal' :
-                'info';
-            entry.innerHTML = `<span class="time">${time}</span><span class="${cls}">${message}</span>`;
-            logArea.appendChild(entry);
-            logArea.scrollTop = logArea.scrollHeight;
         }
 
         function wait(seconds) {
