@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>全自動人狼ゲーム（Gemini 3.5 Flash Lite）</title>
+    <style>
+        /* ===== リセット & ベース ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #0b0e14;
+            color: #e8edf5;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        #app {
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        /* ===== 共通 ===== */
+        h1,
+        h2,
+        h3 {
+            font-weight: 400;
+        }
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            font-size: 0.95rem;
+            background: #2a3a4a;
+            color: #e8edf5;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background: #3a5068;
+        }
+        button:active {
+            transform: scale(0.97);
+        }
+        input,
+        textarea {
+            background: #1a222c;
+            border: 1px solid #3a4a5a;
+            border-radius: 6px;
+            color: #e8edf5;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            width: 100%;
+            transition: border 0.2s;
+        }
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #6a8aaa;
+        }
+        textarea {
+            resize: vertical;
+            font-family: inherit;
+            min-height: 60px;
+        }
+        .btn-primary {
+            background: #3b7a9a;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: #4a8aaa;
+        }
+        .btn-success {
+            background: #2d7a4a;
+            font-weight: 600;
+        }
+        .btn-success:hover {
+            background: #3a9a5a;
+        }
+        .btn-danger {
+            background: #8a3a3a;
+        }
+        .btn-danger:hover {
+            background: #aa4a4a;
+        }
+        .btn-copy {
+            background: #6a5a3a;
+            font-size: 0.8rem;
+            padding: 4px 12px;
+        }
+        .btn-copy:hover {
+            background: #8a7a4a;
+        }
+        .flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .grid-6 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .card {
+            background: #141c26;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #2a3a4a;
+            transition: border 0.3s;
+        }
+        .card.dead {
+            opacity: 0.5;
+            border-color: #5a2a2a;
+        }
+        .card .avatar {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            border-radius: 50%;
+            background: #1a222c;
+            border: 2px solid #3a4a5a;
+        }
+        .card .avatar-placeholder {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 50%;
+            background: #1a222c;
+            border: 2px solid #3a4a5a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #6a8aaa;
+        }
+        .card .name {
+            font-weight: 600;
+            margin-top: 8px;
+            font-size: 1.05rem;
+        }
+        .card .role {
+            font-size: 0.85rem;
+            color: #8aabba;
+        }
+        .card .speech {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            background: #0b1119;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border-left: 3px solid #3b7a9a;
+            min-height: 40px;
+            font-style: italic;
+            color: #bcc9d5;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .badge-alive {
+            background: #2a5a3a;
+            color: #8aca8a;
+        }
+        .badge-dead {
+            background: #5a2a2a;
+            color: #ca8a8a;
+        }
+        .badge-werewolf {
+            background: #5a2a3a;
+            color: #da8a8a;
+        }
+        .badge-villager {
+            background: #2a3a5a;
+            color: #8abada;
+        }
+        .badge-fortuneteller {
+            background: #4a3a6a;
+            color: #caaada;
+        }
+
+        /* ===== セットアップ画面 ===== */
+        #setupScreen {
+            display: block;
+        }
+        #setupScreen .char-form {
+            background: #10181f;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #2a3a4a;
+        }
+        #setupScreen .char-form .field-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        #setupScreen .char-form .field-group .full {
+            grid-column: 1 / -1;
+        }
+        #setupScreen .char-form label {
+            font-size: 0.85rem;
+            color: #9aabba;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .copy-area {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+        .copy-area textarea {
+            flex: 1;
+            min-height: 40px;
+        }
+
+        /* ===== ゲーム画面 ===== */
+        #gameScreen {
+            display: none;
+        }
+        #gameHeader {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #2a3a4a;
+            margin-bottom: 20px;
+        }
+        #gameHeader .phase {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #8acada;
+        }
+        #gameHeader .controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        #gameHeader .controls label {
+            font-size: 0.85rem;
+            color: #9aabba;
+        }
+        #gameHeader .controls input[type="range"] {
+            width: 100px;
+            background: #1a222c;
+        }
+        #logArea {
+            background: #0b1119;
+            border-radius: 12px;
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #1a2a3a;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        #logArea .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #1a222c;
+        }
+        #logArea .log-entry .time {
+            color: #6a8aaa;
+            margin-right: 12px;
+        }
+        #logArea .log-entry .highlight {
+            color: #eac84a;
+        }
+        #logArea .log-entry .death {
+            color: #da6a6a;
+        }
+        #logArea .log-entry .info {
+            color: #6acada;
+        }
+
+        /* ===== スクロールバー ===== */
+        #logArea::-webkit-scrollbar {
+            width: 6px;
+        }
+        #logArea::-webkit-scrollbar-track {
+            background: #0b1119;
+        }
+        #logArea::-webkit-scrollbar-thumb {
+            background: #3a4a5a;
+            border-radius: 10px;
+        }
+
+        /* ===== レスポンシブ ===== */
+        @media (max-width: 700px) {
+            #setupScreen .char-form .field-group {
+                grid-template-columns: 1fr;
+            }
+            .grid-6 {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            #gameHeader {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+
+        <!-- ========================================================= -->
+        <!-- セットアップ画面 -->
+        <!-- ========================================================= -->
+        <div id="setupScreen">
+            <h1 style="margin-bottom:8px;">🐺 全自動人狼 <span style="font-size:0.9rem;color:#6a8aaa;">with Gemini 3.5 Flash Lite</span></h1>
+            <p style="color:#8aabba;margin-bottom:20px;">6人のキャラクターを登録し、ゲームを開始すると完全自動で進行します。</p>
+
+            <!-- APIキー -->
+            <div class="card" style="margin-bottom:20px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+                <label style="color:#8aabba;font-weight:600;">Gemini APIキー</label>
+                <input type="password" id="apiKeyInput" placeholder="AIzaSy..." style="flex:1;min-width:200px;" />
+                <button id="saveApiKeyBtn" class="btn-primary">保存</button>
+                <span id="apiKeyStatus" style="font-size:0.85rem;color:#6a8aaa;"></span>
+            </div>
+
+            <!-- 6キャラ分のフォーム -->
+            <div id="charFormsContainer">
+                <!-- JSで生成 -->
+            </div>
+
+            <button id="startGameBtn" class="btn-success" style="font-size:1.2rem;padding:14px 40px;margin:20px 0;">🚀 ゲーム開始</button>
+            <p style="font-size:0.8rem;color:#5a6a7a;">※ ゲーム開始後は自動進行します。各フェーズ間に5秒のウェイトが入ります。</p>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- ゲーム画面 -->
+        <!-- ========================================================= -->
+        <div id="gameScreen">
+            <div id="gameHeader">
+                <div>
+                    <span class="phase" id="phaseDisplay">⏳ 準備中...</span>
+                    <span style="margin-left:16px;font-size:0.9rem;color:#6a8aaa;" id="dayCounter">1日目</span>
+                </div>
+                <div class="controls">
+                    <label>速度 <input type="range" id="speedSlider" min="0" max="10" value="5" /></label>
+                    <button id="pauseBtn" class="btn-danger">⏸ 一時停止</button>
+                    <button id="resetBtn" class="btn-danger" style="background:#5a3a3a;">🔄 リセット</button>
+                </div>
+            </div>
+
+            <!-- キャラカード -->
+            <div class="grid-6" id="charCards"></div>
+
+            <!-- ログ -->
+            <div id="logArea"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // ================================================================
+        //  グローバル状態
+        // ================================================================
+        const STATE = {
+            apiKey: '',
+            characters: [], // { anime, name, imageUrl, description, role, alive, speech, initialDesc }
+            day: 0,
+            phase: 'setup', // setup | night | day | vote | ended
+            paused: false,
+            running: false,
+            log: [],
+            speed: 5, // 0~10
+            // ゲーム中の動的データ
+            aliveIndices: [],
+            werewolfIndices: [],
+            fortuneTellerIndex: -1,
+            villagerIndices: [],
+            deathOrder: [],
+            voteHistory: [],
+            conversationLog: [], // 過去の発言
+            // 夜のアクション
+            nightAttackTarget: -1,
+            nightFortuneTarget: -1,
+            nightResult: '',
+        };
+
+        // ================================================================
+        //  初期化
+        // ================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // APIキー読み込み
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) {
+                document.getElementById('apiKeyInput').value = savedKey;
+                STATE.apiKey = savedKey;
+                document.getElementById('apiKeyStatus').textContent = '✅ 読み込み済み';
+            }
+
+            // キャラフォーム生成
+            generateCharForms();
+
+            // イベント
+            document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
+            document.getElementById('startGameBtn').addEventListener('click', startGame);
+            document.getElementById('pauseBtn').addEventListener('click', togglePause);
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+            document.getElementById('speedSlider').addEventListener('input', (e) => {
+                STATE.speed = parseInt(e.target.value);
+            });
+
+            // コピープロンプト用のグローバル関数をwindowに公開
+            window.copyPrompt = copyPrompt;
+        });
+
+        // ================================================================
+        //  キャラフォーム生成
+        // ================================================================
+        function generateCharForms() {
+            const container = document.getElementById('charFormsContainer');
+            container.innerHTML = '';
+            for (let i = 1; i <= 6; i++) {
+                const div = document.createElement('div');
+                div.className = 'char-form';
+                div.innerHTML = `
+                    <h3 style="margin-bottom:8px;color:#8acada;">キャラクター ${i}</h3>
+                    <div class="field-group">
+                        <div>
+                            <label>アニメ作品名</label>
+                            <input type="text" class="char-anime" placeholder="例：SPY×FAMILY" data-idx="${i-1}" />
+                        </div>
+                        <div>
+                            <label>キャラクター名</label>
+                            <input type="text" class="char-name" placeholder="例：ロイド・フォージャー" data-idx="${i-1}" />
+                        </div>
+                        <div>
+                            <label>画像URL（imgurなど）</label>
+                            <input type="text" class="char-image" placeholder="https://i.imgur.com/xxx.jpg" data-idx="${i-1}" />
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <div style="flex:1;">
+                                <label>キャラクター説明文（ChatGPTで生成して貼り付け）</label>
+                                <textarea class="char-desc" rows="2" data-idx="${i-1}" placeholder="性格・口調・外見・行動パターンなど"></textarea>
+                            </div>
+                            <button class="btn-copy" style="align-self:flex-end;margin-bottom:2px;" onclick="copyPrompt(${i-1})">📋 プロンプトをコピー</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        // ================================================================
+        //  ChatGPT用プロンプト生成＆コピー
+        // ================================================================
+        function copyPrompt(idx) {
+            const forms = document.querySelectorAll('.char-form');
+            if (idx >= forms.length) return;
+            const form = forms[idx];
+            const anime = form.querySelector('.char-anime').value.trim() || '（作品名未入力）';
+            const name = form.querySelector('.char-name').value.trim() || '（キャラ名未入力）';
+
+            const prompt = `あなたはアニメ・漫画・ゲームに詳しい専門家です。
+        以下のアニメ作品とキャラクターについて、**原作設定に忠実に**、下記の項目を必ず含めて詳細に説明してください。
+
+        【作品名】：${anime}
+        【キャラ名】：${name}
+
+        必須項目：
+        1. 性格（例：明るい、クール、臆病、傲岸不遜など）
+        2. 話し方・口調（例：丁寧語、ため口、関西弁、語尾に「〜だぞ」など）
+        3. 外見の特徴（髪型、服装、目の色、雰囲気など）
+        4. 行動パターン（例：直感的に動く、論理的に考える、仲間を守る、孤立しがちなど）
+        5. 人狼ゲームにおいて特に発揮されそうな特徴（例：リーダーシップ、疑い深い、騙すのが上手い、説得力があるなど）
+
+        注意事項：
+        - 独自の解釈やファン理論を加えず、公式設定を優先してください。
+        - もし公式設定が不足している場合は、その旨を明記し、一般的なイメージに沿って補足してください。
+        - 説明は全体で200〜300文字程度にまとめてください。`;
+
+            navigator.clipboard.writeText(prompt).then(() => {
+                const btn = form.querySelector('.btn-copy');
+                const orig = btn.textContent;
+                btn.textContent = '✅ コピー完了!';
+                setTimeout(() => btn.textContent = orig, 2000);
+            }).catch(() => {
+                // フォールバック
+                const textarea = document.createElement('textarea');
+                textarea.value = prompt;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                const btn = form.querySelector('.btn-copy');
+                const orig = btn.textContent;
+                btn.textContent = '✅ コピー完了!';
+                setTimeout(() => btn.textContent = orig, 2000);
+            });
+        }
+
+        // ================================================================
+        //  APIキー保存
+        // ================================================================
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (key) {
+                STATE.apiKey = key;
+                localStorage.setItem('gemini_api_key', key);
+                document.getElementById('apiKeyStatus').textContent = '✅ 保存しました';
+            } else {
+                document.getElementById('apiKeyStatus').textContent = '⚠️ キーを入力してください';
+            }
+        }
+
+        // ================================================================
+        //  ゲーム開始
+        // ================================================================
+        function startGame() {
+            // APIキーチェック
+            if (!STATE.apiKey) {
+                alert('Gemini APIキーを入力して保存してください。');
+                return;
+            }
+
+            // キャラデータ取得
+            const forms = document.querySelectorAll('.char-form');
+            const chars = [];
+            let valid = true;
+            forms.forEach((form, idx) => {
+                const anime = form.querySelector('.char-anime').value.trim();
+                const name = form.querySelector('.char-name').value.trim();
+                const imageUrl = form.querySelector('.char-image').value.trim();
+                const description = form.querySelector('.char-desc').value.trim();
+
+                if (!anime || !name || !description) {
+                    alert(`キャラクター ${idx+1} の「アニメ名」「キャラ名」「説明文」は必須です。`);
+                    valid = false;
+                    return;
+                }
+                chars.push({
+                    index: idx,
+                    anime,
+                    name,
+                    imageUrl: imageUrl || '',
+                    description,
+                    role: '',
+                    alive: true,
+                    speech: '準備中...',
+                });
+            });
+            if (!valid || chars.length !== 6) return;
+
+            STATE.characters = chars;
+            STATE.log = [];
+            STATE.day = 0;
+            STATE.running = true;
+            STATE.paused = false;
+            STATE.deathOrder = [];
+            STATE.voteHistory = [];
+            STATE.conversationLog = [];
+
+            // UI切り替え
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+
+            // キャラカード描画
+            renderCards();
+
+            // ログ初期化
+            document.getElementById('logArea').innerHTML = '';
+            addLog('info', '🐺 ゲームを開始します！');
+
+            // 役職割り当て
+            assignRoles();
+
+            // ゲームループ開始
+            gameLoop();
+        }
+
+        // ================================================================
+        //  役職割り当て（6人固定：村人3／人狼2／占い師1）
+        // ================================================================
+        function assignRoles() {
+            const indices = [0, 1, 2, 3, 4, 5];
+            // シャッフル
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+            // 役職割り当て
+            const roles = ['werewolf', 'werewolf', 'villager', 'villager', 'villager', 'fortuneteller'];
+            STATE.werewolfIndices = [];
+            STATE.villagerIndices = [];
+            STATE.fortuneTellerIndex = -1;
+
+            indices.forEach((idx, pos) => {
+                const role = roles[pos];
+                STATE.characters[idx].role = role;
+                if (role === 'werewolf') STATE.werewolfIndices.push(idx);
+                else if (role === 'villager') STATE.villagerIndices.push(idx);
+                else if (role === 'fortuneteller') STATE.fortuneTellerIndex = idx;
+            });
+
+            // 生存インデックス
+            STATE.aliveIndices = [0, 1, 2, 3, 4, 5];
+
+            // ログ出力（役職は非公開にするが、デバッグ用に表示しない）
+            const roleNames = {
+                werewolf: '人狼',
+                villager: '村人',
+                fortuneteller: '占い師'
+            };
+            STATE.characters.forEach((c, i) => {
+                addLog('info', `${c.name} の役職は ${roleNames[c.role]} です。`);
+            });
+            // でも実際は人狼だけは自分たちが分かるようにするため、ここでは表示しない（ゲーム内で伏せる）
+            // ログには「役職が割り当てられました」だけにする
+            addLog('info', '✅ 役職の割り当てが完了しました。');
+            renderCards();
+        }
+
+        // ================================================================
+        //  ゲームループ（async）
+        // ================================================================
+        async function gameLoop() {
+            if (!STATE.running) return;
+
+            STATE.day++;
+            document.getElementById('dayCounter').textContent = `${STATE.day}日目`;
+            addLog('info', `🌅 ${STATE.day}日目が始まります。`);
+
+            // ---- 夜フェーズ ----
+            await setPhase('🌙 夜フェーズ');
+            await wait(STATE.speed);
+
+            await nightPhase();
+
+            // 死亡者チェック（夜の襲撃結果）
+            const dead = STATE.characters.filter(c => !c.alive).length;
+            if (dead >= 3 || STATE.werewolfIndices.every(idx => !STATE.characters[idx].alive)) {
+                // ゲーム終了判定（夜の後でチェック）
+                if (checkGameEnd()) return;
+            }
+
+            // ---- 昼フェーズ ----
+            await setPhase('☀️ 昼フェーズ（議論）');
+            await wait(STATE.speed);
+
+            // 死者発表
+            const killed = STATE.characters.filter(c => !c.alive);
+            if (killed.length > 0) {
+                const names = killed.map(c => c.name).join('、');
+                addLog('death', `💀 昨夜、${names} が命を落としました。`);
+            } else {
+                addLog('info', '😴 昨夜は誰も死にませんでした。');
+            }
+
+            // 昼の議論（3往復）
+            for (let round = 1; round <= 3; round++) {
+                if (!STATE.running) return;
+                if (STATE.paused) await waitUntilResume();
+                await setPhase(`☀️ 議論 ${round}/3`);
+                await wait(STATE.speed);
+                await dayDiscussion(round);
+                renderCards();
+                // 議論中にゲーム終了条件を満たすことはないが、一応チェック
+                if (checkGameEnd()) return;
+            }
+
+            // ---- 投票フェーズ ----
+            await setPhase('🗳️ 投票フェーズ');
+            await wait(STATE.speed);
+
+            await votingPhase();
+            renderCards();
+
+            // 処刑後チェック
+            if (checkGameEnd()) return;
+
+            // 次の日へ
+            addLog('info', `🌙 ${STATE.day}日目が終了しました。`);
+            await wait(STATE.speed);
+            gameLoop();
+        }
+
+        // ================================================================
+        //  夜フェーズ
+        // ================================================================
+        async function nightPhase() {
+            const alive = STATE.aliveIndices;
+            const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
+            const fortune = STATE.fortuneTellerIndex;
+
+            // 人狼が襲撃対象を選択（APIコール）
+            let attackTarget = -1;
+            let fortuneTarget = -1;
+
+            if (wolves.length > 0 && alive.length > 0) {
+                // 人狼が襲う対象を決める
+                const prompt = buildNightPrompt('werewolf');
+                const response = await callGemini(prompt);
+                try {
+                    const json = JSON.parse(response);
+                    const targetName = json.werewolf_vote || '';
+                    // 名前からインデックスを特定
+                    const targetIdx = STATE.characters.findIndex((c, i) =>
+                        c.name === targetName && STATE.aliveIndices.includes(i) && !STATE.werewolfIndices.includes(i)
+                    );
+                    if (targetIdx !== -1) attackTarget = targetIdx;
+                    else {
+                        // フォールバック：ランダム
+                        const candidates = alive.filter(i => !STATE.werewolfIndices.includes(i));
+                        if (candidates.length > 0) attackTarget = candidates[Math.floor(Math.random() * candidates.length)];
+                    }
+                } catch (e) {
+                    // パース失敗時はランダム
+                    const candidates = alive.filter(i => !STATE.werewolfIndices.includes(i));
+                    if (candidates.length > 0) attackTarget = candidates[Math.floor(Math.random() * candidates.length)];
+                }
+            }
+
+            // 占い師が占う対象を決める（生存している人狼の可能性がある人）
+            if (fortune !== -1 && STATE.characters[fortune].alive) {
+                const prompt = buildNightPrompt('fortuneteller');
+                const response = await callGemini(prompt);
+                try {
+                    const json = JSON.parse(response);
+                    const targetName = json.fortune_teller_target || '';
+                    const targetIdx = STATE.characters.findIndex((c, i) =>
+                        c.name === targetName && STATE.aliveIndices.includes(i) && i !== fortune
+                    );
+                    if (targetIdx !== -1) fortuneTarget = targetIdx;
+                    else {
+                        const candidates = alive.filter(i => i !== fortune);
+                        if (candidates.length > 0) fortuneTarget = candidates[Math.floor(Math.random() * candidates.length)];
+                    }
+                } catch (e) {
+                    const candidates = alive.filter(i => i !== fortune);
+                    if (candidates.length > 0) fortuneTarget = candidates[Math.floor(Math.random() * candidates.length)];
+                }
+            }
+
+            // 実行：襲撃
+            if (attackTarget !== -1 && STATE.characters[attackTarget].alive) {
+                STATE.characters[attackTarget].alive = false;
+                STATE.aliveIndices = STATE.aliveIndices.filter(i => i !== attackTarget);
+                addLog('death', `🐺 人狼が ${STATE.characters[attackTarget].name} を襲撃しました。`);
+                STATE.characters[attackTarget].speech = '⚰️ 死亡';
+            }
+
+            // 占い結果（ログには出さないが、内部で保持）
+            if (fortuneTarget !== -1 && STATE.characters[fortuneTarget].alive) {
+                const isWolf = STATE.werewolfIndices.includes(fortuneTarget);
+                STATE.nightResult = `${STATE.characters[fortuneTarget].name} は ${isWolf ? '人狼' : '村人'} でした。`;
+                addLog('info', `🔮 占い師が ${STATE.characters[fortuneTarget].name} を占いました。（結果はGMのみ把握）`);
+                // 占い師には結果を伝える（次回のプロンプトに含めるため）
+                STATE.characters[fortune].speech = `🔮 ${STATE.nightResult}`;
+            }
+
+            renderCards();
+            await wait(STATE.speed);
+        }
+
+        // ================================================================
+        //  昼の議論（各キャラが発言）
+        // ================================================================
+        async function dayDiscussion(round) {
+            const alive = STATE.aliveIndices;
+            if (alive.length < 2) return;
+
+            // 生存者の名前と説明をまとめてプロンプト
+            const prompt = buildDayPrompt(round);
+            const response = await callGemini(prompt);
+
+            try {
+                const json = JSON.parse(response);
+                // json は { "キャラ名": "セリフ", ... } の形式を想定
+                let spoken = 0;
+                for (const [name, speech] of Object.entries(json)) {
+                    const idx = STATE.characters.findIndex(c => c.name === name);
+                    if (idx !== -1 && STATE.characters[idx].alive) {
+                        STATE.characters[idx].speech = speech;
+                        spoken++;
+                        addLog('conversation', `💬 ${name}: ${speech}`);
+                    }
+                }
+                // 発言がなかったキャラはデフォルト
+                alive.forEach(idx => {
+                    if (!json[STATE.characters[idx].name]) {
+                        STATE.characters[idx].speech = '…（沈黙）';
+                    }
+                });
+            } catch (e) {
+                // パース失敗時はデフォルト発言
+                alive.forEach(idx => {
+                    STATE.characters[idx].speech = '（何も言わなかった）';
+                });
+            }
+
+            renderCards();
+            await wait(STATE.speed);
+        }
+
+        // ================================================================
+        //  投票フェーズ
+        // ================================================================
+        async function votingPhase() {
+            const alive = STATE.aliveIndices;
+            if (alive.length < 2) return;
+
+            const prompt = buildVotePrompt();
+            const response = await callGemini(prompt);
+
+            let votes = {}; // { voterName: targetName }
+            try {
+                const json = JSON.parse(response);
+                // json は { "投票者名": "被投票者名", ... }
+                votes = json;
+            } catch (e) {
+                // フォールバック：ランダム投票
+                alive.forEach(idx => {
+                    const candidates = alive.filter(i => i !== idx);
+                    if (candidates.length > 0) {
+                        const target = candidates[Math.floor(Math.random() * candidates.length)];
+                        votes[STATE.characters[idx].name] = STATE.characters[target].name;
+                    }
+                });
+            }
+
+            // 集計
+            const tally = {};
+            alive.forEach(idx => {
+                const voterName = STATE.characters[idx].name;
+                const targetName = votes[voterName] || '';
+                const targetIdx = STATE.characters.findIndex(c => c.name === targetName && STATE.aliveIndices.includes(c
+                .index));
+                if (targetIdx !== -1 && targetIdx !== idx) {
+                    tally[targetIdx] = (tally[targetIdx] || 0) + 1;
+                    addLog('info', `🗳️ ${voterName} → ${targetName}`);
+                } else {
+                    // 無効票
+                    addLog('info', `🗳️ ${voterName} → 無効票`);
+                }
+            });
+
+            // 最多得票者を処刑
+            let maxVotes = 0;
+            let executed = -1;
+            for (const [idx, count] of Object.entries(tally)) {
+                if (count > maxVotes) {
+                    maxVotes = count;
+                    executed = parseInt(idx);
+                }
+            }
+
+            if (executed !== -1 && STATE.characters[executed].alive) {
+                STATE.characters[executed].alive = false;
+                STATE.aliveIndices = STATE.aliveIndices.filter(i => i !== executed);
+                STATE.characters[executed].speech = '⚰️ 処刑';
+                addLog('death', `⚖️ 村民の投票により ${STATE.characters[executed].name} が処刑されました。`);
+            } else {
+                addLog('info', '⚖️ 投票が分散し、処刑者は決まりませんでした。');
+            }
+
+            renderCards();
+            await wait(STATE.speed);
+        }
+
+        // ================================================================
+        //  ゲーム終了チェック
+        // ================================================================
+        function checkGameEnd() {
+            const aliveWolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
+            const aliveVillagers = STATE.villagerIndices.filter(idx => STATE.characters[idx].alive);
+            const aliveFortune = STATE.fortuneTellerIndex !== -1 && STATE.characters[STATE.fortuneTellerIndex].alive;
+
+            if (aliveWolves.length === 0) {
+                addLog('info', '🎉 村人陣営の勝利！人狼を全て退治しました！');
+                STATE.running = false;
+                document.getElementById('phaseDisplay').textContent = '🏆 村人勝利！';
+                return true;
+            }
+
+            if (aliveWolves.length >= aliveVillagers.length + (aliveFortune ? 1 : 0)) {
+                addLog('info', '🐺 人狼陣営の勝利！村人は絶滅しました。');
+                STATE.running = false;
+                document.getElementById('phaseDisplay').textContent = '🏆 人狼勝利！';
+                return true;
+            }
+
+            return false;
+        }
+
+        // ================================================================
+        //  Gemini API呼び出し
+        // ================================================================
+        async function callGemini(prompt) {
+            if (!STATE.apiKey) throw new Error('APIキーがありません');
+
+            const url =
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${STATE.apiKey}`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 800,
+                }
+            };
+
+            try {
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!resp.ok) {
+                    const errText = await resp.text();
+                    throw new Error(`APIエラー (${resp.status}): ${errText}`);
+                }
+
+                const data = await resp.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                // JSON部分を抽出（マークダウンコードブロック対応）
+                let jsonText = text;
+                const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (codeBlockMatch) {
+                    jsonText = codeBlockMatch[1].trim();
+                } else {
+                    // { } で囲まれている部分を抽出
+                    const braceMatch = text.match(/\{[\s\S]*\}/);
+                    if (braceMatch) jsonText = braceMatch[0];
+                }
+                return jsonText;
+            } catch (e) {
+                addLog('info', `⚠️ API呼び出しエラー: ${e.message}`);
+                return '{}'; // 空オブジェクト
+            }
+        }
+
+        // ================================================================
+        //  プロンプトビルダー
+        // ================================================================
+        function buildNightPrompt(role) {
+            const alive = STATE.aliveIndices;
+            const charInfo = alive.map(i => {
+                const c = STATE.characters[i];
+                return `${c.name}（${c.description}）`;
+            }).join('\n');
+
+            const wolves = STATE.werewolfIndices.filter(i => STATE.characters[i].alive).map(i => STATE.characters[i].name);
+
+            if (role === 'werewolf') {
+                return `
+        あなたは人狼ゲームの「人狼」役です。
+        現在の生存者は以下の通りです：
+        ${charInfo}
+
+        あなたの仲間（人狼）は：${wolves.join('、')} です。
+        あなたは今夜、誰を襲撃しますか？
+        襲撃対象は村人（人狼以外）から選んでください。
+
+        出力は必ず下記のJSON形式のみで返してください。
+        {
+          "werewolf_vote": "襲撃するキャラクターの名前"
+        }
+        `;
+            } else {
+                // 占い師
+                return `
+        あなたは人狼ゲームの「占い師」です。
+        現在の生存者は以下の通りです：
+        ${charInfo}
+
+        あなたは今夜、誰を占いますか？
+        占い対象は自分以外の生存者から選んでください。
+
+        出力は必ず下記のJSON形式のみで返してください。
+        {
+          "fortune_teller_target": "占うキャラクターの名前"
+        }
+        `;
+            }
+        }
+
+        function buildDayPrompt(round) {
+            const alive = STATE.aliveIndices;
+            const charInfo = alive.map(i => {
+                const c = STATE.characters[i];
+                return `${c.name}（${c.description}）`;
+            }).join('\n');
+
+            const deadNames = STATE.characters.filter(c => !c.alive).map(c => c.name);
+
+            return `
+        あなたは人狼ゲームの参加者です。現在は昼の議論中です（${round}回目の発言機会）。
+        生存者は：
+        ${charInfo}
+
+        死亡者は：${deadNames.length > 0 ? deadNames.join('、') : 'なし'}
+
+        各キャラクターがこの状況でどのような発言をするか、性格・口調に忠実にセリフを生成してください。
+        出力は必ず下記のJSON形式のみで返してください。
+        {
+          "キャラクターAの名前": "セリフ",
+          "キャラクターBの名前": "セリフ",
+          ...
+        }
+        全生存者のセリフを含めてください。会話は自然で、人狼ゲームの議論らしくしてください。
+        `;
+        }
+
+        function buildVotePrompt() {
+            const alive = STATE.aliveIndices;
+            const charInfo = alive.map(i => {
+                const c = STATE.characters[i];
+                const roleHint = STATE.werewolfIndices.includes(i) ? '（人狼）' : '';
+                return `${c.name}${roleHint}（${c.description}）`;
+            }).join('\n');
+
+            return `
+        あなたは人狼ゲームの参加者です。現在は投票フェーズです。
+        生存者は：
+        ${charInfo}
+
+        各キャラクターが「誰を処刑したいか」を投票してください。
+        人狼は自分たちが処刑されないよう、また村人を処刑するよう誘導してください。
+        村人は怪しいと思う人物に投票してください。
+
+        出力は必ず下記のJSON形式のみで返してください。
+        {
+          "投票者Aの名前": "被投票者Bの名前",
+          "投票者Cの名前": "被投票者Dの名前",
+          ...
+        }
+        全生存者の投票先を含めてください。自分自身には投票できません。
+        `;
+        }
+
+        // ================================================================
+        //  UIヘルパー
+        // ================================================================
+        function renderCards() {
+            const container = document.getElementById('charCards');
+            container.innerHTML = '';
+            STATE.characters.forEach((c, idx) => {
+                const card = document.createElement('div');
+                card.className = `card ${c.alive ? '' : 'dead'}`;
+
+                const avatar = c.imageUrl ?
+                    `<img class="avatar" src="${c.imageUrl}" alt="${c.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="avatar-placeholder" style="display:none;">${c.name.charAt(0)}</div>` :
+                    `<div class="avatar-placeholder">${c.name.charAt(0)}</div>`;
+
+                const roleLabel = {
+                    werewolf: '🐺 人狼',
+                    villager: '🏘️ 村人',
+                    fortuneteller: '🔮 占い師'
+                } [c.role] || '';
+
+                const statusBadge = c.alive ?
+                    `<span class="badge badge-alive">生存</span>` :
+                    `<span class="badge badge-dead">死亡</span>`;
+
+                card.innerHTML = `
+                    ${avatar}
+                    <div class="name">${c.name}</div>
+                    <div style="font-size:0.8rem;color:#6a8aaa;">${c.anime}</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                        <span class="badge ${c.role === 'werewolf' ? 'badge-werewolf' : c.role === 'fortuneteller' ? 'badge-fortuneteller' : 'badge-villager'}">${roleLabel}</span>
+                        ${statusBadge}
+                    </div>
+                    <div class="speech">💬 ${c.speech || '…'}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function setPhase(text) {
+            document.getElementById('phaseDisplay').textContent = text;
+        }
+
+        function addLog(type, message) {
+            const logArea = document.getElementById('logArea');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString();
+            const cls = type === 'death' ? 'death' : type === 'conversation' ? 'highlight' : 'info';
+            entry.innerHTML = `<span class="time">${time}</span><span class="${cls}">${message}</span>`;
+            logArea.appendChild(entry);
+            logArea.scrollTop = logArea.scrollHeight;
+            STATE.log.push({ type, message, time });
+        }
+
+        function wait(seconds) {
+            // speed: 0=0.5s, 5=3s, 10=6s
+            const base = 0.5 + (seconds / 10) * 5.5;
+            const delay = STATE.paused ? 100 : base * 1000;
+            return new Promise(resolve => setTimeout(resolve, delay));
+        }
+
+        function waitUntilResume() {
+            return new Promise(resolve => {
+                const interval = setInterval(() => {
+                    if (!STATE.paused) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 200);
+            });
+        }
+
+        function togglePause() {
+            STATE.paused = !STATE.paused;
+            document.getElementById('pauseBtn').textContent = STATE.paused ? '▶️ 再開' : '⏸ 一時停止';
+            if (STATE.paused) {
+                addLog('info', '⏸ ゲームを一時停止しました。');
+            } else {
+                addLog('info', '▶️ ゲームを再開します。');
+            }
+        }
+
+        function resetGame() {
+            if (confirm('ゲームをリセットしてセットアップ画面に戻りますか？')) {
+                STATE.running = false;
+                STATE.paused = false;
+                document.getElementById('gameScreen').style.display = 'none';
+                document.getElementById('setupScreen').style.display = 'block';
+                document.getElementById('pauseBtn').textContent = '⏸ 一時停止';
+                document.getElementById('phaseDisplay').textContent = '⏳ 準備中...';
+                document.getElementById('dayCounter').textContent = '0日目';
+            }
+        }
+
+        // ================================================================
+        //  追加：ロード時にデフォルトサンプルを入れる（デモ用）
+        // ================================================================
+        window.addEventListener('load', () => {
+            // サンプルデータ（ユーザーがすぐに試せるように）
+            const samples = [
+                { anime: 'SPY×FAMILY', name: 'ロイド・フォージャー', img: '' },
+                { anime: 'SPY×FAMILY', name: 'ヨル・フォージャー', img: '' },
+                { anime: 'SPY×FAMILY', name: 'アーニャ・フォージャー', img: '' },
+                { anime: '鬼滅の刃', name: '竈門炭治郎', img: '' },
+                { anime: '鬼滅の刃', name: '竈門禰豆子', img: '' },
+                { anime: '鬼滅の刃', name: '我妻善逸', img: '' },
+            ];
+            const forms = document.querySelectorAll('.char-form');
+            forms.forEach((form, idx) => {
+                if (idx < samples.length) {
+                    form.querySelector('.char-anime').value = samples[idx].anime;
+                    form.querySelector('.char-name').value = samples[idx].name;
+                    // 画像は空
+                }
+            });
+        });
+    </script>
+</body>
+</html>
