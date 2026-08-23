@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver3.8 - Gemini</title>
+    <title>全自動人狼 Ver3.9 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -23,7 +23,7 @@
             padding: 16px;
         }
         #app {
-            max-width: 1280px;  /* ★ 広く戻した */
+            max-width: 1280px;
             margin: 0 auto;
             background: #ffffff;
             border-radius: 28px;
@@ -658,8 +658,8 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.8</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — タイムスタンプ復活・広幅</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.9</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 超スロー・会話一括表示</span>
             </div>
             <div class="api-area">
                 <i class="fas fa-key" style="color:#6a8aaa;"></i>
@@ -743,7 +743,7 @@
                 <div class="game-controls">
                     <div class="speed-wrap">
                         <i class="fas fa-tachometer-alt"></i>
-                        <span class="speed-label">遅い</span>
+                        <span class="speed-label">遅い（初期）</span>
                         <input type="range" id="speedSlider" min="0" max="10" value="10" />
                         <span class="speed-label">速い</span>
                     </div>
@@ -759,7 +759,7 @@
 
     <script>
         // ================================================================
-        //  Ver3.8 タイムスタンプ復活・広幅・超スロー調整
+        //  Ver3.9 超スロー調整 + 会話一括表示
         // ================================================================
 
         // -------- 状態 --------
@@ -1147,7 +1147,7 @@
 
             renderCards();
             document.getElementById('messageArea').innerHTML = '';
-            addSystemMessage('🐺 Ver3.8 ゲームを開始します！（タイムスタンプ復活・広幅）', 'info');
+            addSystemMessage('🐺 Ver3.9 ゲームを開始します！（超スロー・会話一括表示）', 'info');
             assignRoles();
             gameLoop();
         }
@@ -1315,7 +1315,7 @@
             await wait(STATE.speed);
         }
 
-        // -------- 昼の議論（「沈黙」を表示しない） --------
+        // ★★★ 会話を一括表示（順番に表示しない） ★★★
         async function dayDiscussion(round) {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
@@ -1332,7 +1332,8 @@
                 return;
             }
 
-            let roundSpeeches = [];
+            // 会話データを収集（スキップ条件はそのまま）
+            let conversations = [];
             for (const idx of alive) {
                 const name = STATE.characters[idx].name;
                 let speech = parsed[name] || '';
@@ -1343,15 +1344,27 @@
                     speech = speech.slice(0, 200) + '…';
                 }
                 STATE.characters[idx].speech = speech;
-                roundSpeeches.push({ name, speech });
-
-                addConversationMessage(idx, speech);
-                renderCards();
-                await wait(0.3);
+                conversations.push({ idx, name, speech });
             }
 
-            STATE.conversationLog = STATE.conversationLog.concat(roundSpeeches);
-            await wait(STATE.speed);
+            // 会話ログに保存
+            STATE.conversationLog = STATE.conversationLog.concat(
+                conversations.map(c => ({ name: c.name, speech: c.speech }))
+            );
+
+            // ★★★ 全員分の会話を一括で表示（順番に表示しない） ★★★
+            if (conversations.length > 0) {
+                // 全てのメッセージを一度に追加（同時表示）
+                for (const conv of conversations) {
+                    addConversationMessage(conv.idx, conv.speech);
+                }
+                renderCards();
+                // 会話表示後、1回だけ待機（まとめて表示された後に間隔を空ける）
+                await wait(STATE.speed);
+            } else {
+                // 発言がない場合
+                await wait(STATE.speed);
+            }
         }
 
         // -------- 投票フェーズ（1件ずつ遅延表示） --------
@@ -1712,10 +1725,10 @@
             document.getElementById('phaseDisplay').innerHTML = text;
         }
 
-        // ★★★ 速度計算を調整（最大6.5秒、値が大きいほど遅い） ★★★
+        // ★★★ 速度計算を大幅に調整（超スロー） ★★★
+        // speed=0 → 1.0秒, speed=10 → 10.0秒
         function wait(seconds) {
-            // seconds=0 → 0.5秒, seconds=10 → 6.5秒
-            const base = 0.5 + (seconds / 10) * 6.0;
+            const base = 1.0 + (seconds / 10) * 9.0;
             const delay = STATE.paused ? 100 : base * 1000;
             return new Promise(r => setTimeout(r, delay));
         }
