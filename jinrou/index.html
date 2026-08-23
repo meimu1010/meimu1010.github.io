@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver3.0 - Gemini</title>
+    <title>全自動人狼 Ver3.1 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -177,6 +177,15 @@
             transform: translateY(-1px);
             box-shadow: 0 6px 16px rgba(42, 122, 90, 0.2);
         }
+        .btn-warning {
+            background: #d4a030;
+            color: #fff;
+        }
+        .btn-warning:hover {
+            background: #b8892a;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(212, 160, 48, 0.2);
+        }
         .btn-danger {
             background: #c0392b;
             color: #fff;
@@ -197,6 +206,11 @@
             padding: 5px 14px;
             font-size: 0.8rem;
         }
+        .btn-xs {
+            padding: 3px 10px;
+            font-size: 0.7rem;
+            border-radius: 40px;
+        }
         .btn-copy {
             background: #f0e6d0;
             color: #6a5a3a;
@@ -212,19 +226,6 @@
         .btn-copy:hover {
             background: #e6d8b8;
         }
-        .btn-danger-small {
-            background: #e74c3c;
-            color: #fff;
-            border: none;
-            border-radius: 40px;
-            padding: 3px 12px;
-            font-size: 0.7rem;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-danger-small:hover {
-            background: #c0392b;
-        }
 
         /* ===== キャラクター作成フォーム ===== */
         .char-form-area {
@@ -233,6 +234,11 @@
             padding: 20px;
             border: 1px solid #e6ecf3;
             margin-bottom: 24px;
+            transition: border-color 0.3s;
+        }
+        .char-form-area.editing {
+            border-color: #d4a030;
+            box-shadow: 0 0 0 3px rgba(212, 160, 48, 0.15);
         }
         .char-form-area .form-row {
             display: grid;
@@ -275,6 +281,17 @@
             gap: 12px;
             margin-top: 12px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+        .char-form-area .edit-badge {
+            display: none;
+            font-size: 0.8rem;
+            color: #d4a030;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .char-form-area.editing .edit-badge {
+            display: inline;
         }
 
         /* ===== ライブラリ一覧 ===== */
@@ -355,26 +372,36 @@
             border-radius: 40px;
             margin-top: 4px;
         }
-        .library-card .delete-btn {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            background: rgba(200, 50, 50, 0.8);
-            color: #fff;
+        .library-card .card-actions {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .library-card .card-actions button {
             border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            border-radius: 40px;
+            padding: 2px 10px;
             font-size: 0.7rem;
             cursor: pointer;
             transition: 0.2s;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
+            gap: 4px;
         }
-        .library-card .delete-btn:hover {
+        .library-card .card-actions .edit-btn {
+            background: #f0e6d0;
+            color: #6a5a3a;
+        }
+        .library-card .card-actions .edit-btn:hover {
+            background: #e6d8b8;
+        }
+        .library-card .card-actions .delete-btn {
+            background: rgba(200, 50, 50, 0.8);
+            color: #fff;
+        }
+        .library-card .card-actions .delete-btn:hover {
             background: #c0392b;
-            transform: scale(1.1);
         }
         .library-card .select-badge {
             position: absolute;
@@ -591,8 +618,8 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.7rem;color:#6a8aaa;">Ver3.0</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — キャラクターライブラリ対応</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.7rem;color:#6a8aaa;">Ver3.1</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 編集機能付きライブラリ</span>
             </div>
             <div class="api-area">
                 <i class="fas fa-key" style="color:#6a8aaa;"></i>
@@ -613,9 +640,13 @@
         <!-- ========================================================= -->
         <div id="tab-library" class="tab-pane active">
 
-            <!-- キャラ作成フォーム -->
-            <div class="char-form-area">
-                <h3 style="margin-bottom:12px;"><i class="fas fa-user-plus" style="color:#2d6a8a;"></i> 新しいキャラクターを作成</h3>
+            <!-- キャラ作成/編集フォーム -->
+            <div class="char-form-area" id="charFormArea">
+                <h3 style="margin-bottom:12px;">
+                    <i class="fas fa-user-plus" style="color:#2d6a8a;"></i>
+                    <span id="formTitle">新しいキャラクターを作成</span>
+                    <span class="edit-badge"><i class="fas fa-pen"></i> 編集中</span>
+                </h3>
                 <div class="form-row">
                     <div>
                         <label>アニメ作品名</label>
@@ -638,8 +669,9 @@
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button class="btn btn-success" id="addCharBtn"><i class="fas fa-plus"></i> ライブラリに追加</button>
+                    <button class="btn btn-success" id="addCharBtn"><i class="fas fa-plus"></i> <span id="submitBtnText">ライブラリに追加</span></button>
                     <button class="btn btn-outline" id="clearFormBtn"><i class="fas fa-undo"></i> クリア</button>
+                    <button class="btn btn-outline" id="cancelEditBtn" style="display:none;"><i class="fas fa-times"></i> 編集キャンセル</button>
                 </div>
             </div>
 
@@ -658,7 +690,7 @@
             </div>
             <div class="library-grid" id="libraryGrid"></div>
             <p style="margin-top:12px;font-size:0.8rem;color:#7a8a9a;text-align:center;">
-                <i class="fas fa-info-circle"></i> キャラをクリックで選択/解除（最大6人）。選択した6人でゲームが始まります。
+                <i class="fas fa-info-circle"></i> キャラをクリックで選択/解除（最大6人）。✏️編集ボタンで情報を変更できます。
             </p>
         </div>
 
@@ -688,17 +720,14 @@
 
     <script>
         // ================================================================
-        //  Ver3.0 キャラクターライブラリ対応 完全ロジック
+        //  Ver3.1 キャラクターライブラリ + 編集機能
         // ================================================================
 
         // -------- 状態 --------
         const STATE = {
             apiKey: '',
-            // ライブラリ（localStorageに保存）
             library: [],
-            // 選択中のキャラID（最大6）
             selectedIds: [],
-            // ゲーム用
             characters: [],
             day: 0,
             phase: 'setup',
@@ -711,13 +740,13 @@
             fortuneTellerIndex: -1,
             villagerIndices: [],
             fortuneSecret: '',
+            editingId: null, // 編集中のキャラID
         };
 
         const STORAGE_KEY = 'werewolf_library';
 
         // -------- 初期化 --------
         document.addEventListener('DOMContentLoaded', () => {
-            // APIキー読み込み
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) {
                 document.getElementById('apiKeyInput').value = savedKey;
@@ -725,10 +754,8 @@
                 document.getElementById('apiKeyStatus').textContent = '✅ 読込完了';
             }
 
-            // ライブラリ読み込み
             loadLibrary();
 
-            // タブ切り替え
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -738,10 +765,10 @@
                 });
             });
 
-            // イベント
             document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
-            document.getElementById('addCharBtn').addEventListener('click', addCharacter);
+            document.getElementById('addCharBtn').addEventListener('click', handleSubmit);
             document.getElementById('clearFormBtn').addEventListener('click', clearForm);
+            document.getElementById('cancelEditBtn').addEventListener('click', cancelEdit);
             document.getElementById('startGameFromLibrary').addEventListener('click', startGameFromLibrary);
             document.getElementById('pauseBtn').addEventListener('click', togglePause);
             document.getElementById('resetBtn').addEventListener('click', resetGame);
@@ -751,7 +778,6 @@
 
             window.copyPromptFromInput = copyPromptFromInput;
 
-            // 初回サンプルデータ
             if (STATE.library.length === 0) {
                 addSampleCharacters();
             }
@@ -768,7 +794,6 @@
             } catch (e) {
                 STATE.library = [];
             }
-            // 互換性: 古いデータにidがなければ付与
             STATE.library.forEach(c => {
                 if (!c.id) c.id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
             });
@@ -800,29 +825,21 @@
             saveLibrary();
         }
 
-        // -------- キャラ追加 --------
-        function addCharacter() {
-            const anime = document.getElementById('newAnime').value.trim();
-            const name = document.getElementById('newName').value.trim();
-            const imageUrl = document.getElementById('newImage').value.trim();
-            const description = document.getElementById('newDesc').value.trim();
+        // -------- フォーム操作 --------
+        function getFormData() {
+            return {
+                anime: document.getElementById('newAnime').value.trim(),
+                name: document.getElementById('newName').value.trim(),
+                imageUrl: document.getElementById('newImage').value.trim(),
+                description: document.getElementById('newDesc').value.trim(),
+            };
+        }
 
-            if (!anime || !name || !description) {
-                alert('アニメ名・キャラ名・説明文は必須です。');
-                return;
-            }
-
-            STATE.library.push({
-                id: Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-                anime,
-                name,
-                imageUrl: imageUrl || '',
-                description,
-            });
-            saveLibrary();
-            renderLibrary();
-            clearForm();
-            updateSelectedCount();
+        function setFormData(data) {
+            document.getElementById('newAnime').value = data.anime || '';
+            document.getElementById('newName').value = data.name || '';
+            document.getElementById('newImage').value = data.imageUrl || '';
+            document.getElementById('newDesc').value = data.description || '';
         }
 
         function clearForm() {
@@ -830,9 +847,79 @@
             document.getElementById('newName').value = '';
             document.getElementById('newImage').value = '';
             document.getElementById('newDesc').value = '';
+            cancelEdit();
         }
 
-        // -------- プロンプトコピー（新フォーム用） --------
+        // -------- 編集モード --------
+        function startEdit(id) {
+            const char = STATE.library.find(c => c.id === id);
+            if (!char) return;
+
+            STATE.editingId = id;
+            setFormData(char);
+
+            document.getElementById('charFormArea').classList.add('editing');
+            document.getElementById('formTitle').textContent = 'キャラクターを編集';
+            document.getElementById('submitBtnText').textContent = '更新';
+            document.getElementById('addCharBtn').className = 'btn btn-warning';
+            document.getElementById('addCharBtn').innerHTML = '<i class="fas fa-save"></i> <span id="submitBtnText">更新</span>';
+            document.getElementById('cancelEditBtn').style.display = 'inline-flex';
+
+            // フォームまでスクロール
+            document.getElementById('charFormArea').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function cancelEdit() {
+            STATE.editingId = null;
+            document.getElementById('charFormArea').classList.remove('editing');
+            document.getElementById('formTitle').textContent = '新しいキャラクターを作成';
+            document.getElementById('submitBtnText').textContent = 'ライブラリに追加';
+            document.getElementById('addCharBtn').className = 'btn btn-success';
+            document.getElementById('addCharBtn').innerHTML = '<i class="fas fa-plus"></i> <span id="submitBtnText">ライブラリに追加</span>';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            clearFormInputs();
+        }
+
+        function clearFormInputs() {
+            document.getElementById('newAnime').value = '';
+            document.getElementById('newName').value = '';
+            document.getElementById('newImage').value = '';
+            document.getElementById('newDesc').value = '';
+        }
+
+        // -------- 送信処理（追加 or 更新） --------
+        function handleSubmit() {
+            const data = getFormData();
+            if (!data.anime || !data.name || !data.description) {
+                alert('アニメ名・キャラ名・説明文は必須です。');
+                return;
+            }
+
+            if (STATE.editingId) {
+                // 更新
+                const idx = STATE.library.findIndex(c => c.id === STATE.editingId);
+                if (idx !== -1) {
+                    STATE.library[idx] = { ...STATE.library[idx], ...data };
+                    saveLibrary();
+                    renderLibrary();
+                    cancelEdit();
+                    // 選択状態を維持（IDは変わらない）
+                    updateSelectedCount();
+                }
+            } else {
+                // 新規追加
+                STATE.library.push({
+                    id: Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    ...data,
+                });
+                saveLibrary();
+                renderLibrary();
+                clearFormInputs();
+                updateSelectedCount();
+            }
+        }
+
+        // -------- プロンプトコピー --------
         function copyPromptFromInput() {
             const anime = document.getElementById('newAnime').value.trim() || '（作品名未入力）';
             const name = document.getElementById('newName').value.trim() || '（キャラ名未入力）';
@@ -891,15 +978,24 @@
                     <div class="lname">${c.name}</div>
                     <div class="lanime">${c.anime}</div>
                     <div class="lbadge">${isSelected ? '✅ 選択中' : 'クリックで選択'}</div>
-                    <button class="delete-btn" data-id="${c.id}" title="削除"><i class="fas fa-times"></i></button>
+                    <div class="card-actions">
+                        <button class="edit-btn" data-id="${c.id}" title="編集"><i class="fas fa-pen"></i> 編集</button>
+                        <button class="delete-btn" data-id="${c.id}" title="削除"><i class="fas fa-trash"></i></button>
+                    </div>
                     ${isSelected ? '<div class="select-badge">' + (STATE.selectedIds.indexOf(c.id)+1) + '</div>' : ''}
                 `;
                 grid.appendChild(card);
 
                 // クリックで選択/解除
                 card.addEventListener('click', (e) => {
-                    if (e.target.closest('.delete-btn')) return;
+                    if (e.target.closest('.card-actions')) return;
                     toggleSelect(c.id);
+                });
+
+                // 編集ボタン
+                card.querySelector('.edit-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    startEdit(c.id);
                 });
 
                 // 削除ボタン
@@ -937,6 +1033,7 @@
         function deleteCharacter(id) {
             STATE.library = STATE.library.filter(c => c.id !== id);
             STATE.selectedIds = STATE.selectedIds.filter(sid => sid !== id);
+            if (STATE.editingId === id) cancelEdit();
             saveLibrary();
             renderLibrary();
             updateSelectedCount();
@@ -967,14 +1064,12 @@
                 return;
             }
 
-            // 選択されたキャラを取得
             const selectedChars = STATE.library.filter(c => STATE.selectedIds.includes(c.id));
             if (selectedChars.length !== 6) {
                 alert('選択されたキャラの取得に失敗しました。');
                 return;
             }
 
-            // ゲーム用に変換
             STATE.characters = selectedChars.map((c, idx) => ({
                 index: idx,
                 anime: c.anime,
@@ -992,7 +1087,6 @@
             STATE.paused = false;
             STATE.fortuneSecret = '';
 
-            // ゲームタブに切り替え
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('[data-tab="game"]').classList.add('active');
             document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -1000,17 +1094,15 @@
 
             renderCards();
             document.getElementById('logArea').innerHTML = '';
-            addLog('info', '🐺 Ver3.0 ゲームを開始します！（ライブラリから選択したキャラで進行）');
+            addLog('info', '🐺 Ver3.1 ゲームを開始します！（編集機能付きライブラリから選択）');
             assignRoles();
             gameLoop();
         }
 
         // ================================================================
         //  以下、ゲームロジックは Ver2.0 と同一（完全版）
-        //  ===== ただし、STATE.characters の構造は同じなのでそのまま流用 =====
         // ================================================================
 
-        // -------- 役職割り当て --------
         function assignRoles() {
             const indices = [0, 1, 2, 3, 4, 5];
             for (let i = indices.length - 1; i > 0; i--) {
@@ -1033,7 +1125,6 @@
             renderCards();
         }
 
-        // -------- ゲームループ（Ver2.0 完全版） --------
         async function gameLoop() {
             if (!STATE.running) return;
             STATE.day++;
@@ -1078,7 +1169,6 @@
             gameLoop();
         }
 
-        // -------- 夜フェーズ --------
         async function nightPhase() {
             const alive = STATE.aliveIndices;
             const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
@@ -1166,7 +1256,6 @@
             await wait(STATE.speed);
         }
 
-        // -------- 昼の議論 --------
         async function dayDiscussion(round) {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
@@ -1195,7 +1284,6 @@
             await wait(STATE.speed);
         }
 
-        // -------- 投票 --------
         async function votingPhase() {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
@@ -1254,7 +1342,6 @@
             await wait(STATE.speed);
         }
 
-        // -------- 終了チェック --------
         function checkGameEnd() {
             const aliveWolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
             const aliveVillagers = STATE.villagerIndices.filter(idx => STATE.characters[idx].alive);
@@ -1275,7 +1362,6 @@
             return false;
         }
 
-        // -------- Gemini API --------
         async function callGemini(prompt) {
             if (!STATE.apiKey) throw new Error('APIキーなし');
             const models = ['gemini-2.0-flash-lite', 'gemini-1.5-flash'];
@@ -1317,7 +1403,6 @@
             return '{}';
         }
 
-        // -------- プロンプトビルダー --------
         function buildWolfNightPrompt() {
             const alive = STATE.aliveIndices;
             const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
