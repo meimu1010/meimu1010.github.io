@@ -180,7 +180,7 @@
                     <div style="display:flex;gap:6px;align-items:flex-end;">
                         <div style="flex:1;">
                             <label>説明文（詳細に！）</label>
-                            <textarea id="newDesc" rows="3" placeholder="性格・口調・行動パターン・人狼ゲームでの特徴などを具体的に"></textarea>
+                            <textarea id="newDesc" rows="5" placeholder="「プロンプト」ボタンで生成した「一人称・口調・口癖・サンプルセリフ」形式の説明文を貼り付けると、より本人らしいセリフになります"></textarea>
                         </div>
                         <button class="btn-copy" onclick="copyPromptFromInput()" style="align-self:flex-end;margin-bottom:2px;"><i class="fas fa-copy"></i> プロンプト</button>
                     </div>
@@ -264,6 +264,13 @@
         };
 
         const STORAGE_KEY = 'werewolf_library';
+
+        // -------- HTMLエスケープ（キャラ名・作品名・セリフ等、ユーザー/AI由来の文字列をinnerHTMLに入れる前に必ず通す） --------
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            } [ch]));
+        }
 
         // -------- 初期化 --------
         document.addEventListener('DOMContentLoaded', () => {
@@ -435,22 +442,28 @@
         function copyPromptFromInput() {
             const anime = document.getElementById('newAnime').value.trim() || '（作品名未入力）';
             const name = document.getElementById('newName').value.trim() || '（キャラ名未入力）';
-            const prompt = `あなたはアニメ・漫画・ゲームに詳しい専門家です。
-        以下のアニメ作品とキャラクターについて、**原作設定に忠実に**、下記の項目を必ず含めて詳細に説明してください。
+            const prompt = `あなたはアニメ・漫画・ゲームのセリフ再現に長けた専門家です。
+        以下のキャラクターについて、**人狼ゲームのAIが「本人らしく喋る」ために必要な情報**を、下記のテンプレートの形式そのままで出力してください。
+        形容詞で性格を説明するだけでなく、**実際の口調がそのまま再現できる具体情報**を優先してください。
 
         【作品名】：${anime}
         【キャラ名】：${name}
 
-        必須項目：
-        1. 性格（例：明るい、クール、臆病、傲岸不遜など）
-        2. 話し方・口調（例：丁寧語、ため口、関西弁、語尾に「〜だぞ」など）
-        3. 外見の特徴（髪型、服装、目の色、雰囲気など）
-        4. 行動パターン（例：直感的に動く、論理的に考える、仲間を守る、孤立しがちなど）
-        5. 人狼ゲームにおいて特に発揮されそうな特徴（例：リーダーシップ、疑い深い、騙すのが上手い、説得力があるなど）
+        必ず次のテンプレートの見出しを使い、各項目を埋めてください（見出し以外の前置き・後書きは不要）：
+
+        【一人称】：（例：俺、あたし、僕、拙者 など。原作での実際の一人称）
+        【他者の呼び方】：（例：〜くん付け、呼び捨て、あだ名で呼ぶ など、口にする際の癖）
+        【口調・語尾】：（例：語尾に「〜だぜ」「〜ですわ」「〜なのだ」を付ける、関西弁、敬語を絶対に崩さない、など具体的な特徴）
+        【口癖・決め台詞】：（作中で実際に繰り返し使うフレーズを1〜3個、そのままの言い回しで）
+        【性格の核】：（一言で。例：強がりだが本当は臆病、直感型のリーダー、皮肉屋の分析家）
+        【話し方のテンポ・温度感】：（例：早口でまくし立てる、間を置いてぼそっと言う、感情的にすぐ声を荒げる）
+        【人狼ゲームでの傾向】：（疑われた時にどう反応するか、嘘をつくのが得意か、仲間を庇うか、論理で攻めるか等）
+        【サンプルセリフ】：このキャラが実際に言いそうなセリフを、口調・一人称・語尾を忠実に再現して2つ（人狼と無関係な内容でよい）
 
         注意事項：
-        - 独自の解釈やファン理論を加えず、公式設定を優先してください。
-        - 説明は全体で200〜300文字程度にまとめてください。`;
+        - 独自解釈やファン理論を加えず、公式設定・原作の口調を最優先してください。
+        - 抽象的な性格描写より、上記のような**再現可能な言語的特徴**を重視してください。
+        - 全体で350〜450文字程度にまとめてください。`;
             navigator.clipboard.writeText(prompt).then(() => {
                 const btn = document.querySelector('.char-form-area .btn-copy');
                 const orig = btn.innerHTML;
@@ -477,14 +490,17 @@
                 const card = document.createElement('div');
                 card.className = `library-card ${STATE.selectedIds.includes(c.id) ? 'selected' : ''}`;
                 card.dataset.id = c.id;
+                const safeName = escapeHtml(c.name);
+                const safeAnime = escapeHtml(c.anime);
+                const safeImg = escapeHtml(c.imageUrl);
                 const avatar = c.imageUrl ?
-                    `<img class="avatar" src="${c.imageUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="avatar-placeholder" style="display:none;">${c.name.charAt(0)}</div>` :
-                    `<div class="avatar-placeholder">${c.name.charAt(0)}</div>`;
+                    `<img class="avatar" src="${safeImg}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="avatar-placeholder" style="display:none;">${escapeHtml(c.name.charAt(0))}</div>` :
+                    `<div class="avatar-placeholder">${escapeHtml(c.name.charAt(0))}</div>`;
                 const isSelected = STATE.selectedIds.includes(c.id);
                 card.innerHTML = `
                     ${avatar}
-                    <div class="lname">${c.name}</div>
-                    <div class="lanime">${c.anime}</div>
+                    <div class="lname">${safeName}</div>
+                    <div class="lanime">${safeAnime}</div>
                     <div class="lbadge">${isSelected ? '✅ 選択中' : 'クリックで選択'}</div>
                     <div class="card-actions">
                         <button class="edit-btn" data-id="${c.id}" title="編集"><i class="fas fa-pen"></i> 編集</button>
@@ -598,7 +614,7 @@
             document.getElementById('messageArea').innerHTML = '';
             addSystemMessage('🐺 Ver3.13 ゲームを開始！（ランダム会話順・超スロー）', 'info');
             assignRoles();
-            gameLoop();
+            gameLoop().catch(handleGameLoopError);
         }
 
         // ================================================================
@@ -627,14 +643,22 @@
             renderCards();
         }
 
+        // ゲームループ内で例外が起きた場合に、無言で止まらせず状況を表示する
+        function handleGameLoopError(e) {
+            console.error('ゲームループでエラーが発生しました:', e);
+            addSystemMessage('⚠️ エラーが発生したためゲームを停止しました。詳細はブラウザのコンソールを確認してください。', 'info');
+            STATE.running = false;
+        }
+
         async function gameLoop() {
             if (!STATE.running) return;
+            try {
             STATE.day++;
             document.getElementById('dayCounter').textContent = `${STATE.day}日目`;
             addSystemMessage(`🌅 ${STATE.day}日目が始まります。`, 'info');
 
             await setPhase('🌙 夜フェーズ');
-            await wait(STATE.speed);
+            await fastWait();
 
             if (STATE.isFirstNight) {
                 addSystemMessage('🌙 初日の夜は平和です（襲撃は発生しません）', 'info');
@@ -646,7 +670,7 @@
             if (checkGameEnd()) return;
 
             await setPhase('☀️ 昼フェーズ（議論）');
-            await wait(STATE.speed);
+            await fastWait();
 
             const killed = STATE.characters.filter(c => !c.alive);
             if (killed.length > 0) {
@@ -668,14 +692,17 @@
             }
 
             await setPhase('🗳️ 投票フェーズ');
-            await wait(STATE.speed);
+            await fastWait();
             await votingPhase();
             renderCards();
             if (checkGameEnd()) return;
 
             addSystemMessage(`🌙 ${STATE.day}日目が終了しました。`, 'info');
-            await wait(STATE.speed);
-            gameLoop();
+            await fastWait();
+            gameLoop().catch(handleGameLoopError);
+            } catch (e) {
+                handleGameLoopError(e);
+            }
         }
 
         // -------- 夜フェーズ --------
@@ -761,7 +788,7 @@
                 STATE.fortuneSecret = '';
             }
             renderCards();
-            await wait(STATE.speed);
+            await fastWait();
         }
 
         // ★★★ 会話をランダム順で表示 ★★★
@@ -874,7 +901,9 @@
             for (let i = 0; i < voteEntries.length; i++) {
                 const e = voteEntries[i];
                 addVoteMessage(e.voter, e.target);
-                await wait(1.0);
+                // ★修正: wait(1.0) は「スライダー値1」を渡していたため実際には約13.6秒待っていたバグ。
+                // 投票結果は1件ずつ短いテンポ（0.6秒）で表示する。
+                await waitFor(600);
             }
 
             let maxVotes = 0;
@@ -897,7 +926,7 @@
                 addSystemMessage('⚖️ 投票が分散し、処刑者は決まりませんでした。', 'info');
             }
             renderCards();
-            await wait(STATE.speed);
+            await fastWait();
         }
 
         function checkGameEnd() {
@@ -967,7 +996,7 @@
             const nameSpan = document.createElement('div');
             nameSpan.className = 'name';
             const time = new Date().toLocaleTimeString();
-            nameSpan.innerHTML = `${c.name} <span class="msg-time">${time}</span>`;
+            nameSpan.innerHTML = `${escapeHtml(c.name)} <span class="msg-time">${time}</span>`;
             bubble.appendChild(nameSpan);
             const textSpan = document.createElement('div');
             textSpan.className = 'text';
@@ -985,7 +1014,7 @@
             const div = document.createElement('div');
             div.className = 'msg-vote';
             const time = new Date().toLocaleTimeString();
-            div.innerHTML = `<span class="msg-time">${time}</span> <span class="voter">${voter}</span> <span class="arrow">→</span> <span class="target">${target}</span>`;
+            div.innerHTML = `<span class="msg-time">${time}</span> <span class="voter">${escapeHtml(voter)}</span> <span class="arrow">→</span> <span class="target">${escapeHtml(target)}</span>`;
             area.appendChild(div);
             area.scrollTop = area.scrollHeight;
         }
@@ -1020,25 +1049,30 @@
             }
 
             return `
-        あなたは人狼ゲームの参加者です。現在は ${round}回目の議論です。
-        目標は「人狼」を見つけて処刑することです。
+        あなたは人狼ゲームの参加者6名を同時に演じる、キャラクターの声真似が非常に得意な脚本家です。
+        現在は ${round}回目の議論です。目標は「人狼」を見つけて処刑することです。
 
         ## 状況
-        生存者:
+        生存者（各キャラの一人称・口調・口癖・サンプルセリフを含む設定）:
         ${charInfo}
 
         ${deadInfo}
 
         ${prevConversation ? prevConversation : ''}
 
-        ## 指示
-        1. 各キャラの**役職と性格**を考慮して発言してください。
-        2. 村人は疑わしい人物を推理し、人狼は自分が疑われないように振る舞ってください。
-        3. **セリフは必ず1〜2文の短いもの**にしてください。
-        4. 前回の発言に関連させると自然です。
-        5. **発言の順番は特に決まっていません。各キャラが自由に発言し、会話が自然に流れるようにしてください。**
+        ## 最重要指示：キャラクターらしさの再現
+        1. **各キャラの一人称・語尾・口癖・話し方のテンポを一言一句レベルで厳守**してください。設定にサンプルセリフがあれば、それと同じ言葉選び・文体で書いてください。
+        2. **6人全員が同じような言い回し（「〜かもしれません」「怪しいですね」等の無難な当たり障りのない言葉）にならないよう、キャラごとに語彙・語尾・温度感をはっきり変えてください。** 全員が同じ喋り方に寄ってしまうのが最大の失敗です。
+        3. セリフの長さはキャラの性格に合わせて変えてください（早口・饒舌な性格は2〜3文、寡黙・クールな性格は短く1文や単語だけでも良い）。「必ず1〜2文」という均一なルールは適用しません。
+        4. 原作のトーン（シリアス／コメディ／不穏など）を壊さないでください。現代的なネットスラングや、原作にない砕けた言い回しを安易に足さないでください。
 
-        ## 出力（JSON）
+        ## ゲーム進行上の指示
+        5. 各キャラの**役職と性格**を踏まえて発言してください。村人は疑わしい人物を推理し、人狼は自分が疑われないよう自然に振る舞ってください。
+        6. 前回の発言がある場合は、話の流れとして自然に関連させてください（触れなくてもよい発言があってもOKです）。
+        7. 発言の順番は決まっていません。各キャラが自由に発言し、自然な会話の流れを作ってください。
+        8. キャラクターとして不自然になるくらいなら、推理を控えめにしてでもキャラらしさを優先してください。
+
+        ## 出力（JSON。前置き・説明・コードブロック以外の文章は一切不要）
         {
           "キャラ名1": "セリフ",
           "キャラ名2": "セリフ",
@@ -1122,7 +1156,7 @@
                         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${STATE.apiKey}`;
                     const payload = {
                         contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { temperature: 0.75, maxOutputTokens: 800 }
+                        generationConfig: { temperature: 0.85, maxOutputTokens: 1500 }
                     };
                     const resp = await fetch(url, {
                         method: 'POST',
@@ -1161,9 +1195,12 @@
             STATE.characters.forEach((c, idx) => {
                 const card = document.createElement('div');
                 card.className = `char-card ${c.alive ? '' : 'dead'}`;
+                const safeName = escapeHtml(c.name);
+                const safeAnime = escapeHtml(c.anime);
+                const safeImg = escapeHtml(c.imageUrl);
                 const avatar = c.imageUrl ?
-                    `<img class="avatar" src="${c.imageUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="avatar-placeholder" style="display:none;">${c.name.charAt(0)}</div>` :
-                    `<div class="avatar-placeholder">${c.name.charAt(0)}</div>`;
+                    `<img class="avatar" src="${safeImg}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="avatar-placeholder" style="display:none;">${escapeHtml(c.name.charAt(0))}</div>` :
+                    `<div class="avatar-placeholder">${escapeHtml(c.name.charAt(0))}</div>`;
                 const roleLabel = {
                     werewolf: '🐺 人狼',
                     villager: '🏘️ 村人',
@@ -1176,10 +1213,10 @@
                 } [c.role] || '';
                 card.innerHTML = `
                     ${avatar}
-                    <div class="name">${c.name}</div>
-                    <div class="anime">${c.anime}</div>
+                    <div class="name">${safeName}</div>
+                    <div class="anime">${safeAnime}</div>
                     <span class="role-badge ${badgeClass}">${roleLabel}</span>
-                    <div class="speech">💬 ${c.speech || '…'}</div>
+                    <div class="speech">💬 ${escapeHtml(c.speech) || '…'}</div>
                 `;
                 container.appendChild(card);
             });
@@ -1195,6 +1232,12 @@
             const base = 1.5 + (inverted / 10) * 13.5; // 1.5秒〜15秒
             const delay = STATE.paused ? 100 : base * 1000;
             return new Promise(r => setTimeout(r, delay));
+        }
+
+        // ★ 議論フェーズ以外の待機用。スピードスライダーの影響を受けず常に短時間（一時停止には対応）。
+        const FAST_PHASE_DELAY_MS = 400;
+        function fastWait(ms = FAST_PHASE_DELAY_MS) {
+            return waitFor(ms);
         }
 
         function waitUntilResume() {
