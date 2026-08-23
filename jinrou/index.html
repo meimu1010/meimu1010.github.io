@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver2.0 - Gemini</title>
+    <title>全自動人狼 Ver3.0 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ===== ベース（ライトモード・高品質UI） ===== */
+        /* ===== ベース（ライトモード） ===== */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -212,74 +212,183 @@
         .btn-copy:hover {
             background: #e6d8b8;
         }
-
-        /* ===== キャラ作成フォーム ===== */
-        .char-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-        }
-        .char-card-form {
-            background: #f9fbfd;
-            border-radius: 20px;
-            padding: 18px;
-            border: 1px solid #e6ecf3;
+        .btn-danger-small {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 40px;
+            padding: 3px 12px;
+            font-size: 0.7rem;
+            cursor: pointer;
             transition: 0.2s;
         }
-        .char-card-form:hover {
-            border-color: #c8d4e0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        .btn-danger-small:hover {
+            background: #c0392b;
         }
-        .char-card-form h3 {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #2a3a4a;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+
+        /* ===== キャラクター作成フォーム ===== */
+        .char-form-area {
+            background: #f9fbfd;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid #e6ecf3;
+            margin-bottom: 24px;
         }
-        .char-card-form .field {
-            margin-bottom: 10px;
+        .char-form-area .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
         }
-        .char-card-form .field label {
+        .char-form-area .form-row .full {
+            grid-column: 1 / -1;
+        }
+        .char-form-area label {
             display: block;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: #5a6a7a;
             margin-bottom: 2px;
         }
-        .char-card-form .field input,
-        .char-card-form .field textarea {
+        .char-form-area input,
+        .char-form-area textarea {
             width: 100%;
             border: 1.5px solid #dce3ec;
             border-radius: 12px;
             padding: 8px 12px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             background: #fff;
             transition: 0.2s;
             font-family: inherit;
         }
-        .char-card-form .field input:focus,
-        .char-card-form .field textarea:focus {
+        .char-form-area input:focus,
+        .char-form-area textarea:focus {
             border-color: #2d6a8a;
             outline: none;
             box-shadow: 0 0 0 3px rgba(45, 106, 138, 0.08);
         }
-        .char-card-form .field textarea {
+        .char-form-area textarea {
             resize: vertical;
-            min-height: 48px;
+            min-height: 50px;
         }
-        .char-card-form .copy-row {
+        .char-form-area .form-actions {
             display: flex;
-            gap: 8px;
-            align-items: flex-end;
-        }
-        .char-card-form .copy-row textarea {
-            flex: 1;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
         }
 
-        /* ===== ゲーム画面 ===== */
+        /* ===== ライブラリ一覧 ===== */
+        .library-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .library-header .count {
+            font-size: 0.9rem;
+            color: #5a6a7a;
+        }
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .library-card {
+            background: #f9fbfd;
+            border-radius: 18px;
+            padding: 14px;
+            border: 2px solid #e6ecf3;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.25s;
+            position: relative;
+        }
+        .library-card:hover {
+            border-color: #b0c8d8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+        }
+        .library-card.selected {
+            border-color: #2d6a8a;
+            background: #eef6fa;
+            box-shadow: 0 0 0 3px rgba(45, 106, 138, 0.15);
+        }
+        .library-card .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 6px;
+            border: 2px solid #dce3ec;
+            background: #fff;
+        }
+        .library-card .avatar-placeholder {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            margin: 0 auto 6px;
+            background: #eef2f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #4a6a8a;
+            border: 2px solid #dce3ec;
+        }
+        .library-card .lname {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .library-card .lanime {
+            font-size: 0.75rem;
+            color: #7a8a9a;
+        }
+        .library-card .lbadge {
+            display: inline-block;
+            background: #2d6a8a;
+            color: #fff;
+            font-size: 0.6rem;
+            padding: 1px 10px;
+            border-radius: 40px;
+            margin-top: 4px;
+        }
+        .library-card .delete-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(200, 50, 50, 0.8);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .library-card .delete-btn:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+        .library-card .select-badge {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            background: #2d6a8a;
+            color: #fff;
+            border-radius: 40px;
+            padding: 1px 10px;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+
+        /* ===== ゲーム画面（既存） ===== */
         .game-header {
             display: flex;
             flex-wrap: wrap;
@@ -323,7 +432,6 @@
             accent-color: #2d6a8a;
         }
 
-        /* キャラカード（ゲーム内） */
         .char-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -411,7 +519,6 @@
             word-break: break-word;
         }
 
-        /* ログ */
         .log-area {
             background: #f8fafc;
             border-radius: 16px;
@@ -450,7 +557,6 @@
             font-weight: 600;
         }
 
-        /* レスポンシブ */
         @media (max-width: 600px) {
             .app-header {
                 flex-direction: column;
@@ -463,8 +569,11 @@
                 flex-direction: column;
                 border-radius: 20px;
             }
-            .char-grid {
+            .char-form-area .form-row {
                 grid-template-columns: 1fr;
+            }
+            .library-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
             .char-cards {
                 grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -482,8 +591,8 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.7rem;color:#6a8aaa;">Ver2.0</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 完全情報戦</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.7rem;color:#6a8aaa;">Ver3.0</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — キャラクターライブラリ対応</span>
             </div>
             <div class="api-area">
                 <i class="fas fa-key" style="color:#6a8aaa;"></i>
@@ -495,20 +604,61 @@
 
         <!-- ===== タブ ===== -->
         <div class="tabs">
-            <button class="tab-btn active" data-tab="setup"><i class="fas fa-users-cog"></i> キャラクター設定</button>
+            <button class="tab-btn active" data-tab="library"><i class="fas fa-book"></i> キャラライブラリ</button>
             <button class="tab-btn" data-tab="game"><i class="fas fa-gamepad"></i> ゲーム観戦</button>
         </div>
 
         <!-- ========================================================= -->
-        <!-- タブ1: 設定 -->
+        <!-- タブ1: ライブラリ -->
         <!-- ========================================================= -->
-        <div id="tab-setup" class="tab-pane active">
-            <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-                <button class="btn btn-success" id="startGameBtn"><i class="fas fa-play"></i> ゲーム開始</button>
+        <div id="tab-library" class="tab-pane active">
+
+            <!-- キャラ作成フォーム -->
+            <div class="char-form-area">
+                <h3 style="margin-bottom:12px;"><i class="fas fa-user-plus" style="color:#2d6a8a;"></i> 新しいキャラクターを作成</h3>
+                <div class="form-row">
+                    <div>
+                        <label>アニメ作品名</label>
+                        <input type="text" id="newAnime" placeholder="例: SPY×FAMILY" />
+                    </div>
+                    <div>
+                        <label>キャラクター名</label>
+                        <input type="text" id="newName" placeholder="例: ロイド・フォージャー" />
+                    </div>
+                    <div>
+                        <label>画像URL（imgurなど）</label>
+                        <input type="text" id="newImage" placeholder="https://i.imgur.com/xxx.jpg" />
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:flex-end;">
+                        <div style="flex:1;">
+                            <label>説明文（ChatGPTで生成したものを貼り付け）</label>
+                            <textarea id="newDesc" rows="2" placeholder="性格・口調・外見・行動パターンなど"></textarea>
+                        </div>
+                        <button class="btn-copy" onclick="copyPromptFromInput()" style="align-self:flex-end;margin-bottom:2px;"><i class="fas fa-copy"></i> プロンプト</button>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-success" id="addCharBtn"><i class="fas fa-plus"></i> ライブラリに追加</button>
+                    <button class="btn btn-outline" id="clearFormBtn"><i class="fas fa-undo"></i> クリア</button>
+                </div>
             </div>
-            <div class="char-grid" id="charFormsContainer"></div>
-            <p style="margin-top:16px;font-size:0.8rem;color:#7a8a9a;text-align:center;">
-                <i class="fas fa-info-circle"></i> 各キャラの「説明文」は「プロンプトコピー」→ ChatGPTで生成→貼り付け で正確なキャラ付けが可能
+
+            <!-- ライブラリ一覧 + 選択 -->
+            <div class="library-header">
+                <div>
+                    <span style="font-weight:700;font-size:1.1rem;"><i class="fas fa-users"></i> キャラクターライブラリ</span>
+                    <span class="count" id="libraryCount">0 キャラ</span>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <span style="font-size:0.85rem;color:#5a6a7a;display:flex;align-items:center;">
+                        <i class="fas fa-check-circle" style="color:#2d6a8a;margin-right:4px;"></i> 選択中: <span id="selectedCount">0</span>/6
+                    </span>
+                    <button class="btn btn-success btn-sm" id="startGameFromLibrary"><i class="fas fa-play"></i> 選択した6人でゲーム開始</button>
+                </div>
+            </div>
+            <div class="library-grid" id="libraryGrid"></div>
+            <p style="margin-top:12px;font-size:0.8rem;color:#7a8a9a;text-align:center;">
+                <i class="fas fa-info-circle"></i> キャラをクリックで選択/解除（最大6人）。選択した6人でゲームが始まります。
             </p>
         </div>
 
@@ -538,13 +688,18 @@
 
     <script>
         // ================================================================
-        //  Ver2.0 完全ロジック
+        //  Ver3.0 キャラクターライブラリ対応 完全ロジック
         // ================================================================
 
         // -------- 状態 --------
         const STATE = {
             apiKey: '',
-            characters: [], // { anime, name, imageUrl, description, role, alive, speech }
+            // ライブラリ（localStorageに保存）
+            library: [],
+            // 選択中のキャラID（最大6）
+            selectedIds: [],
+            // ゲーム用
+            characters: [],
             day: 0,
             phase: 'setup',
             paused: false,
@@ -555,22 +710,25 @@
             werewolfIndices: [],
             fortuneTellerIndex: -1,
             villagerIndices: [],
-            // 占い師の秘密情報
-            fortuneSecret: '', // 例: "ヨルは人狼です"
-            // 人狼の夜の希望（集計用）
-            wolfVotes: {},
+            fortuneSecret: '',
         };
+
+        const STORAGE_KEY = 'werewolf_library';
 
         // -------- 初期化 --------
         document.addEventListener('DOMContentLoaded', () => {
+            // APIキー読み込み
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) {
                 document.getElementById('apiKeyInput').value = savedKey;
                 STATE.apiKey = savedKey;
                 document.getElementById('apiKeyStatus').textContent = '✅ 読込完了';
             }
-            generateCharForms();
 
+            // ライブラリ読み込み
+            loadLibrary();
+
+            // タブ切り替え
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -580,75 +738,104 @@
                 });
             });
 
+            // イベント
             document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
-            document.getElementById('startGameBtn').addEventListener('click', startGame);
+            document.getElementById('addCharBtn').addEventListener('click', addCharacter);
+            document.getElementById('clearFormBtn').addEventListener('click', clearForm);
+            document.getElementById('startGameFromLibrary').addEventListener('click', startGameFromLibrary);
             document.getElementById('pauseBtn').addEventListener('click', togglePause);
             document.getElementById('resetBtn').addEventListener('click', resetGame);
             document.getElementById('speedSlider').addEventListener('input', (e) => {
                 STATE.speed = parseInt(e.target.value);
             });
-            window.copyPrompt = copyPrompt;
 
-            // デモサンプル
-            const samples = [
-                { anime: 'SPY×FAMILY', name: 'ロイド・フォージャー' },
-                { anime: 'SPY×FAMILY', name: 'ヨル・フォージャー' },
-                { anime: 'SPY×FAMILY', name: 'アーニャ・フォージャー' },
-                { anime: '鬼滅の刃', name: '竈門炭治郎' },
-                { anime: '鬼滅の刃', name: '竈門禰豆子' },
-                { anime: '鬼滅の刃', name: '我妻善逸' },
-            ];
-            setTimeout(() => {
-                const forms = document.querySelectorAll('.char-card-form');
-                forms.forEach((form, idx) => {
-                    if (idx < samples.length) {
-                        form.querySelector('.char-anime').value = samples[idx].anime;
-                        form.querySelector('.char-name').value = samples[idx].name;
-                    }
-                });
-            }, 50);
+            window.copyPromptFromInput = copyPromptFromInput;
+
+            // 初回サンプルデータ
+            if (STATE.library.length === 0) {
+                addSampleCharacters();
+            }
+
+            renderLibrary();
+            updateSelectedCount();
         });
 
-        // -------- フォーム生成 --------
-        function generateCharForms() {
-            const container = document.getElementById('charFormsContainer');
-            container.innerHTML = '';
-            for (let i = 1; i <= 6; i++) {
-                const div = document.createElement('div');
-                div.className = 'char-card-form';
-                div.innerHTML = `
-                    <h3><i class="fas fa-user" style="color:#2d6a8a;"></i> キャラクター ${i}</h3>
-                    <div class="field">
-                        <label>アニメ作品名</label>
-                        <input type="text" class="char-anime" placeholder="例: SPY×FAMILY" data-idx="${i-1}" />
-                    </div>
-                    <div class="field">
-                        <label>キャラクター名</label>
-                        <input type="text" class="char-name" placeholder="例: ロイド・フォージャー" data-idx="${i-1}" />
-                    </div>
-                    <div class="field">
-                        <label>画像URL（imgurなど）</label>
-                        <input type="text" class="char-image" placeholder="https://i.imgur.com/xxx.jpg" data-idx="${i-1}" />
-                    </div>
-                    <div class="field">
-                        <label>キャラクター説明文（ChatGPTで生成して貼り付け）</label>
-                        <div class="copy-row">
-                            <textarea class="char-desc" rows="2" placeholder="性格・口調・外見・行動パターンなど" data-idx="${i-1}"></textarea>
-                            <button class="btn-copy" onclick="copyPrompt(${i-1})"><i class="fas fa-copy"></i> プロンプト</button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(div);
+        // -------- ライブラリ読み込み/保存 --------
+        function loadLibrary() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                STATE.library = data ? JSON.parse(data) : [];
+            } catch (e) {
+                STATE.library = [];
             }
+            // 互換性: 古いデータにidがなければ付与
+            STATE.library.forEach(c => {
+                if (!c.id) c.id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+            });
         }
 
-        // -------- プロンプトコピー --------
-        function copyPrompt(idx) {
-            const forms = document.querySelectorAll('.char-card-form');
-            if (idx >= forms.length) return;
-            const form = forms[idx];
-            const anime = form.querySelector('.char-anime').value.trim() || '（作品名未入力）';
-            const name = form.querySelector('.char-name').value.trim() || '（キャラ名未入力）';
+        function saveLibrary() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE.library));
+        }
+
+        // -------- サンプルキャラ --------
+        function addSampleCharacters() {
+            const samples = [
+                { anime: 'SPY×FAMILY', name: 'ロイド・フォージャー', imageUrl: '', description: '西国の凄腕スパイ。冷静沈着で計画性があり、どんな状況でも動じない。家族を守るために偽装家族を作り上げた。話し方は落ち着いており、常に周囲を観察している。' },
+                { anime: 'SPY×FAMILY', name: 'ヨル・フォージャー', imageUrl: '', description: '表向きは市役所職員だが、実は暗殺者「いばら姫」。純粋で優しいが戦闘になると驚異的な能力を発揮する。少し天然で、家族に対しては強い愛情を持つ。' },
+                { anime: 'SPY×FAMILY', name: 'アーニャ・フォージャー', imageUrl: '', description: '超能力を持つ少女。テレパシーで他人の心が読める。天真爛漫で甘えん坊だが、時にとんでもない発言で周囲を驚かせる。「ワクワク」が口癖。' },
+                { anime: '鬼滅の刃', name: '竈門炭治郎', imageUrl: '', description: '優しく真面目な少年。家族を鬼に殺され、妹の禰豆子を人間に戻すために戦う。嗅覚が異常に発達し、敵の弱点を嗅ぎ分ける。正義感が強く、仲間を大切にする。' },
+                { anime: '鬼滅の刃', name: '竈門禰豆子', imageUrl: '', description: '炭治郎の妹。鬼になってしまったが、人間の心を保っている。普段は竹筒をくわえており、言葉を話せないが、行動で感情を表現する。兄を守るために戦う。' },
+                { anime: '鬼滅の刃', name: '我妻善逸', imageUrl: '', description: '雷の呼吸を使う剣士。普段は臆病で自信がないが、眠ると驚異的な戦闘力を発揮する。女性に弱く、口調はやや頼りないが、仲間を思う気持ちは強い。' },
+            ];
+            samples.forEach(s => {
+                STATE.library.push({
+                    id: Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    anime: s.anime,
+                    name: s.name,
+                    imageUrl: s.imageUrl,
+                    description: s.description,
+                });
+            });
+            saveLibrary();
+        }
+
+        // -------- キャラ追加 --------
+        function addCharacter() {
+            const anime = document.getElementById('newAnime').value.trim();
+            const name = document.getElementById('newName').value.trim();
+            const imageUrl = document.getElementById('newImage').value.trim();
+            const description = document.getElementById('newDesc').value.trim();
+
+            if (!anime || !name || !description) {
+                alert('アニメ名・キャラ名・説明文は必須です。');
+                return;
+            }
+
+            STATE.library.push({
+                id: Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                anime,
+                name,
+                imageUrl: imageUrl || '',
+                description,
+            });
+            saveLibrary();
+            renderLibrary();
+            clearForm();
+            updateSelectedCount();
+        }
+
+        function clearForm() {
+            document.getElementById('newAnime').value = '';
+            document.getElementById('newName').value = '';
+            document.getElementById('newImage').value = '';
+            document.getElementById('newDesc').value = '';
+        }
+
+        // -------- プロンプトコピー（新フォーム用） --------
+        function copyPromptFromInput() {
+            const anime = document.getElementById('newAnime').value.trim() || '（作品名未入力）';
+            const name = document.getElementById('newName').value.trim() || '（キャラ名未入力）';
             const prompt = `あなたはアニメ・漫画・ゲームに詳しい専門家です。
         以下のアニメ作品とキャラクターについて、**原作設定に忠実に**、下記の項目を必ず含めて詳細に説明してください。
 
@@ -667,7 +854,7 @@
         - もし公式設定が不足している場合は、その旨を明記し、一般的なイメージに沿って補足してください。
         - 説明は全体で200〜300文字程度にまとめてください。`;
             navigator.clipboard.writeText(prompt).then(() => {
-                const btn = form.querySelector('.btn-copy');
+                const btn = document.querySelector('.char-form-area .btn-copy');
                 const orig = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-check"></i> 完了!';
                 setTimeout(() => btn.innerHTML = orig, 2000);
@@ -678,11 +865,81 @@
                 ta.select();
                 document.execCommand('copy');
                 document.body.removeChild(ta);
-                const btn = form.querySelector('.btn-copy');
+                const btn = document.querySelector('.char-form-area .btn-copy');
                 const orig = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-check"></i> 完了!';
                 setTimeout(() => btn.innerHTML = orig, 2000);
             });
+        }
+
+        // -------- ライブラリ描画 --------
+        function renderLibrary() {
+            const grid = document.getElementById('libraryGrid');
+            grid.innerHTML = '';
+            STATE.library.forEach(c => {
+                const card = document.createElement('div');
+                card.className = `library-card ${STATE.selectedIds.includes(c.id) ? 'selected' : ''}`;
+                card.dataset.id = c.id;
+
+                const avatar = c.imageUrl ?
+                    `<img class="avatar" src="${c.imageUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" /><div class="avatar-placeholder" style="display:none;">${c.name.charAt(0)}</div>` :
+                    `<div class="avatar-placeholder">${c.name.charAt(0)}</div>`;
+
+                const isSelected = STATE.selectedIds.includes(c.id);
+                card.innerHTML = `
+                    ${avatar}
+                    <div class="lname">${c.name}</div>
+                    <div class="lanime">${c.anime}</div>
+                    <div class="lbadge">${isSelected ? '✅ 選択中' : 'クリックで選択'}</div>
+                    <button class="delete-btn" data-id="${c.id}" title="削除"><i class="fas fa-times"></i></button>
+                    ${isSelected ? '<div class="select-badge">' + (STATE.selectedIds.indexOf(c.id)+1) + '</div>' : ''}
+                `;
+                grid.appendChild(card);
+
+                // クリックで選択/解除
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.delete-btn')) return;
+                    toggleSelect(c.id);
+                });
+
+                // 削除ボタン
+                card.querySelector('.delete-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm(`「${c.name}」を削除しますか？`)) {
+                        deleteCharacter(c.id);
+                    }
+                });
+            });
+            document.getElementById('libraryCount').textContent = STATE.library.length + ' キャラ';
+            updateSelectedCount();
+        }
+
+        // -------- 選択/解除 --------
+        function toggleSelect(id) {
+            const idx = STATE.selectedIds.indexOf(id);
+            if (idx !== -1) {
+                STATE.selectedIds.splice(idx, 1);
+            } else {
+                if (STATE.selectedIds.length >= 6) {
+                    alert('選択できるのは最大6人までです。');
+                    return;
+                }
+                STATE.selectedIds.push(id);
+            }
+            renderLibrary();
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = STATE.selectedIds.length;
+        }
+
+        // -------- 削除 --------
+        function deleteCharacter(id) {
+            STATE.library = STATE.library.filter(c => c.id !== id);
+            STATE.selectedIds = STATE.selectedIds.filter(sid => sid !== id);
+            saveLibrary();
+            renderLibrary();
+            updateSelectedCount();
         }
 
         // -------- APIキー保存 --------
@@ -698,36 +955,44 @@
         }
 
         // ================================================================
-        //  ゲーム開始
+        //  ゲーム開始（ライブラリ選択から）
         // ================================================================
-        function startGame() {
-            if (!STATE.apiKey) { alert('Gemini APIキーを入力して保存してください。'); return; }
-            const forms = document.querySelectorAll('.char-card-form');
-            const chars = [];
-            let valid = true;
-            forms.forEach((form, idx) => {
-                const anime = form.querySelector('.char-anime').value.trim();
-                const name = form.querySelector('.char-name').value.trim();
-                const imageUrl = form.querySelector('.char-image').value.trim();
-                const description = form.querySelector('.char-desc').value.trim();
-                if (!anime || !name || !description) {
-                    alert(`キャラクター ${idx+1} の「アニメ名」「キャラ名」「説明文」は必須です。`);
-                    valid = false;
-                    return;
-                }
-                chars.push({ index: idx, anime, name, imageUrl: imageUrl || '', description, role: '', alive: true,
-                    speech: '…' });
-            });
-            if (!valid || chars.length !== 6) return;
+        function startGameFromLibrary() {
+            if (!STATE.apiKey) {
+                alert('Gemini APIキーを入力して保存してください。');
+                return;
+            }
+            if (STATE.selectedIds.length !== 6) {
+                alert(`選択されているキャラは ${STATE.selectedIds.length} 人です。6人選択してください。`);
+                return;
+            }
 
-            STATE.characters = chars;
+            // 選択されたキャラを取得
+            const selectedChars = STATE.library.filter(c => STATE.selectedIds.includes(c.id));
+            if (selectedChars.length !== 6) {
+                alert('選択されたキャラの取得に失敗しました。');
+                return;
+            }
+
+            // ゲーム用に変換
+            STATE.characters = selectedChars.map((c, idx) => ({
+                index: idx,
+                anime: c.anime,
+                name: c.name,
+                imageUrl: c.imageUrl || '',
+                description: c.description,
+                role: '',
+                alive: true,
+                speech: '…',
+            }));
+
             STATE.log = [];
             STATE.day = 0;
             STATE.running = true;
             STATE.paused = false;
             STATE.fortuneSecret = '';
 
-            // タブ切り替え
+            // ゲームタブに切り替え
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('[data-tab="game"]').classList.add('active');
             document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -735,10 +1000,15 @@
 
             renderCards();
             document.getElementById('logArea').innerHTML = '';
-            addLog('info', '🐺 Ver2.0 ゲームを開始します！（占い師の情報が駆け引きに活用されます）');
+            addLog('info', '🐺 Ver3.0 ゲームを開始します！（ライブラリから選択したキャラで進行）');
             assignRoles();
             gameLoop();
         }
+
+        // ================================================================
+        //  以下、ゲームロジックは Ver2.0 と同一（完全版）
+        //  ===== ただし、STATE.characters の構造は同じなのでそのまま流用 =====
+        // ================================================================
 
         // -------- 役職割り当て --------
         function assignRoles() {
@@ -763,25 +1033,19 @@
             renderCards();
         }
 
-        // ================================================================
-        //  ゲームループ（Ver2.0 完全版）
-        // ================================================================
+        // -------- ゲームループ（Ver2.0 完全版） --------
         async function gameLoop() {
             if (!STATE.running) return;
             STATE.day++;
             document.getElementById('dayCounter').textContent = `${STATE.day}日目`;
             addLog('info', `🌅 ${STATE.day}日目が始まります。`);
 
-            // ---- 夜 ----
             await setPhase('🌙 夜フェーズ');
             await wait(STATE.speed);
             await nightPhase();
 
-            // 夜の死亡チェック
-            const deadCount = STATE.characters.filter(c => !c.alive).length;
             if (checkGameEnd()) return;
 
-            // ---- 昼（議論） ----
             await setPhase('☀️ 昼フェーズ（議論）');
             await wait(STATE.speed);
 
@@ -803,7 +1067,6 @@
                 if (checkGameEnd()) return;
             }
 
-            // ---- 投票 ----
             await setPhase('🗳️ 投票フェーズ');
             await wait(STATE.speed);
             await votingPhase();
@@ -815,15 +1078,12 @@
             gameLoop();
         }
 
-        // ================================================================
-        //  夜フェーズ（Ver2.0: 人狼複数意見＋占い師）
-        // ================================================================
+        // -------- 夜フェーズ --------
         async function nightPhase() {
             const alive = STATE.aliveIndices;
             const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
             const fortuneIdx = STATE.fortuneTellerIndex;
 
-            // ---- 1. 人狼の襲撃対象（複数意見・多数決） ----
             let attackTarget = -1;
             if (wolves.length > 0 && alive.length > 0) {
                 const wolfPrompt = buildWolfNightPrompt();
@@ -831,10 +1091,8 @@
                 let votes = {};
                 try {
                     const json = JSON.parse(response);
-                    // json: { "人狼Aの名前": "ターゲット名", "人狼Bの名前": "ターゲット名" }
                     votes = json;
                 } catch (e) {
-                    // フォールバック: 各人狼がランダムに選ぶ
                     wolves.forEach(idx => {
                         const candidates = alive.filter(i => i !== idx && !STATE.werewolfIndices.includes(i));
                         if (candidates.length > 0) {
@@ -843,8 +1101,6 @@
                         }
                     });
                 }
-
-                // 集計
                 const tally = {};
                 for (const [wolfName, targetName] of Object.entries(votes)) {
                     const targetIdx = STATE.characters.findIndex(c =>
@@ -862,14 +1118,12 @@
                         attackTarget = parseInt(idx);
                     }
                 }
-                // 同票または未確定ならランダム
                 if (attackTarget === -1) {
                     const candidates = alive.filter(i => !STATE.werewolfIndices.includes(i));
                     if (candidates.length > 0) attackTarget = candidates[Math.floor(Math.random() * candidates.length)];
                 }
             }
 
-            // ---- 2. 占い師 ----
             let fortuneTarget = -1;
             if (fortuneIdx !== -1 && STATE.characters[fortuneIdx].alive) {
                 const fortunePrompt = buildFortuneNightPrompt();
@@ -892,8 +1146,6 @@
                 }
             }
 
-            // ---- 実行 ----
-            // 襲撃
             if (attackTarget !== -1 && STATE.characters[attackTarget].alive) {
                 STATE.characters[attackTarget].alive = false;
                 STATE.aliveIndices = STATE.aliveIndices.filter(i => i !== attackTarget);
@@ -901,7 +1153,6 @@
                 addLog('death', `🐺 人狼の多数決により ${STATE.characters[attackTarget].name} が襲撃されました。`);
             }
 
-            // 占い（秘密情報を保持）
             if (fortuneTarget !== -1 && STATE.characters[fortuneTarget].alive) {
                 const isWolf = STATE.werewolfIndices.includes(fortuneTarget);
                 const targetName = STATE.characters[fortuneTarget].name;
@@ -911,29 +1162,22 @@
             } else {
                 STATE.fortuneSecret = '';
             }
-
             renderCards();
             await wait(STATE.speed);
         }
 
-        // ================================================================
-        //  昼の議論（Ver2.0: 占い師に秘密情報を付与）
-        // ================================================================
+        // -------- 昼の議論 --------
         async function dayDiscussion(round) {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
-
             const prompt = buildDayPrompt(round);
             const response = await callGemini(prompt);
-
             try {
                 const json = JSON.parse(response);
-                let spoken = 0;
                 for (const [name, speech] of Object.entries(json)) {
                     const idx = STATE.characters.findIndex(c => c.name === name);
                     if (idx !== -1 && STATE.characters[idx].alive) {
                         STATE.characters[idx].speech = speech;
-                        spoken++;
                         addLog('conversation', `💬 ${name}: ${speech}`);
                     }
                 }
@@ -951,16 +1195,13 @@
             await wait(STATE.speed);
         }
 
-        // ================================================================
-        //  投票フェーズ（Ver2.0: 占い師情報反映＋役職公開）
-        // ================================================================
+        // -------- 投票 --------
         async function votingPhase() {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
 
             const prompt = buildVotePrompt();
             const response = await callGemini(prompt);
-
             let votes = {};
             try {
                 const json = JSON.parse(response);
@@ -975,7 +1216,6 @@
                 });
             }
 
-            // 集計
             const tally = {};
             alive.forEach(idx => {
                 const voterName = STATE.characters[idx].name;
@@ -1004,7 +1244,6 @@
                 STATE.characters[executed].alive = false;
                 STATE.aliveIndices = STATE.aliveIndices.filter(i => i !== executed);
                 STATE.characters[executed].speech = '⚰️ 処刑';
-                // ★ 役職公開
                 const roleMap = { werewolf: '人狼', villager: '村人', fortuneteller: '占い師' };
                 const revealedRole = roleMap[STATE.characters[executed].role] || '不明';
                 addLog('reveal', `⚖️ 村民の投票により ${STATE.characters[executed].name}（${revealedRole}）が処刑されました。`);
@@ -1015,9 +1254,7 @@
             await wait(STATE.speed);
         }
 
-        // ================================================================
-        //  ゲーム終了チェック
-        // ================================================================
+        // -------- 終了チェック --------
         function checkGameEnd() {
             const aliveWolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
             const aliveVillagers = STATE.villagerIndices.filter(idx => STATE.characters[idx].alive);
@@ -1038,9 +1275,7 @@
             return false;
         }
 
-        // ================================================================
-        //  Gemini API 呼び出し（フォールバック付き）
-        // ================================================================
+        // -------- Gemini API --------
         async function callGemini(prompt) {
             if (!STATE.apiKey) throw new Error('APIキーなし');
             const models = ['gemini-2.0-flash-lite', 'gemini-1.5-flash'];
@@ -1082,11 +1317,7 @@
             return '{}';
         }
 
-        // ================================================================
-        //  プロンプトビルダー（Ver2.0 強化版）
-        // ================================================================
-
-        // --- 人狼用（複数意見） ---
+        // -------- プロンプトビルダー --------
         function buildWolfNightPrompt() {
             const alive = STATE.aliveIndices;
             const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
@@ -1111,7 +1342,6 @@
         `;
         }
 
-        // --- 占い師用 ---
         function buildFortuneNightPrompt() {
             const alive = STATE.aliveIndices;
             const idx = STATE.fortuneTellerIndex;
@@ -1131,18 +1361,15 @@
         `;
         }
 
-        // --- 昼の議論（占い師に秘密情報を明示） ---
         function buildDayPrompt(round) {
             const alive = STATE.aliveIndices;
             let charInfo = alive.map(i => {
                 let desc = STATE.characters[i].description;
-                // 占い師が生きていて、秘密情報があれば、占い師にだけ付与
                 if (i === STATE.fortuneTellerIndex && STATE.characters[i].alive && STATE.fortuneSecret) {
                     desc += ` （あなたは昨夜の占いで「${STATE.fortuneSecret}」という秘密を知っています。この情報は他の誰も知りません。あなたはこの情報をどう活用するか考えて発言してください）`;
                 }
                 return `${STATE.characters[i].name}（${desc}）`;
             }).join('\n');
-
             const deadNames = STATE.characters.filter(c => !c.alive).map(c => c.name);
             return `
         あなたは人狼ゲームの参加者です。現在は昼の議論中（${round}回目の発言機会）。
@@ -1164,7 +1391,6 @@
         `;
         }
 
-        // --- 投票（占い師に秘密情報を明示） ---
         function buildVotePrompt() {
             const alive = STATE.aliveIndices;
             let charInfo = alive.map(i => {
@@ -1175,7 +1401,6 @@
                 const roleHint = STATE.werewolfIndices.includes(i) ? '（人狼）' : '';
                 return `${STATE.characters[i].name}${roleHint}（${desc}）`;
             }).join('\n');
-
             return `
         あなたは人狼ゲームの参加者です。現在は投票フェーズです。
         生存者:
@@ -1195,9 +1420,7 @@
         `;
         }
 
-        // ================================================================
-        //  UIヘルパー（共通）
-        // ================================================================
+        // -------- UIヘルパー --------
         function renderCards() {
             const container = document.getElementById('charCards');
             if (!container) return;
@@ -1270,10 +1493,10 @@
         }
 
         function resetGame() {
-            if (confirm('ゲームをリセットしてキャラクター設定に戻りますか？')) {
+            if (confirm('ゲームをリセットしてライブラリ画面に戻りますか？')) {
                 STATE.running = false;
                 STATE.paused = false;
-                document.querySelector('[data-tab="setup"]').click();
+                document.querySelector('[data-tab="library"]').click();
                 document.getElementById('pauseBtn').innerHTML = '<i class="fas fa-pause"></i> 一時停止';
                 document.getElementById('phaseDisplay').innerHTML = '<i class="fas fa-hourglass-half"></i> 待機中';
                 document.getElementById('dayCounter').textContent = '0日目';
