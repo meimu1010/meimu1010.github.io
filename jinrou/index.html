@@ -3,652 +3,131 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver3.12 - Gemini</title>
+    <title>全自動人狼 Ver3.13 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
-        /* ===== ベース ===== */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: 'Noto Sans JP', 'Segoe UI', sans-serif;
-            background: #e8edf3;
-            color: #1e2a3a;
-            min-height: 100vh;
-            padding: 16px;
-        }
-        #app {
-            max-width: 1280px;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 28px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-            padding: 24px 32px 28px;
-            transition: all 0.3s;
-        }
-        @media (max-width: 600px) {
-            #app { padding: 14px 12px; border-radius: 20px; }
-        }
-
-        /* ===== ヘッダー ===== */
-        .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 18px;
-            border-bottom: 2px solid #eef2f7;
-            padding-bottom: 12px;
-        }
-        .app-header h1 {
-            font-weight: 700;
-            font-size: 1.6rem;
-            color: #1a2a3a;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .app-header h1 i { color: #d35400; }
-        .app-header .sub {
-            font-weight: 400;
-            color: #6a7a8a;
-            font-size: 0.8rem;
-            background: #f0f4fa;
-            padding: 2px 12px;
-            border-radius: 40px;
-        }
-        .api-area {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .api-area input {
-            border: 1.5px solid #dce3ec;
-            border-radius: 40px;
-            padding: 6px 14px;
-            font-size: 0.85rem;
-            width: 180px;
-            background: #f8fafc;
-            transition: 0.2s;
-        }
-        .api-area input:focus {
-            border-color: #2d6a8a;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(45,106,138,0.12);
-        }
-        .api-area .status {
-            font-size: 0.75rem;
-            color: #2a7a5a;
-            font-weight: 600;
-        }
-
-        /* ===== タブ ===== */
-        .tabs {
-            display: flex;
-            gap: 4px;
-            background: #f0f4fa;
-            border-radius: 40px;
-            padding: 4px;
-            margin-bottom: 20px;
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 8px 14px;
-            border: none;
-            background: transparent;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: #5a6a7a;
-            cursor: pointer;
-            transition: 0.25s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .tab-btn i { font-size: 0.95rem; }
-        .tab-btn.active {
-            background: #ffffff;
-            color: #1a2a3a;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        }
-        .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.5); }
-        .tab-pane {
-            display: none;
-            animation: fadeUp 0.3s ease;
-        }
-        .tab-pane.active { display: block; }
-        @keyframes fadeUp {
-            0% { opacity: 0; transform: translateY(6px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ===== ボタン ===== */
-        .btn {
-            border: none;
-            border-radius: 40px;
-            padding: 8px 20px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-primary { background: #2d6a8a; color: #fff; }
-        .btn-primary:hover { background: #1f5570; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(45,106,138,0.2); }
-        .btn-success { background: #2a7a5a; color: #fff; }
-        .btn-success:hover { background: #1e6046; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(42,122,90,0.2); }
-        .btn-warning { background: #d4a030; color: #fff; }
-        .btn-warning:hover { background: #b8892a; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(212,160,48,0.2); }
-        .btn-danger { background: #c0392b; color: #fff; }
-        .btn-danger:hover { background: #a03022; }
-        .btn-outline { background: transparent; border: 1.5px solid #d0d8e0; color: #3a4a5a; }
-        .btn-outline:hover { background: #f0f4fa; border-color: #b0c0d0; }
-        .btn-sm { padding: 4px 12px; font-size: 0.75rem; }
-        .btn-copy {
-            background: #f0e6d0;
-            color: #6a5a3a;
-            border-radius: 40px;
-            padding: 4px 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: 0.2s;
-            white-space: nowrap;
-        }
-        .btn-copy:hover { background: #e6d8b8; }
-
-        /* ===== キャラ作成フォーム ===== */
-        .char-form-area {
-            background: #f9fbfd;
-            border-radius: 18px;
-            padding: 18px;
-            border: 1px solid #e6ecf3;
-            margin-bottom: 20px;
-            transition: border-color 0.3s;
-        }
-        .char-form-area.editing {
-            border-color: #d4a030;
-            box-shadow: 0 0 0 3px rgba(212,160,48,0.12);
-        }
-        .char-form-area .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        .char-form-area .form-row .full { grid-column: 1 / -1; }
-        .char-form-area label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #5a6a7a;
-            margin-bottom: 2px;
-        }
-        .char-form-area input,
-        .char-form-area textarea {
-            width: 100%;
-            border: 1.5px solid #dce3ec;
-            border-radius: 12px;
-            padding: 6px 10px;
-            font-size: 0.85rem;
-            background: #fff;
-            transition: 0.2s;
-            font-family: inherit;
-        }
-        .char-form-area input:focus,
-        .char-form-area textarea:focus {
-            border-color: #2d6a8a;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(45,106,138,0.08);
-        }
-        .char-form-area textarea {
-            resize: vertical;
-            min-height: 44px;
-        }
-        .char-form-area .form-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .char-form-area .edit-badge {
-            display: none;
-            font-size: 0.75rem;
-            color: #d4a030;
-            font-weight: 600;
-            margin-left: 6px;
-        }
-        .char-form-area.editing .edit-badge { display: inline; }
-
-        /* ===== ライブラリ ===== */
-        .library-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-        .library-header .count {
-            font-size: 0.85rem;
-            color: #5a6a7a;
-        }
-        .library-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 12px;
-        }
-        .library-card {
-            background: #f9fbfd;
-            border-radius: 16px;
-            padding: 12px;
-            border: 2px solid #e6ecf3;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.25s;
-            position: relative;
-        }
-        .library-card:hover {
-            border-color: #b0c8d8;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        }
-        .library-card.selected {
-            border-color: #2d6a8a;
-            background: #eef6fa;
-            box-shadow: 0 0 0 3px rgba(45,106,138,0.12);
-        }
-        .library-card .avatar {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin: 0 auto 4px;
-            border: 2px solid #dce3ec;
-            background: #fff;
-        }
-        .library-card .avatar-placeholder {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            margin: 0 auto 4px;
-            background: #eef2f7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #4a6a8a;
-            border: 2px solid #dce3ec;
-        }
-        .library-card .lname {
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-        .library-card .lanime {
-            font-size: 0.7rem;
-            color: #7a8a9a;
-        }
-        .library-card .lbadge {
-            display: inline-block;
-            background: #2d6a8a;
-            color: #fff;
-            font-size: 0.55rem;
-            padding: 1px 8px;
-            border-radius: 40px;
-            margin-top: 2px;
-        }
-        .library-card .card-actions {
-            display: flex;
-            justify-content: center;
-            gap: 4px;
-            margin-top: 6px;
-        }
-        .library-card .card-actions button {
-            border: none;
-            border-radius: 40px;
-            padding: 1px 8px;
-            font-size: 0.65rem;
-            cursor: pointer;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-        }
-        .library-card .card-actions .edit-btn {
-            background: #f0e6d0;
-            color: #6a5a3a;
-        }
-        .library-card .card-actions .edit-btn:hover { background: #e6d8b8; }
-        .library-card .card-actions .delete-btn {
-            background: rgba(200,50,50,0.8);
-            color: #fff;
-        }
-        .library-card .card-actions .delete-btn:hover { background: #c0392b; }
-        .library-card .select-badge {
-            position: absolute;
-            bottom: 4px;
-            right: 4px;
-            background: #2d6a8a;
-            color: #fff;
-            border-radius: 40px;
-            padding: 1px 8px;
-            font-size: 0.6rem;
-            font-weight: 600;
-        }
-
-        /* ===== ゲーム画面 ===== */
-        .game-header {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-        .game-phase {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #1a2a3a;
-        }
-        .game-phase i { color: #d35400; margin-right: 6px; }
-        .game-day {
-            font-size: 0.85rem;
-            color: #5a6a7a;
-            background: #f0f4fa;
-            padding: 2px 14px;
-            border-radius: 40px;
-            font-weight: 600;
-        }
-        .game-controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .game-controls .speed-wrap {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.75rem;
-            color: #5a6a7a;
-        }
-        .game-controls .speed-wrap input[type="range"] {
-            width: 80px;
-            accent-color: #2d6a8a;
-        }
-        .game-controls .speed-wrap .speed-label {
-            font-size: 0.65rem;
-            color: #8a9aaa;
-        }
-
-        /* ===== メッセージエリア（LINE風） ===== */
-        .message-area {
-            background: #f8fafc;
-            border-radius: 16px;
-            padding: 14px 16px;
-            max-height: 420px;
-            overflow-y: auto;
-            border: 1px solid #e6ecf3;
-            margin-top: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .message-area::-webkit-scrollbar {
-            width: 5px;
-        }
-        .message-area::-webkit-scrollbar-track {
-            background: #f0f4fa;
-            border-radius: 10px;
-        }
-        .message-area::-webkit-scrollbar-thumb {
-            background: #c8d4e0;
-            border-radius: 10px;
-        }
-
-        /* タイムスタンプ（共通） */
-        .msg-time {
-            font-size: 0.6rem;
-            color: #9aabba;
-            margin-right: 8px;
-            white-space: nowrap;
-        }
-
-        /* システムメッセージ（中央バッジ） */
-        .msg-system {
-            text-align: center;
-            font-size: 0.75rem;
-            color: #6a7a8a;
-            background: #eef2f7;
-            padding: 4px 14px;
-            border-radius: 40px;
-            display: inline-block;
-            margin: 2px auto;
-            max-width: 90%;
-            font-weight: 500;
-        }
-        .msg-system .msg-time {
-            color: #8a9aaa;
-            margin-right: 6px;
-        }
-        .msg-system.death {
-            background: #fce4e4;
-            color: #b03a3a;
-        }
-        .msg-system.reveal {
-            background: #ede4f7;
-            color: #7a4a9a;
-        }
-        .msg-system.info {
-            background: #e4f0f7;
-            color: #2a6a8a;
-        }
-        .msg-system.vote {
-            background: #f0f0e8;
-            color: #6a5a3a;
-            font-size: 0.7rem;
-        }
-        .msg-system.win {
-            background: #fce8c8;
-            color: #b06a2a;
-            font-weight: 700;
-        }
-
-        /* 会話メッセージ（LINE風） */
-        .msg-conversation {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            margin: 2px 0;
-        }
-        .msg-conversation .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #dce3ec;
-            flex-shrink: 0;
-            background: #fff;
-        }
-        .msg-conversation .avatar-placeholder {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #eef2f7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #4a6a8a;
-            border: 2px solid #dce3ec;
-            flex-shrink: 0;
-        }
-        .msg-conversation .bubble {
-            flex: 1;
-            background: #ffffff;
-            border-radius: 12px 12px 12px 4px;
-            padding: 8px 14px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            border: 1px solid #e6ecf3;
-            max-width: calc(100% - 56px);
-        }
-        .msg-conversation .bubble .name {
-            font-weight: 700;
-            font-size: 0.8rem;
-            color: #2a3a4a;
-            margin-bottom: 2px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .msg-conversation .bubble .name .msg-time {
-            font-weight: 400;
-            font-size: 0.6rem;
-            color: #9aabba;
-        }
-        .msg-conversation .bubble .text {
-            font-size: 0.9rem;
-            color: #1a2a3a;
-            word-break: break-word;
-            line-height: 1.5;
-        }
-        .msg-conversation.self {
-            flex-direction: row-reverse;
-        }
-        .msg-conversation.self .bubble {
-            border-radius: 12px 12px 4px 12px;
-            background: #dce8f5;
-        }
-
-        /* 投票メッセージ（特別枠） */
-        .msg-vote {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #f4f6f0;
-            border-radius: 12px;
-            padding: 4px 14px;
-            font-size: 0.8rem;
-            color: #3a4a3a;
-            border-left: 3px solid #b0b8a0;
-            margin: 2px 0;
-        }
-        .msg-vote .msg-time {
-            font-size: 0.6rem;
-            color: #9aabba;
-        }
-        .msg-vote .voter {
-            font-weight: 600;
-            color: #1a2a3a;
-        }
-        .msg-vote .arrow {
-            color: #8a9a8a;
-        }
-        .msg-vote .target {
-            font-weight: 600;
-            color: #2d6a8a;
-        }
-
-        /* ===== キャラカード ===== */
-        .char-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin: 12px 0;
-        }
-        .char-card {
-            background: #f9fbfd;
-            border-radius: 14px;
-            padding: 10px 8px;
-            border: 1px solid #e6ecf3;
-            text-align: center;
-            transition: 0.25s;
-        }
-        .char-card.dead {
-            opacity: 0.45;
-            filter: grayscale(0.7);
-            border-color: #e0c8c8;
-        }
-        .char-card .avatar {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin: 0 auto 4px;
-            border: 2px solid #dce3ec;
-            background: #fff;
-        }
-        .char-card .avatar-placeholder {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            margin: 0 auto 4px;
-            background: #eef2f7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #4a6a8a;
-            border: 2px solid #dce3ec;
-        }
-        .char-card .name {
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-        .char-card .anime {
-            font-size: 0.6rem;
-            color: #7a8a9a;
-        }
-        .char-card .role-badge {
-            display: inline-block;
-            padding: 1px 10px;
-            border-radius: 40px;
-            font-size: 0.6rem;
-            font-weight: 700;
-            margin-top: 2px;
-        }
-        .role-badge.werewolf { background: #fce4e4; color: #b03a3a; }
-        .role-badge.villager { background: #e4f0f7; color: #2a6a8a; }
-        .role-badge.fortuneteller { background: #ede4f7; color: #7a4a9a; }
-        .char-card .speech {
-            margin-top: 6px;
-            font-size: 0.75rem;
-            background: #ffffff;
-            padding: 4px 6px;
-            border-radius: 8px;
-            border-left: 3px solid #2d6a8a;
-            min-height: 30px;
-            color: #2a3a4a;
-            font-style: italic;
-            text-align: left;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-            word-break: break-word;
-        }
-
-        @media (max-width: 600px) {
-            .app-header { flex-direction: column; align-items: stretch; }
-            .api-area input { width: 100%; }
-            .tabs { flex-direction: column; border-radius: 20px; }
-            .char-form-area .form-row { grid-template-columns: 1fr; }
-            .library-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
-            .char-cards { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
-            .game-header { flex-direction: column; align-items: stretch; }
-            .msg-conversation .bubble { max-width: 100%; }
+        /* ===== ベース（以前と同様、省略） ===== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', 'Segoe UI', sans-serif; background: #e8edf3; color: #1e2a3a; min-height: 100vh; padding: 16px; }
+        #app { max-width: 1280px; margin: 0 auto; background: #ffffff; border-radius: 28px; box-shadow: 0 12px 40px rgba(0,0,0,0.08); padding: 24px 32px 28px; transition: all 0.3s; }
+        @media (max-width:600px){ #app { padding:14px 12px; border-radius:20px; } }
+        .app-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; border-bottom: 2px solid #eef2f7; padding-bottom: 12px; }
+        .app-header h1 { font-weight:700; font-size:1.6rem; color:#1a2a3a; display:flex; align-items:center; gap:8px; }
+        .app-header h1 i { color:#d35400; }
+        .app-header .sub { font-weight:400; color:#6a7a8a; font-size:0.8rem; background:#f0f4fa; padding:2px 12px; border-radius:40px; }
+        .api-area { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .api-area input { border:1.5px solid #dce3ec; border-radius:40px; padding:6px 14px; font-size:0.85rem; width:180px; background:#f8fafc; transition:0.2s; }
+        .api-area input:focus { border-color:#2d6a8a; outline:none; box-shadow:0 0 0 3px rgba(45,106,138,0.12); }
+        .api-area .status { font-size:0.75rem; color:#2a7a5a; font-weight:600; }
+        .tabs { display:flex; gap:4px; background:#f0f4fa; border-radius:40px; padding:4px; margin-bottom:20px; }
+        .tab-btn { flex:1; padding:8px 14px; border:none; background:transparent; border-radius:40px; font-weight:600; font-size:0.9rem; color:#5a6a7a; cursor:pointer; transition:0.25s; display:flex; align-items:center; justify-content:center; gap:6px; }
+        .tab-btn i { font-size:0.95rem; }
+        .tab-btn.active { background:#ffffff; color:#1a2a3a; box-shadow:0 4px 12px rgba(0,0,0,0.04); }
+        .tab-btn:hover:not(.active) { background:rgba(255,255,255,0.5); }
+        .tab-pane { display:none; animation:fadeUp 0.3s ease; }
+        .tab-pane.active { display:block; }
+        @keyframes fadeUp { 0%{opacity:0;transform:translateY(6px);} 100%{opacity:1;transform:translateY(0);} }
+        .btn { border:none; border-radius:40px; padding:8px 20px; font-weight:600; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer; transition:0.2s; }
+        .btn-primary { background:#2d6a8a; color:#fff; }
+        .btn-primary:hover { background:#1f5570; transform:translateY(-1px); box-shadow:0 4px 12px rgba(45,106,138,0.2); }
+        .btn-success { background:#2a7a5a; color:#fff; }
+        .btn-success:hover { background:#1e6046; transform:translateY(-1px); box-shadow:0 4px 12px rgba(42,122,90,0.2); }
+        .btn-warning { background:#d4a030; color:#fff; }
+        .btn-warning:hover { background:#b8892a; transform:translateY(-1px); box-shadow:0 4px 12px rgba(212,160,48,0.2); }
+        .btn-danger { background:#c0392b; color:#fff; }
+        .btn-danger:hover { background:#a03022; }
+        .btn-outline { background:transparent; border:1.5px solid #d0d8e0; color:#3a4a5a; }
+        .btn-outline:hover { background:#f0f4fa; border-color:#b0c0d0; }
+        .btn-sm { padding:4px 12px; font-size:0.75rem; }
+        .btn-copy { background:#f0e6d0; color:#6a5a3a; border-radius:40px; padding:4px 12px; font-size:0.75rem; font-weight:600; border:none; cursor:pointer; transition:0.2s; white-space:nowrap; }
+        .btn-copy:hover { background:#e6d8b8; }
+        .char-form-area { background:#f9fbfd; border-radius:18px; padding:18px; border:1px solid #e6ecf3; margin-bottom:20px; transition:border-color 0.3s; }
+        .char-form-area.editing { border-color:#d4a030; box-shadow:0 0 0 3px rgba(212,160,48,0.12); }
+        .char-form-area .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .char-form-area .form-row .full { grid-column:1/-1; }
+        .char-form-area label { display:block; font-size:0.75rem; font-weight:600; color:#5a6a7a; margin-bottom:2px; }
+        .char-form-area input, .char-form-area textarea { width:100%; border:1.5px solid #dce3ec; border-radius:12px; padding:6px 10px; font-size:0.85rem; background:#fff; transition:0.2s; font-family:inherit; }
+        .char-form-area input:focus, .char-form-area textarea:focus { border-color:#2d6a8a; outline:none; box-shadow:0 0 0 3px rgba(45,106,138,0.08); }
+        .char-form-area textarea { resize:vertical; min-height:44px; }
+        .char-form-area .form-actions { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; align-items:center; }
+        .char-form-area .edit-badge { display:none; font-size:0.75rem; color:#d4a030; font-weight:600; margin-left:6px; }
+        .char-form-area.editing .edit-badge { display:inline; }
+        .library-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+        .library-header .count { font-size:0.85rem; color:#5a6a7a; }
+        .library-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:12px; }
+        .library-card { background:#f9fbfd; border-radius:16px; padding:12px; border:2px solid #e6ecf3; text-align:center; cursor:pointer; transition:0.25s; position:relative; }
+        .library-card:hover { border-color:#b0c8d8; transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.04); }
+        .library-card.selected { border-color:#2d6a8a; background:#eef6fa; box-shadow:0 0 0 3px rgba(45,106,138,0.12); }
+        .library-card .avatar { width:56px; height:56px; border-radius:50%; object-fit:cover; margin:0 auto 4px; border:2px solid #dce3ec; background:#fff; }
+        .library-card .avatar-placeholder { width:56px; height:56px; border-radius:50%; margin:0 auto 4px; background:#eef2f7; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:700; color:#4a6a8a; border:2px solid #dce3ec; }
+        .library-card .lname { font-weight:700; font-size:0.9rem; }
+        .library-card .lanime { font-size:0.7rem; color:#7a8a9a; }
+        .library-card .lbadge { display:inline-block; background:#2d6a8a; color:#fff; font-size:0.55rem; padding:1px 8px; border-radius:40px; margin-top:2px; }
+        .library-card .card-actions { display:flex; justify-content:center; gap:4px; margin-top:6px; }
+        .library-card .card-actions button { border:none; border-radius:40px; padding:1px 8px; font-size:0.65rem; cursor:pointer; transition:0.2s; display:inline-flex; align-items:center; gap:3px; }
+        .library-card .card-actions .edit-btn { background:#f0e6d0; color:#6a5a3a; }
+        .library-card .card-actions .edit-btn:hover { background:#e6d8b8; }
+        .library-card .card-actions .delete-btn { background:rgba(200,50,50,0.8); color:#fff; }
+        .library-card .card-actions .delete-btn:hover { background:#c0392b; }
+        .library-card .select-badge { position:absolute; bottom:4px; right:4px; background:#2d6a8a; color:#fff; border-radius:40px; padding:1px 8px; font-size:0.6rem; font-weight:600; }
+        .game-header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; }
+        .game-phase { font-size:1.2rem; font-weight:700; color:#1a2a3a; }
+        .game-phase i { color:#d35400; margin-right:6px; }
+        .game-day { font-size:0.85rem; color:#5a6a7a; background:#f0f4fa; padding:2px 14px; border-radius:40px; font-weight:600; }
+        .game-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        .game-controls .speed-wrap { display:flex; align-items:center; gap:4px; font-size:0.75rem; color:#5a6a7a; }
+        .game-controls .speed-wrap input[type="range"] { width:80px; accent-color:#2d6a8a; }
+        .game-controls .speed-wrap .speed-label { font-size:0.65rem; color:#8a9aaa; }
+        .message-area { background:#f8fafc; border-radius:16px; padding:14px 16px; max-height:420px; overflow-y:auto; border:1px solid #e6ecf3; margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+        .message-area::-webkit-scrollbar { width:5px; }
+        .message-area::-webkit-scrollbar-track { background:#f0f4fa; border-radius:10px; }
+        .message-area::-webkit-scrollbar-thumb { background:#c8d4e0; border-radius:10px; }
+        .msg-time { font-size:0.6rem; color:#9aabba; margin-right:8px; white-space:nowrap; }
+        .msg-system { text-align:center; font-size:0.75rem; color:#6a7a8a; background:#eef2f7; padding:4px 14px; border-radius:40px; display:inline-block; margin:2px auto; max-width:90%; font-weight:500; }
+        .msg-system .msg-time { color:#8a9aaa; margin-right:6px; }
+        .msg-system.death { background:#fce4e4; color:#b03a3a; }
+        .msg-system.reveal { background:#ede4f7; color:#7a4a9a; }
+        .msg-system.info { background:#e4f0f7; color:#2a6a8a; }
+        .msg-system.vote { background:#f0f0e8; color:#6a5a3a; font-size:0.7rem; }
+        .msg-system.win { background:#fce8c8; color:#b06a2a; font-weight:700; }
+        .msg-conversation { display:flex; align-items:flex-start; gap:10px; margin:2px 0; }
+        .msg-conversation .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #dce3ec; flex-shrink:0; background:#fff; }
+        .msg-conversation .avatar-placeholder { width:40px; height:40px; border-radius:50%; background:#eef2f7; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:700; color:#4a6a8a; border:2px solid #dce3ec; flex-shrink:0; }
+        .msg-conversation .bubble { flex:1; background:#ffffff; border-radius:12px 12px 12px 4px; padding:8px 14px; box-shadow:0 1px 4px rgba(0,0,0,0.04); border:1px solid #e6ecf3; max-width:calc(100% - 56px); }
+        .msg-conversation .bubble .name { font-weight:700; font-size:0.8rem; color:#2a3a4a; margin-bottom:2px; display:flex; align-items:center; gap:6px; }
+        .msg-conversation .bubble .name .msg-time { font-weight:400; font-size:0.6rem; color:#9aabba; }
+        .msg-conversation .bubble .text { font-size:0.9rem; color:#1a2a3a; word-break:break-word; line-height:1.5; }
+        .msg-conversation.self { flex-direction:row-reverse; }
+        .msg-conversation.self .bubble { border-radius:12px 12px 4px 12px; background:#dce8f5; }
+        .msg-vote { display:flex; align-items:center; gap:8px; background:#f4f6f0; border-radius:12px; padding:4px 14px; font-size:0.8rem; color:#3a4a3a; border-left:3px solid #b0b8a0; margin:2px 0; }
+        .msg-vote .msg-time { font-size:0.6rem; color:#9aabba; }
+        .msg-vote .voter { font-weight:600; color:#1a2a3a; }
+        .msg-vote .arrow { color:#8a9a8a; }
+        .msg-vote .target { font-weight:600; color:#2d6a8a; }
+        .char-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px; margin:12px 0; }
+        .char-card { background:#f9fbfd; border-radius:14px; padding:10px 8px; border:1px solid #e6ecf3; text-align:center; transition:0.25s; }
+        .char-card.dead { opacity:0.45; filter:grayscale(0.7); border-color:#e0c8c8; }
+        .char-card .avatar { width:56px; height:56px; border-radius:50%; object-fit:cover; margin:0 auto 4px; border:2px solid #dce3ec; background:#fff; }
+        .char-card .avatar-placeholder { width:56px; height:56px; border-radius:50%; margin:0 auto 4px; background:#eef2f7; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:700; color:#4a6a8a; border:2px solid #dce3ec; }
+        .char-card .name { font-weight:700; font-size:0.85rem; }
+        .char-card .anime { font-size:0.6rem; color:#7a8a9a; }
+        .char-card .role-badge { display:inline-block; padding:1px 10px; border-radius:40px; font-size:0.6rem; font-weight:700; margin-top:2px; }
+        .role-badge.werewolf { background:#fce4e4; color:#b03a3a; }
+        .role-badge.villager { background:#e4f0f7; color:#2a6a8a; }
+        .role-badge.fortuneteller { background:#ede4f7; color:#7a4a9a; }
+        .char-card .speech { margin-top:6px; font-size:0.75rem; background:#ffffff; padding:4px 6px; border-radius:8px; border-left:3px solid #2d6a8a; min-height:30px; color:#2a3a4a; font-style:italic; text-align:left; box-shadow:0 1px 2px rgba(0,0,0,0.02); word-break:break-word; }
+        @media (max-width:600px) {
+            .app-header { flex-direction:column; align-items:stretch; }
+            .api-area input { width:100%; }
+            .tabs { flex-direction:column; border-radius:20px; }
+            .char-form-area .form-row { grid-template-columns:1fr; }
+            .library-grid { grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); }
+            .char-cards { grid-template-columns:repeat(auto-fit, minmax(100px,1fr)); }
+            .game-header { flex-direction:column; align-items:stretch; }
+            .msg-conversation .bubble { max-width:100%; }
         }
     </style>
 </head>
@@ -658,8 +137,8 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.12</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 文字数遅延・一人ずつ表示</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.13</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — ランダム会話・超スロー</span>
             </div>
             <div class="api-area">
                 <i class="fas fa-key" style="color:#6a8aaa;"></i>
@@ -759,7 +238,7 @@
 
     <script>
         // ================================================================
-        //  Ver3.12 文字数遅延・一人ずつ表示
+        //  Ver3.13 ランダム会話順・超スロー
         // ================================================================
 
         // -------- 状態 --------
@@ -850,42 +329,12 @@
         // -------- サンプルキャラ --------
         function addSampleCharacters() {
             const samples = [
-                { 
-                    anime: 'ひぐらしのなく頃に', 
-                    name: '前原圭一', 
-                    imageUrl: '', 
-                    description: '都会から雛見沢に引っ越してきた少年。正義感が強く、口が達者で仲間を引っ張るリーダータイプ。ただし、疑われると極端に感情的になり、周りを威圧する傾向がある。口調は乱暴だが、根は仲間思い。人狼ゲームでは、リーダーシップを発揮する反面、疑われると怒り狂って自爆しやすい。'
-                },
-                { 
-                    anime: 'ひぐらしのなく頃に', 
-                    name: '竜宮レナ', 
-                    imageUrl: '', 
-                    description: '雛見沢の少女。物腰は柔らかく「〜かな？」が口癖だが、直感が鋭く、危険を察知するのが得意。性格は一見おっとりしているが、真実を見抜く力に長けており、鋭い指摘で周囲を驚かせる。人狼ゲームでは、勘の良さを武器に村人を導くが、自分の意見を強く主張しないため、時折流されやすい。'
-                },
-                { 
-                    anime: 'ひぐらしのなく頃に', 
-                    name: '古手梨花', 
-                    imageUrl: '', 
-                    description: '雛見沢の神社の娘。見た目は幼いが、どこか達観した口調で「み〜」「にぱ〜」が口癖。ミステリアスな雰囲気を纏い、物事を斜めに見る傾向がある。実は非常に賢く、他人の心理を読むのが上手い。人狼ゲームでは、クールに分析し、ミスリードを誘うような発言で人狼を追い詰めるのが得意。'
-                },
-                { 
-                    anime: 'ひぐらしのなく頃に', 
-                    name: '園崎詩音', 
-                    imageUrl: '', 
-                    description: '園崎家の次女。姉の魅音とは対照的に、大人びた口調で他人をからかうのが好き。洞察力に優れ、人の嘘を見抜くのが得意。ただし、やや皮肉っぽい物言いをするため、村人からは疑われやすい。人狼ゲームでは、鋭いツッコミで人狼を追い詰めるが、その毒舌が仇になることも。'
-                },
-                { 
-                    anime: 'ひぐらしのなく頃に', 
-                    name: '園崎魅音', 
-                    imageUrl: '', 
-                    description: '園崎家の長女で、クラスのリーダー的存在。姉御肌で、仲間をまとめるのが上手い。口調は軽妙で「おじさん」が口癖。冷静な判断力を持ち、感情的になりがちな圭一をなだめる役割を担う。人狼ゲームでは、公平な仲裁役として、皆の意見をまとめながら人狼を炙り出す。'
-                },
-                { 
-                    anime: 'ひぐらしのなく頃に', 
-                    name: '北条沙都子', 
-                    imageUrl: '', 
-                    description: '雛見沢の少女。お嬢様口調で高飛車な態度を取るが、実はかなりの策士。トラップを仕掛けるのが得意で、他人を挑発して誤った行動を引き出すのが上手い。人狼ゲームでは、挑発的な発言で相手を動揺させ、真実を引き出す囮役として活躍。ただし、自信過剰になりがちで、時として大きなミスを犯すことも。'
-                },
+                { anime: 'ひぐらしのなく頃に', name: '前原圭一', imageUrl: '', description: '都会から雛見沢に引っ越してきた少年。正義感が強く、口が達者で仲間を引っ張るリーダータイプ。ただし、疑われると極端に感情的になり、周りを威圧する傾向がある。口調は乱暴だが、根は仲間思い。人狼ゲームでは、リーダーシップを発揮する反面、疑われると怒り狂って自爆しやすい。' },
+                { anime: 'ひぐらしのなく頃に', name: '竜宮レナ', imageUrl: '', description: '雛見沢の少女。物腰は柔らかく「〜かな？」が口癖だが、直感が鋭く、危険を察知するのが得意。性格は一見おっとりしているが、真実を見抜く力に長けており、鋭い指摘で周囲を驚かせる。人狼ゲームでは、勘の良さを武器に村人を導くが、自分の意見を強く主張しないため、時折流されやすい。' },
+                { anime: 'ひぐらしのなく頃に', name: '古手梨花', imageUrl: '', description: '雛見沢の神社の娘。見た目は幼いが、どこか達観した口調で「み〜」「にぱ〜」が口癖。ミステリアスな雰囲気を纏い、物事を斜めに見る傾向がある。実は非常に賢く、他人の心理を読むのが上手い。人狼ゲームでは、クールに分析し、ミスリードを誘うような発言で人狼を追い詰めるのが得意。' },
+                { anime: 'ひぐらしのなく頃に', name: '園崎詩音', imageUrl: '', description: '園崎家の次女。姉の魅音とは対照的に、大人びた口調で他人をからかうのが好き。洞察力に優れ、人の嘘を見抜くのが得意。ただし、やや皮肉っぽい物言いをするため、村人からは疑われやすい。人狼ゲームでは、鋭いツッコミで人狼を追い詰めるが、その毒舌が仇になることも。' },
+                { anime: 'ひぐらしのなく頃に', name: '園崎魅音', imageUrl: '', description: '園崎家の長女で、クラスのリーダー的存在。姉御肌で、仲間をまとめるのが上手い。口調は軽妙で「おじさん」が口癖。冷静な判断力を持ち、感情的になりがちな圭一をなだめる役割を担う。人狼ゲームでは、公平な仲裁役として、皆の意見をまとめながら人狼を炙り出す。' },
+                { anime: 'ひぐらしのなく頃に', name: '北条沙都子', imageUrl: '', description: '雛見沢の少女。お嬢様口調で高飛車な態度を取るが、実はかなりの策士。トラップを仕掛けるのが得意で、他人を挑発して誤った行動を引き出すのが上手い。人狼ゲームでは、挑発的な発言で相手を動揺させ、真実を引き出す囮役として活躍。ただし、自信過剰になりがちで、時として大きなミスを犯すことも。' },
             ];
             samples.forEach(s => {
                 STATE.library.push({
@@ -1147,7 +596,7 @@
 
             renderCards();
             document.getElementById('messageArea').innerHTML = '';
-            addSystemMessage('🐺 Ver3.12 ゲームを開始！（文字数遅延・一人ずつ表示）', 'info');
+            addSystemMessage('🐺 Ver3.13 ゲームを開始！（ランダム会話順・超スロー）', 'info');
             assignRoles();
             gameLoop();
         }
@@ -1315,11 +764,12 @@
             await wait(STATE.speed);
         }
 
-        // ★★★ 一人ずつ・文字数遅延で表示 ★★★
+        // ★★★ 会話をランダム順で表示 ★★★
         async function dayDiscussion(round) {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
 
+            // プロンプトに「発言順は自由」という指示を追加（任意）
             const prompt = buildDayPrompt(round);
             const response = await callGemini(prompt);
 
@@ -1350,16 +800,22 @@
                 conversations.map(c => ({ name: c.name, speech: c.speech }))
             );
 
-            // ★ 一人ずつ、文字数に応じた遅延で表示
+            // ★ 会話リストをシャッフル（ランダム順）
+            for (let i = conversations.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [conversations[i], conversations[j]] = [conversations[j], conversations[i]];
+            }
+
+            // ★ シャッフルした順に表示（文字数遅延）
             for (const conv of conversations) {
                 addConversationMessage(conv.idx, conv.speech);
                 renderCards();
-                // 文字数に応じて遅延（1文字あたり50ms、最小500ms、最大4000ms）
-                const delay = Math.min(4000, Math.max(500, conv.speech.length * 50));
+                // 文字数に応じた遅延（1文字あたり80ms、最小1秒、最大5秒） より遅く
+                const delay = Math.min(5000, Math.max(1000, conv.speech.length * 80));
                 await waitFor(delay);
             }
 
-            // 全員表示後、フェーズ待機（スライダー値に応じる）
+            // 全員表示後、フェーズ待機
             await wait(STATE.speed);
         }
 
@@ -1534,7 +990,7 @@
             area.scrollTop = area.scrollHeight;
         }
 
-        // -------- プロンプトビルダー --------
+        // -------- プロンプトビルダー（発言順自由を追記） --------
         function buildDayPrompt(round) {
             const alive = STATE.aliveIndices;
 
@@ -1580,6 +1036,7 @@
         2. 村人は疑わしい人物を推理し、人狼は自分が疑われないように振る舞ってください。
         3. **セリフは必ず1〜2文の短いもの**にしてください。
         4. 前回の発言に関連させると自然です。
+        5. **発言の順番は特に決まっていません。各キャラが自由に発言し、会話が自然に流れるようにしてください。**
 
         ## 出力（JSON）
         {
@@ -1732,10 +1189,10 @@
             document.getElementById('phaseDisplay').innerHTML = text;
         }
 
-        // ★ スライダー値0で最大待機（10秒）、値10で最小（1秒）
+        // ★ スライダー値0で最大待機（15秒）、値10で最小（1.5秒）　より遅く
         function wait(seconds) {
             const inverted = 10 - seconds;
-            const base = 1.0 + (inverted / 10) * 9.0;
+            const base = 1.5 + (inverted / 10) * 13.5; // 1.5秒〜15秒
             const delay = STATE.paused ? 100 : base * 1000;
             return new Promise(r => setTimeout(r, delay));
         }
