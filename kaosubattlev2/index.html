@@ -14,9 +14,9 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+1p:wght@400;700;900&display=swap');
 :root{
-  --bg:#1a1a2e;--surface:#16213e;--surface2:#0f3460;--border:#2a2a5a;--border2:#3a3a6a;
-  --accent:#e94560;--accent2:#f5a623;--accent3:#00d2ff;--text:#e8e8f0;--text-muted:#8888aa;--shadow:rgba(0,0,0,.3);
-  --ta:#e94560;--tb:#00d2ff;--tc:#22ee66;--td:#c77dff;
+--bg:#1a1a2e;--surface:#16213e;--surface2:#0f3460;--border:#2a2a5a;--border2:#3a3a6a;
+--accent:#e94560;--accent2:#f5a623;--accent3:#00d2ff;--text:#e8e8f0;--text-muted:#8888aa;--shadow:rgba(0,0,0,.3);
+--ta:#e94560;--tb:#00d2ff;--tc:#22ee66;--td:#c77dff;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'M PLUS 1p',sans-serif;min-height:100vh;overflow-x:hidden;}
@@ -34,7 +34,6 @@ header{display:none;}
 .btn-info{background:var(--accent3);color:#000;font-weight:900;}.btn-info:hover{background:#00b8e0;}
 .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border2);}.btn-secondary:hover{border-color:var(--accent3);color:var(--accent3);}
 .btn-sm{padding:5px 12px;font-size:12px;}.btn-xs{padding:3px 8px;font-size:11px;}
-
 /* ========== SETUP ========== */
 #panel-setup{padding:20px;}
 .setup-inner{max-width:1020px;margin:0 auto;}
@@ -81,7 +80,6 @@ header{display:none;}
 .add-char-card:hover{border-color:var(--accent3);color:var(--accent3);background:rgba(0,210,255,.05);}
 .empty-state{text-align:center;padding:44px 20px;color:var(--text-muted);grid-column:1/-1;}
 .empty-state h3{font-size:18px;color:var(--text);margin-bottom:8px;}
-
 /* ========== SELECT ========== */
 #panel-select{padding:20px;}
 .select-inner{max-width:1000px;margin:0 auto;}
@@ -110,14 +108,12 @@ header{display:none;}
 .pc-team-badge{position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;z-index:5;border:2px solid rgba(255,255,255,.3);box-shadow:0 1px 4px rgba(0,0,0,.5);}
 .pc-del{position:absolute;top:4px;right:4px;width:28px;height:28px;background:rgba(233,69,96,.9);border:none;border-radius:50%;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;}
 .sel-count{font-size:13px;color:var(--text-muted);font-weight:700;}
-
 /* ========== MULTI-ATTACK SETTINGS ========== */
 .multi-atk-section{border-top:1px solid var(--border);padding-top:12px;margin-top:8px;}
 .multi-atk-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;}
 .multi-atk-field{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);}
 .mini-input{width:60px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);outline:none;}
 .mini-input:focus{border-color:var(--accent3);}
-
 /* ========== BATTLE ========== */
 #panel-battle{padding:8px 0 0;flex-direction:column;height:calc(100vh - 48px);box-sizing:border-box;overflow:hidden;position:relative;}
 #battle-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;flex-shrink:0;padding:0 18px 8px;}
@@ -136,13 +132,11 @@ header{display:none;}
 #arena-wrap{position:relative;margin-bottom:12px;}
 #arrow-canvas{position:absolute;top:0;left:0;pointer-events:none;z-index:10;}
 #arena{display:grid;gap:8px;justify-content:center;}
-
 /* Arena Shake */
 #arena-wrap.arena-shake{animation:arenaShake .4s ease-out;}
 @keyframes arenaShake{0%,100%{transform:translate(0);}10%{transform:translate(-8px,4px);}20%{transform:translate(6px,-6px);}30%{transform:translate(-4px,8px);}40%{transform:translate(8px,-2px);}50%{transform:translate(-6px,6px);}60%{transform:translate(4px,-8px);}70%{transform:translate(-8px,2px);}80%{transform:translate(6px,4px);}90%{transform:translate(-2px,-6px);}}
 #arena-wrap.arena-big-shake{animation:arenaBigShake .6s ease-out;}
 @keyframes arenaBigShake{0%,100%{transform:translate(0);}10%{transform:translate(-16px,8px);}20%{transform:translate(12px,-12px);}30%{transform:translate(-8px,16px);}40%{transform:translate(16px,-4px);}50%{transform:translate(-12px,12px);}60%{transform:translate(8px,-16px);}70%{transform:translate(-16px,4px);}80%{transform:translate(12px,8px);}90%{transform:translate(-4px,-12px);}}
-
 /* Fighter Cells */
 .fighter-cell{position:relative;border:3px solid var(--border);border-radius:10px;overflow:visible;background:var(--surface2);flex-shrink:0;transition:border-color .2s,box-shadow .2s;}
 .fighter-cell.attacking{border-color:var(--accent);box-shadow:0 0 20px rgba(233,69,96,.5);}
@@ -163,12 +157,10 @@ header{display:none;}
 .hp-fill{height:100%;background:var(--tc);transition:width .3s,background .3s;border-radius:3px;box-shadow:0 0 6px rgba(34,238,102,.4);}
 .fighter-team-badge{position:absolute;top:4px;left:4px;width:16px;height:16px;border-radius:50%;font-size:8px;font-weight:900;display:flex;align-items:center;justify-content:center;color:#fff;z-index:5;border:1px solid rgba(255,255,255,.3);}
 .terrain-indicator{position:absolute;top:4px;right:4px;font-size:14px;z-index:4;filter:drop-shadow(0 0 4px rgba(0,0,0,.5));}
-
 /* Speech Bubble */
 .speech-bubble{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);border:2px solid var(--accent);border-radius:10px;padding:5px 10px;font-size:12px;font-weight:700;color:#1a1a1a;z-index:100;pointer-events:none;box-shadow:0 2px 12px rgba(233,69,96,.3);max-width:160px;white-space:pre-wrap;text-align:center;animation:bubblePop .15s ease;word-break:break-all;}
 @keyframes bubblePop{from{transform:translateX(-50%) scale(.8);}to{transform:translateX(-50%) scale(1);}}
 .speech-bubble::after{content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--accent);}
-
 /* Damage Popup */
 .damage-popup{position:absolute;font-family:'DotGothic16',monospace;font-weight:900;z-index:120;pointer-events:none;text-shadow:2px 2px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;}
 .damage-popup.normal{font-size:1.6rem;color:#ff4444;animation:dmgFloat 1s ease-out forwards;}
@@ -177,11 +169,9 @@ header{display:none;}
 .damage-popup.event-dmg{font-size:1.4rem;color:#ff8800;animation:dmgFloat 1s ease-out forwards;}
 @keyframes dmgFloat{0%{opacity:1;transform:translateY(0) scale(1.2);}60%{opacity:1;}100%{opacity:0;transform:translateY(-50px) scale(.7);}}
 @keyframes dmgFloatCrit{0%{opacity:1;transform:translateY(0) scale(1.8);}20%{transform:translateY(-10px) scale(1.2);}60%{opacity:1;}100%{opacity:0;transform:translateY(-60px) scale(.6);}}
-
 /* Event Banner */
 .event-banner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);font-family:'DotGothic16',monospace;font-size:2.5rem;font-weight:900;color:#fff;z-index:9999;pointer-events:none;text-align:center;white-space:nowrap;animation:bannerPop 2s ease-out forwards;}
 @keyframes bannerPop{0%{transform:translate(-50%,-50%) scale(0) rotate(-10deg);opacity:0;}10%{opacity:1;}20%{transform:translate(-50%,-50%) scale(1.3) rotate(3deg);}35%{transform:translate(-50%,-50%) scale(1) rotate(0);}75%{opacity:1;transform:translate(-50%,-50%) scale(1);}100%{opacity:0;transform:translate(-50%,-50%) scale(.8) translateY(-30px);}}
-
 /* Intro Cutin */
 .cutin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:8000;display:flex;align-items:center;justify-content:center;}
 .cutin-card{display:flex;flex-direction:column;align-items:center;gap:10px;animation:cutinSlide .5s ease-out;}
@@ -190,7 +180,6 @@ header{display:none;}
 .cutin-name{font-family:'DotGothic16',monospace;font-size:24px;color:var(--accent2);text-shadow:0 0 20px rgba(245,166,35,.6);}
 .cutin-label{font-size:14px;color:var(--accent);font-weight:700;}
 @keyframes cutinSlide{from{transform:translateX(-100px) scale(.5);opacity:0;}to{transform:translateX(0) scale(1);opacity:1;}}
-
 /* ===== EXPLOSION ===== */
 .explosion-container{position:absolute;inset:0;z-index:150;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:visible;}
 .explosion-ring{position:absolute;border-radius:50%;background:radial-gradient(circle,#fff 0%,#ffee00 20%,#ff8800 45%,#ff2200 70%,transparent 100%);animation:explodeRing .9s cubic-bezier(.1,.6,.3,1) forwards;opacity:0;}
@@ -205,14 +194,12 @@ header{display:none;}
 @keyframes explodeFlash{0%{opacity:1;transform:scale(.3);}30%{opacity:1;transform:scale(1.5);}100%{opacity:0;transform:scale(2.5);}}
 .explosion-smoke{position:absolute;width:80%;height:80%;border-radius:50%;background:radial-gradient(circle,rgba(80,80,80,.7) 0%,rgba(40,40,40,.4) 50%,transparent 75%);animation:explodeSmoke 1.5s ease-out forwards;top:10%;left:10%;}
 @keyframes explodeSmoke{0%{transform:scale(0);opacity:.8;}40%{opacity:.6;}100%{transform:scale(3) translateY(-20px);opacity:0;}}
-
 /* ===== MULTIPLY ===== */
 .multiply-effect{position:absolute;inset:0;z-index:140;pointer-events:none;display:flex;align-items:center;justify-content:center;}
 .multiply-ghost{position:absolute;width:100%;height:100%;border-radius:10px;overflow:hidden;animation:multiplyGhost .8s ease-out forwards;opacity:0;}
 @keyframes multiplyGhost{0%{transform:scale(1);opacity:.8;filter:brightness(2) hue-rotate(90deg);}50%{transform:scale(1.3);opacity:.5;}100%{transform:scale(.3) translateY(-40px);opacity:0;}}
 .multiply-label{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-family:'DotGothic16',monospace;font-size:14px;color:#c77dff;font-weight:900;white-space:nowrap;text-shadow:0 0 10px rgba(199,125,255,.8);animation:multiplyLabelAnim 1s ease-out forwards;}
 @keyframes multiplyLabelAnim{0%{opacity:0;transform:translateX(-50%) translateY(10px) scale(.5);}30%{opacity:1;transform:translateX(-50%) translateY(0) scale(1.2);}60%{transform:translateX(-50%) translateY(0) scale(1);}100%{opacity:0;transform:translateX(-50%) translateY(-20px);}}
-
 /* Animations */
 @keyframes flash-hit{0%{filter:brightness(3) saturate(0);}100%{filter:brightness(1) saturate(1);}}
 .cell-flash{animation:flash-hit .4s ease-out;}
@@ -229,7 +216,6 @@ header{display:none;}
 .fighter-cell.terrain-heal{box-shadow:inset 0 0 20px rgba(34,238,102,.2);}
 .fighter-cell.terrain-warp{box-shadow:inset 0 0 20px rgba(199,125,255,.3);}
 .fighter-cell.terrain-bomb{box-shadow:inset 0 0 20px rgba(255,200,0,.3);}
-
 /* Log */
 .log-col-title{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
 #battle-log{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;font-family:'DotGothic16',monospace;color:var(--text-muted);flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;max-height:100%;}
@@ -247,14 +233,12 @@ header{display:none;}
 .log-entry .multi-atk-log{color:#ffaa00;font-weight:700;}
 .empty-cell{background:rgba(15,52,96,.3);border-radius:10px;border:1px dashed rgba(42,42,90,.5);flex-shrink:0;}
 #storage-mode-bar{display:flex;align-items:center;gap:10px;margin-top:18px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;}
-
 @media(max-width:800px){.battle-layout{flex-direction:column;}.battle-log-col{width:100%;}#battle-log{max-height:250px;}.char-grid{grid-template-columns:1fr;}.pc{width:80px;height:80px;}}
-
 /* ========== THEMES ========== */
 [data-theme="light"]{
-  --bg:#f0f2f5;--surface:#ffffff;--surface2:#e8ecf2;--border:#c8d0dc;--border2:#a0aabb;
-  --accent:#d32f4a;--accent2:#e67e00;--accent3:#0077cc;--text:#1a1a2e;--text-muted:#5566788;--shadow:rgba(0,0,0,.12);
-  --ta:#d32f4a;--tb:#0077cc;--tc:#22aa44;--td:#8833cc;
+--bg:#f0f2f5;--surface:#ffffff;--surface2:#e8ecf2;--border:#c8d0dc;--border2:#a0aabb;
+--accent:#d32f4a;--accent2:#e67e00;--accent3:#0077cc;--text:#1a1a2e;--text-muted:#5566788;--shadow:rgba(0,0,0,.12);
+--ta:#d32f4a;--tb:#0077cc;--tc:#22aa44;--td:#8833cc;
 }
 [data-theme="light"] body{background:var(--bg);color:var(--text);}
 [data-theme="light"] .tabs{background:#fff;border-bottom:2px solid var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.1);}
@@ -303,12 +287,11 @@ header{display:none;}
 [data-theme="light"] .fighter-placeholder{background:#e0e0e0;}
 [data-theme="light"] .dead-overlay{color:var(--accent);}
 [data-theme="light"] .mini-input{background:#f5f7fa;border-color:var(--border);color:var(--text);}
-
 /* ========== LIGHT2 (新ライト) ========== */
 [data-theme="light2"]{
-  --bg:#fdf6ee;--surface:#ffffff;--surface2:#f5ede0;--border:#e0cdb8;--border2:#c9b49a;
-  --accent:#c0392b;--accent2:#d35400;--accent3:#16a085;--text:#2c1a0e;--text-muted:#7a5c44;--shadow:rgba(0,0,0,.1);
-  --ta:#c0392b;--tb:#16a085;--tc:#27ae60;--td:#8e44ad;
+--bg:#fdf6ee;--surface:#ffffff;--surface2:#f5ede0;--border:#e0cdb8;--border2:#c9b49a;
+--accent:#c0392b;--accent2:#d35400;--accent3:#16a085;--text:#2c1a0e;--text-muted:#7a5c44;--shadow:rgba(0,0,0,.1);
+--ta:#c0392b;--tb:#16a085;--tc:#27ae60;--td:#8e44ad;
 }
 [data-theme="light2"] body{background:var(--bg);color:var(--text);}
 [data-theme="light2"] .tabs{background:#fff7ee;border-bottom:2px solid var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.08);}
@@ -355,12 +338,11 @@ header{display:none;}
 [data-theme="light2"] .fighter-placeholder{background:#ede0d0;}
 [data-theme="light2"] .dead-overlay{color:var(--accent);}
 [data-theme="light2"] .mini-input{background:#fff7ee;border-color:var(--border);color:var(--text);}
-
 /* ========== DARK2 (新ダーク) ========== */
 [data-theme="dark2"]{
-  --bg:#0d0d1a;--surface:#12122a;--surface2:#1a1a3a;--border:#252550;--border2:#353570;
-  --accent:#ff2d78;--accent2:#ffaa00;--accent3:#00ffcc;--text:#e0e0ff;--text-muted:#7070aa;--shadow:rgba(0,0,0,.5);
-  --ta:#ff2d78;--tb:#00ffcc;--tc:#00ff88;--td:#dd88ff;
+--bg:#0d0d1a;--surface:#12122a;--surface2:#1a1a3a;--border:#252550;--border2:#353570;
+--accent:#ff2d78;--accent2:#ffaa00;--accent3:#00ffcc;--text:#e0e0ff;--text-muted:#7070aa;--shadow:rgba(0,0,0,.5);
+--ta:#ff2d78;--tb:#00ffcc;--tc:#00ff88;--td:#dd88ff;
 }
 [data-theme="dark2"] body{background:var(--bg);color:var(--text);}
 [data-theme="dark2"] .tabs{background:#12122a;border-bottom:2px solid var(--accent);box-shadow:0 2px 16px rgba(255,45,120,.2);}
@@ -411,312 +393,298 @@ header{display:none;}
 </head>
 <body>
 <div class="tabs">
-  <div class="tabs-logo">カオス<span style="color:var(--accent2)">バトル</span></div>
-  <div class="tab active" id="tab-setup" onclick="switchTab('setup')">キャラクター登録</div>
-  <div class="tab" id="tab-select" onclick="switchTab('select')">配置モード</div>
-  <div class="tab" id="tab-battle" onclick="switchTab('battle')">バトル</div>
-  <div style="flex:1;"></div>
-  <div class="tab" id="tab-tutorial" onclick="openTutorial()" style="color:#22ee66;border-bottom-color:transparent;">📖 チュートリアル</div>
-  <div class="tab" id="tab-theme" onclick="openThemePicker()" style="color:var(--accent3);border-bottom-color:transparent;">🎨 テーマ</div>
-  <div class="tab" id="tab-help" onclick="openHelp()" style="color:var(--accent2);border-bottom-color:transparent;">❓ お困りですか？</div>
+<div class="tabs-logo">カオス<span style="color:var(--accent2)">バトル</span></div>
+<div class="tab active" id="tab-setup" onclick="switchTab('setup')">キャラクター登録</div>
+<div class="tab" id="tab-select" onclick="switchTab('select')">配置モード</div>
+<div class="tab" id="tab-battle" onclick="switchTab('battle')">バトル</div>
+<div style="flex:1;"></div>
+<div class="tab" id="tab-tutorial" onclick="openTutorial()" style="color:#22ee66;border-bottom-color:transparent;">📖 チュートリアル</div>
+<div class="tab" id="tab-theme" onclick="openThemePicker()" style="color:var(--accent3);border-bottom-color:transparent;">🎨 テーマ</div>
+<div class="tab" id="tab-help" onclick="openHelp()" style="color:var(--accent2);border-bottom-color:transparent;">❓ お困りですか？</div>
 </div>
-
 <!-- SETUP -->
 <div class="panel active" id="panel-setup">
-  <div class="setup-inner">
-    <div class="info-bar">🎮 キャラクターを登録してください。画像・セリフ・音声を複数追加できます。データはブラウザに自動保存されます。<br>💡 大人数で戦わせるほどカオス度UP！</div>
-    <div class="sec-title">プリセットから追加 <span style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:0;">(未実装)</span></div>
-    <div class="preset-strip" id="preset-strip"></div>
-    <div class="sec-title">インポート / エクスポート</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
-      <button class="btn btn-secondary btn-sm" onclick="showExportMenu(this)">📤 エクスポート ▾</button>
-      <button class="btn btn-secondary btn-sm" onclick="showImportMenu(this)">📥 インポート ▾</button>
-      <button class="btn btn-info btn-sm" onclick="importHigurashi()">🎭 ひぐらしキャラを読み込む</button>
-      <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importFile(this)">
-    </div>
-    <div class="sec-title">登録済みキャラクター</div>
-    <div class="char-grid" id="char-list"></div>
-    <div class="add-char-card" id="add-char-card-btn"><span style="font-size:28px">＋</span><span>新しいキャラクターを追加</span></div>
-    <div id="storage-mode-bar">
-      <span style="font-size:12px;color:var(--text-muted);">保存先:</span>
-      <span id="storage-mode-badge" style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(0,210,255,.15);color:var(--accent3);">LocalStorage</span>
-      <span id="storage-usage-text" style="font-size:12px;color:var(--text-muted);"></span>
-      <button id="switch-to-idb-btn" class="btn btn-info btn-xs" onclick="switchToIndexedDB()" style="display:none;">IndexedDBに切替</button>
-      <button id="switch-to-ls-btn" class="btn btn-secondary btn-xs" onclick="switchToLocalStorage()" style="display:none;">LocalStorageに戻す</button>
-      <button id="add-idb-only-btn" class="btn btn-secondary btn-xs" onclick="addBlankCharIDB()" style="display:none;">＋ IDB限定で追加</button>
-    </div>
-  </div>
+<div class="setup-inner">
+<div class="info-bar">🎮 キャラクターを登録してください。画像・セリフ・音声を複数追加できます。データはブラウザに自動保存されます。<br>💡 大人数で戦わせるほどカオス度UP！</div>
+<div class="sec-title">プリセットから追加 <span style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:0;">(未実装)</span></div>
+<div class="preset-strip" id="preset-strip"></div>
+<div class="sec-title">インポート / エクスポート</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+<button class="btn btn-secondary btn-sm" onclick="showExportMenu(this)">📤 エクスポート ▾</button>
+<button class="btn btn-secondary btn-sm" onclick="showImportMenu(this)">📥 インポート ▾</button>
+<button class="btn btn-info btn-sm" onclick="importHigurashi()">🎭 ひぐらしキャラを読み込む</button>
+<input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importFile(this)">
 </div>
-
+<div class="sec-title">登録済みキャラクター</div>
+<div class="char-grid" id="char-list"></div>
+<div class="add-char-card" id="add-char-card-btn"><span style="font-size:28px">＋</span><span>新しいキャラクターを追加</span></div>
+<div id="storage-mode-bar">
+<span style="font-size:12px;color:var(--text-muted);">保存先:</span>
+<span id="storage-mode-badge" style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(0,210,255,.15);color:var(--accent3);">LocalStorage</span>
+<span id="storage-usage-text" style="font-size:12px;color:var(--text-muted);"></span>
+<button id="switch-to-idb-btn" class="btn btn-info btn-xs" onclick="switchToIndexedDB()" style="display:none;">IndexedDBに切替</button>
+<button id="switch-to-ls-btn" class="btn btn-secondary btn-xs" onclick="switchToLocalStorage()" style="display:none;">LocalStorageに戻す</button>
+<button id="add-idb-only-btn" class="btn btn-secondary btn-xs" onclick="addBlankCharIDB()" style="display:none;">＋ IDB限定で追加</button>
+</div>
+</div>
+</div>
 <!-- SELECT -->
 <div class="panel" id="panel-select">
-  <div class="select-inner">
-    <h2>⚔️ 配置モード</h2>
-    <p>プールのキャラをクリックでグリッドに追加、またはドラッグして直接配置。セルのチームバッジをクリックでチーム変更。</p>
-    <div class="pool-label">キャラクタープール（クリックまたはドラッグで配置）</div>
-    <div class="pool-grid" id="char-pool"></div>
-    <div class="placement-controls">
-      <span style="font-size:12px;color:var(--text-muted);">グリッド:</span>
-      <select class="grid-sel" id="grid-size" onchange="onGridSizeChange(this.value)">
-        <option value="2">2×2</option>
-        <option value="3" selected>3×3</option>
-        <option value="4">4×4</option>
-        <option value="5">5×5</option>
-        <option value="6">6×6</option>
-        <option value="8">8×8</option>
-      </select>
-      <button class="btn btn-secondary btn-xs" onclick="clearAll()">全クリア</button>
-      <button class="btn btn-secondary btn-xs" onclick="randomFill(false)">ランダム登場</button>
-      <button class="btn btn-secondary btn-xs" onclick="randomFill(true)">ランダム(重複あり)</button>
-      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted);cursor:pointer;">
-        <input type="checkbox" id="terrain-toggle"> 地形ギミック
-      </label>
-      <span style="font-size:12px;color:var(--text-muted);">ターン間隔(秒)</span>
-      <input type="number" id="speed-input-sel" min="0" max="30" step="0.1" value="0.1" style="width:60px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
-      <span style="font-size:12px;color:var(--text-muted);">セリフ待機(秒)</span>
-      <input type="number" id="resp-input-sel" min="0" max="30" step="0.1" value="0.1" style="width:60px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
-      <span class="sel-count" id="sel-count">0人配置中</span>
-      <button class="btn btn-primary btn-sm" id="battle-go-btn" onclick="launchBattle(false)" disabled>🔥 バトル開始！</button>
-      <button class="btn btn-secondary btn-sm" id="battle-skip-btn" onclick="launchBattle(true)" disabled title="参戦演出をスキップしてすぐバトル開始">⚡ 演出スキップで開始</button>
-    </div>
-    <div style="margin-bottom:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">発生イベント選択（チェックを外すと無効）</div>
-      <div id="event-toggle-list" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-    </div>
-    <div class="placement-outer"><div class="placement-grid" id="placement-grid"></div></div>
-  </div>
+<div class="select-inner">
+<h2>⚔️ 配置モード</h2>
+<p>プールのキャラをクリックでグリッドに追加、またはドラッグして直接配置。セルのチームバッジをクリックでチーム変更。</p>
+<div class="pool-label">キャラクタープール（クリックまたはドラッグで配置）</div>
+<div class="pool-grid" id="char-pool"></div>
+<div class="placement-controls">
+<span style="font-size:12px;color:var(--text-muted);">グリッド:</span>
+<select class="grid-sel" id="grid-size" onchange="onGridSizeChange(this.value)">
+<option value="2">2×2</option>
+<option value="3" selected>3×3</option>
+<option value="4">4×4</option>
+<option value="5">5×5</option>
+<option value="6">6×6</option>
+<option value="8">8×8</option>
+</select>
+<button class="btn btn-secondary btn-xs" onclick="clearAll()">全クリア</button>
+<button class="btn btn-secondary btn-xs" onclick="randomFill(false)">ランダム登場</button>
+<button class="btn btn-secondary btn-xs" onclick="randomFill(true)">ランダム(重複あり)</button>
+<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted);cursor:pointer;">
+<input type="checkbox" id="terrain-toggle"> 地形ギミック
+</label>
+<span style="font-size:12px;color:var(--text-muted);">ターン間隔(秒)</span>
+<input type="number" id="speed-input-sel" min="0" max="30" step="0.1" value="0.1" style="width:60px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
+<span style="font-size:12px;color:var(--text-muted);">セリフ待機(秒)</span>
+<input type="number" id="resp-input-sel" min="0" max="30" step="0.1" value="0.1" style="width:60px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
+<span class="sel-count" id="sel-count">0人配置中</span>
+<button class="btn btn-primary btn-sm" id="battle-go-btn" onclick="launchBattle(false)" disabled>🔥 バトル開始！</button>
+<button class="btn btn-secondary btn-sm" id="battle-skip-btn" onclick="launchBattle(true)" disabled title="参戦演出をスキップしてすぐバトル開始">⚡ 演出スキップで開始</button>
 </div>
-
+<div style="margin-bottom:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+<div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">発生イベント選択（チェックを外すと無効）</div>
+<div id="event-toggle-list" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+</div>
+<div class="placement-outer"><div class="placement-grid" id="placement-grid"></div></div>
+</div>
+</div>
 <!-- BATTLE -->
 <div class="panel" id="panel-battle">
-  <div id="battle-controls">
-    <span class="speed-label">ターン間隔(秒)</span>
-    <input type="number" id="speed-input" min="0" max="30" step="0.1" value="0.1" oninput="updateSpeed(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
-    <span class="speed-label">セリフ待機(秒)</span>
-    <input type="number" id="resp-input" min="0" max="30" step="0.1" value="0.1" oninput="updateResp(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
-    <button class="btn btn-secondary btn-sm" id="pause-btn" onclick="togglePause()" disabled>⏸ 一時停止</button>
-    <button class="btn btn-secondary btn-sm" onclick="endAndReturn()">終了</button>
-    <span style="width:1px;height:20px;background:var(--border2);flex-shrink:0;margin:0 4px;"></span>
-    <div id="round-counter"></div>
-    <div id="alive-counter"></div>
-  </div>
-  <div class="battle-layout">
-    <div id="winner-banner">
-      <h2>🏆 <span id="winner-name">???</span></h2>
-      <p style="color:var(--text-muted);font-size:13px;margin-bottom:6px;">バトル終了！</p>
-      <div id="winner-stats"></div>
-      <button class="btn btn-warn btn-sm" onclick="gotoSelect()" style="margin-top:10px;">もう一度</button>
-    </div>
-    <div class="battle-main" id="battle-main">
-      <div id="arena-wrap"><canvas id="arrow-canvas"></canvas><div id="arena"></div></div>
-    </div>
-    <div class="battle-log-col">
-      <div class="log-col-title">バトルログ</div>
-      <div id="battle-log"></div>
-    </div>
-  </div>
+<div id="battle-controls">
+<span class="speed-label">ターン間隔(秒)</span>
+<input type="number" id="speed-input" min="0" max="30" step="0.1" value="0.1" oninput="updateSpeed(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
+<span class="speed-label">セリフ待機(秒)</span>
+<input type="number" id="resp-input" min="0" max="30" step="0.1" value="0.1" oninput="updateResp(this.value)" style="width:70px;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-family:'M PLUS 1p',sans-serif;font-size:13px;background:var(--surface2);color:var(--text);">
+<button class="btn btn-secondary btn-sm" id="pause-btn" onclick="togglePause()" disabled>⏸ 一時停止</button>
+<button class="btn btn-secondary btn-sm" onclick="endAndReturn()">終了</button>
+<span style="width:1px;height:20px;background:var(--border2);flex-shrink:0;margin:0 4px;"></span>
+<div id="round-counter"></div>
+<div id="alive-counter"></div>
 </div>
-
+<div class="battle-layout">
+<div id="winner-banner">
+<h2>🏆 <span id="winner-name">???</span></h2>
+<p style="color:var(--text-muted);font-size:13px;margin-bottom:6px;">バトル終了！</p>
+<div id="winner-stats"></div>
+<button class="btn btn-warn btn-sm" onclick="gotoSelect()" style="margin-top:10px;">もう一度</button>
+</div>
+<div class="battle-main" id="battle-main">
+<div id="arena-wrap"><canvas id="arrow-canvas"></canvas><div id="arena"></div></div>
+</div>
+<div class="battle-log-col">
+<div class="log-col-title">バトルログ</div>
+<div id="battle-log"></div>
+</div>
+</div>
+</div>
 <script>
 /* ============================================================
-   CONSTANTS
+CONSTANTS
 ============================================================ */
 const SOUND_TYPES=[
-  {key:'attack',label:'攻撃',ph:'「食らえ！」など'},
-  {key:'hit',label:'やられ',ph:'「ぐはっ！」など'},
-  {key:'dodge',label:'回避(opt)',ph:'「甘いぜ！」など'},
-  {key:'death',label:'死亡(opt)',ph:'「ばかなー…」など'},
-  {key:'revive',label:'蘇生(opt)',ph:'「復活！」など'},
+{key:'attack',label:'攻撃',ph:'「食らえ！」など'},
+{key:'hit',label:'やられ',ph:'「ぐはっ！」など'},
+{key:'dodge',label:'回避(opt)',ph:'「甘いぜ！」など'},
+{key:'death',label:'死亡(opt)',ph:'「ばかなー…」など'},
+{key:'revive',label:'蘇生(opt)',ph:'「復活！」など'},
 ];
 const PRESETS=[
-  {name:'ドナルド',emoji:'🤡'},{name:'ムスカ',emoji:'🧐'},
-  {name:'ロボクラッシャー',emoji:'🏻'},{name:'松岡修造',emoji:'🔥'},
-  {name:'ピカチュウ',emoji:'⚡'},{name:'ドラゴン',emoji:'🐉'},
-  {name:'忍者',emoji:'🥷'},{name:'ロボット',emoji:'🤖'},
-  {name:'魔王',emoji:'😈'},{name:'勇者',emoji:'⚔️'},
-  {name:'スライム',emoji:'🟢'},{name:'爆弾',emoji:'💣'},
+{name:'ドナルド',emoji:'🤡'},{name:'ムスカ',emoji:'🧐'},
+{name:'ロボクラッシャー',emoji:'🏻'},{name:'松岡修造',emoji:'🔥'},
+{name:'ピカチュウ',emoji:'⚡'},{name:'ドラゴン',emoji:'🐉'},
+{name:'忍者',emoji:'🥷'},{name:'ロボット',emoji:'🤖'},
+{name:'魔王',emoji:'😈'},{name:'勇者',emoji:'⚔️'},
+{name:'スライム',emoji:'🟢'},{name:'爆弾',emoji:'💣'},
 ];
 const TEAMS_CYCLE=[null,'a','b','c','d'];
 const TEAM_COLORS={a:'var(--ta)',b:'var(--tb)',c:'var(--tc)',d:'var(--td)'};
 const TEAM_NAMES={a:'A',b:'B',c:'C',d:'D'};
-
 /* ============================================================
-   EXPLOSION AUDIO - PRELOAD
+EXPLOSION AUDIO - PRELOAD
 ============================================================ */
 const EXPLOSION_AUDIO_URL = 'https://files.catbox.moe/08ar6u.mp3';
 let explosionAudioBuffer = null;
 let explosionAudioCtx = null;
-
 function getExplosionAudioCtx() {
-  if (!explosionAudioCtx) {
-    explosionAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  return explosionAudioCtx;
+if (!explosionAudioCtx) {
+explosionAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
 }
-
+return explosionAudioCtx;
+}
 async function preloadExplosionAudio() {
-  try {
-    const ctx = getExplosionAudioCtx();
-    const response = await fetch(EXPLOSION_AUDIO_URL);
-    const arrayBuffer = await response.arrayBuffer();
-    explosionAudioBuffer = await ctx.decodeAudioData(arrayBuffer);
-    console.log('爆発音プリロード完了');
-  } catch(e) {
-    console.warn('爆発音のプリロード失敗:', e);
-    explosionAudioBuffer = null;
-  }
+try {
+const ctx = getExplosionAudioCtx();
+const response = await fetch(EXPLOSION_AUDIO_URL);
+const arrayBuffer = await response.arrayBuffer();
+explosionAudioBuffer = await ctx.decodeAudioData(arrayBuffer);
+console.log('爆発音プリロード完了');
+} catch(e) {
+console.warn('爆発音のプリロード失敗:', e);
+explosionAudioBuffer = null;
 }
-
+}
 // 爆発音を再生し、再生終了まで待つPromiseを返す
 function playExplosionSound() {
-  return new Promise(resolve => {
-    if (explosionAudioBuffer && explosionAudioCtx) {
-      try {
-        const source = explosionAudioCtx.createBufferSource();
-        source.buffer = explosionAudioBuffer;
-        source.connect(explosionAudioCtx.destination);
-        source.onended = () => resolve();
-        source.start(0);
-        // フォールバック：音声の長さ + 100msで強制resolve
-        const duration = (explosionAudioBuffer.duration * 1000) + 100;
-        setTimeout(resolve, duration);
-      } catch(e) {
-        console.warn('爆発音再生エラー:', e);
-        resolve();
-      }
-    } else {
-      // バッファが無い場合はSE代替
-      seExplodeFallback();
-      setTimeout(resolve, 900);
-    }
-  });
+return new Promise(resolve => {
+if (explosionAudioBuffer && explosionAudioCtx) {
+try {
+const source = explosionAudioCtx.createBufferSource();
+source.buffer = explosionAudioBuffer;
+source.connect(explosionAudioCtx.destination);
+source.onended = () => resolve();
+source.start(0);
+// フォールバック：音声の長さ + 100msで強制resolve
+const duration = (explosionAudioBuffer.duration * 1000) + 100;
+setTimeout(resolve, duration);
+} catch(e) {
+console.warn('爆発音再生エラー:', e);
+resolve();
 }
-
+} else {
+// バッファが無い場合はSE代替
+seExplodeFallback();
+setTimeout(resolve, 900);
+}
+});
+}
 /* ============================================================
-   RANDOM EVENTS
+RANDOM EVENTS
 ============================================================ */
 const ALL_EVENTS=[
-  {key:'shuffle',  name:'🔄 シャッフル',    prob:.07,color:'#00d2ff',fn:()=>evShuffle(),  teamOnly:false},
-  {key:'powerup',  name:'💪 パワーアップ',  prob:.06,color:'#ffdd00',fn:()=>evPowerUp(),  teamOnly:false},
-  {key:'healall',  name:'💚 回復の雨',      prob:.06,color:'#22ee66',fn:()=>evHealAll(),  teamOnly:false},
-  {key:'multiply', name:'👻 増殖',          prob:.04,color:'#c77dff',fn:()=>evMultiply(), teamOnly:false},
-  {key:'resurrect',name:'✨ ランダム復活',   prob:.05,color:'#aaffcc',fn:()=>evResurrect(),teamOnly:false},
-  {key:'betray',   name:'🤝 裏切り',        prob:.05,color:'#c77dff',fn:()=>evBetray(),   teamOnly:true},
-  {key:'confusion',name:'🌀 混乱',          prob:.04,color:'#ff8800',fn:()=>evConfusion(),teamOnly:true},
+{key:'shuffle',  name:'🔄 シャッフル',    prob:.07,color:'#00d2ff',fn:()=>evShuffle(),  teamOnly:false},
+{key:'powerup',  name:'💪 パワーアップ',  prob:.06,color:'#ffdd00',fn:()=>evPowerUp(),  teamOnly:false},
+{key:'healall',  name:'💚 回復の雨',      prob:.06,color:'#22ee66',fn:()=>evHealAll(),  teamOnly:false},
+{key:'multiply', name:'👻 増殖',          prob:.04,color:'#c77dff',fn:()=>evMultiply(), teamOnly:false},
+{key:'resurrect',name:'✨ ランダム復活',   prob:.05,color:'#aaffcc',fn:()=>evResurrect(),teamOnly:false},
+{key:'betray',   name:'🤝 裏切り',        prob:.05,color:'#c77dff',fn:()=>evBetray(),   teamOnly:true},
+{key:'confusion',name:'🌀 混乱',          prob:.04,color:'#ff8800',fn:()=>evConfusion(),teamOnly:true},
 ];
 let enabledEvents=null;
-
 function getActiveEvents(){
-  const isTeamBattle=fighters.some(f=>f.team);
-  return ALL_EVENTS.filter(ev=>{
-    if(ev.teamOnly&&!isTeamBattle)return false;
-    if(enabledEvents!==null&&!enabledEvents.has(ev.key))return false;
-    return true;
-  });
+const isTeamBattle=fighters.some(f=>f.team);
+return ALL_EVENTS.filter(ev=>{
+if(ev.teamOnly&&!isTeamBattle)return false;
+if(enabledEvents!==null&&!enabledEvents.has(ev.key))return false;
+return true;
+});
 }
-
 /* ============================================================
-   TERRAIN
+TERRAIN
 ============================================================ */
 const TERRAIN_TYPES=[
-  {type:'normal',emoji:'',effect:null},
-  {type:'lava',emoji:'🌋',effectDesc:'毎ターン5ダメージ'},
-  {type:'heal',emoji:'💚',effectDesc:'毎ターン8回復'},
-  {type:'warp',emoji:'🌀',effectDesc:'ワープする'},
-  {type:'bomb',emoji:'💣',effectDesc:'踏むと爆発(50ダメージ)'},
+{type:'normal',emoji:'',effect:null},
+{type:'lava',emoji:'🌋',effectDesc:'毎ターン5ダメージ'},
+{type:'heal',emoji:'💚',effectDesc:'毎ターン8回復'},
+{type:'warp',emoji:'🌀',effectDesc:'ワープする'},
+{type:'bomb',emoji:'💣',effectDesc:'踏むと爆発(50ダメージ)'},
 ];
 let terrainMap={};
-
 /* ============================================================
-   AUDIO (fallback beeps)
+AUDIO (fallback beeps)
 ============================================================ */
 let audioCtx=null;
 function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
 function playBeep(freq,dur,type='square',vol=.15){
-  try{const ctx=getAudioCtx();const o=ctx.createOscillator();const g=ctx.createGain();o.type=type;o.frequency.value=freq;g.gain.value=vol;o.connect(g);g.connect(ctx.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur);o.stop(ctx.currentTime+dur);}catch(e){}
+try{const ctx=getAudioCtx();const o=ctx.createOscillator();const g=ctx.createGain();o.type=type;o.frequency.value=freq;g.gain.value=vol;o.connect(g);g.connect(ctx.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur);o.stop(ctx.currentTime+dur);}catch(e){}
 }
 function seHit(){playBeep(200,.15,'sawtooth',.12);}
 function seCrit(){playBeep(150,.2,'sawtooth',.15);setTimeout(()=>playBeep(100,.15,'square',.12),80);}
 // フォールバック用爆発SE（bufferロード失敗時のみ使用）
 function seExplodeFallback(){
-  try{
-    const ctx=getAudioCtx();const now=ctx.currentTime;
-    const sub=ctx.createOscillator();const subG=ctx.createGain();
-    sub.type='sine';sub.frequency.setValueAtTime(80,now);sub.frequency.exponentialRampToValueAtTime(20,now+0.8);
-    subG.gain.setValueAtTime(0,now);subG.gain.linearRampToValueAtTime(0.6,now+0.02);subG.gain.exponentialRampToValueAtTime(0.001,now+0.9);
-    sub.connect(subG);subG.connect(ctx.destination);sub.start(now);sub.stop(now+0.9);
-    const mid=ctx.createOscillator();const midG=ctx.createGain();
-    mid.type='sawtooth';mid.frequency.setValueAtTime(120,now);mid.frequency.exponentialRampToValueAtTime(30,now+0.6);
-    midG.gain.setValueAtTime(0,now);midG.gain.linearRampToValueAtTime(0.4,now+0.01);midG.gain.exponentialRampToValueAtTime(0.001,now+0.7);
-    mid.connect(midG);midG.connect(ctx.destination);mid.start(now);mid.stop(now+0.7);
-    const bufSize=ctx.sampleRate*0.5;const buf=ctx.createBuffer(1,bufSize,ctx.sampleRate);
-    const data=buf.getChannelData(0);for(let i=0;i<bufSize;i++)data[i]=(Math.random()*2-1);
-    const noise=ctx.createBufferSource();noise.buffer=buf;
-    const noiseG=ctx.createGain();noiseG.gain.setValueAtTime(0.3,now);noiseG.gain.exponentialRampToValueAtTime(0.001,now+0.5);
-    const noiseF=ctx.createBiquadFilter();noiseF.type='lowpass';noiseF.frequency.value=1000;
-    noise.connect(noiseF);noiseF.connect(noiseG);noiseG.connect(ctx.destination);noise.start(now);noise.stop(now+0.5);
-    [0,0.06,0.14].forEach(d=>{
-      const cr=ctx.createOscillator();const crG=ctx.createGain();
-      cr.type='square';cr.frequency.setValueAtTime(800+Math.random()*400,now+d);
-      crG.gain.setValueAtTime(0.2,now+d);crG.gain.exponentialRampToValueAtTime(0.001,now+d+0.08);
-      cr.connect(crG);crG.connect(ctx.destination);cr.start(now+d);cr.stop(now+d+0.09);
-    });
-  }catch(e){}
+try{
+const ctx=getAudioCtx();const now=ctx.currentTime;
+const sub=ctx.createOscillator();const subG=ctx.createGain();
+sub.type='sine';sub.frequency.setValueAtTime(80,now);sub.frequency.exponentialRampToValueAtTime(20,now+0.8);
+subG.gain.setValueAtTime(0,now);subG.gain.linearRampToValueAtTime(0.6,now+0.02);subG.gain.exponentialRampToValueAtTime(0.001,now+0.9);
+sub.connect(subG);subG.connect(ctx.destination);sub.start(now);sub.stop(now+0.9);
+const mid=ctx.createOscillator();const midG=ctx.createGain();
+mid.type='sawtooth';mid.frequency.setValueAtTime(120,now);mid.frequency.exponentialRampToValueAtTime(30,now+0.6);
+midG.gain.setValueAtTime(0,now);midG.gain.linearRampToValueAtTime(0.4,now+0.01);midG.gain.exponentialRampToValueAtTime(0.001,now+0.7);
+mid.connect(midG);midG.connect(ctx.destination);mid.start(now);mid.stop(now+0.7);
+const bufSize=ctx.sampleRate*0.5;const buf=ctx.createBuffer(1,bufSize,ctx.sampleRate);
+const data=buf.getChannelData(0);for(let i=0;i<bufSize;i++)data[i]=(Math.random()*2-1);
+const noise=ctx.createBufferSource();noise.buffer=buf;
+const noiseG=ctx.createGain();noiseG.gain.setValueAtTime(0.3,now);noiseG.gain.exponentialRampToValueAtTime(0.001,now+0.5);
+const noiseF=ctx.createBiquadFilter();noiseF.type='lowpass';noiseF.frequency.value=1000;
+noise.connect(noiseF);noiseF.connect(noiseG);noiseG.connect(ctx.destination);noise.start(now);noise.stop(now+0.5);
+[0,0.06,0.14].forEach(d=>{
+const cr=ctx.createOscillator();const crG=ctx.createGain();
+cr.type='square';cr.frequency.setValueAtTime(800+Math.random()*400,now+d);
+crG.gain.setValueAtTime(0.2,now+d);crG.gain.exponentialRampToValueAtTime(0.001,now+d+0.08);
+cr.connect(crG);crG.connect(ctx.destination);cr.start(now+d);cr.stop(now+d+0.09);
+});
+}catch(e){}
 }
 function seEvent(){playBeep(440,.1,'sine',.1);setTimeout(()=>playBeep(660,.1,'sine',.1),100);setTimeout(()=>playBeep(880,.15,'sine',.12),200);}
 function seDodge(){playBeep(600,.08,'sine',.08);setTimeout(()=>playBeep(800,.08,'sine',.08),80);}
 function seWin(){[0,100,200,300,400].forEach((d,i)=>setTimeout(()=>playBeep([523,659,784,1047,1319][i],.2,'sine',.12),d));}
 function seMultiply(){playBeep(330,.1,'sine',.1);setTimeout(()=>playBeep(440,.1,'sine',.1),80);setTimeout(()=>playBeep(550,.15,'sine',.12),160);setTimeout(()=>playBeep(660,.2,'sine',.1),250);}
-
 /* ============================================================
-   IMPORT/EXPORT
+IMPORT/EXPORT
 ============================================================ */
 function showExportMenu(btn){showDropMenu(btn,[
-  {label:'📁 全キャラ → JSONファイル',fn:()=>exportFile(null)},
-  {label:'📋 全キャラ → クリップボード',fn:()=>exportClipboard(null)},
-  {label:'─────────',fn:null},
-  {label:'📁 選んで → JSONファイル',fn:()=>showCharPicker('export-file')},
-  {label:'📁 選んで → クリップボード',fn:()=>showCharPicker('export-clip')},
+{label:'📁 全キャラ → JSONファイル',fn:()=>exportFile(null)},
+{label:'📋 全キャラ → クリップボード',fn:()=>exportClipboard(null)},
+{label:'─────────',fn:null},
+{label:'📁 選んで → JSONファイル',fn:()=>showCharPicker('export-file')},
+{label:'📁 選んで → クリップボード',fn:()=>showCharPicker('export-clip')},
 ]);}
 function showImportMenu(btn){showDropMenu(btn,[
-  {label:'📁 JSONファイルから読み込み',fn:()=>document.getElementById('import-file-input').click()},
-  {label:'📋 クリップボードから貼り付け',fn:importClipboard},
+{label:'📁 JSONファイルから読み込み',fn:()=>document.getElementById('import-file-input').click()},
+{label:'📋 クリップボードから貼り付け',fn:importClipboard},
 ]);}
 function showDropMenu(anchor,items){
-  document.querySelectorAll('.__drop-menu').forEach(m=>m.remove());
-  const menu=document.createElement('div');menu.className='__drop-menu';
-  menu.style.cssText='position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:999;min-width:240px;overflow:hidden;';
-  items.forEach(item=>{
-    if(item.fn===null){const sep=document.createElement('div');sep.style.cssText='height:1px;background:var(--border);margin:2px 0;';menu.appendChild(sep);return;}
-    const row=document.createElement('button');
-    row.style.cssText='display:block;width:100%;padding:10px 16px;background:none;border:none;text-align:left;cursor:pointer;font-family:"M PLUS 1p",sans-serif;font-size:13px;color:var(--text);';
-    row.textContent=item.label;row.onmouseenter=()=>row.style.background='var(--surface2)';row.onmouseleave=()=>row.style.background='none';
-    row.onclick=()=>{menu.remove();item.fn();};menu.appendChild(row);
-  });
-  document.body.appendChild(menu);const r=anchor.getBoundingClientRect();menu.style.left=(r.left+window.scrollX)+'px';menu.style.top=(r.bottom+window.scrollY+4)+'px';
-  setTimeout(()=>document.addEventListener('click',function h(e){if(!menu.contains(e.target)){menu.remove();document.removeEventListener('click',h);}},0));
+document.querySelectorAll('.__drop-menu').forEach(m=>m.remove());
+const menu=document.createElement('div');menu.className='__drop-menu';
+menu.style.cssText='position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.3);z-index:999;min-width:240px;overflow:hidden;';
+items.forEach(item=>{
+if(item.fn===null){const sep=document.createElement('div');sep.style.cssText='height:1px;background:var(--border);margin:2px 0;';menu.appendChild(sep);return;}
+const row=document.createElement('button');
+row.style.cssText='display:block;width:100%;padding:10px 16px;background:none;border:none;text-align:left;cursor:pointer;font-family:"M PLUS 1p",sans-serif;font-size:13px;color:var(--text);';
+row.textContent=item.label;row.onmouseenter=()=>row.style.background='var(--surface2)';row.onmouseleave=()=>row.style.background='none';
+row.onclick=()=>{menu.remove();item.fn();};menu.appendChild(row);
+});
+document.body.appendChild(menu);const r=anchor.getBoundingClientRect();menu.style.left=(r.left+window.scrollX)+'px';menu.style.top=(r.bottom+window.scrollY+4)+'px';
+setTimeout(()=>document.addEventListener('click',function h(e){if(!menu.contains(e.target)){menu.remove();document.removeEventListener('click',h);}},0));
 }
 function exportFile(ids){const data=ids?chars.filter(c=>ids.includes(c.id)):chars;const j=JSON.stringify(data,null,2);const b=new Blob([j],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='chaos-chars.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);}
 function exportClipboard(ids){const data=ids?chars.filter(c=>ids.includes(c.id)):chars;const j=JSON.stringify(data,null,2);navigator.clipboard.writeText(j).then(()=>alert('コピーしました！')).catch(()=>{const ta=document.createElement('textarea');ta.value=j;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();alert('コピーしました！');});}
 function showCharPicker(mode){
-  let ex=document.getElementById('__char-picker');if(ex)ex.remove();const selected=new Set();
-  const modal=document.createElement('div');modal.id='__char-picker';modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;display:flex;align-items:center;justify-content:center;';
-  const box=document.createElement('div');box.style.cssText='background:var(--surface);border-radius:14px;padding:20px;max-width:560px;width:92%;max-height:82vh;display:flex;flex-direction:column;gap:12px;border:1px solid var(--border);';
-  box.innerHTML='<div style="font-weight:700;font-size:15px;color:var(--text);">エクスポートするキャラを選択</div>';
-  const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;overflow-y:auto;flex:1;';
-  chars.forEach(c=>{const card=document.createElement('div');card.style.cssText='border:2px solid var(--border);border-radius:9px;padding:8px 5px;text-align:center;cursor:pointer;transition:all .12s;';const ib=document.createElement('div');ib.style.cssText='width:56px;height:56px;border-radius:7px;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--surface2);overflow:hidden;';if(c.imgSrc){const img=document.createElement('img');img.style.cssText='width:100%;height:100%;object-fit:cover;';img.src=c.imgSrc;ib.appendChild(img);}else{ib.textContent=c.emoji;}const nm=document.createElement('div');nm.style.cssText='font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);';nm.textContent=c.name;card.appendChild(ib);card.appendChild(nm);card.onclick=()=>{if(selected.has(c.id)){selected.delete(c.id);card.style.borderColor='var(--border)';}else{selected.add(c.id);card.style.borderColor='var(--accent)';}execBtn.disabled=selected.size===0;};grid.appendChild(card);});
-  box.appendChild(grid);const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;';
-  const execBtn=document.createElement('button');execBtn.className='btn btn-primary btn-sm';execBtn.textContent=mode==='export-file'?'JSONに書き出す':'クリップボードにコピー';execBtn.disabled=true;
-  execBtn.onclick=()=>{modal.remove();const ids=[...selected];if(mode==='export-file')exportFile(ids);else exportClipboard(ids);};
-  const cancelBtn=document.createElement('button');cancelBtn.className='btn btn-secondary btn-sm';cancelBtn.textContent='キャンセル';cancelBtn.onclick=()=>modal.remove();
-  btns.appendChild(cancelBtn);btns.appendChild(execBtn);box.appendChild(btns);modal.appendChild(box);modal.onclick=e=>{if(e.target===modal)modal.remove();};document.body.appendChild(modal);
+let ex=document.getElementById('__char-picker');if(ex)ex.remove();const selected=new Set();
+const modal=document.createElement('div');modal.id='__char-picker';modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;display:flex;align-items:center;justify-content:center;';
+const box=document.createElement('div');box.style.cssText='background:var(--surface);border-radius:14px;padding:20px;max-width:560px;width:92%;max-height:82vh;display:flex;flex-direction:column;gap:12px;border:1px solid var(--border);';
+box.innerHTML='<div style="font-weight:700;font-size:15px;color:var(--text);">エクスポートするキャラを選択</div>';
+const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;overflow-y:auto;flex:1;';
+chars.forEach(c=>{const card=document.createElement('div');card.style.cssText='border:2px solid var(--border);border-radius:9px;padding:8px 5px;text-align:center;cursor:pointer;transition:all .12s;';const ib=document.createElement('div');ib.style.cssText='width:56px;height:56px;border-radius:7px;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--surface2);overflow:hidden;';if(c.imgSrc){const img=document.createElement('img');img.style.cssText='width:100%;height:100%;object-fit:cover;';img.src=c.imgSrc;ib.appendChild(img);}else{ib.textContent=c.emoji;}const nm=document.createElement('div');nm.style.cssText='font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);';nm.textContent=c.name;card.appendChild(ib);card.appendChild(nm);card.onclick=()=>{if(selected.has(c.id)){selected.delete(c.id);card.style.borderColor='var(--border)';}else{selected.add(c.id);card.style.borderColor='var(--accent)';}execBtn.disabled=selected.size===0;};grid.appendChild(card);});
+box.appendChild(grid);const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;';
+const execBtn=document.createElement('button');execBtn.className='btn btn-primary btn-sm';execBtn.textContent=mode==='export-file'?'JSONに書き出す':'クリップボードにコピー';execBtn.disabled=true;
+execBtn.onclick=()=>{modal.remove();const ids=[...selected];if(mode==='export-file')exportFile(ids);else exportClipboard(ids);};
+const cancelBtn=document.createElement('button');cancelBtn.className='btn btn-secondary btn-sm';cancelBtn.textContent='キャンセル';cancelBtn.onclick=()=>modal.remove();
+btns.appendChild(cancelBtn);btns.appendChild(execBtn);box.appendChild(btns);modal.appendChild(box);modal.onclick=e=>{if(e.target===modal)modal.remove();};document.body.appendChild(modal);
 }
 function importFile(input){const file=input.files[0];if(!file)return;const r=new FileReader();r.onload=e=>{try{importData(JSON.parse(e.target.result));}catch{alert('読み込み失敗');}};r.readAsText(file);input.value='';}
 function importClipboard(){navigator.clipboard.readText().then(t=>{try{importData(JSON.parse(t));}catch{alert('JSONが不正です');}}).catch(()=>alert('読み取り失敗'));}
 function importData(data){if(!Array.isArray(data)){alert('データ形式が不正です');return;}const mode=confirm('現在のキャラクターを置き換えますか？\nOK=置き換え / キャンセル=追加');const maxId=chars.length?Math.max(...chars.map(c=>c.id)):0;let newId=Math.max(maxId,nid)+1;const imported=data.map(c=>({...c,id:newId++,sounds:c.sounds||{attack:[],hit:[],dodge:[],death:[],revive:[]},dodgePct:c.dodgePct??20,revivePct:c.revivePct??0,reviveHp:c.reviveHp??30,multiAtkProb:c.multiAtkProb??5,multiAtkCount:c.multiAtkCount??2}));if(mode)chars=imported;else chars=[...chars,...imported];nid=Math.max(...chars.map(c=>c.id))+1;save();renderSetup();alert(imported.length+'人読み込みました！');}
-
 /* ============================================================
-   STORAGE
+STORAGE
 ============================================================ */
 const SK='chaos_v7';const IDB_NAME='ChaosDB',IDB_STORE='chars',IDB_VER=1;let storageMode='ls',idb=null;
 function openIDB(){return new Promise((res,rej)=>{const req=indexedDB.open(IDB_NAME,IDB_VER);req.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE,{keyPath:'id'});};req.onsuccess=e=>res(e.target.result);req.onerror=e=>rej(e);});}
@@ -734,743 +702,675 @@ let chars=load(),nid=chars.length?Math.max(...chars.map(c=>c.id))+1:1;
 function mkChar(name,emoji){return{id:nid++,name,emoji,imgSrc:null,maxHp:100,atk:20,dodgePct:20,revivePct:0,reviveHp:30,multiAtkProb:5,multiAtkCount:2,sounds:{attack:[],hit:[],dodge:[],death:[],revive:[]}};}
 function fixChar(c){if(c.dodgePct===undefined)c.dodgePct=20;if(c.revivePct===undefined)c.revivePct=0;if(c.reviveHp===undefined)c.reviveHp=30;if(c.multiAtkProb===undefined)c.multiAtkProb=5;if(c.multiAtkCount===undefined)c.multiAtkCount=2;if(!c.sounds)c.sounds={attack:[],hit:[],dodge:[],death:[],revive:[]};if(!c.sounds.revive)c.sounds.revive=[];}
 chars.forEach(fixChar);
-
 /* ============================================================
-   PLACEMENT
+PLACEMENT
 ============================================================ */
 let gCols=3,gRows=3,slots=[],niid=1;
 function mkSlot(charId,team=null){return{charId,iid:niid++,team};}
 function initSlots(){const total=gCols*gRows;while(slots.length<total)slots.push(null);slots=slots.slice(0,total);slots=slots.map(s=>s&&chars.find(c=>c.id===s.charId)?s:null);}
-
 /* ============================================================
-   TABS
+TABS
 ============================================================ */
 function switchTab(t){['setup','select','battle'].forEach(x=>{document.getElementById('tab-'+x).classList.toggle('active',x===t);document.getElementById('panel-'+x).classList.toggle('active',x===t);});if(t==='setup')renderSetup();if(t==='select'){initSlots();renderSelectPanel();}if(t==='battle'&&bActive){setTimeout(()=>{renderArena();setTimeout(()=>resizeC(),80);},50);}}
 function gotoSelect(){if(!bActive)resetBattle();if(chars.length<1){alert('キャラクターを登録してください！');switchTab('setup');return;}initSlots();renderSelectPanel();switchTab('select');}
-
 /* ============================================================
-   SETUP PANEL
+SETUP PANEL
 ============================================================ */
 function renderPresets(){const s=document.getElementById('preset-strip');s.innerHTML='';PRESETS.forEach(p=>{const b=document.createElement('button');b.className='preset-btn';b.textContent=p.emoji+' '+p.name;b.onclick=()=>{chars.push(mkChar(p.name,p.emoji));save();renderSetup();};s.appendChild(b);});}
 function addBlankChar(){chars.push(mkChar('キャラ'+nid,'🤖'));save();renderSetup();}
 function removeChar(id){if(!confirm('削除しますか？'))return;chars=chars.filter(c=>c.id!==id);slots=slots.map(s=>s&&s.charId===id?null:s);save();renderSetup();}
 function renderSetup(){const l=document.getElementById('char-list');l.innerHTML='';if(!chars.length){l.innerHTML='<div class="empty-state"><h3>キャラクターがいません</h3><p>プリセットから追加してください。</p></div>';return;}chars.forEach(c=>l.appendChild(buildCard(c)));}
 function buildCard(c){
-  const card=document.createElement('div');card.className='char-card';
-  const rm=document.createElement('button');rm.className='remove-char-btn';rm.textContent='✕';rm.onclick=()=>removeChar(c.id);card.appendChild(rm);
-  const top=document.createElement('div');top.className='char-card-top';
-  const imgCol=document.createElement('div');imgCol.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;';
-  const ia=document.createElement('div');ia.className='char-img-area';
-  const ii=document.createElement('input');ii.type='file';ii.accept='image/*';ii.style.display='none';
-  ii.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{c.imgSrc=ev.target.result;save();renderSetup();};r.readAsDataURL(f);};card.appendChild(ii);
-  if(c.imgSrc){const img=document.createElement('img');img.src=c.imgSrc;ia.appendChild(img);}else{ia.textContent=c.emoji;}
-  const h=document.createElement('span');h.className='char-img-hint';h.textContent='クリックで画像';ia.appendChild(h);ia.onclick=()=>ii.click();imgCol.appendChild(ia);
-  if(c.imgSrc){const cb=document.createElement('button');cb.className='btn btn-secondary btn-xs';cb.style.width='100%';cb.textContent='画像削除';cb.onclick=()=>{c.imgSrc=null;save();renderSetup();};imgCol.appendChild(cb);}
-  const urlBtn=document.createElement('button');urlBtn.className='btn btn-secondary btn-xs';urlBtn.style.width='100%';urlBtn.textContent='URLで指定 (推奨)';
-  urlBtn.onclick=()=>{const url=prompt('画像のURLを入力してください\n\n【推奨】imgur.com にアップロードした画像を使うと\nLocalStorageの容量を消費しません。\n\n形式例: https://i.imgur.com/xxxxxx.png',c.imgSrc&&c.imgSrc.startsWith('http')?c.imgSrc:'');if(url===null)return;c.imgSrc=url.trim()||null;save();renderSetup();};imgCol.appendChild(urlBtn);top.appendChild(imgCol);
-  const rt=document.createElement('div');rt.className='char-right';fl(rt,'キャラクター名');
-  const ni=inp(c.name,'char-name-input','text');ni.oninput=e=>{c.name=e.target.value;save();};rt.appendChild(ni);
-  const sr=document.createElement('div');sr.className='stat-row';
-  [{key:'maxHp',lbl:'HP',def:100},{key:'atk',lbl:'攻撃力',def:20},{key:'dodgePct',lbl:'回避%',def:20},{key:'revivePct',lbl:'蘇生%',def:0},{key:'reviveHp',lbl:'蘇生後HP',def:30}].forEach(({key,lbl,def})=>{const w=document.createElement('div');w.className='stat-wrap';fl(w,lbl);const i=inp(c[key]!==undefined?c[key]:def,'char-name-input','number');i.min=0;i.max=key.endsWith('Pct')?100:9999;i.oninput=e=>{c[key]=Number(e.target.value);save();};w.appendChild(i);sr.appendChild(w);});
-  rt.appendChild(sr);top.appendChild(rt);card.appendChild(top);
-  const ss=document.createElement('div');ss.className='sounds-section';const stabs=document.createElement('div');stabs.className='sound-type-tabs';let at='attack';const vw=document.createElement('div');
-  function rvl(){
-    vw.innerHTML='';
-    const vl=document.createElement('div');vl.className='voice-list';
-    c.sounds[at].forEach((item,idx)=>vl.appendChild(buildVI(c,at,item,idx,rvl)));
-    const ab=document.createElement('button');ab.className='voice-add-btn';ab.innerHTML='<span style="font-size:18px">＋</span> セリフ/音声を追加';ab.onclick=()=>{c.sounds[at].push({text:'',audio:null});save();rvl();};vl.appendChild(ab);
-    vw.appendChild(vl);
-  }
-  SOUND_TYPES.forEach(st=>{const tab=document.createElement('div');tab.className='st-tab'+(st.key===at?' active':'');const cnt=c.sounds[st.key].length;tab.textContent=st.label+(cnt>0?' ('+cnt+')':'');tab.onclick=()=>{at=st.key;stabs.querySelectorAll('.st-tab').forEach((t,i)=>t.classList.toggle('active',SOUND_TYPES[i].key===at));rvl();};stabs.appendChild(tab);});
-  ss.appendChild(stabs);rvl();ss.appendChild(vw);card.appendChild(ss);return card;
+const card=document.createElement('div');card.className='char-card';
+const rm=document.createElement('button');rm.className='remove-char-btn';rm.textContent='✕';rm.onclick=()=>removeChar(c.id);card.appendChild(rm);
+const top=document.createElement('div');top.className='char-card-top';
+const imgCol=document.createElement('div');imgCol.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;';
+const ia=document.createElement('div');ia.className='char-img-area';
+const ii=document.createElement('input');ii.type='file';ii.accept='image/*';ii.style.display='none';
+ii.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{c.imgSrc=ev.target.result;save();renderSetup();};r.readAsDataURL(f);};card.appendChild(ii);
+if(c.imgSrc){const img=document.createElement('img');img.src=c.imgSrc;ia.appendChild(img);}else{ia.textContent=c.emoji;}
+const h=document.createElement('span');h.className='char-img-hint';h.textContent='クリックで画像';ia.appendChild(h);ia.onclick=()=>ii.click();imgCol.appendChild(ia);
+if(c.imgSrc){const cb=document.createElement('button');cb.className='btn btn-secondary btn-xs';cb.style.width='100%';cb.textContent='画像削除';cb.onclick=()=>{c.imgSrc=null;save();renderSetup();};imgCol.appendChild(cb);}
+const urlBtn=document.createElement('button');urlBtn.className='btn btn-secondary btn-xs';urlBtn.style.width='100%';urlBtn.textContent='URLで指定 (推奨)';
+urlBtn.onclick=()=>{const url=prompt('画像のURLを入力してください\n【推奨】imgur.com にアップロードした画像を使うと\nLocalStorageの容量を消費しません。\n形式例: https://i.imgur.com/xxxxxx.png',c.imgSrc&&c.imgSrc.startsWith('http')?c.imgSrc:'');if(url===null)return;c.imgSrc=url.trim()||null;save();renderSetup();};imgCol.appendChild(urlBtn);top.appendChild(imgCol);
+const rt=document.createElement('div');rt.className='char-right';fl(rt,'キャラクター名');
+const ni=inp(c.name,'char-name-input','text');ni.oninput=e=>{c.name=e.target.value;save();};rt.appendChild(ni);
+const sr=document.createElement('div');sr.className='stat-row';
+[{key:'maxHp',lbl:'HP',def:100},{key:'atk',lbl:'攻撃力',def:20},{key:'dodgePct',lbl:'回避%',def:20},{key:'revivePct',lbl:'蘇生%',def:0},{key:'reviveHp',lbl:'蘇生後HP',def:30}].forEach(({key,lbl,def})=>{const w=document.createElement('div');w.className='stat-wrap';fl(w,lbl);const i=inp(c[key]!==undefined?c[key]:def,'char-name-input','number');i.min=0;i.max=key.endsWith('Pct')?100:9999;i.oninput=e=>{c[key]=Number(e.target.value);save();};w.appendChild(i);sr.appendChild(w);});
+rt.appendChild(sr);top.appendChild(rt);card.appendChild(top);
+const ss=document.createElement('div');ss.className='sounds-section';const stabs=document.createElement('div');stabs.className='sound-type-tabs';let at='attack';const vw=document.createElement('div');
+function rvl(){
+vw.innerHTML='';
+const vl=document.createElement('div');vl.className='voice-list';
+c.sounds[at].forEach((item,idx)=>vl.appendChild(buildVI(c,at,item,idx,rvl)));
+const ab=document.createElement('button');ab.className='voice-add-btn';ab.innerHTML='<span style="font-size:18px">＋</span> セリフ/音声を追加';ab.onclick=()=>{c.sounds[at].push({text:'',audio:null});save();rvl();};vl.appendChild(ab);
+vw.appendChild(vl);
+}
+SOUND_TYPES.forEach(st=>{const tab=document.createElement('div');tab.className='st-tab'+(st.key===at?' active':'');const cnt=c.sounds[st.key].length;tab.textContent=st.label+(cnt>0?' ('+cnt+')':'');tab.onclick=()=>{at=st.key;stabs.querySelectorAll('.st-tab').forEach((t,i)=>t.classList.toggle('active',SOUND_TYPES[i].key===at));rvl();};stabs.appendChild(tab);});
+ss.appendChild(stabs);rvl();ss.appendChild(vw);card.appendChild(ss);return card;
 }
 function fl(p,t){const l=document.createElement('div');l.className='field-label';l.textContent=t;p.appendChild(l);}
 function inp(v,c,t){const i=document.createElement('input');i.className=c;i.type=t;i.value=v;return i;}
 function buildVI(c,tk,item,idx,refresh){
-  const st=SOUND_TYPES.find(s=>s.key===tk);const vi=document.createElement('div');vi.className='voice-item';const left=document.createElement('div');left.className='voice-item-left';
-  const ti=document.createElement('input');ti.className='voice-text-input';ti.type='text';ti.value=item.text||'';ti.placeholder=st.ph;ti.oninput=e=>{item.text=e.target.value;save();};left.appendChild(ti);
-  const fr=document.createElement('div');fr.className='voice-file-row';const fi=document.createElement('input');fi.type='file';fi.accept='audio/*';fi.style.display='none';
-  const ub=document.createElement('button');ub.className='snd-upload-btn'+(item.audio?' has-file':'');ub.textContent=item.audio?'✔ 音声あり':'音声アップロード';ub.onclick=()=>fi.click();
-  fi.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{item.audio=ev.target.result;save();refresh();};r.readAsDataURL(f);};left.appendChild(fi);
-  const pb=document.createElement('button');pb.className='snd-play-btn';pb.textContent='▶ 再生';pb.style.display=item.audio?'inline-block':'none';pb.onclick=()=>{if(item.audio)new Audio(item.audio).play().catch(()=>{});};
-  fr.appendChild(ub);fr.appendChild(pb);
-  // 攻撃タブのみ複数攻撃オプションボタン
-  if(tk==='attack'){
-    const hasMulti=item.multiAtk&&item.multiAtk.prob>0;
-    const mab=document.createElement('button');
-    mab.className='snd-play-btn';
-    if(hasMulti){
-      mab.style.cssText='border-color:var(--accent2);color:var(--accent2);background:rgba(245,166,35,.1);font-weight:700;';
-      mab.textContent=`🔥 適用済 選択${item.multiAtk.prob}% / ${item.multiAtk.count===-1?'全員':item.multiAtk.count+'人'}`;
-    } else {
-      mab.textContent='🔥 複数攻撃';
-    }
-    mab.onclick=()=>openMultiAtkModal(item,()=>{refresh();});
-    fr.appendChild(mab);
-  }
-  left.appendChild(fr);vi.appendChild(left);
-  const db=document.createElement('button');db.className='voice-del-btn';db.textContent='✕';db.onclick=()=>{if(!confirm('このセリフを削除しますか？'))return;c.sounds[tk].splice(idx,1);save();refresh();};vi.appendChild(db);return vi;
+const st=SOUND_TYPES.find(s=>s.key===tk);const vi=document.createElement('div');vi.className='voice-item';const left=document.createElement('div');left.className='voice-item-left';
+const ti=document.createElement('input');ti.className='voice-text-input';ti.type='text';ti.value=item.text||'';ti.placeholder=st.ph;ti.oninput=e=>{item.text=e.target.value;save();};left.appendChild(ti);
+const fr=document.createElement('div');fr.className='voice-file-row';const fi=document.createElement('input');fi.type='file';fi.accept='audio/*';fi.style.display='none';
+const ub=document.createElement('button');ub.className='snd-upload-btn'+(item.audio?' has-file':'');ub.textContent=item.audio?'✔ 音声あり':'音声アップロード';ub.onclick=()=>fi.click();
+fi.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{item.audio=ev.target.result;save();refresh();};r.readAsDataURL(f);};left.appendChild(fi);
+const pb=document.createElement('button');pb.className='snd-play-btn';pb.textContent='▶ 再生';pb.style.display=item.audio?'inline-block':'none';pb.onclick=()=>{if(item.audio)new Audio(item.audio).play().catch(()=>{});};
+fr.appendChild(ub);fr.appendChild(pb);
+// 攻撃タブのみ複数攻撃オプションボタン
+if(tk==='attack'){
+const hasMulti=item.multiAtk&&item.multiAtk.prob>0;
+const mab=document.createElement('button');
+mab.className='snd-play-btn';
+if(hasMulti){
+mab.style.cssText='border-color:var(--accent2);color:var(--accent2);background:rgba(245,166,35,.1);font-weight:700;';
+mab.textContent=`🔥 適用済 選択${item.multiAtk.prob}% / ${item.multiAtk.count===-1?'全員':item.multiAtk.count+'人'}`;
+} else {
+mab.textContent='🔥 複数攻撃';
 }
-
+mab.onclick=()=>openMultiAtkModal(item,()=>{refresh();});
+fr.appendChild(mab);
+}
+left.appendChild(fr);vi.appendChild(left);
+const db=document.createElement('button');db.className='voice-del-btn';db.textContent='✕';db.onclick=()=>{if(!confirm('このセリフを削除しますか？'))return;c.sounds[tk].splice(idx,1);save();refresh();};vi.appendChild(db);return vi;
+}
 function openMultiAtkModal(item, onClose){
-  const existing=document.getElementById('__multi-atk-modal');if(existing)existing.remove();
-  const modal=document.createElement('div');modal.id='__multi-atk-modal';
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9500;display:flex;align-items:center;justify-content:center;';
-  const box=document.createElement('div');
-  box.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:360px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.5);';
-
-  const title=document.createElement('div');title.style.cssText='font-family:"DotGothic16",monospace;font-size:16px;color:var(--accent2);margin-bottom:4px;font-weight:700;';title.textContent='🔥 複数攻撃オプション';box.appendChild(title);
-  const sub=document.createElement('div');sub.style.cssText='font-size:12px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;';sub.textContent='このセリフが選ばれる確率を設定します。選ばれると必ず複数攻撃を実行します。通常セリフは残りの確率で均等に選ばれます。';box.appendChild(sub);
-
-  const hasMulti=item.multiAtk&&item.multiAtk.prob>0;
-
-  // このセリフの発生確率
-  const r1=document.createElement('div');r1.style.cssText='margin-bottom:14px;';
-  const l1=document.createElement('div');l1.style.cssText='font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;';l1.textContent='このセリフが選ばれる確率';r1.appendChild(l1);
-  const probWrap=document.createElement('div');probWrap.style.cssText='display:flex;align-items:center;gap:8px;';
-  const probIn=document.createElement('input');probIn.type='number';probIn.min=1;probIn.max=100;probIn.value=hasMulti?item.multiAtk.prob:5;
-  probIn.style.cssText='width:80px;padding:7px 10px;border:1px solid var(--border2);border-radius:6px;font-family:"M PLUS 1p",sans-serif;font-size:14px;background:var(--surface2);color:var(--text);outline:none;';
-  probIn.onfocus=()=>probIn.style.borderColor='var(--accent3)';probIn.onblur=()=>probIn.style.borderColor='var(--border2)';
-  const pSuffix=document.createElement('span');pSuffix.style.cssText='font-size:13px;color:var(--text-muted);';pSuffix.textContent='%';
-  probWrap.appendChild(probIn);probWrap.appendChild(pSuffix);r1.appendChild(probWrap);box.appendChild(r1);
-
-  // 同時攻撃人数
-  const r2=document.createElement('div');r2.style.cssText='margin-bottom:20px;';
-  const l2=document.createElement('div');l2.style.cssText='font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;';l2.textContent='同時攻撃人数';r2.appendChild(l2);
-  const cntWrap=document.createElement('div');cntWrap.style.cssText='display:flex;align-items:center;gap:8px;';
-  const cntIn=document.createElement('input');cntIn.type='number';cntIn.min=-1;cntIn.max=99;cntIn.value=hasMulti?item.multiAtk.count:2;
-  cntIn.style.cssText='width:80px;padding:7px 10px;border:1px solid var(--border2);border-radius:6px;font-family:"M PLUS 1p",sans-serif;font-size:14px;background:var(--surface2);color:var(--text);outline:none;';
-  cntIn.onfocus=()=>cntIn.style.borderColor='var(--accent3)';cntIn.onblur=()=>cntIn.style.borderColor='var(--border2)';
-  const cSuffix=document.createElement('span');cSuffix.style.cssText='font-size:13px;color:var(--text-muted);';cSuffix.textContent='人　(-1 = 全員)';
-  cntWrap.appendChild(cntIn);cntWrap.appendChild(cSuffix);r2.appendChild(cntWrap);
-  const hint=document.createElement('div');hint.style.cssText='font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.6;';hint.textContent='同じキャラへの重複攻撃は発生しません。複数の複数攻撃セリフがある場合、確率の合計が上限になります。';r2.appendChild(hint);box.appendChild(r2);
-
-  // ボタン行
-  const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;justify-content:space-between;align-items:center;';
-
-  // 削除ボタン（設定済みの場合のみ）
-  const leftBtns=document.createElement('div');
-  if(hasMulti){
-    const delBtn=document.createElement('button');delBtn.className='btn btn-sm';
-    delBtn.style.cssText='background:rgba(233,69,96,.15);border:1px solid var(--accent);color:var(--accent);';
-    delBtn.textContent='🗑 複数攻撃を削除';
-    delBtn.onclick=()=>{delete item.multiAtk;save();modal.remove();if(onClose)onClose();};
-    leftBtns.appendChild(delBtn);
-  }
-  btns.appendChild(leftBtns);
-
-  const rightBtns=document.createElement('div');rightBtns.style.cssText='display:flex;gap:8px;';
-  const cancelBtn=document.createElement('button');cancelBtn.className='btn btn-secondary btn-sm';cancelBtn.textContent='キャンセル';cancelBtn.onclick=()=>modal.remove();
-  const saveBtn=document.createElement('button');saveBtn.className='btn btn-warn btn-sm';saveBtn.textContent='✔ 保存';
-  saveBtn.onclick=()=>{
-    const prob=Math.max(1,Math.min(100,Number(probIn.value)||5));
-    const count=Math.max(-1,Number(cntIn.value)||2);
-    item.multiAtk={prob,count};
-    save();modal.remove();if(onClose)onClose();
-  };
-  rightBtns.appendChild(cancelBtn);rightBtns.appendChild(saveBtn);
-  btns.appendChild(rightBtns);
-  box.appendChild(btns);
-
-  const xBtn=document.createElement('button');xBtn.style.cssText='position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;line-height:1;';xBtn.textContent='✕';xBtn.onclick=()=>modal.remove();box.appendChild(xBtn);
-
-  modal.appendChild(box);
-  modal.onclick=e=>{if(e.target===modal)modal.remove();};
-  document.body.appendChild(modal);
-  setTimeout(()=>probIn.focus(),50);
+const existing=document.getElementById('__multi-atk-modal');if(existing)existing.remove();
+const modal=document.createElement('div');modal.id='__multi-atk-modal';
+modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9500;display:flex;align-items:center;justify-content:center;';
+const box=document.createElement('div');
+box.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:360px;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.5);';
+const title=document.createElement('div');title.style.cssText='font-family:"DotGothic16",monospace;font-size:16px;color:var(--accent2);margin-bottom:4px;font-weight:700;';title.textContent='🔥 複数攻撃オプション';box.appendChild(title);
+const sub=document.createElement('div');sub.style.cssText='font-size:12px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;';sub.textContent='このセリフが選ばれる確率を設定します。選ばれると必ず複数攻撃を実行します。通常セリフは残りの確率で均等に選ばれます。';box.appendChild(sub);
+const hasMulti=item.multiAtk&&item.multiAtk.prob>0;
+// このセリフの発生確率
+const r1=document.createElement('div');r1.style.cssText='margin-bottom:14px;';
+const l1=document.createElement('div');l1.style.cssText='font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;';l1.textContent='このセリフが選ばれる確率';r1.appendChild(l1);
+const probWrap=document.createElement('div');probWrap.style.cssText='display:flex;align-items:center;gap:8px;';
+const probIn=document.createElement('input');probIn.type='number';probIn.min=1;probIn.max=100;probIn.value=hasMulti?item.multiAtk.prob:5;
+probIn.style.cssText='width:80px;padding:7px 10px;border:1px solid var(--border2);border-radius:6px;font-family:"M PLUS 1p",sans-serif;font-size:14px;background:var(--surface2);color:var(--text);outline:none;';
+probIn.onfocus=()=>probIn.style.borderColor='var(--accent3)';probIn.onblur=()=>probIn.style.borderColor='var(--border2)';
+const pSuffix=document.createElement('span');pSuffix.style.cssText='font-size:13px;color:var(--text-muted);';pSuffix.textContent='%';
+probWrap.appendChild(probIn);probWrap.appendChild(pSuffix);r1.appendChild(probWrap);box.appendChild(r1);
+// 同時攻撃人数
+const r2=document.createElement('div');r2.style.cssText='margin-bottom:20px;';
+const l2=document.createElement('div');l2.style.cssText='font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;';l2.textContent='同時攻撃人数';r2.appendChild(l2);
+const cntWrap=document.createElement('div');cntWrap.style.cssText='display:flex;align-items:center;gap:8px;';
+const cntIn=document.createElement('input');cntIn.type='number';cntIn.min=-1;cntIn.max=99;cntIn.value=hasMulti?item.multiAtk.count:2;
+cntIn.style.cssText='width:80px;padding:7px 10px;border:1px solid var(--border2);border-radius:6px;font-family:"M PLUS 1p",sans-serif;font-size:14px;background:var(--surface2);color:var(--text);outline:none;';
+cntIn.onfocus=()=>cntIn.style.borderColor='var(--accent3)';cntIn.onblur=()=>cntIn.style.borderColor='var(--border2)';
+const cSuffix=document.createElement('span');cSuffix.style.cssText='font-size:13px;color:var(--text-muted);';cSuffix.textContent='人 (-1 = 全員)';
+cntWrap.appendChild(cntIn);cntWrap.appendChild(cSuffix);r2.appendChild(cntWrap);
+const hint=document.createElement('div');hint.style.cssText='font-size:11px;color:var(--text-muted);margin-top:6px;line-height:1.6;';hint.textContent='同じキャラへの重複攻撃は発生しません。複数の複数攻撃セリフがある場合、確率の合計が上限になります。';r2.appendChild(hint);box.appendChild(r2);
+// ボタン行
+const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;justify-content:space-between;align-items:center;';
+// 削除ボタン（設定済みの場合のみ）
+const leftBtns=document.createElement('div');
+if(hasMulti){
+const delBtn=document.createElement('button');delBtn.className='btn btn-sm';
+delBtn.style.cssText='background:rgba(233,69,96,.15);border:1px solid var(--accent);color:var(--accent);';
+delBtn.textContent='🗑 複数攻撃を削除';
+delBtn.onclick=()=>{delete item.multiAtk;save();modal.remove();if(onClose)onClose();};
+leftBtns.appendChild(delBtn);
 }
-
+btns.appendChild(leftBtns);
+const rightBtns=document.createElement('div');rightBtns.style.cssText='display:flex;gap:8px;';
+const cancelBtn=document.createElement('button');cancelBtn.className='btn btn-secondary btn-sm';cancelBtn.textContent='キャンセル';cancelBtn.onclick=()=>modal.remove();
+const saveBtn=document.createElement('button');saveBtn.className='btn btn-warn btn-sm';saveBtn.textContent='✔ 保存';
+saveBtn.onclick=()=>{
+const prob=Math.max(1,Math.min(100,Number(probIn.value)||5));
+const count=Math.max(-1,Number(cntIn.value)||2);
+item.multiAtk={prob,count};
+save();modal.remove();if(onClose)onClose();
+};
+rightBtns.appendChild(cancelBtn);rightBtns.appendChild(saveBtn);
+btns.appendChild(rightBtns);
+box.appendChild(btns);
+const xBtn=document.createElement('button');xBtn.style.cssText='position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;line-height:1;';xBtn.textContent='✕';xBtn.onclick=()=>modal.remove();box.appendChild(xBtn);
+modal.appendChild(box);
+modal.onclick=e=>{if(e.target===modal)modal.remove();};
+document.body.appendChild(modal);
+setTimeout(()=>probIn.focus(),50);
+}
 /* ============================================================
-   SELECT PANEL
+SELECT PANEL
 ============================================================ */
 let dragSrcCharId=null,dragSrcSlotIdx=null;
 function renderSelectPanel(){renderPool();rebuildGrid();updateSelCount();renderEventToggles();}
 function renderEventToggles(){
-  const container=document.getElementById('event-toggle-list');if(!container)return;
-  container.innerHTML='';
-  ALL_EVENTS.forEach(ev=>{
-    const lbl=document.createElement('label');
-    lbl.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:12px;color:var(--text);user-select:none;transition:border-color .15s;';
-    const cb=document.createElement('input');
-    cb.type='checkbox';
-    cb.dataset.evKey=ev.key;
-    cb.checked=enabledEvents===null||enabledEvents.has(ev.key);
-    const teamNote=ev.teamOnly?' <span style="font-size:10px;color:var(--text-muted);">(チーム戦)</span>':'';
-    cb.onchange=()=>{
-      const allCbs=container.querySelectorAll('input[type=checkbox]');
-      const checkedKeys=new Set([...allCbs].filter(c=>c.checked).map(c=>c.dataset.evKey));
-      enabledEvents=checkedKeys.size===ALL_EVENTS.length?null:checkedKeys;
-    };
-    lbl.appendChild(cb);
-    lbl.insertAdjacentHTML('beforeend', ev.name + teamNote);
-    container.appendChild(lbl);
-  });
+const container=document.getElementById('event-toggle-list');if(!container)return;
+container.innerHTML='';
+ALL_EVENTS.forEach(ev=>{
+const lbl=document.createElement('label');
+lbl.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:12px;color:var(--text);user-select:none;transition:border-color .15s;';
+const cb=document.createElement('input');
+cb.type='checkbox';
+cb.dataset.evKey=ev.key;
+cb.checked=enabledEvents===null||enabledEvents.has(ev.key);
+const teamNote=ev.teamOnly?' <span style="font-size:10px;color:var(--text-muted);">(チーム戦)</span>':'';
+cb.onchange=()=>{
+const allCbs=container.querySelectorAll('input[type=checkbox]');
+const checkedKeys=new Set([...allCbs].filter(c=>c.checked).map(c=>c.dataset.evKey));
+enabledEvents=checkedKeys.size===ALL_EVENTS.length?null:checkedKeys;
+};
+lbl.appendChild(cb);
+lbl.insertAdjacentHTML('beforeend', ev.name + teamNote);
+container.appendChild(lbl);
+});
 }
 function renderPool(){const pool=document.getElementById('char-pool');pool.innerHTML='';chars.forEach(c=>{const card=document.createElement('div');card.className='pool-card';card.draggable=true;card.dataset.charId=c.id;const ib=document.createElement('div');ib.className='pool-card-img';if(c.imgSrc){const img=document.createElement('img');img.src=c.imgSrc;ib.appendChild(img);}else{ib.textContent=c.emoji;}card.appendChild(ib);const nm=document.createElement('div');nm.className='pool-card-name';nm.textContent=c.name;card.appendChild(nm);const badge=document.createElement('span');badge.className='plus-badge';badge.textContent='＋';card.appendChild(badge);card.onclick=()=>autoPlace(c.id);card.ondragstart=e=>{dragSrcCharId=c.id;dragSrcSlotIdx=null;e.dataTransfer.effectAllowed='copy';};card.ondragend=()=>{dragSrcCharId=null;};pool.appendChild(card);});}
 function onGridSizeChange(val){const n=parseInt(val)||3;gCols=n;gRows=n;rebuildGrid();}
 function rebuildGrid(){initSlots();const grid=document.getElementById('placement-grid');const cellPx=gCols<=4?120:gCols<=6?90:70;grid.style.gridTemplateColumns=`repeat(${gCols},${cellPx}px)`;grid.style.gap='6px';grid.innerHTML='';slots.forEach((s,i)=>grid.appendChild(buildPCell(s,i,cellPx)));updateSelCount();}
 function buildPCell(s,idx,cellPx){
-  const cell=document.createElement('div');cell.className='pc'+(s?' occupied':'');cell.style.width=cellPx+'px';cell.style.height=cellPx+'px';cell.dataset.idx=idx;
-  if(s){const c=chars.find(x=>x.id===s.charId);if(c){if(c.imgSrc){const img=document.createElement('img');img.className='pc-img';img.src=c.imgSrc;cell.appendChild(img);}else{const em=document.createElement('div');em.className='pc-emoji';em.textContent=c.emoji;cell.appendChild(em);}
-  const nm=document.createElement('div');nm.className='pc-name';nm.textContent=c.name;cell.appendChild(nm);
-  const tb=document.createElement('div');tb.className='pc-team-badge';tb.style.background=s.team?TEAM_COLORS[s.team]:'rgba(100,100,100,.6)';tb.textContent=s.team?TEAM_NAMES[s.team]:'?';tb.onclick=e=>{e.stopPropagation();cycleTeam(idx);};cell.appendChild(tb);
-  const db=document.createElement('button');db.className='pc-del';db.textContent='✕';db.onclick=e=>{e.stopPropagation();slots[idx]=null;rebuildGrid();};cell.appendChild(db);}
-  cell.onclick=()=>cycleTeam(idx);cell.draggable=true;cell.ondragstart=e=>{dragSrcSlotIdx=idx;dragSrcCharId=null;e.dataTransfer.effectAllowed='move';};cell.ondragend=()=>{dragSrcSlotIdx=null;};}
-  else{cell.textContent='+';}
-  cell.ondragover=e=>{e.preventDefault();cell.classList.add('drag-over');};cell.ondragleave=()=>cell.classList.remove('drag-over');
-  cell.ondrop=e=>{e.preventDefault();cell.classList.remove('drag-over');if(dragSrcCharId!=null){slots[idx]=mkSlot(dragSrcCharId,null);dragSrcCharId=null;}else if(dragSrcSlotIdx!=null&&dragSrcSlotIdx!==idx){const tmp=slots[idx];slots[idx]=slots[dragSrcSlotIdx];slots[dragSrcSlotIdx]=tmp;dragSrcSlotIdx=null;}rebuildGrid();};
-  if(!s)cell.onclick=()=>autoPlace(chars.length?chars[0].id:null);return cell;
+const cell=document.createElement('div');cell.className='pc'+(s?' occupied':'');cell.style.width=cellPx+'px';cell.style.height=cellPx+'px';cell.dataset.idx=idx;
+if(s){const c=chars.find(x=>x.id===s.charId);if(c){if(c.imgSrc){const img=document.createElement('img');img.className='pc-img';img.src=c.imgSrc;cell.appendChild(img);}else{const em=document.createElement('div');em.className='pc-emoji';em.textContent=c.emoji;cell.appendChild(em);}
+const nm=document.createElement('div');nm.className='pc-name';nm.textContent=c.name;cell.appendChild(nm);
+const tb=document.createElement('div');tb.className='pc-team-badge';tb.style.background=s.team?TEAM_COLORS[s.team]:'rgba(100,100,100,.6)';tb.textContent=s.team?TEAM_NAMES[s.team]:'?';tb.onclick=e=>{e.stopPropagation();cycleTeam(idx);};cell.appendChild(tb);
+const db=document.createElement('button');db.className='pc-del';db.textContent='✕';db.onclick=e=>{e.stopPropagation();slots[idx]=null;rebuildGrid();};cell.appendChild(db);}
+cell.onclick=()=>cycleTeam(idx);cell.draggable=true;cell.ondragstart=e=>{dragSrcSlotIdx=idx;dragSrcCharId=null;e.dataTransfer.effectAllowed='move';};cell.ondragend=()=>{dragSrcSlotIdx=null;};}
+else{cell.textContent='+';}
+cell.ondragover=e=>{e.preventDefault();cell.classList.add('drag-over');};cell.ondragleave=()=>cell.classList.remove('drag-over');
+cell.ondrop=e=>{e.preventDefault();cell.classList.remove('drag-over');if(dragSrcCharId!=null){slots[idx]=mkSlot(dragSrcCharId,null);dragSrcCharId=null;}else if(dragSrcSlotIdx!=null&&dragSrcSlotIdx!==idx){const tmp=slots[idx];slots[idx]=slots[dragSrcSlotIdx];slots[dragSrcSlotIdx]=tmp;dragSrcSlotIdx=null;}rebuildGrid();};
+if(!s)cell.onclick=()=>autoPlace(chars.length?chars[0].id:null);return cell;
 }
 function cycleTeam(idx){if(!slots[idx])return;const cur=slots[idx].team;const ci=TEAMS_CYCLE.indexOf(cur);slots[idx].team=TEAMS_CYCLE[(ci+1)%TEAMS_CYCLE.length];rebuildGrid();}
 function autoPlace(charId){if(!charId)return;const empty=slots.findIndex(s=>s===null);if(empty===-1){alert('グリッドが満杯です');return;}slots[empty]=mkSlot(charId,null);rebuildGrid();}
 function clearAll(){slots=slots.map(()=>null);rebuildGrid();}
 function randomFill(allowDup){slots=slots.map(()=>null);if(!chars.length){rebuildGrid();return;}const total=gCols*gRows;if(allowDup){for(let i=0;i<total;i++)slots[i]=mkSlot(chars[Math.floor(Math.random()*chars.length)].id,null);}else{const sh=[...chars].sort(()=>Math.random()-.5);for(let i=0;i<Math.min(total,sh.length);i++)slots[i]=mkSlot(sh[i].id,null);}rebuildGrid();}
 function updateSelCount(){const n=slots.filter(Boolean).length;document.getElementById('sel-count').textContent=n+'人配置中';const disabled=n<2;document.getElementById('battle-go-btn').disabled=disabled;document.getElementById('battle-skip-btn').disabled=disabled;}
-
 /* ============================================================
-   BATTLE ENGINE
+BATTLE ENGINE
 ============================================================ */
 let fighters=[],bActive=false,paused=false,trRunning=false,tto=null;
 let iMs=100,rMs=100;
 let roundNum=0,battleStats={};
 let pendingPowerUpIid=null;
 let finalPhase=0;
-
 function updateSpeed(v){iMs=Math.max(50,Math.round(parseFloat(v)*1000));}
 function updateResp(v){rMs=Math.max(0,Math.round(parseFloat(v)*1000));}
-
 function launchBattle(skipIntro=false){
-  const placed=slots.filter(Boolean);if(placed.length<2){alert('2人以上配置してください');return;}
-  const srSel=document.getElementById('speed-input-sel');if(srSel)iMs=Math.max(50,Math.round(parseFloat(srSel.value)*1000));
-  const rrSel=document.getElementById('resp-input-sel');if(rrSel)rMs=Math.max(0,Math.round(parseFloat(rrSel.value)*1000));
-  const bi=document.getElementById('speed-input');if(bi)bi.value=(iMs/1000).toFixed(1);
-  const ri=document.getElementById('resp-input');if(ri)ri.value=(rMs/1000).toFixed(1);
-  buildFighters(placed,skipIntro);switchTab('battle');
+const placed=slots.filter(Boolean);if(placed.length<2){alert('2人以上配置してください');return;}
+const srSel=document.getElementById('speed-input-sel');if(srSel)iMs=Math.max(50,Math.round(parseFloat(srSel.value)*1000));
+const rrSel=document.getElementById('resp-input-sel');if(rrSel)rMs=Math.max(0,Math.round(parseFloat(rrSel.value)*1000));
+const bi=document.getElementById('speed-input');if(bi)bi.value=(iMs/1000).toFixed(1);
+const ri=document.getElementById('resp-input');if(ri)ri.value=(rMs/1000).toFixed(1);
+buildFighters(placed,skipIntro);switchTab('battle');
 }
-
 function buildFighters(placed, skipIntro=false){
-  clearT();bActive=true;paused=false;trRunning=false;roundNum=0;finalPhase=0;turnsPerRound=0;
-  pendingPowerUpIid=null;
-  battleStats={kills:{},damageDone:{},damageTaken:{},deathOrder:[],events:0};
-  document.getElementById('winner-banner').style.display='none';
-  document.getElementById('pause-btn').disabled=false;document.getElementById('pause-btn').textContent='⏸ 一時停止';
-  document.getElementById('battle-log').innerHTML='';document.getElementById('round-counter').textContent='';
-  terrainMap={};
-  fighters=placed.map(s=>{const c=chars.find(x=>x.id===s.charId);if(!c)return null;
-    return{iid:s.iid,charId:c.id,name:c.name,emoji:c.emoji,imgSrc:c.imgSrc,hp:c.maxHp||100,maxHp:c.maxHp||100,atk:c.atk||20,dodgePct:c.dodgePct!==undefined?c.dodgePct:20,revivePct:c.revivePct!==undefined?c.revivePct:0,reviveHp:c.reviveHp!==undefined?c.reviveHp:30,multiAtkProb:c.multiAtkProb!==undefined?c.multiAtkProb:5,multiAtkCount:c.multiAtkCount!==undefined?c.multiAtkCount:2,alive:true,team:s.team||null,gridPos:slots.indexOf(s),sounds:JSON.parse(JSON.stringify(c.sounds)),confused:false,powerUp:1,terrain:null};
-  }).filter(Boolean);
-  if(document.getElementById('terrain-toggle')&&document.getElementById('terrain-toggle').checked){
-    const types=['lava','heal','warp','bomb'];
-    fighters.forEach(f=>{if(Math.random()<0.25)f.terrain=types[Math.floor(Math.random()*types.length)];});
-  }
-  fighters.forEach(f=>{battleStats.kills[f.iid]=0;battleStats.damageDone[f.iid]=0;battleStats.damageTaken[f.iid]=0;});
-  renderArena();updateAliveCounter();
-  
-  const startBattle = () => {
-    addLog('<span class="round-log">🔔 ━━━ ROUND 1 ━━━</span>');roundNum=1;document.getElementById('round-counter').textContent='ROUND 1';scheduleNext();
-  };
-
-  if(skipIntro){
-    showEventBanner('⚔️ カオスバトル開始！','#ff4444',2000);
-    setTimeout(startBattle, 1000);
-  } else {
-    doIntro().then(startBattle);
-  }
+clearT();bActive=true;paused=false;trRunning=false;roundNum=0;finalPhase=0;turnsPerRound=0;
+pendingPowerUpIid=null;
+battleStats={kills:{},damageDone:{},damageTaken:{},deathOrder:[],events:0};
+document.getElementById('winner-banner').style.display='none';
+document.getElementById('pause-btn').disabled=false;document.getElementById('pause-btn').textContent='⏸ 一時停止';
+document.getElementById('battle-log').innerHTML='';document.getElementById('round-counter').textContent='';
+terrainMap={};
+fighters=placed.map(s=>{const c=chars.find(x=>x.id===s.charId);if(!c)return null;
+return{iid:s.iid,charId:c.id,name:c.name,emoji:c.emoji,imgSrc:c.imgSrc,hp:c.maxHp||100,maxHp:c.maxHp||100,atk:c.atk||20,dodgePct:c.dodgePct!==undefined?c.dodgePct:20,revivePct:c.revivePct!==undefined?c.revivePct:0,reviveHp:c.reviveHp!==undefined?c.reviveHp:30,multiAtkProb:c.multiAtkProb!==undefined?c.multiAtkProb:5,multiAtkCount:c.multiAtkCount!==undefined?c.multiAtkCount:2,alive:true,team:s.team||null,gridPos:slots.indexOf(s),sounds:JSON.parse(JSON.stringify(c.sounds)),confused:false,powerUp:1,terrain:null};
+}).filter(Boolean);
+if(document.getElementById('terrain-toggle')&&document.getElementById('terrain-toggle').checked){
+const types=['lava','heal','warp','bomb'];
+fighters.forEach(f=>{if(Math.random()<0.25)f.terrain=types[Math.floor(Math.random()*types.length)];});
 }
-
+fighters.forEach(f=>{battleStats.kills[f.iid]=0;battleStats.damageDone[f.iid]=0;battleStats.damageTaken[f.iid]=0;});
+renderArena();updateAliveCounter();
+const startBattle = () => {
+addLog('<span class="round-log">🔔 ━━━ ROUND 1 ━━━</span>');roundNum=1;document.getElementById('round-counter').textContent='ROUND 1';scheduleNext();
+};
+if(skipIntro){
+showEventBanner('⚔️ カオスバトル開始！','#ff4444',2000);
+setTimeout(startBattle, 1000);
+} else {
+doIntro().then(startBattle);
+}
+}
 async function doIntro(){
-  const overlay=document.createElement('div');overlay.className='cutin-overlay';
-  // スキップボタンを追加
-  const skipBtn=document.createElement('button');
-  skipBtn.className='btn btn-secondary btn-sm';
-  skipBtn.style.cssText='position:fixed;bottom:30px;right:30px;z-index:8100;opacity:.85;';
-  skipBtn.textContent='⏩ 演出スキップ';
-  let skipped=false;
-  const skipPromise=new Promise(res=>{skipBtn.onclick=()=>{skipped=true;res();}});
-  document.body.appendChild(skipBtn);
-  document.body.appendChild(overlay);
-  showEventBanner('⚔️ カオスバトル開始！','#ff4444',2000);await wait(800);
-  for(const f of fighters){
-    if(skipped)break;
-    overlay.innerHTML='';const card=document.createElement('div');card.className='cutin-card';
-    const ib=document.createElement('div');ib.className='cutin-img';
-    if(f.imgSrc){const img=document.createElement('img');img.src=f.imgSrc;ib.appendChild(img);}else{ib.textContent=f.emoji;}
-    card.appendChild(ib);const nm=document.createElement('div');nm.className='cutin-name';nm.textContent=f.name;card.appendChild(nm);
-    const lb=document.createElement('div');lb.className='cutin-label';lb.textContent='参戦！';card.appendChild(lb);
-    overlay.appendChild(card);seEvent();
-    await Promise.race([wait(400),skipPromise]);
-  }
-  overlay.remove();skipBtn.remove();
+const overlay=document.createElement('div');overlay.className='cutin-overlay';
+// スキップボタンを追加
+const skipBtn=document.createElement('button');
+skipBtn.className='btn btn-secondary btn-sm';
+skipBtn.style.cssText='position:fixed;bottom:30px;right:30px;z-index:8100;opacity:.85;';
+skipBtn.textContent='⏩ 演出スキップ';
+let skipped=false;
+const skipPromise=new Promise(res=>{skipBtn.onclick=()=>{skipped=true;res();}});
+document.body.appendChild(skipBtn);
+document.body.appendChild(overlay);
+showEventBanner('⚔️ カオスバトル開始！','#ff4444',2000);await wait(800);
+for(const f of fighters){
+if(skipped)break;
+overlay.innerHTML='';const card=document.createElement('div');card.className='cutin-card';
+const ib=document.createElement('div');ib.className='cutin-img';
+if(f.imgSrc){const img=document.createElement('img');img.src=f.imgSrc;ib.appendChild(img);}else{ib.textContent=f.emoji;}
+card.appendChild(ib);const nm=document.createElement('div');nm.className='cutin-name';nm.textContent=f.name;card.appendChild(nm);
+const lb=document.createElement('div');lb.className='cutin-label';lb.textContent='参戦！';card.appendChild(lb);
+overlay.appendChild(card);seEvent();
+await Promise.race([wait(400),skipPromise]);
 }
-
+overlay.remove();skipBtn.remove();
+}
 function resetBattle(){clearT();bActive=false;paused=false;trRunning=false;fighters=[];document.getElementById('arena').innerHTML='';document.getElementById('winner-banner').style.display='none';document.getElementById('battle-log').innerHTML='';document.getElementById('pause-btn').disabled=true;document.getElementById('alive-counter').textContent='';document.getElementById('round-counter').textContent='';clearArrow();}
 function endAndReturn(){resetBattle();switchTab('select');}
 function togglePause(){if(!bActive)return;paused=!paused;document.getElementById('pause-btn').textContent=paused?'▶ 再開':'⏸ 一時停止';if(!paused&&!trRunning)scheduleNext();}
 function clearT(){if(tto){clearTimeout(tto);tto=null;}}
 function scheduleNext(){clearT();if(!bActive||paused)return;tto=setTimeout(async()=>{if(paused||!bActive)return;trRunning=true;await doTurn();trRunning=false;scheduleNext();},iMs);}
 function updateAliveCounter(){const alive=fighters.filter(f=>f.alive).length;document.getElementById('alive-counter').textContent=`生存: ${alive} / ${fighters.length}`;}
-
 /* ---- Random Event ---- */
 async function checkRandomEvent(){
-  const dead=fighters.filter(f=>!f.alive);
-  const events=getActiveEvents().filter(ev=>{
-    if((ev.key==='resurrect'||ev.key==='multiply')&&dead.length===0)return false;
-    return true;
-  });
-  for(const ev of events){
-    if(Math.random()<ev.prob){
-      seEvent();showEventBanner(ev.name,ev.color,2000);
-      addLog(`<span class="event-log">${ev.name} 発動！</span>`);
-      battleStats.events++;await wait(800);await ev.fn();return true;
-    }
-  }
-  return false;
+const dead=fighters.filter(f=>!f.alive);
+const events=getActiveEvents().filter(ev=>{
+if((ev.key==='resurrect'||ev.key==='multiply')&&dead.length===0)return false;
+return true;
+});
+for(const ev of events){
+if(Math.random()<ev.prob){
+seEvent();showEventBanner(ev.name,ev.color,2000);
+addLog(`<span class="event-log">${ev.name} 発動！</span>`);
+battleStats.events++;await wait(800);await ev.fn();return true;
 }
-
+}
+return false;
+}
 /* ---- Event Functions ---- */
 async function evShuffle(){
-  if(fighters.length<=1)return;
-  const positions=fighters.map(f=>f.gridPos);
-  const shuffled=[...positions].sort(()=>Math.random()-.5);
-  fighters.forEach((f,i)=>f.gridPos=shuffled[i]);
-  shakeArena(true);renderArena();updateAliveCounter();
-  resizeC();
-  await wait(500);
-  addLog('<span class="event-log">🔄 全員（生死問わず）の位置がシャッフルされた！</span>');
+if(fighters.length<=1)return;
+const positions=fighters.map(f=>f.gridPos);
+const shuffled=[...positions].sort(()=>Math.random()-.5);
+fighters.forEach((f,i)=>f.gridPos=shuffled[i]);
+shakeArena(true);renderArena();updateAliveCounter();
+resizeC();
+await wait(500);
+addLog('<span class="event-log">🔄 全員（生死問わず）の位置がシャッフルされた！</span>');
 }
 async function evBetray(){
-  const alive=fighters.filter(f=>f.alive&&f.team);if(alive.length<1)return;
-  const traitor=alive[Math.floor(Math.random()*alive.length)];
-  const teams=['a','b','c','d'].filter(t=>t!==traitor.team);const newTeam=teams[Math.floor(Math.random()*teams.length)];const oldTeam=traitor.team;
-  traitor.team=newTeam;const dc=document.getElementById('cell-'+traitor.iid);
-  if(dc){dc.setAttribute('data-team',newTeam);const tb=dc.querySelector('.fighter-team-badge');if(tb){tb.style.background=TEAM_COLORS[newTeam];tb.textContent=TEAM_NAMES[newTeam];}}
-  addLog(`<span class="event-log">🤝 ${traitor.name} がチーム${TEAM_NAMES[oldTeam]}→${TEAM_NAMES[newTeam]}に裏切った！</span>`);
+const alive=fighters.filter(f=>f.alive&&f.team);if(alive.length<1)return;
+const traitor=alive[Math.floor(Math.random()*alive.length)];
+const teams=['a','b','c','d'].filter(t=>t!==traitor.team);const newTeam=teams[Math.floor(Math.random()*teams.length)];const oldTeam=traitor.team;
+traitor.team=newTeam;const dc=document.getElementById('cell-'+traitor.iid);
+if(dc){dc.setAttribute('data-team',newTeam);const tb=dc.querySelector('.fighter-team-badge');if(tb){tb.style.background=TEAM_COLORS[newTeam];tb.textContent=TEAM_NAMES[newTeam];}}
+addLog(`<span class="event-log">🤝 ${traitor.name} がチーム${TEAM_NAMES[oldTeam]}→${TEAM_NAMES[newTeam]}に裏切った！</span>`);
 }
 async function evPowerUp(){
-  const alive=fighters.filter(f=>f.alive);if(!alive.length)return;
-  const target=alive[Math.floor(Math.random()*alive.length)];target.powerUp=2;
-  pendingPowerUpIid=target.iid;
-  showDamagePopup(target.iid,'💪×2','heal');
-  addLog(`<span class="event-log">💪 ${target.name} の攻撃力が2倍になった！次のターン優先攻撃！</span>`);
+const alive=fighters.filter(f=>f.alive);if(!alive.length)return;
+const target=alive[Math.floor(Math.random()*alive.length)];target.powerUp=2;
+pendingPowerUpIid=target.iid;
+showDamagePopup(target.iid,'💪×2','heal');
+addLog(`<span class="event-log">💪 ${target.name} の攻撃力が2倍になった！次のターン優先攻撃！</span>`);
 }
 async function evHealAll(){
-  fighters.filter(f=>f.alive).forEach(f=>{const heal=Math.floor(f.maxHp*0.2);f.hp=Math.min(f.maxHp,f.hp+heal);updateHp(f);showDamagePopup(f.iid,'+'+heal,'heal');});
-  addLog('<span class="event-log">💚 回復の雨！全員HP20%回復！</span>');
+fighters.filter(f=>f.alive).forEach(f=>{const heal=Math.floor(f.maxHp*0.2);f.hp=Math.min(f.maxHp,f.hp+heal);updateHp(f);showDamagePopup(f.iid,'+'+heal,'heal');});
+addLog('<span class="event-log">💚 回復の雨！全員HP20%回復！</span>');
 }
 async function evConfusion(){
-  fighters.filter(f=>f.alive).forEach(f=>f.confused=true);
-  addLog('<span class="event-log">🌀 全員が混乱した！次のターン味方を攻撃するかも！</span>');
+fighters.filter(f=>f.alive).forEach(f=>f.confused=true);
+addLog('<span class="event-log">🌀 全員が混乱した！次のターン味方を攻撃するかも！</span>');
 }
-
 /* ---- 増殖 ---- */
 async function evMultiply(){
-  const alive=fighters.filter(f=>f.alive);
-  const dead=fighters.filter(f=>!f.alive);
-  if(!alive.length||!dead.length)return;
-  const source=alive[Math.floor(Math.random()*alive.length)];
-  const target=dead[Math.floor(Math.random()*dead.length)];
-  const srcCell=document.getElementById('cell-'+source.iid);
-  if(srcCell){
-    const mfx=document.createElement('div');mfx.className='multiply-effect';
-    const ghost=document.createElement('div');ghost.className='multiply-ghost';
-    ghost.style.background=source.imgSrc?`url(${source.imgSrc}) center/cover`:'var(--surface2)';
-    if(!source.imgSrc){ghost.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:42px;">${source.emoji}</div>`;}
-    mfx.appendChild(ghost);
-    const label=document.createElement('div');label.className='multiply-label';label.textContent='👻 増殖！';
-    mfx.appendChild(label);
-    srcCell.appendChild(mfx);
-    seMultiply();
-    await wait(400);
-  }
-  target.name=source.name+'(増殖)';
-  target.emoji=source.emoji;
-  target.imgSrc=source.imgSrc;
-  target.hp=Math.floor(source.maxHp*0.5);
-  target.maxHp=source.maxHp;
-  target.atk=source.atk;
-  target.dodgePct=source.dodgePct;
-  target.revivePct=source.revivePct;
-  target.reviveHp=source.reviveHp;
-  target.multiAtkProb=source.multiAtkProb;
-  target.multiAtkCount=source.multiAtkCount;
-  target.sounds=JSON.parse(JSON.stringify(source.sounds));
-  target.alive=true;
-  target.team=source.team;
-  target.powerUp=1;
-  target.confused=false;
-  renderArena();
-  updateAliveCounter();
-  setTimeout(()=>resizeC(),100);
-  const newCell=document.getElementById('cell-'+target.iid);
-  if(newCell){
-    newCell.classList.add('cell-revive');
-    const mfx2=document.createElement('div');mfx2.className='multiply-effect';
-    const label2=document.createElement('div');label2.className='multiply-label';label2.textContent='👻 '+target.name+' 出現！';
-    mfx2.appendChild(label2);
-    newCell.appendChild(mfx2);
-    setTimeout(()=>{newCell.classList.remove('cell-revive');mfx2.remove();},1000);
-  }
-  if(srcCell){const mfxOld=srcCell.querySelector('.multiply-effect');if(mfxOld)setTimeout(()=>mfxOld.remove(),800);}
-  showEventBanner(`👻 ${source.name} が増殖した！`,'#c77dff',2000);
-  addLog(`<span class="multiply-log">👻 ${source.name} が増殖！ ${target.name} が出現した！</span>`);
-  battleStats.kills[target.iid]=0;battleStats.damageDone[target.iid]=0;battleStats.damageTaken[target.iid]=0;
+const alive=fighters.filter(f=>f.alive);
+const dead=fighters.filter(f=>!f.alive);
+if(!alive.length||!dead.length)return;
+const source=alive[Math.floor(Math.random()*alive.length)];
+const target=dead[Math.floor(Math.random()*dead.length)];
+const srcCell=document.getElementById('cell-'+source.iid);
+if(srcCell){
+const mfx=document.createElement('div');mfx.className='multiply-effect';
+const ghost=document.createElement('div');ghost.className='multiply-ghost';
+ghost.style.background=source.imgSrc?`url(${source.imgSrc}) center/cover`:'var(--surface2)';
+if(!source.imgSrc){ghost.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:42px;">${source.emoji}</div>`;}
+mfx.appendChild(ghost);
+const label=document.createElement('div');label.className='multiply-label';label.textContent='👻 増殖！';
+mfx.appendChild(label);
+srcCell.appendChild(mfx);
+seMultiply();
+await wait(400);
 }
-
+target.name=source.name+'(増殖)';
+target.emoji=source.emoji;
+target.imgSrc=source.imgSrc;
+target.hp=Math.floor(source.maxHp*0.5);
+target.maxHp=source.maxHp;
+target.atk=source.atk;
+target.dodgePct=source.dodgePct;
+target.revivePct=source.revivePct;
+target.reviveHp=source.reviveHp;
+target.multiAtkProb=source.multiAtkProb;
+target.multiAtkCount=source.multiAtkCount;
+target.sounds=JSON.parse(JSON.stringify(source.sounds));
+target.alive=true;
+target.team=source.team;
+target.powerUp=1;
+target.confused=false;
+renderArena();
+updateAliveCounter();
+setTimeout(()=>resizeC(),100);
+const newCell=document.getElementById('cell-'+target.iid);
+if(newCell){
+newCell.classList.add('cell-revive');
+const mfx2=document.createElement('div');mfx2.className='multiply-effect';
+const label2=document.createElement('div');label2.className='multiply-label';label2.textContent='👻 '+target.name+' 出現！';
+mfx2.appendChild(label2);
+newCell.appendChild(mfx2);
+setTimeout(()=>{newCell.classList.remove('cell-revive');mfx2.remove();},1000);
+}
+if(srcCell){const mfxOld=srcCell.querySelector('.multiply-effect');if(mfxOld)setTimeout(()=>mfxOld.remove(),800);}
+showEventBanner(`👻 ${source.name} が増殖した！`,'#c77dff',2000);
+addLog(`<span class="multiply-log">👻 ${source.name} が増殖！ ${target.name} が出現した！</span>`);
+battleStats.kills[target.iid]=0;battleStats.damageDone[target.iid]=0;battleStats.damageTaken[target.iid]=0;
+}
 /* ---- 復活イベント ---- */
 async function evResurrect(){
-  const dead=fighters.filter(f=>!f.alive);
-  if(!dead.length)return;
-  const target=dead[Math.floor(Math.random()*dead.length)];
-  target.alive=true;target.hp=Math.floor(target.maxHp*0.4);
-  const tdc=document.getElementById('cell-'+target.iid);
-  if(tdc){tdc.classList.remove('dead-exploded');tdc.classList.add('cell-revive');setTimeout(()=>tdc.classList.remove('cell-revive'),800);}
-  updateHp(target);updateAliveCounter();
-  showDamagePopup(target.iid,'✨ 復活！','heal');
-  addLog(`<span class="revive-log">✨ ${target.name} がランダム復活！（HP:${target.hp}）</span>`);
-  setTimeout(()=>resizeC(),100);
+const dead=fighters.filter(f=>!f.alive);
+if(!dead.length)return;
+const target=dead[Math.floor(Math.random()*dead.length)];
+target.alive=true;target.hp=Math.floor(target.maxHp*0.4);
+const tdc=document.getElementById('cell-'+target.iid);
+if(tdc){tdc.classList.remove('dead-exploded');tdc.classList.add('cell-revive');setTimeout(()=>tdc.classList.remove('cell-revive'),800);}
+updateHp(target);updateAliveCounter();
+showDamagePopup(target.iid,'✨ 復活！','heal');
+addLog(`<span class="revive-log">✨ ${target.name} がランダム復活！（HP:${target.hp}）</span>`);
+setTimeout(()=>resizeC(),100);
 }
-
 async function applyTerrainEffects(){
-  for(const f of fighters){
-    if(!f.alive||!f.terrain)continue;
-    const t=f.terrain;
-    if(t==='lava'){const dmg=5;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg,'event-dmg');updateHp(f);if(f.hp<=0){await killWithExplosion(f);addLog(`<span class="event-log">🌋 ${f.name} が溶岩で焼かれた！</span>`);}}
-    else if(t==='heal'){const heal=8;f.hp=Math.min(f.maxHp,f.hp+heal);showDamagePopup(f.iid,'+'+heal,'heal');updateHp(f);}
-    else if(t==='warp'){
-      const empties=[];
-      for(let i=0;i<gCols*gRows;i++){
-        if(!fighters.some(x=>x.gridPos===i)&&i!==f.gridPos)empties.push(i);
-      }
-      if(empties.length){
-        f.gridPos=empties[Math.floor(Math.random()*empties.length)];
-        renderArena();setTimeout(()=>resizeC(),100);
-        addLog(`<span class="event-log">🌀 ${f.name} がワープした！</span>`);
-      }
-    }
-    else if(t==='bomb'){const dmg=50;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg+'💥','event-dmg');updateHp(f);shakeArena(false);f.terrain=null;addLog(`<span class="event-log">💣 ${f.name} が爆弾を踏んだ！${dmg}ダメージ！</span>`);if(f.hp<=0){await killWithExplosion(f);}}
-  }
+for(const f of fighters){
+if(!f.alive||!f.terrain)continue;
+const t=f.terrain;
+if(t==='lava'){const dmg=5;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg,'event-dmg');updateHp(f);if(f.hp<=0){await killWithExplosion(f);addLog(`<span class="event-log">🌋 ${f.name} が溶岩で焼かれた！</span>`);}}
+else if(t==='heal'){const heal=8;f.hp=Math.min(f.maxHp,f.hp+heal);showDamagePopup(f.iid,'+'+heal,'heal');updateHp(f);}
+else if(t==='warp'){
+const empties=[];
+for(let i=0;i<gCols*gRows;i++){
+if(!fighters.some(x=>x.gridPos===i)&&i!==f.gridPos)empties.push(i);
 }
-
+if(empties.length){
+f.gridPos=empties[Math.floor(Math.random()*empties.length)];
+renderArena();setTimeout(()=>resizeC(),100);
+addLog(`<span class="event-log">🌀 ${f.name} がワープした！</span>`);
+}
+}
+else if(t==='bomb'){const dmg=50;f.hp=Math.max(0,f.hp-dmg);showDamagePopup(f.iid,'-'+dmg+'💥','event-dmg');updateHp(f);shakeArena(false);f.terrain=null;addLog(`<span class="event-log">💣 ${f.name} が爆弾を踏んだ！${dmg}ダメージ！</span>`);if(f.hp<=0){await killWithExplosion(f);}}
+}
+}
 /* ============================================================
-   EXPLOSION EFFECT (visual + wait for audio)
+EXPLOSION EFFECT (visual + wait for audio)
 ============================================================ */
 function playExplosionVisual(iid){
-  return new Promise(resolve=>{
-    const cell=document.getElementById('cell-'+iid);
-    if(!cell){resolve();return;}
-
-    const flash=document.createElement('div');flash.className='explosion-flash';cell.appendChild(flash);
-    const container=document.createElement('div');container.className='explosion-container';
-    const ring1=document.createElement('div');ring1.className='explosion-ring';ring1.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);';container.appendChild(ring1);
-    const ring2=document.createElement('div');ring2.className='explosion-ring2';ring2.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);animation-delay:.08s;';container.appendChild(ring2);
-    const colors=['#fff','#ffee00','#ffaa00','#ff6600','#ff2200','#ffdd44','#ffffff'];
-    const sizes=[6,8,10,12,14];
-    for(let i=0;i<24;i++){
-      const p=document.createElement('div');p.className='explosion-particle';
-      const angle=(i/24)*Math.PI*2+(Math.random()-.5)*0.4;
-      const dist=50+Math.random()*80;
-      const dx=Math.cos(angle)*dist;const dy=Math.sin(angle)*dist;
-      const sz=sizes[Math.floor(Math.random()*sizes.length)];
-      p.style.cssText=`width:${sz}px;height:${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};left:calc(50% - ${sz/2}px);top:calc(50% - ${sz/2}px);box-shadow:0 0 ${sz}px ${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${0.6+Math.random()*0.5}s;`;
-      p.animate([{transform:`translate(0,0) scale(1.8)`,opacity:1},{transform:`translate(${dx}px,${dy}px) scale(0.2)`,opacity:0}],{duration:700+Math.random()*500,easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'});
-      container.appendChild(p);
-    }
-    for(let i=0;i<10;i++){
-      const s=document.createElement('div');s.className='explosion-shard';
-      const angle=Math.random()*Math.PI*2;
-      const dist=40+Math.random()*60;
-      const dx=Math.cos(angle)*dist;const dy=Math.sin(angle)*dist;
-      s.style.cssText=`background:${colors[Math.floor(Math.random()*3)]};left:calc(50% - 2px);top:calc(50% - 6px);`;
-      s.animate([{transform:`translate(0,0) rotate(${Math.random()*360}deg) scale(1)`,opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${Math.random()*720}deg) scale(0)`,opacity:0}],{duration:800+Math.random()*400,easing:'ease-out',fill:'forwards'});
-      container.appendChild(s);
-    }
-    const smoke=document.createElement('div');smoke.className='explosion-smoke';container.appendChild(smoke);
-    cell.appendChild(container);
-    shakeArena(true);
-
-    setTimeout(()=>{
-      flash.remove();container.remove();
-      cell.classList.add('dead-exploded');
-      resolve();
-    },950);
-  });
+return new Promise(resolve=>{
+const cell=document.getElementById('cell-'+iid);
+if(!cell){resolve();return;}
+const flash=document.createElement('div');flash.className='explosion-flash';cell.appendChild(flash);
+const container=document.createElement('div');container.className='explosion-container';
+const ring1=document.createElement('div');ring1.className='explosion-ring';ring1.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);';container.appendChild(ring1);
+const ring2=document.createElement('div');ring2.className='explosion-ring2';ring2.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);animation-delay:.08s;';container.appendChild(ring2);
+const colors=['#fff','#ffee00','#ffaa00','#ff6600','#ff2200','#ffdd44','#ffffff'];
+const sizes=[6,8,10,12,14];
+for(let i=0;i<24;i++){
+const p=document.createElement('div');p.className='explosion-particle';
+const angle=(i/24)*Math.PI*2+(Math.random()-.5)*0.4;
+const dist=50+Math.random()*80;
+const dx=Math.cos(angle)*dist;const dy=Math.sin(angle)*dist;
+const sz=sizes[Math.floor(Math.random()*sizes.length)];
+p.style.cssText=`width:${sz}px;height:${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};left:calc(50% - ${sz/2}px);top:calc(50% - ${sz/2}px);box-shadow:0 0 ${sz}px ${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${0.6+Math.random()*0.5}s;`;
+p.animate([{transform:`translate(0,0) scale(1.8)`,opacity:1},{transform:`translate(${dx}px,${dy}px) scale(0.2)`,opacity:0}],{duration:700+Math.random()*500,easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'});
+container.appendChild(p);
 }
-
+for(let i=0;i<10;i++){
+const s=document.createElement('div');s.className='explosion-shard';
+const angle=Math.random()*Math.PI*2;
+const dist=40+Math.random()*60;
+const dx=Math.cos(angle)*dist;const dy=Math.sin(angle)*dist;
+s.style.cssText=`background:${colors[Math.floor(Math.random()*3)]};left:calc(50% - 2px);top:calc(50% - 6px);`;
+s.animate([{transform:`translate(0,0) rotate(${Math.random()*360}deg) scale(1)`,opacity:1},{transform:`translate(${dx}px,${dy}px) rotate(${Math.random()*720}deg) scale(0)`,opacity:0}],{duration:800+Math.random()*400,easing:'ease-out',fill:'forwards'});
+container.appendChild(s);
+}
+const smoke=document.createElement('div');smoke.className='explosion-smoke';container.appendChild(smoke);
+cell.appendChild(container);
+shakeArena(true);
+setTimeout(()=>{
+flash.remove();container.remove();
+cell.classList.add('dead-exploded');
+resolve();
+},950);
+});
+}
 async function playExplosion(iid){
-  // 視覚エフェクトと爆発音を並行して開始し、両方終わるまで待つ
-  await Promise.all([
-    playExplosionVisual(iid),
-    playExplosionSound()
-  ]);
+// 視覚エフェクトと爆発音を並行して開始し、両方終わるまで待つ
+await Promise.all([
+playExplosionVisual(iid),
+playExplosionSound()
+]);
 }
-
 async function killWithExplosion(f){
-  f.hp=0;f.alive=false;
-  battleStats.deathOrder.push(f.iid);
-  const dc=document.getElementById('cell-'+f.iid);
-  const deathV=pickR(f.sounds.death);
-  if(deathV&&(deathV.text||deathV.audio)){
-    if(dc){dc.classList.add('cell-death');setTimeout(()=>dc.classList.remove('cell-death'),500);}
-    await speechWait(f.iid,deathV);
-  } else {
-    await wait(200);
-  }
-  await playExplosion(f.iid);
-  updateAliveCounter();
+f.hp=0;f.alive=false;
+battleStats.deathOrder.push(f.iid);
+const dc=document.getElementById('cell-'+f.iid);
+const deathV=pickR(f.sounds.death);
+if(deathV&&(deathV.text||deathV.audio)){
+if(dc){dc.classList.add('cell-death');setTimeout(()=>dc.classList.remove('cell-death'),500);}
+await speechWait(f.iid,deathV);
+} else {
+await wait(200);
 }
-
+await playExplosion(f.iid);
+updateAliveCounter();
+}
 /* ---- Win Check ---- */
 function checkWin(){
-  const alive=fighters.filter(f=>f.alive);
-  if(alive.length===0){endBattle(null,null);return true;}
-  if(alive.length===1){endBattle(alive[0],null);return true;}
-  const hasTeams=fighters.some(f=>f.team);
-  if(hasTeams){
-    const aliveWithTeam=alive.filter(f=>f.team);const aliveNoTeam=alive.filter(f=>!f.team);
-    const aliveTeams=new Set(aliveWithTeam.map(f=>f.team));
-    if(aliveWithTeam.length>0&&aliveTeams.size===1&&aliveNoTeam.length===0){endBattle(null,aliveTeams.values().next().value);return true;}
-    if(aliveWithTeam.length===0&&aliveNoTeam.length<=1){endBattle(aliveNoTeam[0]||null,null);return true;}
-  }
-  return false;
+const alive=fighters.filter(f=>f.alive);
+if(alive.length===0){endBattle(null,null);return true;}
+if(alive.length===1){endBattle(alive[0],null);return true;}
+const hasTeams=fighters.some(f=>f.team);
+if(hasTeams){
+const aliveWithTeam=alive.filter(f=>f.team);const aliveNoTeam=alive.filter(f=>!f.team);
+const aliveTeams=new Set(aliveWithTeam.map(f=>f.team));
+if(aliveWithTeam.length>0&&aliveTeams.size===1&&aliveNoTeam.length===0){endBattle(null,aliveTeams.values().next().value);return true;}
+if(aliveWithTeam.length===0&&aliveNoTeam.length<=1){endBattle(aliveNoTeam[0]||null,null);return true;}
 }
-
+return false;
+}
 /* ---- Final Phase ---- */
 function checkFinalPhase(){
-  const alive=fighters.filter(f=>f.alive).length;
-  if(alive===2&&finalPhase<2){finalPhase=2;showEventBanner('⚡ FINAL BATTLE ⚡','#ffdd00',2500);addLog('<span class="final-log">⚡ FINAL BATTLE ⚡</span>');}
-  else if(alive===3&&finalPhase<3){finalPhase=3;showEventBanner('🔥 FINAL 3 🔥','#ff4400',2000);addLog('<span class="final-log">🔥 FINAL 3 - 残り3体！</span>');}
+const alive=fighters.filter(f=>f.alive).length;
+if(alive===2&&finalPhase<2){finalPhase=2;showEventBanner('⚡ FINAL BATTLE ⚡','#ffdd00',2500);addLog('<span class="final-log">⚡ FINAL BATTLE ⚡</span>');}
+else if(alive===3&&finalPhase<3){finalPhase=3;showEventBanner('🔥 FINAL 3 🔥','#ff4400',2000);addLog('<span class="final-log">🔥 FINAL 3 - 残り3体！</span>');}
 }
-
 /* ---- Main Turn ---- */
 let turnsPerRound=0;
 async function doTurn(){
-  if(!bActive)return;if(checkWin())return;
-  const alive=fighters.filter(f=>f.alive);if(alive.length<2)return;
-
-  turnsPerRound++;
-  if(turnsPerRound>alive.length){
-    turnsPerRound=1;roundNum++;
-    document.getElementById('round-counter').textContent='ROUND '+roundNum;
-    addLog(`<span class="round-log">🔔 ━━━ ROUND ${roundNum} ━━━</span>`);
-    if(fighters.some(f=>f.terrain)){await applyTerrainEffects();if(checkWin())return;}
-    fighters.forEach(f=>f.confused=false);
-  }
-
-  if(roundNum>1&&Math.random()<0.3){
-    const evH=await checkRandomEvent();if(evH&&checkWin())return;
-  }
-
-  checkFinalPhase();
-
-  // パワーアップ済みキャラがいれば優先的に攻撃者にする
-  let attacker;
-  if(pendingPowerUpIid){
-    const powered=alive.find(f=>f.iid===pendingPowerUpIid);
-    if(powered){attacker=powered;}
-    pendingPowerUpIid=null;
-  }
-  if(!attacker)attacker=alive[Math.floor(Math.random()*alive.length)];
-
-  // 攻撃セリフを重み付きで選択（multiAtk.probがあるセリフはその確率で選ばれやすい）
-  const atkVCheck=pickRWeighted(attacker.sounds.attack);
-  const isMultiAtk=!!(atkVCheck&&atkVCheck.multiAtk);
-
-  if(isMultiAtk){
-    await doMultiAttack(attacker,alive,atkVCheck);
-  } else {
-    await doSingleAttack(attacker,alive);
-  }
+if(!bActive)return;if(checkWin())return;
+const alive=fighters.filter(f=>f.alive);if(alive.length<2)return;
+turnsPerRound++;
+if(turnsPerRound>alive.length){
+turnsPerRound=1;roundNum++;
+document.getElementById('round-counter').textContent='ROUND '+roundNum;
+addLog(`<span class="round-log">🔔 ━━━ ROUND ${roundNum} ━━━</span>`);
+if(fighters.some(f=>f.terrain)){await applyTerrainEffects();if(checkWin())return;}
+fighters.forEach(f=>f.confused=false);
 }
-
+if(roundNum>1&&Math.random()<0.3){
+const evH=await checkRandomEvent();if(evH&&checkWin())return;
+}
+checkFinalPhase();
+// パワーアップ済みキャラがいれば優先的に攻撃者にする
+let attacker;
+if(pendingPowerUpIid){
+const powered=alive.find(f=>f.iid===pendingPowerUpIid);
+if(powered){attacker=powered;}
+pendingPowerUpIid=null;
+}
+if(!attacker)attacker=alive[Math.floor(Math.random()*alive.length)];
+// 攻撃セリフを重み付きで選択（multiAtk.probがあるセリフはその確率で選ばれやすい）
+const atkVCheck=pickRWeighted(attacker.sounds.attack);
+const isMultiAtk=!!(atkVCheck&&atkVCheck.multiAtk);
+if(isMultiAtk){
+await doMultiAttack(attacker,alive,atkVCheck);
+} else {
+await doSingleAttack(attacker,alive);
+}
+}
 /* ---- 複数攻撃 ---- */
 async function doMultiAttack(attacker, alive, atkV){
-  // ターゲット候補
-  let candidates;
-  if(attacker.confused){candidates=alive.filter(f=>f.iid!==attacker.iid);}
-  else if(attacker.team){candidates=alive.filter(f=>f.iid!==attacker.iid&&f.team!==attacker.team);if(!candidates.length)candidates=alive.filter(f=>f.iid!==attacker.iid);}
-  else{candidates=alive.filter(f=>f.iid!==attacker.iid);}
-  if(!candidates.length)return;
-
-  // 攻撃数を決める（渡されたセリフ行のmultiAtkから）
-  const multiAtk=atkV&&atkV.multiAtk;
-  let count=multiAtk&&multiAtk.count!==undefined?multiAtk.count:2;
-  if(count===-1||count>=candidates.length){count=candidates.length;}else{count=Math.min(count,candidates.length);}
-
-  // ターゲットをランダムに重複なしで選ぶ
-  const shuffledCands=[...candidates].sort(()=>Math.random()-.5);
-  const targets=shuffledCands.slice(0,count);
-
-  const tl=attacker.team?' ['+TEAM_NAMES[attacker.team]+']':'';
-  addLog(`<span class="multi-atk-log">🔥 ${attacker.name}${tl} が複数攻撃！（${targets.length}体同時）</span>`);
-
-  const atkCell=document.getElementById('cell-'+attacker.iid);if(atkCell)atkCell.classList.add('attacking');
-
-  // 矢印を先に表示してからセリフ
-  resizeC();
-  targets.forEach(t=>drawArrow(attacker.iid,t.iid));
-
-  if(atkV&&(atkV.text||atkV.audio))await speechWait(attacker.iid,atkV);
-  if(!bActive)return;
-  if(rMs>0)await wait(rMs);if(!bActive)return;
-
-  const puMult=attacker.powerUp||1;if(puMult>1){showDamagePopup(attacker.iid,'💪 POWER UP! × ALL','heal');attacker.powerUp=1;}
-
-  const deathQueue=[];
-  const hitSpeechQueue=[];
-  for(const target of targets){
-    // 回避判定
-    const dodgeChance=(target.dodgePct!==undefined?target.dodgePct:20)/100;
-    if(Math.random()<dodgeChance){
-      const dc=document.getElementById('cell-'+target.iid);if(dc){dc.classList.add('cell-dodge');setTimeout(()=>dc.classList.remove('cell-dodge'),500);}
-      const dv=pickR(target.sounds.dodge);if(dv&&(dv.text||dv.audio)){playVoice(dv);if(dv.text)showBubble(target.iid,dv.text,1200);}
-      seDodge();addLog(`<span class="dodge-log">💨 ${target.name} は回避した！</span>`);
-      continue;
-    }
-
-    const isCrit=Math.random()<0.05;
-    const critMult=isCrit?1.5:1;
-    const baseDmg=Math.max(1,Math.floor((Number(attacker.atk)||20)*(0.8+Math.random()*.4)));
-    const dmg=Math.floor(baseDmg*critMult*puMult);
-
-    target.hp=Math.max(0,target.hp-dmg);
-    battleStats.damageDone[attacker.iid]=(battleStats.damageDone[attacker.iid]||0)+dmg;
-    battleStats.damageTaken[target.iid]=(battleStats.damageTaken[target.iid]||0)+dmg;
-    const dc=document.getElementById('cell-'+target.iid);
-    if(dc){dc.classList.add('cell-flash','cell-shake');setTimeout(()=>dc.classList.remove('cell-flash','cell-shake'),400);}
-    updateHp(target);
-    showDamagePopup(target.iid,(isCrit?'💥':'')+dmg,isCrit?'critical':'normal');
-    if(isCrit)seCrit();else seHit();
-
-    const tl2=target.team?' ['+TEAM_NAMES[target.team]+']':'';
-    if(isCrit)addLog(`<span class="critical-log">💥 CRITICAL! </span><span class="atk">${attacker.name}</span> → <span class="def">${target.name}${tl2}</span> に ${dmg} ダメージ！！（残HP:${target.hp}）`);
-    else addLog(`<span class="atk">${attacker.name}</span> → <span class="def">${target.name}${tl2}</span> に ${dmg} ダメージ（残HP:${target.hp}）`);
-
-    if(target.hp<=0){
-      battleStats.kills[attacker.iid]=(battleStats.kills[attacker.iid]||0)+1;
-      deathQueue.push(target);
-    } else {
-      // やられセリフをキューに積む（後でまとめてawait）
-      hitSpeechQueue.push({iid:target.iid,entry:pickR(target.sounds.hit)});
-    }
-  }
-
-  // 全ターゲットのやられセリフ・音声を並行再生し、全部終わるまで待つ
-  if(hitSpeechQueue.length>0){
-    await Promise.all(hitSpeechQueue.map(({iid,entry})=>{
-      if(!entry||(entry.text===''&&!entry.audio))return Promise.resolve();
-      return speechWaitVolume(iid,entry,0.65);
-    }));
-  }
-
-  await wait(200);
-  clearArrow();if(atkCell)atkCell.classList.remove('attacking');
-
-  // 死亡処理を順次実行
-  for(const dead of deathQueue){
-    if(!dead.alive)continue;
-    const aliveCount=fighters.filter(f=>f!==dead&&f.alive).length;
-    addLog(`<span class="dead-log">☠ ${dead.name} 脱落！</span> <span style="color:var(--accent2);">（残り${aliveCount}体）</span>`);
-    await killWithExplosion(dead);
-    if(!bActive)return;
-    const revChance=(dead.revivePct||0)/100;
-    if(revChance>0&&Math.random()<revChance){
-      await wait(400);dead.alive=true;dead.hp=Math.max(1,dead.reviveHp||30);
-      const tdc=document.getElementById('cell-'+dead.iid);
-      if(tdc){tdc.classList.remove('dead-exploded');tdc.classList.add('cell-revive');setTimeout(()=>tdc.classList.remove('cell-revive'),800);}
-      updateHp(dead);updateAliveCounter();
-      const rv=pickR(dead.sounds.revive);if(rv&&(rv.text||rv.audio))await speechWait(dead.iid,rv);
-      addLog(`<span class="revive-log">✨ ${dead.name} 蘇生！（HP:${dead.hp}）</span>`);
-    }
-    if(checkWin())return;
-  }
+// ターゲット候補
+let candidates;
+if(attacker.confused){candidates=alive.filter(f=>f.iid!==attacker.iid);}
+else if(attacker.team){candidates=alive.filter(f=>f.iid!==attacker.iid&&f.team!==attacker.team);if(!candidates.length)candidates=alive.filter(f=>f.iid!==attacker.iid);}
+else{candidates=alive.filter(f=>f.iid!==attacker.iid);}
+if(!candidates.length)return;
+// 攻撃数を決める（渡されたセリフ行のmultiAtkから）
+const multiAtk=atkV&&atkV.multiAtk;
+let count=multiAtk&&multiAtk.count!==undefined?multiAtk.count:2;
+if(count===-1||count>=candidates.length){count=candidates.length;}else{count=Math.min(count,candidates.length);}
+// ターゲットをランダムに重複なしで選ぶ
+const shuffledCands=[...candidates].sort(()=>Math.random()-.5);
+const targets=shuffledCands.slice(0,count);
+const tl=attacker.team?' ['+TEAM_NAMES[attacker.team]+']':'';
+addLog(`<span class="multi-atk-log">🔥 ${attacker.name}${tl} が複数攻撃！（${targets.length}体同時）</span>`);
+const atkCell=document.getElementById('cell-'+attacker.iid);if(atkCell)atkCell.classList.add('attacking');
+// 矢印を先に表示してからセリフ
+resizeC();
+targets.forEach(t=>drawArrow(attacker.iid,t.iid));
+if(atkV&&(atkV.text||atkV.audio))await speechWait(attacker.iid,atkV);
+if(!bActive)return;
+if(rMs>0)await wait(rMs);if(!bActive)return;
+const puMult=attacker.powerUp||1;if(puMult>1){showDamagePopup(attacker.iid,'💪 POWER UP! × ALL','heal');attacker.powerUp=1;}
+const deathQueue=[];
+const hitSpeechQueue=[];
+for(const target of targets){
+// 回避判定
+const dodgeChance=(target.dodgePct!==undefined?target.dodgePct:20)/100;
+if(Math.random()<dodgeChance){
+const dc=document.getElementById('cell-'+target.iid);if(dc){dc.classList.add('cell-dodge');setTimeout(()=>dc.classList.remove('cell-dodge'),500);}
+const dv=pickR(target.sounds.dodge);if(dv&&(dv.text||dv.audio)){playVoice(dv);if(dv.text)showBubble(target.iid,dv.text,1200);}
+seDodge();addLog(`<span class="dodge-log">💨 ${target.name} は回避した！</span>`);
+continue;
 }
-
+const isCrit=Math.random()<0.05;
+const critMult=isCrit?1.5:1;
+const baseDmg=Math.max(1,Math.floor((Number(attacker.atk)||20)*(0.8+Math.random()*.4)));
+const dmg=Math.floor(baseDmg*critMult*puMult);
+target.hp=Math.max(0,target.hp-dmg);
+battleStats.damageDone[attacker.iid]=(battleStats.damageDone[attacker.iid]||0)+dmg;
+battleStats.damageTaken[target.iid]=(battleStats.damageTaken[target.iid]||0)+dmg;
+const dc=document.getElementById('cell-'+target.iid);
+if(dc){dc.classList.add('cell-flash','cell-shake');setTimeout(()=>dc.classList.remove('cell-flash','cell-shake'),400);}
+updateHp(target);
+showDamagePopup(target.iid,(isCrit?'💥':'')+dmg,isCrit?'critical':'normal');
+if(isCrit)seCrit();else seHit();
+const tl2=target.team?' ['+TEAM_NAMES[target.team]+']':'';
+if(isCrit)addLog(`<span class="critical-log">💥 CRITICAL! </span><span class="atk">${attacker.name}</span> → <span class="def">${target.name}${tl2}</span> に ${dmg} ダメージ！！（残HP:${target.hp}）`);
+else addLog(`<span class="atk">${attacker.name}</span> → <span class="def">${target.name}${tl2}</span> に ${dmg} ダメージ（残HP:${target.hp}）`);
+if(target.hp<=0){
+battleStats.kills[attacker.iid]=(battleStats.kills[attacker.iid]||0)+1;
+deathQueue.push(target);
+} else {
+// やられセリフをキューに積む（後でまとめてawait）
+hitSpeechQueue.push({iid:target.iid,entry:pickR(target.sounds.hit)});
+}
+}
+// 全ターゲットのやられセリフ・音声を並行再生し、全部終わるまで待つ
+if(hitSpeechQueue.length>0){
+await Promise.all(hitSpeechQueue.map(({iid,entry})=>{
+if(!entry||(entry.text===''&&!entry.audio))return Promise.resolve();
+return speechWaitVolume(iid,entry,0.65);
+}));
+}
+await wait(200);
+clearArrow();if(atkCell)atkCell.classList.remove('attacking');
+// 死亡処理を順次実行
+for(const dead of deathQueue){
+if(!dead.alive)continue;
+const aliveCount=fighters.filter(f=>f!==dead&&f.alive).length;
+addLog(`<span class="dead-log">☠ ${dead.name} 脱落！</span> <span style="color:var(--accent2);">（残り${aliveCount}体）</span>`);
+await killWithExplosion(dead);
+if(!bActive)return;
+const revChance=(dead.revivePct||0)/100;
+if(revChance>0&&Math.random()<revChance){
+await wait(400);dead.alive=true;dead.hp=Math.max(1,dead.reviveHp||30);
+const tdc=document.getElementById('cell-'+dead.iid);
+if(tdc){tdc.classList.remove('dead-exploded');tdc.classList.add('cell-revive');setTimeout(()=>tdc.classList.remove('cell-revive'),800);}
+updateHp(dead);updateAliveCounter();
+const rv=pickR(dead.sounds.revive);if(rv&&(rv.text||rv.audio))await speechWait(dead.iid,rv);
+addLog(`<span class="revive-log">✨ ${dead.name} 蘇生！（HP:${dead.hp}）</span>`);
+}
+if(checkWin())return;
+}
+}
 /* ---- 単体攻撃 ---- */
 async function doSingleAttack(attacker, alive){
-  let targets;
-  if(attacker.confused){targets=alive.filter(f=>f.iid!==attacker.iid);}
-  else if(attacker.team){targets=alive.filter(f=>f.iid!==attacker.iid&&f.team!==attacker.team);if(!targets.length)targets=alive.filter(f=>f.iid!==attacker.iid);}
-  else{targets=alive.filter(f=>f.iid!==attacker.iid);}
-  if(!targets.length)return;
-  const target=targets[Math.floor(Math.random()*targets.length)];
-
-  resizeC();
-  drawArrow(attacker.iid,target.iid);
-  const atkCell=document.getElementById('cell-'+attacker.iid);if(atkCell)atkCell.classList.add('attacking');
-  const atkV=pickR(attacker.sounds.attack);
-  if(atkV&&(atkV.text||atkV.audio))await speechWait(attacker.iid,atkV);
-  if(!bActive)return;
-  if(rMs>0)await wait(rMs);if(!bActive)return;
-
-  // Dodge
-  const dodgeChance=(target.dodgePct!==undefined?target.dodgePct:20)/100;
-  if(Math.random()<dodgeChance){
-    const dc=document.getElementById('cell-'+target.iid);if(dc){dc.classList.add('cell-dodge');setTimeout(()=>dc.classList.remove('cell-dodge'),500);}
-    const dv=pickR(target.sounds.dodge);if(dv&&(dv.text||dv.audio)){playVoice(dv);if(dv.text)showBubble(target.iid,dv.text,1500);}
-    seDodge();addLog(`<span class="dodge-log">💨 ${target.name} は回避した！</span>`);
-    await wait(400);clearArrow();if(atkCell)atkCell.classList.remove('attacking');return;
-  }
-
-  // Critical
-  const isCrit=Math.random()<0.05;
-  const critMult=isCrit?1.5:1;
-  const baseDmg=Math.max(1,Math.floor((Number(attacker.atk)||20)*(0.8+Math.random()*.4)));
-  const puMult=attacker.powerUp||1;
-  const dmg=Math.floor(baseDmg*critMult*puMult);
-  if(puMult>1){showDamagePopup(attacker.iid,'💪 POWER UP!','heal');attacker.powerUp=1;}
-
-  target.hp=Math.max(0,target.hp-dmg);
-  battleStats.damageDone[attacker.iid]=(battleStats.damageDone[attacker.iid]||0)+dmg;
-  battleStats.damageTaken[target.iid]=(battleStats.damageTaken[target.iid]||0)+dmg;
-  const dc=document.getElementById('cell-'+target.iid);
-  if(dc){dc.classList.add('cell-flash','cell-shake');setTimeout(()=>dc.classList.remove('cell-flash','cell-shake'),400);}
-  updateHp(target);
-  showDamagePopup(target.iid,(isCrit?'💥':'')+dmg,isCrit?'critical':'normal');
-  if(isCrit)seCrit();else seHit();
-
-  const tl=attacker.team?' ['+TEAM_NAMES[attacker.team]+']':'';
-  const tl2=target.team?' ['+TEAM_NAMES[target.team]+']':'';
-  if(isCrit)addLog(`<span class="critical-log">💥 CRITICAL! </span><span class="atk">${attacker.name}${tl}</span> → <span class="def">${target.name}${tl2}</span> に ${dmg} ダメージ！！（残HP:${target.hp}）`);
-  else addLog(`<span class="atk">${attacker.name}${tl}</span> → <span class="def">${target.name}${tl2}</span> に ${dmg} ダメージ（残HP:${target.hp}）`);
-
-  if(target.hp>0){
-    // やられセリフ再生中も矢印を維持し、セリフが終わってから矢印を消す
-    const hv=pickR(target.sounds.hit);
-    if(hv&&(hv.text||hv.audio))await speechWait(target.iid,hv);
-    clearArrow();if(atkCell)atkCell.classList.remove('attacking');return;
-  }
-
-  // 死亡：矢印はkillWithExplosionの前に消す
-  clearArrow();if(atkCell)atkCell.classList.remove('attacking');
-  battleStats.kills[attacker.iid]=(battleStats.kills[attacker.iid]||0)+1;
-  const aliveCount=fighters.filter(f=>f!==target&&f.alive).length;
-  addLog(`<span class="dead-log">☠ ${target.name} 脱落！</span> <span style="color:var(--accent2);">（残り${aliveCount}体）</span>`);
-
-  await killWithExplosion(target);
-  if(!bActive)return;
-
-  // Revive check
-  const revChance=(target.revivePct||0)/100;
-  if(revChance>0&&Math.random()<revChance){
-    await wait(400);target.alive=true;target.hp=Math.max(1,target.reviveHp||30);
-    const tdc=document.getElementById('cell-'+target.iid);
-    if(tdc){tdc.classList.remove('dead-exploded');tdc.classList.add('cell-revive');setTimeout(()=>tdc.classList.remove('cell-revive'),800);}
-    updateHp(target);updateAliveCounter();
-    const rv=pickR(target.sounds.revive);if(rv&&(rv.text||rv.audio))await speechWait(target.iid,rv);
-    addLog(`<span class="revive-log">✨ ${target.name} 蘇生！（HP:${target.hp}）</span>`);
-  }
-  checkWin();
+let targets;
+if(attacker.confused){targets=alive.filter(f=>f.iid!==attacker.iid);}
+else if(attacker.team){targets=alive.filter(f=>f.iid!==attacker.iid&&f.team!==attacker.team);if(!targets.length)targets=alive.filter(f=>f.iid!==attacker.iid);}
+else{targets=alive.filter(f=>f.iid!==attacker.iid);}
+if(!targets.length)return;
+const target=targets[Math.floor(Math.random()*targets.length)];
+resizeC();
+drawArrow(attacker.iid,target.iid);
+const atkCell=document.getElementById('cell-'+attacker.iid);if(atkCell)atkCell.classList.add('attacking');
+const atkV=pickR(attacker.sounds.attack);
+if(atkV&&(atkV.text||atkV.audio))await speechWait(attacker.iid,atkV);
+if(!bActive)return;
+if(rMs>0)await wait(rMs);if(!bActive)return;
+// Dodge
+const dodgeChance=(target.dodgePct!==undefined?target.dodgePct:20)/100;
+if(Math.random()<dodgeChance){
+const dc=document.getElementById('cell-'+target.iid);if(dc){dc.classList.add('cell-dodge');setTimeout(()=>dc.classList.remove('cell-dodge'),500);}
+const dv=pickR(target.sounds.dodge);if(dv&&(dv.text||dv.audio)){playVoice(dv);if(dv.text)showBubble(target.iid,dv.text,1500);}
+seDodge();addLog(`<span class="dodge-log">💨 ${target.name} は回避した！</span>`);
+await wait(400);clearArrow();if(atkCell)atkCell.classList.remove('attacking');return;
 }
-
+// Critical
+const isCrit=Math.random()<0.05;
+const critMult=isCrit?1.5:1;
+const baseDmg=Math.max(1,Math.floor((Number(attacker.atk)||20)*(0.8+Math.random()*.4)));
+const puMult=attacker.powerUp||1;
+const dmg=Math.floor(baseDmg*critMult*puMult);
+if(puMult>1){showDamagePopup(attacker.iid,'💪 POWER UP!','heal');attacker.powerUp=1;}
+target.hp=Math.max(0,target.hp-dmg);
+battleStats.damageDone[attacker.iid]=(battleStats.damageDone[attacker.iid]||0)+dmg;
+battleStats.damageTaken[target.iid]=(battleStats.damageTaken[target.iid]||0)+dmg;
+const dc=document.getElementById('cell-'+target.iid);
+if(dc){dc.classList.add('cell-flash','cell-shake');setTimeout(()=>dc.classList.remove('cell-flash','cell-shake'),400);}
+updateHp(target);
+showDamagePopup(target.iid,(isCrit?'💥':'')+dmg,isCrit?'critical':'normal');
+if(isCrit)seCrit();else seHit();
+const tl=attacker.team?' ['+TEAM_NAMES[attacker.team]+']':'';
+const tl2=target.team?' ['+TEAM_NAMES[target.team]+']':'';
+if(isCrit)addLog(`<span class="critical-log">💥 CRITICAL! </span><span class="atk">${attacker.name}${tl}</span> → <span class="def">${target.name}${tl2}</span> に ${dmg} ダメージ！！（残HP:${target.hp}）`);
+else addLog(`<span class="atk">${attacker.name}${tl}</span> → <span class="def">${target.name}${tl2}</span> に ${dmg} ダメージ（残HP:${target.hp}）`);
+if(target.hp>0){
+// やられセリフ再生中も矢印を維持し、セリフが終わってから矢印を消す
+const hv=pickR(target.sounds.hit);
+if(hv&&(hv.text||hv.audio))await speechWait(target.iid,hv);
+clearArrow();if(atkCell)atkCell.classList.remove('attacking');return;
+}
+// 死亡：矢印はkillWithExplosionの前に消す
+clearArrow();if(atkCell)atkCell.classList.remove('attacking');
+battleStats.kills[attacker.iid]=(battleStats.kills[attacker.iid]||0)+1;
+const aliveCount=fighters.filter(f=>f!==target&&f.alive).length;
+addLog(`<span class="dead-log">☠ ${target.name} 脱落！</span> <span style="color:var(--accent2);">（残り${aliveCount}体）</span>`);
+await killWithExplosion(target);
+if(!bActive)return;
+// Revive check
+const revChance=(target.revivePct||0)/100;
+if(revChance>0&&Math.random()<revChance){
+await wait(400);target.alive=true;target.hp=Math.max(1,target.reviveHp||30);
+const tdc=document.getElementById('cell-'+target.iid);
+if(tdc){tdc.classList.remove('dead-exploded');tdc.classList.add('cell-revive');setTimeout(()=>tdc.classList.remove('cell-revive'),800);}
+updateHp(target);updateAliveCounter();
+const rv=pickR(target.sounds.revive);if(rv&&(rv.text||rv.audio))await speechWait(target.iid,rv);
+addLog(`<span class="revive-log">✨ ${target.name} 蘇生！（HP:${target.hp}）</span>`);
+}
+checkWin();
+}
 /* ============================================================
-   SPEECH/AUDIO
+SPEECH/AUDIO
 ============================================================ */
 function speechWait(iid,entry){return new Promise(resolve=>{if(entry.text)showBubble(iid,entry.text,null);if(entry.audio){const a=new Audio(entry.audio);const done=()=>{removeBubble(iid);resolve();};a.onended=done;a.onerror=done;a.play().catch(()=>{removeBubble(iid);resolve();});}else{const dur=estimateDur(entry);setTimeout(()=>{removeBubble(iid);resolve();},dur);}});}
 // 音量指定付きspeechWait（複数攻撃のやられセリフ用）
 function speechWaitVolume(iid,entry,vol){return new Promise(resolve=>{if(entry.text)showBubble(iid,entry.text,null);if(entry.audio){const a=new Audio(entry.audio);a.volume=Math.max(0,Math.min(1,vol));const done=()=>{removeBubble(iid);resolve();};a.onended=done;a.onerror=done;a.play().catch(()=>{removeBubble(iid);resolve();});}else{const dur=estimateDur(entry);setTimeout(()=>{removeBubble(iid);resolve();},dur);}});}
 function playVoice(entry){if(entry.audio){const a=new Audio(entry.audio);a.play().catch(()=>{});}}
 function playVoiceVolume(entry,vol){
-  if(entry.audio){const a=new Audio(entry.audio);a.volume=Math.max(0,Math.min(1,vol));a.play().catch(()=>{});}
+if(entry.audio){const a=new Audio(entry.audio);a.volume=Math.max(0,Math.min(1,vol));a.play().catch(()=>{});}
 }
 function estimateDur(entry){return Math.max(800,(entry.text||'').length*80);}
 function showBubble(iid,text,dur){removeBubble(iid);const cell=document.getElementById('cell-'+iid);if(!cell)return;const b=document.createElement('div');b.className='speech-bubble';b.id='bubble-'+iid;b.textContent=text;cell.appendChild(b);if(dur)setTimeout(()=>removeBubble(iid),dur);}
@@ -1479,384 +1379,351 @@ function pickR(arr){if(!arr||!arr.length)return null;return arr[Math.floor(Math.
 // 重み付きランダム選択: multiAtk.prob があるセリフはその%を重みとして使用
 // 通常セリフ（multiAtkなし）は残りの確率を均等に分配
 function pickRWeighted(arr){
-  if(!arr||!arr.length)return null;
-  if(arr.length===1)return arr[0];
-  // multiAtkセリフの合計確率を計算
-  const multiItems=arr.filter(x=>x.multiAtk&&x.multiAtk.prob>0);
-  const normalItems=arr.filter(x=>!x.multiAtk||!x.multiAtk.prob);
-  const totalMultiProb=multiItems.reduce((s,x)=>s+x.multiAtk.prob,0);
-  // 全multiAtkの合計確率が100%超えたら正規化
-  const clampedMultiProb=Math.min(totalMultiProb,100);
-  const normalProb=100-clampedMultiProb; // 通常セリフに残る確率
-  const roll=Math.random()*100;
-  let cursor=0;
-  // まずmultiAtkセリフを判定
-  for(const item of multiItems){
-    const w=totalMultiProb>0?(item.multiAtk.prob/totalMultiProb)*clampedMultiProb:0;
-    cursor+=w;
-    if(roll<cursor)return item;
-  }
-  // 通常セリフをランダムに返す
-  if(normalItems.length===0)return multiItems[Math.floor(Math.random()*multiItems.length)];
-  return normalItems[Math.floor(Math.random()*normalItems.length)];
+if(!arr||!arr.length)return null;
+if(arr.length===1)return arr[0];
+// multiAtkセリフの合計確率を計算
+const multiItems=arr.filter(x=>x.multiAtk&&x.multiAtk.prob>0);
+const normalItems=arr.filter(x=>!x.multiAtk||!x.multiAtk.prob);
+const totalMultiProb=multiItems.reduce((s,x)=>s+x.multiAtk.prob,0);
+// 全multiAtkの合計確率が100%超えたら正規化
+const clampedMultiProb=Math.min(totalMultiProb,100);
+const normalProb=100-clampedMultiProb; // 通常セリフに残る確率
+const roll=Math.random()*100;
+let cursor=0;
+// まずmultiAtkセリフを判定
+for(const item of multiItems){
+const w=totalMultiProb>0?(item.multiAtk.prob/totalMultiProb)*clampedMultiProb:0;
+cursor+=w;
+if(roll<cursor)return item;
+}
+// 通常セリフをランダムに返す
+if(normalItems.length===0)return multiItems[Math.floor(Math.random()*multiItems.length)];
+return normalItems[Math.floor(Math.random()*normalItems.length)];
 }
 function wait(ms){return new Promise(r=>setTimeout(r,ms));}
-
 /* ============================================================
-   DAMAGE POPUP / BANNER / SHAKE
+DAMAGE POPUP / BANNER / SHAKE
 ============================================================ */
 function showDamagePopup(iid,text,type){const cell=document.getElementById('cell-'+iid);if(!cell)return;const popup=document.createElement('div');popup.className='damage-popup '+type;popup.textContent=text;popup.style.left=(Math.random()*40+30)+'%';popup.style.top='30%';cell.appendChild(popup);setTimeout(()=>popup.remove(),1200);}
 function showEventBanner(text,color,duration=2000){const banner=document.createElement('div');banner.className='event-banner';banner.textContent=text;banner.style.color=color||'#fff';banner.style.textShadow=`0 0 30px ${color||'#fff'}, 0 0 60px ${color||'#fff'}`;document.body.appendChild(banner);setTimeout(()=>banner.remove(),duration);}
 function shakeArena(big){const wrap=document.getElementById('arena-wrap');if(!wrap)return;wrap.classList.remove('arena-shake','arena-big-shake');void wrap.offsetWidth;wrap.classList.add(big?'arena-big-shake':'arena-shake');setTimeout(()=>wrap.classList.remove('arena-shake','arena-big-shake'),big?600:400);}
-
 /* ============================================================
-   ARENA
+ARENA
 ============================================================ */
 function renderArena(){
-  const arena=document.getElementById('arena');arena.innerHTML='';const total=gCols*gRows;
-  const tabH=document.querySelector('.tabs')?.offsetHeight||48;
-  const ctrlH=document.getElementById('battle-controls')?.offsetHeight||44;
-  const vw=window.innerWidth;
-  const vh=window.innerHeight;
-  const logColW=280+18+16;
-  const winnerW=300+18+16;
-  const availH=vh-tabH-ctrlH-40;
-  const availW=vw-logColW-winnerW;
-  const csByH=Math.floor((availH-(gRows-1)*8)/gRows);
-  const csByW=Math.floor((availW-(gCols-1)*8)/gCols);
-  const cs=Math.max(60,Math.floor(Math.min(csByH,csByW)*0.88));
-  arena.style.gridTemplateColumns=`repeat(${gCols},${cs}px)`;
-  for(let i=0;i<total;i++){
-    const f=fighters.find(x=>x.gridPos===i);
-    if(!f){const em=document.createElement('div');em.className='empty-cell';em.style.cssText=`width:${cs}px;height:${cs}px;`;arena.appendChild(em);continue;}
-    const cell=document.createElement('div');cell.className='fighter-cell'+(f.alive?'':' dead-exploded');cell.id='cell-'+f.iid;cell.style.width=cs+'px';cell.style.height=cs+'px';
-    if(f.team)cell.setAttribute('data-team',f.team);
-    const terr=f.terrain;if(terr&&terr!=='normal')cell.classList.add('terrain-'+terr);
-    if(f.imgSrc){const img=document.createElement('img');img.className='fighter-img';img.src=f.imgSrc;cell.appendChild(img);}
-    else{const ph=document.createElement('div');ph.className='fighter-placeholder';ph.textContent=f.emoji;cell.appendChild(ph);}
-    if(f.team){const tb=document.createElement('div');tb.className='fighter-team-badge';tb.style.background=TEAM_COLORS[f.team];tb.textContent=TEAM_NAMES[f.team];cell.appendChild(tb);}
-    if(terr&&terr!=='normal'){const ti=document.createElement('div');ti.className='terrain-indicator';const tt=TERRAIN_TYPES.find(x=>x.type===terr);ti.textContent=tt?tt.emoji:'';cell.appendChild(ti);}
-    const hs=document.createElement('div');hs.className='hp-strip';const hf=document.createElement('div');hf.className='hp-fill';hf.id='hp-'+f.iid;
-    const p=(f.hp/f.maxHp)*100;hf.style.width=p+'%';hf.style.background=p>50?'var(--tc)':p>25?'var(--accent2)':'var(--accent)';
-    hs.appendChild(hf);cell.appendChild(hs);
-    const nt=document.createElement('div');nt.className='fighter-name-tag';nt.textContent=f.name;cell.appendChild(nt);
-    const dov=document.createElement('div');dov.className='dead-overlay';dov.textContent='✕';cell.appendChild(dov);
-    arena.appendChild(cell);
-  }
-  setTimeout(()=>resizeC(),60);
+const arena=document.getElementById('arena');arena.innerHTML='';const total=gCols*gRows;
+const tabH=document.querySelector('.tabs')?.offsetHeight||48;
+const ctrlH=document.getElementById('battle-controls')?.offsetHeight||44;
+const vw=window.innerWidth;
+const vh=window.innerHeight;
+const logColW=280+18+16;
+const winnerW=300+18+16;
+const availH=vh-tabH-ctrlH-40;
+const availW=vw-logColW-winnerW;
+const csByH=Math.floor((availH-(gRows-1)*8)/gRows);
+const csByW=Math.floor((availW-(gCols-1)*8)/gCols);
+const cs=Math.max(60,Math.floor(Math.min(csByH,csByW)*0.88));
+arena.style.gridTemplateColumns=`repeat(${gCols},${cs}px)`;
+for(let i=0;i<total;i++){
+const f=fighters.find(x=>x.gridPos===i);
+if(!f){const em=document.createElement('div');em.className='empty-cell';em.style.cssText=`width:${cs}px;height:${cs}px;`;arena.appendChild(em);continue;}
+const cell=document.createElement('div');cell.className='fighter-cell'+(f.alive?'':' dead-exploded');cell.id='cell-'+f.iid;cell.style.width=cs+'px';cell.style.height=cs+'px';
+if(f.team)cell.setAttribute('data-team',f.team);
+const terr=f.terrain;if(terr&&terr!=='normal')cell.classList.add('terrain-'+terr);
+if(f.imgSrc){const img=document.createElement('img');img.className='fighter-img';img.src=f.imgSrc;cell.appendChild(img);}
+else{const ph=document.createElement('div');ph.className='fighter-placeholder';ph.textContent=f.emoji;cell.appendChild(ph);}
+if(f.team){const tb=document.createElement('div');tb.className='fighter-team-badge';tb.style.background=TEAM_COLORS[f.team];tb.textContent=TEAM_NAMES[f.team];cell.appendChild(tb);}
+if(terr&&terr!=='normal'){const ti=document.createElement('div');ti.className='terrain-indicator';const tt=TERRAIN_TYPES.find(x=>x.type===terr);ti.textContent=tt?tt.emoji:'';cell.appendChild(ti);}
+const hs=document.createElement('div');hs.className='hp-strip';const hf=document.createElement('div');hf.className='hp-fill';hf.id='hp-'+f.iid;
+const p=(f.hp/f.maxHp)*100;hf.style.width=p+'%';hf.style.background=p>50?'var(--tc)':p>25?'var(--accent2)':'var(--accent)';
+hs.appendChild(hf);cell.appendChild(hs);
+const nt=document.createElement('div');nt.className='fighter-name-tag';nt.textContent=f.name;cell.appendChild(nt);
+const dov=document.createElement('div');dov.className='dead-overlay';dov.textContent='✕';cell.appendChild(dov);
+arena.appendChild(cell);
+}
+setTimeout(()=>resizeC(),60);
 }
 function updateHp(f){const fill=document.getElementById('hp-'+f.iid);if(!fill)return;const p=(f.hp/f.maxHp)*100;fill.style.width=p+'%';fill.style.background=p>50?'var(--tc)':p>25?'var(--accent2)':'var(--accent)';}
-
 function endBattle(winner,winTeam){
-  clearT();bActive=false;let label='';
-  if(winTeam)label=`チーム${TEAM_NAMES[winTeam]} の勝利！`;else if(winner)label=winner.name+' の勝利！';else label='引き分け';
-  if(winner){const cell=document.getElementById('cell-'+winner.iid);if(cell)cell.classList.add('winner');}
-  seWin();showEventBanner('🏆 '+label,'#f5a623',3000);
-  document.getElementById('winner-name').textContent=label;
-  let statsHtml=`<div>📊 総ラウンド: <span class="stat-highlight">${roundNum}</span></div>`;
-  statsHtml+=`<div>🎲 ランダムイベント: <span class="stat-highlight">${battleStats.events}回</span></div>`;
-  let mvpIid=null,mvpDmg=0;for(const[iid,dmg]of Object.entries(battleStats.damageDone)){if(dmg>mvpDmg){mvpDmg=dmg;mvpIid=iid;}}
-  if(mvpIid){const mvp=fighters.find(f=>f.iid==mvpIid);if(mvp)statsHtml+=`<div>⚔️ MVP(与ダメ): <span class="stat-highlight">${mvp.name} (${mvpDmg})</span></div>`;}
-  let killIid=null,killMax=0;for(const[iid,k]of Object.entries(battleStats.kills)){if(k>killMax){killMax=k;killIid=iid;}}
-  if(killIid&&killMax>0){const killer=fighters.find(f=>f.iid==killIid);if(killer)statsHtml+=`<div>💀 最多撃破: <span class="stat-highlight">${killer.name} (${killMax}キル)</span></div>`;}
-  if(battleStats.deathOrder.length>0){const fd=fighters.find(f=>f.iid===battleStats.deathOrder[0]);if(fd)statsHtml+=`<div>💔 最速脱落: <span class="stat-highlight">${fd.name}</span></div>`;}
-  let tankIid=null,tankMax=0;for(const[iid,dmg]of Object.entries(battleStats.damageTaken)){if(dmg>tankMax){tankMax=dmg;tankIid=iid;}}
-  if(tankIid){const tank=fighters.find(f=>f.iid==tankIid);if(tank)statsHtml+=`<div>🛡️ 最も不運: <span class="stat-highlight">${tank.name} (被ダメ${tankMax})</span></div>`;}
-  document.getElementById('winner-stats').innerHTML=statsHtml;document.getElementById('winner-banner').style.display='block';
-  addLog(`<span class="final-log">🏆 ${label}</span>`);clearArrow();
+clearT();bActive=false;let label='';
+if(winTeam)label=`チーム${TEAM_NAMES[winTeam]} の勝利！`;else if(winner)label=winner.name+' の勝利！';else label='引き分け';
+if(winner){const cell=document.getElementById('cell-'+winner.iid);if(cell)cell.classList.add('winner');}
+seWin();showEventBanner('🏆 '+label,'#f5a623',3000);
+document.getElementById('winner-name').textContent=label;
+let statsHtml=`<div>📊 総ラウンド: <span class="stat-highlight">${roundNum}</span></div>`;
+statsHtml+=`<div>🎲 ランダムイベント: <span class="stat-highlight">${battleStats.events}回</span></div>`;
+let mvpIid=null,mvpDmg=0;for(const[iid,dmg]of Object.entries(battleStats.damageDone)){if(dmg>mvpDmg){mvpDmg=dmg;mvpIid=iid;}}
+if(mvpIid){const mvp=fighters.find(f=>f.iid==mvpIid);if(mvp)statsHtml+=`<div>⚔️ MVP(与ダメ): <span class="stat-highlight">${mvp.name} (${mvpDmg})</span></div>`;}
+let killIid=null,killMax=0;for(const[iid,k]of Object.entries(battleStats.kills)){if(k>killMax){killMax=k;killIid=iid;}}
+if(killIid&&killMax>0){const killer=fighters.find(f=>f.iid==killIid);if(killer)statsHtml+=`<div>💀 最多撃破: <span class="stat-highlight">${killer.name} (${killMax}キル)</span></div>`;}
+if(battleStats.deathOrder.length>0){const fd=fighters.find(f=>f.iid===battleStats.deathOrder[0]);if(fd)statsHtml+=`<div>💔 最速脱落: <span class="stat-highlight">${fd.name}</span></div>`;}
+let tankIid=null,tankMax=0;for(const[iid,dmg]of Object.entries(battleStats.damageTaken)){if(dmg>tankMax){tankMax=dmg;tankIid=iid;}}
+if(tankIid){const tank=fighters.find(f=>f.iid==tankIid);if(tank)statsHtml+=`<div>🛡️ 最も不運: <span class="stat-highlight">${tank.name} (被ダメ${tankMax})</span></div>`;}
+document.getElementById('winner-stats').innerHTML=statsHtml;document.getElementById('winner-banner').style.display='block';
+addLog(`<span class="final-log">🏆 ${label}</span>`);clearArrow();
 }
-
 /* ============================================================
-   ARROW
+ARROW
 ============================================================ */
 function resizeC(){const g=document.getElementById('arena'),cv=document.getElementById('arrow-canvas'),w=document.getElementById('arena-wrap');if(!cv||!g)return;const gw=g.scrollWidth,gh=g.scrollHeight;cv.width=gw;cv.height=gh;if(w){w.style.width=gw+'px';w.style.height=gh+'px';}}
 function ctr(iid){const cell=document.getElementById('cell-'+iid),wrap=document.getElementById('arena-wrap');if(!cell||!wrap)return null;const cr=cell.getBoundingClientRect(),wr=wrap.getBoundingClientRect();return{x:cr.left-wr.left+cr.width/2,y:cr.top-wr.top+cr.height/2};}
 function drawArrow(fi,ti){const cv=document.getElementById('arrow-canvas'),ctx=cv.getContext('2d'),from=ctr(fi),to=ctr(ti);if(!from||!to)return;const ang=Math.atan2(to.y-from.y,to.x-from.x),hl=14;ctx.strokeStyle='#e94560';ctx.lineWidth=3;ctx.shadowColor='rgba(233,69,96,.5)';ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();ctx.fillStyle='#e94560';ctx.beginPath();ctx.moveTo(to.x,to.y);ctx.lineTo(to.x-hl*Math.cos(ang-Math.PI/6),to.y-hl*Math.sin(ang-Math.PI/6));ctx.lineTo(to.x-hl*Math.cos(ang+Math.PI/6),to.y-hl*Math.sin(ang+Math.PI/6));ctx.closePath();ctx.fill();}
 function clearArrow(){const cv=document.getElementById('arrow-canvas');if(cv){const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);}}
-
 /* ============================================================
-   LOG
+LOG
 ============================================================ */
 function addLog(html){const log=document.getElementById('battle-log');const e=document.createElement('div');e.className='log-entry';e.innerHTML=html;log.appendChild(e);log.scrollTop=log.scrollHeight;}
-
 /* ============================================================
-   THEME
+THEME
 ============================================================ */
 const THEMES = [
-  {key:'default', name:'ダーク',       desc:'ダークネイビー（初期）',       colors:['#1a1a2e','#e94560','#00d2ff']},
-  {key:'dark2',   name:'ダーク(新)',   desc:'ディープブラック×ネオン',       colors:['#0d0d1a','#ff2d78','#00ffcc']},
-  {key:'light',   name:'ライト',       desc:'明るい白ベース',                colors:['#f0f2f5','#d32f4a','#0077cc']},
-  {key:'light2',  name:'ライト(新)',   desc:'温かみのあるクリーム調',         colors:['#fdf6ee','#c0392b','#16a085']},
+{key:'default', name:'ダーク',       desc:'ダークネイビー（初期）',       colors:['#1a1a2e','#e94560','#00d2ff']},
+{key:'dark2',   name:'ダーク(新)',   desc:'ディープブラック×ネオン',       colors:['#0d0d1a','#ff2d78','#00ffcc']},
+{key:'light',   name:'ライト',       desc:'明るい白ベース',                colors:['#f0f2f5','#d32f4a','#0077cc']},
+{key:'light2',  name:'ライト(新)',   desc:'温かみのあるクリーム調',         colors:['#fdf6ee','#c0392b','#16a085']},
 ];
 let currentTheme = localStorage.getItem('chaos_theme') || 'default';
-
 function applyTheme(key){
-  document.documentElement.setAttribute('data-theme', key === 'default' ? '' : key);
-  if(key === 'default') document.documentElement.removeAttribute('data-theme');
-  currentTheme = key;
-  localStorage.setItem('chaos_theme', key);
-  document.querySelectorAll('.theme-card').forEach(c => {
-    c.style.borderColor = c.dataset.key === key ? 'var(--accent2)' : 'var(--border)';
-  });
+document.documentElement.setAttribute('data-theme', key === 'default' ? '' : key);
+if(key === 'default') document.documentElement.removeAttribute('data-theme');
+currentTheme = key;
+localStorage.setItem('chaos_theme', key);
+document.querySelectorAll('.theme-card').forEach(c => {
+c.style.borderColor = c.dataset.key === key ? 'var(--accent2)' : 'var(--border)';
+});
 }
-
 function openThemePicker(){
-  const grid = document.getElementById('theme-grid');
-  grid.innerHTML = '';
-  THEMES.forEach(t => {
-    const card = document.createElement('div');
-    card.className = 'theme-card';
-    card.dataset.key = t.key;
-    card.style.cssText = `border:2px solid ${t.key===currentTheme?'var(--accent2)':'var(--border)'};border-radius:10px;padding:12px;cursor:pointer;transition:border-color .15s;background:var(--surface2);`;
-    const preview = document.createElement('div');
-    preview.style.cssText = 'display:flex;gap:4px;margin-bottom:8px;';
-    t.colors.forEach(c => {
-      const dot = document.createElement('div');
-      dot.style.cssText = `width:18px;height:18px;border-radius:50%;background:${c};flex-shrink:0;`;
-      preview.appendChild(dot);
-    });
-    card.appendChild(preview);
-    const nm = document.createElement('div');
-    nm.style.cssText = 'font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;';
-    nm.textContent = t.name;
-    card.appendChild(nm);
-    const ds = document.createElement('div');
-    ds.style.cssText = 'font-size:11px;color:var(--text-muted);';
-    ds.textContent = t.desc;
-    card.appendChild(ds);
-    card.onclick = () => applyTheme(t.key);
-    card.onmouseenter = () => { if(t.key !== currentTheme) card.style.borderColor = 'var(--accent3)'; };
-    card.onmouseleave = () => { card.style.borderColor = t.key === currentTheme ? 'var(--accent2)' : 'var(--border)'; };
-    grid.appendChild(card);
-  });
-  document.getElementById('theme-modal').style.display = 'flex';
+const grid = document.getElementById('theme-grid');
+grid.innerHTML = '';
+THEMES.forEach(t => {
+const card = document.createElement('div');
+card.className = 'theme-card';
+card.dataset.key = t.key;
+card.style.cssText = `border:2px solid ${t.key===currentTheme?'var(--accent2)':'var(--border)'};border-radius:10px;padding:12px;cursor:pointer;transition:border-color .15s;background:var(--surface2);`;
+const preview = document.createElement('div');
+preview.style.cssText = 'display:flex;gap:4px;margin-bottom:8px;';
+t.colors.forEach(c => {
+const dot = document.createElement('div');
+dot.style.cssText = `width:18px;height:18px;border-radius:50%;background:${c};flex-shrink:0;`;
+preview.appendChild(dot);
+});
+card.appendChild(preview);
+const nm = document.createElement('div');
+nm.style.cssText = 'font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;';
+nm.textContent = t.name;
+card.appendChild(nm);
+const ds = document.createElement('div');
+ds.style.cssText = 'font-size:11px;color:var(--text-muted);';
+ds.textContent = t.desc;
+card.appendChild(ds);
+card.onclick = () => applyTheme(t.key);
+card.onmouseenter = () => { if(t.key !== currentTheme) card.style.borderColor = 'var(--accent3)'; };
+card.onmouseleave = () => { card.style.borderColor = t.key === currentTheme ? 'var(--accent2)' : 'var(--border)'; };
+grid.appendChild(card);
+});
+document.getElementById('theme-modal').style.display = 'flex';
 }
-
 /* ============================================================
-   HIGURASHI PRESET IMPORT
+HIGURASHI PRESET IMPORT
 ============================================================ */
 async function importHigurashi(){
-  try{
-    const res=await fetch('./higurashi.json');
-    if(!res.ok)throw new Error('ファイルが見つかりません ('+res.status+')');
-    const data=await res.json();
-    if(!Array.isArray(data))throw new Error('データ形式が不正です');
-    const mode=chars.length>0?confirm('現在のキャラクターを置き換えますか？\nOK=置き換え / キャンセル=追加'):true;
-    const maxId=chars.length?Math.max(...chars.map(c=>c.id)):0;
-    let newId=Math.max(maxId,nid)+1;
-    const imported=data.map(c=>({
-      ...c,id:newId++,
-      sounds:c.sounds||{attack:[],hit:[],dodge:[],death:[],revive:[]},
-      dodgePct:c.dodgePct??20,revivePct:c.revivePct??0,reviveHp:c.reviveHp??30,
-      multiAtkProb:c.multiAtkProb??5,multiAtkCount:c.multiAtkCount??2
-    }));
-    if(mode)chars=imported;else chars=[...chars,...imported];
-    nid=Math.max(...chars.map(c=>c.id))+1;
-    save();renderSetup();
-    alert('✅ '+imported.length+'人のひぐらしキャラを読み込みました！');
-  }catch(e){
-    alert('❌ 読み込み失敗: '+e.message+'\n\nhigurashi.json がこのページと同じフォルダにあるか確認してください。');
-  }
+try{
+const res=await fetch('./higurashi.json');
+if(!res.ok)throw new Error('ファイルが見つかりません ('+res.status+')');
+const data=await res.json();
+if(!Array.isArray(data))throw new Error('データ形式が不正です');
+const mode=chars.length>0?confirm('現在のキャラクターを置き換えますか？\nOK=置き換え / キャンセル=追加'):true;
+const maxId=chars.length?Math.max(...chars.map(c=>c.id)):0;
+let newId=Math.max(maxId,nid)+1;
+const imported=data.map(c=>({
+...c,id:newId++,
+sounds:c.sounds||{attack:[],hit:[],dodge:[],death:[],revive:[]},
+dodgePct:c.dodgePct??20,revivePct:c.revivePct??0,reviveHp:c.reviveHp??30,
+multiAtkProb:c.multiAtkProb??5,multiAtkCount:c.multiAtkCount??2
+}));
+if(mode)chars=imported;else chars=[...chars,...imported];
+nid=Math.max(...chars.map(c=>c.id))+1;
+save();renderSetup();
+alert('✅ '+imported.length+'人のひぐらしキャラを読み込みました！');
+}catch(e){
+alert('❌ 読み込み失敗: '+e.message+'\nhigurashi.json がこのページと同じフォルダにあるか確認してください。');
 }
-
+}
 /* ============================================================
-   TUTORIAL
+TUTORIAL
 ============================================================ */
 const TUTORIAL_STEPS = [
-  {
-    icon: '🎮',
-    title: 'カオスバトルへようこそ！',
-    body: 'キャラクターを登録してグリッドに配置するだけで、AIが自動でバトルを進行します。<br><br>セリフ・音声・画像を設定して、カオスなバトルを楽しみましょう！<br>このチュートリアルでは基本的な使い方を順番に説明します。',
-  },
-  {
-    icon: '✏️',
-    title: 'STEP 1：キャラクターを登録する',
-    body: '<b>「キャラクター登録」タブ</b>を開き、「新しいキャラクターを追加」をクリックします。<br><br>設定できる項目：<br>・<b>名前・絵文字・画像</b><br>・<b>HP・攻撃力・回避%</b><br>・<b>蘇生%・蘇生後HP</b>（倒れた後に復活する確率）<br><br>画像は「URLで指定（推奨）」から imgur.com のURLを貼ると容量を節約できます。<br>形式例: <code style="background:rgba(255,255,255,.15);padding:1px 5px;border-radius:3px;">https://i.imgur.com/xxxxxx.png</code>',
-  },
-  {
-    icon: '💬',
-    title: 'STEP 2：セリフ・音声を設定する',
-    body: 'キャラカード内の<b>「攻撃 / やられ / 回避 / 死亡 / 蘇生」タブ</b>からセリフを登録します。<br><br>・テキストと音声ファイル（MP3等）を組み合わせて設定できます<br>・複数登録するとバトル中にランダムで使用されます<br>・音声がある場合は再生が終わるまで次のターンに進みません<br><br>「攻撃」タブの各セリフ行にある<b>「🔥 複数攻撃」ボタン</b>を押すと、そのセリフが選ばれたとき複数の敵に同時攻撃する設定ができます。',
-  },
-  {
-    icon: '⚔️',
-    title: 'STEP 3：配置してバトル開始！',
-    body: '<b>「配置モード」タブ</b>を開き、キャラをグリッドのマスに配置します。<br><br>・プールのキャラをクリック or ドラッグで配置<br>・左上のバッジをクリックして<b>チーム（A/B/C/D）</b>を設定するとチーム戦になります<br>・「地形ギミック」をONにすると溶岩・回復・ワープ・爆弾などのギミックが追加されます<br><br>2人以上配置したら<b>「🔥 バトル開始！」</b>を押すだけ！',
-  },
-  {
-    icon: '🎲',
-    title: 'STEP 4：ランダムイベント',
-    body: 'バトル中にさまざまなランダムイベントが発生します：<br><br>🔄 <b>シャッフル</b>：全員の位置が入れ替わる<br>💪 <b>パワーアップ</b>：誰かの攻撃力が2倍になる<br>💚 <b>回復の雨</b>：全員のHPが20%回復<br>👻 <b>増殖</b>：誰かがコピーされて出現<br>✨ <b>ランダム復活</b>：脱落者が復活<br>🤝 <b>裏切り</b>：誰かが別チームに移る（チーム戦のみ）<br><br>不要なイベントは配置モードの「発生イベント選択」でOFFにできます。',
-  },
-  {
-    icon: '💾',
-    title: 'STEP 5：データの保存・共有',
-    body: 'キャラクターデータは<b>ブラウザに自動保存</b>されます。<br><br>・<b>エクスポート</b>：JSONファイルやクリップボードに書き出し<br>・<b>インポート</b>：JSONファイルやクリップボードから読み込み<br><br>画像付きキャラが多い場合は「IndexedDB」への切替（登録画面下部）で容量を増やせます。<br><br>これでカオスバトルの基本はバッチリです！🎉<br>あとは好きなキャラを登録して遊んでみてください！',
-  },
+{
+icon: '🎮',
+title: 'カオスバトルへようこそ！',
+body: 'キャラクターを登録してグリッドに配置するだけで、AIが自動でバトルを進行します。<br><br>セリフ・音声・画像を設定して、カオスなバトルを楽しみましょう！<br>このチュートリアルでは基本的な使い方を順番に説明します。',
+},
+{
+icon: '✏️',
+title: 'STEP 1：キャラクターを登録する',
+body: '<b>「キャラクター登録」タブ</b>を開き、「新しいキャラクターを追加」をクリックします。<br><br>設定できる項目：<br>・<b>名前・絵文字・画像</b><br>・<b>HP・攻撃力・回避%</b><br>・<b>蘇生%・蘇生後HP</b>（倒れた後に復活する確率）<br><br>画像は「URLで指定（推奨）」から imgur.com のURLを貼ると容量を節約できます。<br>形式例: <code style="background:rgba(255,255,255,.15);padding:1px 5px;border-radius:3px;">https://i.imgur.com/xxxxxx.png</code>',
+},
+{
+icon: '💬',
+title: 'STEP 2：セリフ・音声を設定する',
+body: 'キャラカード内の<b>「攻撃 / やられ / 回避 / 死亡 / 蘇生」タブ</b>からセリフを登録します。<br><br>・テキストと音声ファイル（MP3等）を組み合わせて設定できます<br>・複数登録するとバトル中にランダムで使用されます<br>・音声がある場合は再生が終わるまで次のターンに進みません<br><br>「攻撃」タブの各セリフ行にある<b>「🔥 複数攻撃」ボタン</b>を押すと、そのセリフが選ばれたとき複数の敵に同時攻撃する設定ができます。',
+},
+{
+icon: '⚔️',
+title: 'STEP 3：配置してバトル開始！',
+body: '<b>「配置モード」タブ</b>を開き、キャラをグリッドのマスに配置します。<br><br>・プールのキャラをクリック or ドラッグで配置<br>・左上のバッジをクリックして<b>チーム（A/B/C/D）</b>を設定するとチーム戦になります<br>・「地形ギミック」をONにすると溶岩・回復・ワープ・爆弾などのギミックが追加されます<br><br>2人以上配置したら<b>「🔥 バトル開始！」</b>を押すだけ！',
+},
+{
+icon: '🎲',
+title: 'STEP 4：ランダムイベント',
+body: 'バトル中にさまざまなランダムイベントが発生します：<br><br>🔄 <b>シャッフル</b>：全員の位置が入れ替わる<br>💪 <b>パワーアップ</b>：誰かの攻撃力が2倍になる<br>💚 <b>回復の雨</b>：全員のHPが20%回復<br>👻 <b>増殖</b>：誰かがコピーされて出現<br>✨ <b>ランダム復活</b>：脱落者が復活<br>🤝 <b>裏切り</b>：誰かが別チームに移る（チーム戦のみ）<br><br>不要なイベントは配置モードの「発生イベント選択」でOFFにできます。',
+},
+{
+icon: '💾',
+title: 'STEP 5：データの保存・共有',
+body: 'キャラクターデータは<b>ブラウザに自動保存</b>されます。<br><br>・<b>エクスポート</b>：JSONファイルやクリップボードに書き出し<br>・<b>インポート</b>：JSONファイルやクリップボードから読み込み<br><br>画像付きキャラが多い場合は「IndexedDB」への切替（登録画面下部）で容量を増やせます。<br><br>これでカオスバトルの基本はバッチリです！🎉<br>あとは好きなキャラを登録して遊んでみてください！',
+},
 ];
-
 function openTutorial() {
-  const existing = document.getElementById('__tutorial-modal');
-  if (existing) existing.remove();
-
-  let step = 0;
-
-  const modal = document.createElement('div');
-  modal.id = '__tutorial-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;display:flex;align-items:center;justify-content:center;';
-
-  const box = document.createElement('div');
-  box.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:30px 28px 24px;width:500px;max-width:94vw;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.5);';
-
-  // 閉じるボタン
-  const xBtn = document.createElement('button');
-  xBtn.style.cssText = 'position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;line-height:1;';
-  xBtn.textContent = '✕';
-  xBtn.onclick = () => modal.remove();
-  box.appendChild(xBtn);
-
-  // ステップインジケーター
-  const indicator = document.createElement('div');
-  indicator.style.cssText = 'display:flex;gap:6px;justify-content:center;margin-bottom:20px;';
-  box.appendChild(indicator);
-
-  // コンテンツエリア
-  const icon = document.createElement('div');
-  icon.style.cssText = 'font-size:48px;text-align:center;margin-bottom:12px;';
-  box.appendChild(icon);
-
-  const title = document.createElement('div');
-  title.style.cssText = 'font-family:"DotGothic16",monospace;font-size:18px;color:var(--accent2);text-align:center;margin-bottom:16px;text-shadow:0 0 10px rgba(245,166,35,.3);';
-  box.appendChild(title);
-
-  const body = document.createElement('div');
-  body.style.cssText = 'font-size:13px;color:var(--text-muted);line-height:1.9;margin-bottom:24px;';
-  box.appendChild(body);
-
-  // ナビゲーションボタン
-  const nav = document.createElement('div');
-  nav.style.cssText = 'display:flex;gap:10px;justify-content:space-between;align-items:center;';
-
-  const prevBtn = document.createElement('button');
-  prevBtn.className = 'btn btn-secondary btn-sm';
-  prevBtn.textContent = '◀ 前へ';
-
-  const stepLabel = document.createElement('span');
-  stepLabel.style.cssText = 'font-size:12px;color:var(--text-muted);font-family:"DotGothic16",monospace;';
-
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'btn btn-primary btn-sm';
-
-  nav.appendChild(prevBtn);
-  nav.appendChild(stepLabel);
-  nav.appendChild(nextBtn);
-  box.appendChild(nav);
-
-  function render() {
-    const s = TUTORIAL_STEPS[step];
-    icon.textContent = s.icon;
-    title.textContent = s.title;
-    body.innerHTML = s.body;
-    stepLabel.textContent = (step + 1) + ' / ' + TUTORIAL_STEPS.length;
-    nextBtn.textContent = step === TUTORIAL_STEPS.length - 1 ? '✔ 閉じる' : '次へ ▶';
-    prevBtn.disabled = step === 0;
-    prevBtn.style.opacity = step === 0 ? '0.3' : '1';
-
-    // インジケーター更新
-    indicator.innerHTML = '';
-    TUTORIAL_STEPS.forEach((_, i) => {
-      const dot = document.createElement('div');
-      dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${i === step ? 'var(--accent2)' : 'var(--border2)'};transition:background .2s;cursor:pointer;`;
-      dot.onclick = () => { step = i; render(); };
-      indicator.appendChild(dot);
-    });
-  }
-
-  prevBtn.onclick = () => { if (step > 0) { step--; render(); } };
-  nextBtn.onclick = () => {
-    if (step < TUTORIAL_STEPS.length - 1) { step++; render(); }
-    else modal.remove();
-  };
-
-  modal.onclick = e => { if (e.target === modal) modal.remove(); };
-  modal.appendChild(box);
-  document.body.appendChild(modal);
-  render();
+const existing = document.getElementById('__tutorial-modal');
+if (existing) existing.remove();
+let step = 0;
+const modal = document.createElement('div');
+modal.id = '__tutorial-modal';
+modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9500;display:flex;align-items:center;justify-content:center;';
+const box = document.createElement('div');
+box.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:30px 28px 24px;width:500px;max-width:94vw;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.5);';
+// 閉じるボタン
+const xBtn = document.createElement('button');
+xBtn.style.cssText = 'position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;line-height:1;';
+xBtn.textContent = '✕';
+xBtn.onclick = () => modal.remove();
+box.appendChild(xBtn);
+// ステップインジケーター
+const indicator = document.createElement('div');
+indicator.style.cssText = 'display:flex;gap:6px;justify-content:center;margin-bottom:20px;';
+box.appendChild(indicator);
+// コンテンツエリア
+const icon = document.createElement('div');
+icon.style.cssText = 'font-size:48px;text-align:center;margin-bottom:12px;';
+box.appendChild(icon);
+const title = document.createElement('div');
+title.style.cssText = 'font-family:"DotGothic16",monospace;font-size:18px;color:var(--accent2);text-align:center;margin-bottom:16px;text-shadow:0 0 10px rgba(245,166,35,.3);';
+box.appendChild(title);
+const body = document.createElement('div');
+body.style.cssText = 'font-size:13px;color:var(--text-muted);line-height:1.9;margin-bottom:24px;';
+box.appendChild(body);
+// ナビゲーションボタン
+const nav = document.createElement('div');
+nav.style.cssText = 'display:flex;gap:10px;justify-content:space-between;align-items:center;';
+const prevBtn = document.createElement('button');
+prevBtn.className = 'btn btn-secondary btn-sm';
+prevBtn.textContent = '◀ 前へ';
+const stepLabel = document.createElement('span');
+stepLabel.style.cssText = 'font-size:12px;color:var(--text-muted);font-family:"DotGothic16",monospace;';
+const nextBtn = document.createElement('button');
+nextBtn.className = 'btn btn-primary btn-sm';
+nav.appendChild(prevBtn);
+nav.appendChild(stepLabel);
+nav.appendChild(nextBtn);
+box.appendChild(nav);
+function render() {
+const s = TUTORIAL_STEPS[step];
+icon.textContent = s.icon;
+title.textContent = s.title;
+body.innerHTML = s.body;
+stepLabel.textContent = (step + 1) + ' / ' + TUTORIAL_STEPS.length;
+nextBtn.textContent = step === TUTORIAL_STEPS.length - 1 ? '✔ 閉じる' : '次へ ▶';
+prevBtn.disabled = step === 0;
+prevBtn.style.opacity = step === 0 ? '0.3' : '1';
+// インジケーター更新
+indicator.innerHTML = '';
+TUTORIAL_STEPS.forEach((_, i) => {
+const dot = document.createElement('div');
+dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${i === step ? 'var(--accent2)' : 'var(--border2)'};transition:background .2s;cursor:pointer;`;
+dot.onclick = () => { step = i; render(); };
+indicator.appendChild(dot);
+});
 }
-
+prevBtn.onclick = () => { if (step > 0) { step--; render(); } };
+nextBtn.onclick = () => {
+if (step < TUTORIAL_STEPS.length - 1) { step++; render(); }
+else modal.remove();
+};
+modal.onclick = e => { if (e.target === modal) modal.remove(); };
+modal.appendChild(box);
+document.body.appendChild(modal);
+render();
+}
 /* ============================================================
-   HELP / FAQ
+HELP / FAQ
 ============================================================ */
 const FAQ = [
-  {q:'キャラクターの追加方法は？',a:'「キャラクター登録」タブで「新しいキャラクターを追加」ボタンをクリックします。名前・絵文字・HP・攻撃力・回避率などを設定できます。画像はクリックでアップロードするか、「URLで指定（推奨）」で外部URLを設定できます。'},
-  {q:'画像をURLで設定するには？（推奨）',a:'キャラカードの「URLで指定（推奨）」ボタンをクリックし、画像のURLを入力します。\n\n【推奨】imgur.com（無料）に画像をアップロードして、そのURLを使うと LocalStorage の容量を消費しません。\n\nURL形式: https://i.imgur.com/xxxxxx.png\n\nimgur の使い方：imgur.com を開く → 「New post」→ 画像をドラッグ → アップロード後に画像を右クリック→「画像アドレスをコピー」してここに貼り付けてください。'},
-  {q:'キャラにセリフ・音声を設定するには？',a:'各キャラカードの「攻撃 / やられ / 回避 / 死亡 / 蘇生」タブからセリフを入力できます。音声ファイル（MP3など）もアップロード可能。音声がある場合は再生後に次のターンに進みます。'},
-  {q:'複数攻撃を設定するには？',a:'「攻撃」タブの各セリフ行に「🔥 複数攻撃」ボタンがあります。クリックするとオプション画面が開き、「このセリフが選ばれる確率」と「同時攻撃人数」を設定できます。そのセリフが引かれると必ず複数攻撃が発動します。人数を -1 にすると全員に攻撃します。'},
-  {q:'バトルの開始方法は？',a:'「配置モード」タブでキャラをグリッドに2人以上配置し、「🔥 バトル開始！」ボタンを押してください。「⚡ 演出スキップで開始」ボタンを押すと参戦演出なしですぐに始まります。'},
-  {q:'参戦演出をスキップするには？',a:'配置モードの「⚡ 演出スキップで開始」ボタンを使うと演出なしでバトルが始まります。また通常開始後も画面右下の「⏩ 演出スキップ」ボタンで途中スキップもできます。'},
-  {q:'グリッドサイズを変えるには？',a:'配置モードの「グリッド」セレクトボックスで2×2〜8×8まで選べます。'},
-  {q:'チーム戦にするには？',a:'配置グリッドのキャラ左上のバッジをクリックするとチーム（A/B/C/D）を切り替えられます。同じチーム同士は攻撃しません。'},
-  {q:'ランダムイベントを制限したい',a:'配置モードの「発生イベント選択」でチェックを外すと、そのイベントはバトル中に発生しなくなります。'},
-  {q:'蘇生を設定するには？',a:'キャラ登録の「蘇生%」に0より大きい数値を入れると、倒れたときにその確率で復活します。「蘇生後HP」で復活時のHPも指定できます。'},
-  {q:'地形ギミックとは？',a:'配置モードで「地形ギミック」をONにすると、キャラが溶岩・回復・ワープ・爆弾などの地形に配置されます。毎ラウンド地形効果が発動します。'},
-  {q:'データが消えた / 保存されない',a:'データはブラウザのLocalStorageに保存されます。ブラウザのデータ削除やプライベートモードでは消える場合があります。大量のキャラ（特に画像付き）はIndexedDBへの切替をお勧めします（キャラ登録画面下部から切替可能）。\n\nTip：画像はURLで指定（imgur推奨）にすると容量をほぼ消費しません。'},
-  {q:'キャラをエクスポート・インポートするには？',a:'キャラクター登録画面の「エクスポート」「インポート」ボタンからJSONファイルまたはクリップボードでデータを共有・移行できます。複数攻撃などの設定もJSONに含まれます。'},
-  {q:'バトル中に速さを変えたい',a:'バトル画面上部の「ターン間隔(秒)」でターンの速さを、「セリフ待機(秒)」でセリフ表示の長さをリアルタイムで変更できます。'},
+{q:'キャラクターの追加方法は？',a:'「キャラクター登録」タブで「新しいキャラクターを追加」ボタンをクリックします。名前・絵文字・HP・攻撃力・回避率などを設定できます。画像はクリックでアップロードするか、「URLで指定（推奨）」で外部URLを設定できます。'},
+{q:'画像をURLで設定するには？（推奨）',a:'キャラカードの「URLで指定（推奨）」ボタンをクリックし、画像のURLを入力します。\n【推奨】imgur.com（無料）に画像をアップロードして、そのURLを使うと LocalStorage の容量を消費しません。\nURL形式: https://i.imgur.com/xxxxxx.png\nimgur の使い方：imgur.com を開く → 「New post」→ 画像をドラッグ → アップロード後に画像を右クリック→「画像アドレスをコピー」してここに貼り付けてください。'},
+{q:'キャラにセリフ・音声を設定するには？',a:'各キャラカードの「攻撃 / やられ / 回避 / 死亡 / 蘇生」タブからセリフを入力できます。音声ファイル（MP3など）もアップロード可能。音声がある場合は再生後に次のターンに進みます。'},
+{q:'複数攻撃を設定するには？',a:'「攻撃」タブの各セリフ行に「🔥 複数攻撃」ボタンがあります。クリックするとオプション画面が開き、「このセリフが選ばれる確率」と「同時攻撃人数」を設定できます。そのセリフが引かれると必ず複数攻撃が発動します。人数を -1 にすると全員に攻撃します。'},
+{q:'バトルの開始方法は？',a:'「配置モード」タブでキャラをグリッドに2人以上配置し、「🔥 バトル開始！」ボタンを押してください。「⚡ 演出スキップで開始」ボタンを押すと参戦演出なしですぐに始まります。'},
+{q:'参戦演出をスキップするには？',a:'配置モードの「⚡ 演出スキップで開始」ボタンを使うと演出なしでバトルが始まります。また通常開始後も画面右下の「⏩ 演出スキップ」ボタンで途中スキップもできます。'},
+{q:'グリッドサイズを変えるには？',a:'配置モードの「グリッド」セレクトボックスで2×2〜8×8まで選べます。'},
+{q:'チーム戦にするには？',a:'配置グリッドのキャラ左上のバッジをクリックするとチーム（A/B/C/D）を切り替えられます。同じチーム同士は攻撃しません。'},
+{q:'ランダムイベントを制限したい',a:'配置モードの「発生イベント選択」でチェックを外すと、そのイベントはバトル中に発生しなくなります。'},
+{q:'蘇生を設定するには？',a:'キャラ登録の「蘇生%」に0より大きい数値を入れると、倒れたときにその確率で復活します。「蘇生後HP」で復活時のHPも指定できます。'},
+{q:'地形ギミックとは？',a:'配置モードで「地形ギミック」をONにすると、キャラが溶岩・回復・ワープ・爆弾などの地形に配置されます。毎ラウンド地形効果が発動します。'},
+{q:'データが消えた / 保存されない',a:'データはブラウザのLocalStorageに保存されます。ブラウザのデータ削除やプライベートモードでは消える場合があります。大量のキャラ（特に画像付き）はIndexedDBへの切替をお勧めします（キャラ登録画面下部から切替可能）。\nTip：画像はURLで指定（imgur推奨）にすると容量をほぼ消費しません。'},
+{q:'キャラをエクスポート・インポートするには？',a:'キャラクター登録画面の「エクスポート」「インポート」ボタンからJSONファイルまたはクリップボードでデータを共有・移行できます。複数攻撃などの設定もJSONに含まれます。'},
+{q:'バトル中に速さを変えたい',a:'バトル画面上部の「ターン間隔(秒)」でターンの速さを、「セリフ待機(秒)」でセリフ表示の長さをリアルタイムで変更できます。'},
 ];
-
 function openHelp(){
-  const container = document.getElementById('help-faq');
-  container.innerHTML = '';
-  FAQ.forEach((item) => {
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;';
-    const qBtn = document.createElement('button');
-    qBtn.style.cssText = 'width:100%;text-align:left;background:var(--surface2);border:none;padding:13px 16px;font-family:"M PLUS 1p",sans-serif;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;';
-    qBtn.innerHTML = '<span>Q. ' + item.q + '</span><span style="color:var(--accent2);font-size:16px;flex-shrink:0;">▾</span>';
-    const ans = document.createElement('div');
-    ans.style.cssText = 'display:none;padding:12px 16px;font-size:13px;color:var(--text-muted);line-height:1.8;background:var(--surface);border-top:1px solid var(--border);';
-    ans.innerHTML = 'A. ' + item.a.replace(/\n/g,'<br>');
-    qBtn.onclick = () => {
-      const open = ans.style.display === 'block';
-      ans.style.display = open ? 'none' : 'block';
-      qBtn.querySelector('span:last-child').textContent = open ? '▾' : '▴';
-    };
-    wrap.appendChild(qBtn);
-    wrap.appendChild(ans);
-    container.appendChild(wrap);
-  });
-  document.getElementById('help-modal').style.display = 'block';
+const container = document.getElementById('help-faq');
+container.innerHTML = '';
+FAQ.forEach((item) => {
+const wrap = document.createElement('div');
+wrap.style.cssText = 'border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;';
+const qBtn = document.createElement('button');
+qBtn.style.cssText = 'width:100%;text-align:left;background:var(--surface2);border:none;padding:13px 16px;font-family:"M PLUS 1p",sans-serif;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;';
+qBtn.innerHTML = '<span>Q. ' + item.q + '</span><span style="color:var(--accent2);font-size:16px;flex-shrink:0;">▾</span>';
+const ans = document.createElement('div');
+ans.style.cssText = 'display:none;padding:12px 16px;font-size:13px;color:var(--text-muted);line-height:1.8;background:var(--surface);border-top:1px solid var(--border);';
+ans.innerHTML = 'A. ' + item.a.replace(/\n/g,'<br>');
+qBtn.onclick = () => {
+const open = ans.style.display === 'block';
+ans.style.display = open ? 'none' : 'block';
+qBtn.querySelector('span:last-child').textContent = open ? '▾' : '▴';
+};
+wrap.appendChild(qBtn);
+wrap.appendChild(ans);
+container.appendChild(wrap);
+});
+document.getElementById('help-modal').style.display = 'block';
 }
-
 document.addEventListener('DOMContentLoaded',()=>{
-  applyTheme(currentTheme);
-  renderPresets();
-  renderSetup();
-  initStorage();
-  // 爆発音を事前にプリロード
-  preloadExplosionAudio();
-  document.getElementById('add-char-card-btn').addEventListener('click',addBlankChar);
-  window.addEventListener('resize',()=>{if(bActive)resizeC();});
+applyTheme(currentTheme);
+renderPresets();
+renderSetup();
+initStorage();
+// 爆発音を事前にプリロード
+preloadExplosionAudio();
+document.getElementById('add-char-card-btn').addEventListener('click',addBlankChar);
+window.addEventListener('resize',()=>{if(bActive)resizeC();});
 });
 </script>
-
 <!-- HELP MODAL -->
 <div id="help-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;overflow-y:auto;">
-  <div style="max-width:680px;margin:40px auto;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;position:relative;">
-    <button onclick="document.getElementById('help-modal').style.display='none'" style="position:absolute;top:16px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;line-height:1;">✕</button>
-    <h2 style="font-family:'DotGothic16',monospace;font-size:22px;color:var(--accent2);margin-bottom:6px;text-shadow:0 0 12px rgba(245,166,35,.4);">❓ お困りですか？</h2>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px;">カオスバトルの使い方・よくある質問をまとめました。</p>
-    <div id="help-faq"></div>
-  </div>
+<div style="max-width:680px;margin:40px auto;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;position:relative;">
+<button onclick="document.getElementById('help-modal').style.display='none'" style="position:absolute;top:16px;right:18px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+<h2 style="font-family:'DotGothic16',monospace;font-size:22px;color:var(--accent2);margin-bottom:6px;text-shadow:0 0 12px rgba(245,166,35,.4);">❓ お困りですか？</h2>
+<p style="font-size:13px;color:var(--text-muted);margin-bottom:24px;">カオスバトルの使い方・よくある質問をまとめました。</p>
+<div id="help-faq"></div>
 </div>
-
+</div>
 <!-- THEME MODAL -->
-<div id="theme-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:none;align-items:center;justify-content:center;">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:420px;position:relative;">
-    <button onclick="document.getElementById('theme-modal').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;line-height:1;">✕</button>
-    <h2 style="font-family:'DotGothic16',monospace;font-size:20px;color:var(--accent3);margin-bottom:18px;">🎨 テーマ選択</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="theme-grid"></div>
-  </div>
+<div id="theme-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;">
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:420px;position:relative;">
+<button onclick="document.getElementById('theme-modal').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-muted);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+<h2 style="font-family:'DotGothic16',monospace;font-size:20px;color:var(--accent3);margin-bottom:18px;">🎨 テーマ選択</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="theme-grid"></div>
+</div>
 </div>
 </body>
 </html>
