@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver3.15 - Gemini</title>
+    <title>全自動人狼 Ver3.16 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -107,6 +107,7 @@
         .msg-vote .voter { font-weight:700; color:#1a2a3a; }
         .msg-vote .vote-action { color:#6a7a6a; font-weight:400; }
         .msg-vote .target { font-weight:700; color:#c0392b; }
+        .msg-vote .target.abstain { color:#7a8a9a; font-weight:600; }
         .char-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px; margin:12px 0; }
         .char-card { background:#f9fbfd; border-radius:14px; padding:10px 8px; border:1px solid #e6ecf3; text-align:center; transition:0.25s; }
         .char-card.dead { opacity:0.45; filter:grayscale(0.7); border-color:#e0c8c8; }
@@ -136,8 +137,8 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.15</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 発言順を保持・超スロー</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.16</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 精度向上・見送り投票対応</span>
             </div>
             <div class="api-area">
                 <i class="fas fa-key" style="color:#6a8aaa;"></i>
@@ -236,17 +237,6 @@
     </div>
 
     <script>
-        // ================================================================
-        //  Ver3.15 改善版
-        //  - 同数投票の修正（同数なら処刑なし）
-        //  - 投票表示を見やすいテキスト形式に
-        //  - 投票間隔を遅く（1800ms）
-        //  - キャラカードのspeech吹き出しを削除
-        //  - 初日夜の無駄メッセージを削減
-        //  - プロンプトの質を大幅向上
-        //  - 6〜10人対応（動的役職配分）
-        // ================================================================
-
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
 
@@ -275,14 +265,12 @@
         const STORAGE_KEY = 'werewolf_library';
         const API_KEY_STORAGE = 'gemini_api_key';
 
-        // -------- HTMLエスケープ --------
         function escapeHtml(str) {
             return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
             }[ch]));
         }
 
-        // -------- 初期化 --------
         document.addEventListener('DOMContentLoaded', () => {
             const savedKey = localStorage.getItem(API_KEY_STORAGE);
             if (savedKey) {
@@ -325,7 +313,6 @@
             updateSelectedCount();
         });
 
-        // -------- ライブラリ読み込み/保存 --------
         function loadLibrary() {
             try {
                 const data = localStorage.getItem(STORAGE_KEY);
@@ -343,7 +330,6 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE.library));
         }
 
-        // -------- サンプルキャラ --------
         function addSampleCharacters() {
             const samples = [
                 { anime: 'ひぐらしのなく頃に', name: '前原圭一', imageUrl: '', description: '都会から雛見沢に引っ越してきた少年。正義感が強く、口が達者で仲間を引っ張るリーダータイプ。ただし、疑われると極端に感情的になり、周りを威圧する傾向がある。口調は乱暴だが、根は仲間思い。人狼ゲームでは、リーダーシップを発揮する反面、疑われると怒り狂って自爆しやすい。' },
@@ -365,7 +351,6 @@
             saveLibrary();
         }
 
-        // -------- フォーム操作 --------
         function getFormData() {
             return {
                 anime: document.getElementById('newAnime').value.trim(),
@@ -447,12 +432,12 @@
         }
 
         // ================================================================
-        //  ★ キャラ説明文生成プロンプト（大幅改善版）
+        //  ★ キャラ説明文生成プロンプト（Ver3.16 原作セリフ厳格化）
         // ================================================================
         function copyPromptFromInput() {
             const anime = document.getElementById('newAnime').value.trim() || '（作品名未入力）';
             const name = document.getElementById('newName').value.trim() || '（キャラ名未入力）';
-            const prompt = `あなたはアニメ・漫画・ゲームのキャラクター分析の第一人者であり、声真似脚本の専門家です。
+            const prompt = `あなたはアニメ・漫画・ゲームのキャラクター分析の第一人者であり、原作設定に極めて忠実な脚本家です。
 以下のキャラクターが「人狼ゲーム」という極限の心理戦の中で、**完全に本人として喋り・考え・疑い・騙す**ために必要な言語プロファイルを、以下のテンプレート形式そのままで出力してください。
 
 【作品名】：${anime}
@@ -491,19 +476,17 @@
 ・疑われた場合：感情的に反論する/冷静に論理で返す/沈黙する
 など、役職ごとの傾向も踏まえて）
 
-【サンプルセリフ】：
-このキャラが実際に言いそうなセリフを、口調・一人称・語尾・感情の温度を忠実に再現して3つ作成してください。
-1. 何気ない日常の一言（キャラの基本的な喋り方の見本）
-2. 誰かを疑っている時の一言（攻撃的/探るようなトーン）
-3. 追い詰められた時の一言（感情的/冷笑的/沈黙など、キャラの本性が出る場面）
+【実際の原作セリフ（引用）】：
+**※超重要：AIによる創作は厳禁。**必ず原作（アニメ・漫画・ゲーム）で**実際にそのキャラクターが発言したセリフ**を2〜3つ引用し、どのようなシーンでの発言か（感情や背景）を括弧書きで添えてください。このセリフの口調・語彙・テンポを、人狼ゲームでの発言生成の「絶対的なベースライン」とします。
+1. 「（セリフ）」（シーン：〜）
+2. 「（セリフ）」（シーン：〜）
 
 ---
 
 注意事項：
 - 独自解釈・二次創作・ファン理論は一切加えず、公式設定・原作の描写のみを根拠にしてください。
 - 抽象的な性格形容詞（「優しい」「賢い」等）ではなく、**AIがそのままセリフを生成できるレベルの具体的言語情報**を優先してください。
-- 全体で400〜550文字程度にまとめてください。
-- この説明文はそのままAIに「あなたはこのキャラです」と渡されるため、第三者視点の説明（「〜である」体）ではなく、**キャラの喋り方を再現するための設計書**として書いてください。`;
+- 全体で400〜600文字程度にまとめてください。`;
 
             const btn = document.getElementById('copyPromptBtn');
             const orig = btn.innerHTML;
@@ -612,9 +595,6 @@
             }
         }
 
-        // ================================================================
-        //  ゲーム開始（6〜10人対応）
-        // ================================================================
         function startGameFromLibrary() {
             if (!STATE.apiKey) {
                 alert('Gemini APIキーを入力して保存してください。');
@@ -658,16 +638,12 @@
             renderCards();
             document.getElementById('messageArea').innerHTML = '';
             const n = STATE.characters.length;
-            addSystemMessage(`🐺 Ver3.15 ゲーム開始！（${n}人対戦・発言順保持）`, 'info');
+            addSystemMessage(`🐺 Ver3.16 ゲーム開始！（${n}人対戦・見送り投票対応）`, 'info');
             assignRoles();
             gameLoop().catch(handleGameLoopError);
         }
 
-        // ================================================================
-        //  動的役職配分（6〜10人対応）
-        // ================================================================
         function getRoleComposition(n) {
-            // [人狼数, 占い師数, 村人数]
             const table = {
                 6:  [1, 1, 4],
                 7:  [2, 1, 4],
@@ -687,7 +663,6 @@
             for (let i = 0; i < fortuneCount; i++) roles.push('fortuneteller');
             for (let i = 0; i < villagerCount; i++) roles.push('villager');
 
-            // シャッフル
             for (let i = roles.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [roles[i], roles[j]] = [roles[j], roles[i]];
@@ -721,7 +696,6 @@
                 STATE.day++;
                 document.getElementById('dayCounter').textContent = `${STATE.day}日目`;
 
-                // ★ 初日は「始まります」だけ表示
                 if (STATE.day === 1) {
                     addSystemMessage(`🌅 ${STATE.day}日目が始まります。`, 'info');
                 } else {
@@ -732,7 +706,6 @@
                 await fastWait();
 
                 if (STATE.isFirstNight) {
-                    // ★ 初日の夜は無駄メッセージを出さない
                     STATE.isFirstNight = false;
                 } else {
                     await nightPhase();
@@ -743,7 +716,6 @@
                 await setPhase('☀️ 昼フェーズ（議論）');
                 await fastWait();
 
-                // ★ 初日は死亡者メッセージを出さない
                 if (!STATE.isFirstNight) {
                     const killed = STATE.characters.filter(c => !c.alive);
                     if (killed.length > 0) {
@@ -780,7 +752,6 @@
             }
         }
 
-        // -------- 夜フェーズ --------
         async function nightPhase() {
             const alive = STATE.aliveIndices;
             const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
@@ -864,7 +835,6 @@
             await fastWait();
         }
 
-        // -------- 昼議論 --------
         async function dayDiscussion(round) {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
@@ -934,7 +904,7 @@
         }
 
         // ================================================================
-        //  ★ 投票フェーズ（同数修正・見やすい表示・間隔遅く）
+        //  ★ 投票フェーズ（見送り機能・信任不足での不処刑対応）
         // ================================================================
         async function votingPhase() {
             const alive = STATE.aliveIndices;
@@ -957,20 +927,34 @@
 
             const tally = {};
             const voteEntries = [];
+            let abstainCount = 0; // 見送り票数
 
             alive.forEach(idx => {
                 const voterName = STATE.characters[idx].name;
-                const targetName = votes[voterName] || '';
-                const targetIdx = STATE.characters.findIndex(c =>
-                    c.name === targetName && STATE.aliveIndices.includes(c.index) && c.index !== idx
-                );
-                if (targetIdx !== -1) {
-                    tally[targetIdx] = (tally[targetIdx] || 0) + 1;
-                    voteEntries.push({ voter: voterName, target: targetName });
+                let targetName = votes[voterName] || '';
+                
+                // 見送り判定（見送り、なし、棄権、空文字など）
+                const isAbstain = !targetName || ['見送り', 'なし', '棄権', 'abstain', 'none', 'わからない', '不明'].some(k => targetName.includes(k));
+
+                if (isAbstain) {
+                    abstainCount++;
+                    targetName = '見送り';
+                } else {
+                    const targetIdx = STATE.characters.findIndex(c =>
+                        c.name === targetName && STATE.aliveIndices.includes(c.index) && c.index !== idx
+                    );
+                    if (targetIdx !== -1) {
+                        tally[targetIdx] = (tally[targetIdx] || 0) + 1;
+                    } else {
+                        // 存在しない名前や自分自身への投票は見送りとみなす
+                        abstainCount++;
+                        targetName = '見送り';
+                    }
                 }
+                voteEntries.push({ voter: voterName, target: targetName });
             });
 
-            // ★ 投票を1件ずつ表示（間隔1800msに延長）
+            // 投票を1件ずつ表示（間隔1800ms）
             for (let i = 0; i < voteEntries.length; i++) {
                 if (!STATE.running) break;
                 if (STATE.paused) await waitUntilResume();
@@ -979,9 +963,8 @@
                 await waitFor(1800);
             }
 
-            // ★ 同数投票の修正
             if (Object.keys(tally).length === 0) {
-                addSystemMessage('⚖️ 有効な投票がありませんでした。', 'info');
+                addSystemMessage('⚖️ 全員が投票を見送りました。処刑者は決まりませんでした。', 'info');
                 renderCards();
                 await fastWait();
                 return;
@@ -990,12 +973,18 @@
             const maxVoteCount = Math.max(...Object.values(tally));
             const topCandidates = Object.entries(tally).filter(([, count]) => count === maxVoteCount);
 
+            // 1. 同票チェック
             if (topCandidates.length > 1) {
-                // 同数 → 処刑なし
                 const names = topCandidates.map(([idx]) => STATE.characters[parseInt(idx)].name);
                 addSystemMessage(`⚖️ 投票が ${names.join('・')} で同数（${maxVoteCount}票）のため、処刑者は決まりませんでした。`, 'info');
-            } else {
-                // 単独最多 → 処刑
+            }
+            // 2. 信任不足チェック（最多票が見送りの票数以下なら処刑しない）
+            else if (maxVoteCount <= abstainCount) {
+                const topName = STATE.characters[parseInt(topCandidates[0][0])].name;
+                addSystemMessage(`⚖️ ${topName}が${maxVoteCount}票を集めましたが、見送り（${abstainCount}票）を上回らなかったため、信任不足で処刑は見送られました。`, 'info');
+            }
+            // 3. 処刑
+            else {
                 const executed = parseInt(topCandidates[0][0]);
                 if (STATE.characters[executed].alive) {
                     STATE.characters[executed].alive = false;
@@ -1029,10 +1018,6 @@
             }
             return false;
         }
-
-        // ================================================================
-        //  メッセージ表示関数
-        // ================================================================
 
         function addSystemMessage(text, type = 'info') {
             const area = document.getElementById('messageArea');
@@ -1092,20 +1077,26 @@
             area.scrollTop = area.scrollHeight;
         }
 
-        // ★ 投票メッセージを見やすいテキスト形式に
+        // ★ 投票メッセージ（見送り対応）
         function addVoteMessage(voter, target) {
             const area = document.getElementById('messageArea');
             if (!area) return;
             const div = document.createElement('div');
             div.className = 'msg-vote';
             const time = new Date().toLocaleTimeString();
-            div.innerHTML = `<span class="msg-time">${time}</span> <span class="vote-icon">🗳️</span> <span class="voter">${escapeHtml(voter)}</span> <span class="vote-action">が</span> <span class="target">${escapeHtml(target)}</span> <span class="vote-action">に投票した</span>`;
+            
+            const isAbstain = target === '見送り';
+            const actionText = isAbstain 
+                ? `<span class="vote-action">は投票を</span> <span class="target abstain">見送った</span>` 
+                : `<span class="vote-action">が</span> <span class="target">${escapeHtml(target)}</span> <span class="vote-action">に投票した</span>`;
+                
+            div.innerHTML = `<span class="msg-time">${time}</span> <span class="vote-icon">🗳️</span> <span class="voter">${escapeHtml(voter)}</span> ${actionText}`;
             area.appendChild(div);
             area.scrollTop = area.scrollHeight;
         }
 
         // ================================================================
-        //  ★ プロンプトビルダー（大幅改善版・人数動的対応）
+        //  ★ プロンプトビルダー（議論の質向上・序盤の詰め寄り防止）
         // ================================================================
         function buildDayPrompt(round) {
             const alive = STATE.aliveIndices;
@@ -1180,15 +1171,16 @@ ${round > 1 ? '直前の発言を踏まえて、その内容に反応・反論�
 - 「◯◯が言ってたけど」のように、まだ発言していない人物の言葉を引用するのは矛盾なので厳禁
 - 発言順は毎回変えてください。同じキャラが毎回最初に喋るのは不自然です
 
-### ルール6: 役職ごとの立ち回り
+### ルール6: 【超重要】序盤の過剰な推理・「詰め寄り」の禁止
+まだ情報が少ない段階（特に1日目や2日目、あるいは決定的な証拠がない時）で、根拠なく「お前が人狼だ！」と断定したり、強く詰め寄ったりするのは**極めて不自然**です。
+- **村人陣営**: 序盤は**『違和感の共有』『情報収集』『他者の反応を見る』**ことに注力してください。「今の発言のここが気になった」「もう少し話を聞きたい」といった**問いかけや牽制**に留め、**確信のない状態で人狼だと決めつけるのはNG**です。
+- **人狼陣営**: 序盤から露骨に誰かを庇ったり逆に強く攻めたりすると不自然なので、村人と同じく「様子見・情報収集」のスタンスを取ること。
+- **全キャラ共通**: 「推理ゲーム」としての質は求めますが、**証拠がないのにいきなり誰かを人狼扱いする「早い詰め」は絶対に避けてください。** 人間味のある「迷い」や「探り合い」を表現してください。
+
+### ルール7: 役職ごとの立ち回り
 - 村人: 推理を言語化し、根拠を示して疑わしい人物を指摘する。「怪しい」だけでは不十分。なぜ怪しいかをキャラの言葉で説明する
 - 人狼: 村人のふりをして自然に議論に参加する。露骨に誰かを陥れようとすると不自然。むしろ「自分は村人だ」と主張しすぎない方が自然。時折、的を射た推理をして信頼を稼ぐ
 - 占い師: 占い結果をすぐに明かすかどうかはキャラの性格次第。慎重なキャラは様子を見る。直感的なキャラは早めに切り込む
-
-### ルール7: 「推理ゲーム」としての質
-全員が「〜かもしれませんね」のような曖昧な発言だけで終わるのは最悪です。
-最低でも2〜3人のキャラは、具体的な根拠（発言の矛盾、行動の不自然さ、役職の考察）に基づいた推理を述べてください。
-ただし、キャラの知能レベルに合わせた推理深度にすること。脳筋キャラが高度な論理展開をするのは不自然です。
 
 ## 出力形式
 JSONのみ。前置き・後書き・コードブロックの装飾は一切不要。
@@ -1257,6 +1249,7 @@ ${charInfo}
 }`;
         }
 
+        // ★ 投票プロンプト（見送り機能の追加）
         function buildVotePrompt() {
             const alive = STATE.aliveIndices;
             const n = STATE.characters.length;
@@ -1279,18 +1272,17 @@ ${charInfo}
 - 各キャラは自分の役職・性格・これまでの議論を踏まえて投票先を決める
 - 村人: 最も人狼らしいと判断した人物に投票
 - 人狼: 村人陣営の有力な推理者を排除したいが、露骨すぎると自分が疑われる。自然な投票先を選ぶ
+- **重要: 議論を通じて「誰が人狼か全く見当がつかない」「確信が持てない」場合は、無理に誰かに投票せず、必ず「見送り」と出力してください。**
 - 自分自身には投票できない
-- 投票理由は不要。投票先の名前だけ
 
 ## 出力（JSON）
 {
-  "キャラ名A": "投票先の名前",
-  "キャラ名B": "投票先の名前",
+  "キャラ名A": "投票先の名前 または 見送り",
+  "キャラ名B": "投票先の名前 または 見送り",
   ...
 }`;
         }
 
-        // -------- Gemini API --------
         async function callGemini(prompt) {
             if (!STATE.apiKey) throw new Error('APIキーなし');
             const models = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
@@ -1332,8 +1324,6 @@ ${charInfo}
             throw lastError || new Error('API Error');
         }
 
-        // -------- UIヘルパー --------
-        // ★ キャラカードのspeech吹き出しを削除（下部チャットと重複するため）
         function renderCards() {
             const container = document.getElementById('charCards');
             if (!container) return;
