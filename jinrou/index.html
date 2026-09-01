@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver3.16 - Gemini</title>
+    <title>全自動人狼 Ver3.17 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -137,8 +137,8 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.16</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 精度向上・見送り投票対応</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.17</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 因果関係バグ修正</span>
             </div>
             <div class="api-area">
                 <i class="fas fa-key" style="color:#6a8aaa;"></i>
@@ -240,7 +240,6 @@
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
 
-        // -------- 状態 --------
         const STATE = {
             apiKey: '',
             library: [],
@@ -431,9 +430,6 @@
             }
         }
 
-        // ================================================================
-        //  ★ キャラ説明文生成プロンプト（Ver3.16 原作セリフ厳格化）
-        // ================================================================
         function copyPromptFromInput() {
             const anime = document.getElementById('newAnime').value.trim() || '（作品名未入力）';
             const name = document.getElementById('newName').value.trim() || '（キャラ名未入力）';
@@ -638,7 +634,7 @@
             renderCards();
             document.getElementById('messageArea').innerHTML = '';
             const n = STATE.characters.length;
-            addSystemMessage(`🐺 Ver3.16 ゲーム開始！（${n}人対戦・見送り投票対応）`, 'info');
+            addSystemMessage(`🐺 Ver3.17 ゲーム開始！（${n}人対戦・因果関係バグ修正）`, 'info');
             assignRoles();
             gameLoop().catch(handleGameLoopError);
         }
@@ -903,9 +899,6 @@
             });
         }
 
-        // ================================================================
-        //  ★ 投票フェーズ（見送り機能・信任不足での不処刑対応）
-        // ================================================================
         async function votingPhase() {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
@@ -927,13 +920,12 @@
 
             const tally = {};
             const voteEntries = [];
-            let abstainCount = 0; // 見送り票数
+            let abstainCount = 0;
 
             alive.forEach(idx => {
                 const voterName = STATE.characters[idx].name;
                 let targetName = votes[voterName] || '';
                 
-                // 見送り判定（見送り、なし、棄権、空文字など）
                 const isAbstain = !targetName || ['見送り', 'なし', '棄権', 'abstain', 'none', 'わからない', '不明'].some(k => targetName.includes(k));
 
                 if (isAbstain) {
@@ -946,7 +938,6 @@
                     if (targetIdx !== -1) {
                         tally[targetIdx] = (tally[targetIdx] || 0) + 1;
                     } else {
-                        // 存在しない名前や自分自身への投票は見送りとみなす
                         abstainCount++;
                         targetName = '見送り';
                     }
@@ -954,7 +945,6 @@
                 voteEntries.push({ voter: voterName, target: targetName });
             });
 
-            // 投票を1件ずつ表示（間隔1800ms）
             for (let i = 0; i < voteEntries.length; i++) {
                 if (!STATE.running) break;
                 if (STATE.paused) await waitUntilResume();
@@ -973,17 +963,14 @@
             const maxVoteCount = Math.max(...Object.values(tally));
             const topCandidates = Object.entries(tally).filter(([, count]) => count === maxVoteCount);
 
-            // 1. 同票チェック
             if (topCandidates.length > 1) {
                 const names = topCandidates.map(([idx]) => STATE.characters[parseInt(idx)].name);
                 addSystemMessage(`⚖️ 投票が ${names.join('・')} で同数（${maxVoteCount}票）のため、処刑者は決まりませんでした。`, 'info');
             }
-            // 2. 信任不足チェック（最多票が見送りの票数以下なら処刑しない）
             else if (maxVoteCount <= abstainCount) {
                 const topName = STATE.characters[parseInt(topCandidates[0][0])].name;
                 addSystemMessage(`⚖️ ${topName}が${maxVoteCount}票を集めましたが、見送り（${abstainCount}票）を上回らなかったため、信任不足で処刑は見送られました。`, 'info');
             }
-            // 3. 処刑
             else {
                 const executed = parseInt(topCandidates[0][0]);
                 if (STATE.characters[executed].alive) {
@@ -1077,7 +1064,6 @@
             area.scrollTop = area.scrollHeight;
         }
 
-        // ★ 投票メッセージ（見送り対応）
         function addVoteMessage(voter, target) {
             const area = document.getElementById('messageArea');
             if (!area) return;
@@ -1096,7 +1082,7 @@
         }
 
         // ================================================================
-        //  ★ プロンプトビルダー（議論の質向上・序盤の詰め寄り防止）
+        //  ★ プロンプトビルダー（Ver3.17: 因果関係バグ修正）
         // ================================================================
         function buildDayPrompt(round) {
             const alive = STATE.aliveIndices;
@@ -1164,12 +1150,15 @@ ${n}人全員が同じような文章量・同じようなトーンで喋るの�
 ### ルール4: 前回の発言との「会話としての連続性」
 ${round > 1 ? '直前の発言を踏まえて、その内容に反応・反論・補足する形で会話を続けてください。完全に無関係な話題を突然始めるのは不自然です。ただし、全ての発言に逐一反応する必要はなく、自分のキャラが気になる発言だけに反応する方が自然です。' : '最初の議論です。自己紹介は不要で、いきなり本題（誰が怪しいか、どう推理するか）から入ってください。'}
 
-### ルール5: 発言順の因果関係（超重要）
+### ルール5: 発言順の因果関係と「未来予知」の禁止（超重要）
 出力JSONのキーの並び順＝実際の発言順（時系列）です。
-- 後ろに書くキャラは、自分より前に書かれたキャラの発言だけに反応できます
-- まだ書いていない（後に登場する）キャラの発言には絶対に言及しないでください
-- 「◯◯が言ってたけど」のように、まだ発言していない人物の言葉を引用するのは矛盾なので厳禁
-- 発言順は毎回変えてください。同じキャラが毎回最初に喋るのは不自然です
+- **自分より上に書かれた（先に発言した）キャラ**: 発言内容を読んで反応・同意・反論してOK。名前を出して引用するのもOK。
+- **自分より下に書かれる（まだ発言していない）キャラ**: **絶対にその発言内容を予測してはいけません。**
+  - ❌ NG例: 「魅音の言う通りだぜ」（※魅音がまだ発言していないのに同意している）
+  - ❌ NG例: 「レナが怪しいって言ってたけど」（※レナがまだ発言していないのに引用している）
+  - ⭕ OK例: 「魅音、お前はどう思う？」（※まだ発言していないキャラに話を振るのはOK）
+  - ⭕ OK例: 「みんな、落ち着いて話を聞こうぜ」（※特定の誰かの発言には言及しない）
+- **特に「同意」や「引用」をする場合は、必ず自分より前のキー（発言済みキャラ）に対して行ってください。存在しない発言に同意するのはバグです。**
 
 ### ルール6: 【超重要】序盤の過剰な推理・「詰め寄り」の禁止
 まだ情報が少ない段階（特に1日目や2日目、あるいは決定的な証拠がない時）で、根拠なく「お前が人狼だ！」と断定したり、強く詰め寄ったりするのは**極めて不自然**です。
@@ -1249,7 +1238,6 @@ ${charInfo}
 }`;
         }
 
-        // ★ 投票プロンプト（見送り機能の追加）
         function buildVotePrompt() {
             const alive = STATE.aliveIndices;
             const n = STATE.characters.length;
