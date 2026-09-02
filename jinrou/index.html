@@ -3,131 +3,343 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver3.17 - Gemini</title>
+    <title>全自動人狼 Ver4.0 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
+        /* ===== デザイントークン（ライトモード） ===== */
+        :root {
+            --bg: #eef1f6;
+            --surface: #ffffff;
+            --surface-2: #f7f9fc;
+            --surface-3: #eef3f9;
+            --border: #e2e8f0;
+            --border-strong: #c9d4e0;
+            --text: #16233a;
+            --text-2: #44546a;
+            --text-3: #7a8aa0;
+            --accent: #3b5bdb;          /* インディゴ */
+            --accent-soft: #e8edfc;
+            --accent-hover: #2f49b8;
+            --success: #1f8a5b;
+            --success-soft: #e2f4ec;
+            --warning: #b07514;
+            --warning-soft: #fdf3dd;
+            --danger: #c0392b;
+            --danger-soft: #fbe9e7;
+            --purple: #6d3bbf;
+            --purple-soft: #f0e8fb;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --shadow-card: 0 1px 3px rgba(16,30,54,0.06), 0 4px 14px rgba(16,30,54,0.05);
+            --shadow-lift: 0 4px 10px rgba(16,30,54,0.08), 0 12px 28px rgba(16,30,54,0.09);
+            --shadow-app: 0 8px 30px rgba(16,30,54,0.07), 0 2px 8px rgba(16,30,54,0.04);
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Noto Sans JP', 'Segoe UI', sans-serif; background: #e8edf3; color: #1e2a3a; min-height: 100vh; padding: 16px; }
-        #app { max-width: 1280px; margin: 0 auto; background: #ffffff; border-radius: 28px; box-shadow: 0 12px 40px rgba(0,0,0,0.08); padding: 24px 32px 28px; transition: all 0.3s; }
-        @media (max-width:600px){ #app { padding:14px 12px; border-radius:20px; } }
-        .app-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; border-bottom: 2px solid #eef2f7; padding-bottom: 12px; }
-        .app-header h1 { font-weight:700; font-size:1.6rem; color:#1a2a3a; display:flex; align-items:center; gap:8px; }
-        .app-header h1 i { color:#d35400; }
-        .app-header .sub { font-weight:400; color:#6a7a8a; font-size:0.8rem; background:#f0f4fa; padding:2px 12px; border-radius:40px; }
-        .api-area { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-        .api-area input { border:1.5px solid #dce3ec; border-radius:40px; padding:6px 14px; font-size:0.85rem; width:180px; background:#f8fafc; transition:0.2s; }
-        .api-area input:focus { border-color:#2d6a8a; outline:none; box-shadow:0 0 0 3px rgba(45,106,138,0.12); }
-        .api-area .status { font-size:0.75rem; color:#2a7a5a; font-weight:600; }
-        .tabs { display:flex; gap:4px; background:#f0f4fa; border-radius:40px; padding:4px; margin-bottom:20px; }
-        .tab-btn { flex:1; padding:8px 14px; border:none; background:transparent; border-radius:40px; font-weight:600; font-size:0.9rem; color:#5a6a7a; cursor:pointer; transition:0.25s; display:flex; align-items:center; justify-content:center; gap:6px; }
-        .tab-btn i { font-size:0.95rem; }
-        .tab-btn.active { background:#ffffff; color:#1a2a3a; box-shadow:0 4px 12px rgba(0,0,0,0.04); }
-        .tab-btn:hover:not(.active) { background:rgba(255,255,255,0.5); }
-        .tab-pane { display:none; animation:fadeUp 0.3s ease; }
-        .tab-pane.active { display:block; }
+        body {
+            font-family: 'Noto Sans JP', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(circle at 15% 0%, rgba(59,91,219,0.05), transparent 40%),
+                              radial-gradient(circle at 85% 100%, rgba(176,117,20,0.04), transparent 40%);
+            background-attachment: fixed;
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px 16px;
+        }
+        #app {
+            max-width: 1280px; margin: 0 auto;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-app);
+            border: 1px solid rgba(226,232,240,0.8);
+            padding: 26px 34px 30px;
+        }
+        @media (max-width:600px){ #app { padding:16px 14px; border-radius:18px; } }
+
+        /* ===== ヘッダー ===== */
+        .app-header {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 12px;
+            margin-bottom: 20px; padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .app-header h1 {
+            font-weight: 800; font-size: 1.55rem; letter-spacing: -0.01em;
+            color: var(--text); display: flex; align-items: center; gap: 10px;
+        }
+        .app-header h1 i { color: var(--warning); }
+        .app-header h1 .ver { font-size: 0.62rem; font-weight: 600; color: var(--text-3); background: var(--surface-3); padding: 3px 10px; border-radius: 999px; }
+        .app-header .sub {
+            font-weight: 500; color: var(--text-2); font-size: 0.78rem;
+            background: var(--surface-3); border: 1px solid var(--border);
+            padding: 4px 14px; border-radius: 999px; margin-top: 6px; display: inline-block;
+        }
+        .api-area { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .api-area input {
+            border: 1.5px solid var(--border); border-radius: 999px;
+            padding: 8px 16px; font-size: 0.85rem; width: 200px;
+            background: var(--surface-2); color: var(--text); transition: 0.2s;
+            font-family: inherit;
+        }
+        .api-area input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(59,91,219,0.12); background: #fff; }
+        .api-area .status { font-size: 0.75rem; color: var(--success); font-weight: 600; }
+
+        /* ===== タブ ===== */
+        .tabs {
+            display: flex; gap: 4px;
+            background: var(--surface-3); border: 1px solid var(--border);
+            border-radius: 999px; padding: 4px; margin-bottom: 22px;
+        }
+        .tab-btn {
+            flex: 1; padding: 9px 16px; border: none; background: transparent;
+            border-radius: 999px; font-weight: 600; font-size: 0.9rem;
+            color: var(--text-3); cursor: pointer; transition: 0.25s;
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            font-family: inherit;
+        }
+        .tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 2px 8px rgba(16,30,54,0.08); }
+        .tab-btn:hover:not(.active) { color: var(--text-2); background: rgba(255,255,255,0.6); }
+        .tab-pane { display: none; animation: fadeUp 0.3s ease; }
+        .tab-pane.active { display: block; }
         @keyframes fadeUp { 0%{opacity:0;transform:translateY(6px);} 100%{opacity:1;transform:translateY(0);} }
-        .btn { border:none; border-radius:40px; padding:8px 20px; font-weight:600; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer; transition:0.2s; }
-        .btn-primary { background:#2d6a8a; color:#fff; }
-        .btn-primary:hover { background:#1f5570; transform:translateY(-1px); box-shadow:0 4px 12px rgba(45,106,138,0.2); }
-        .btn-success { background:#2a7a5a; color:#fff; }
-        .btn-success:hover { background:#1e6046; transform:translateY(-1px); box-shadow:0 4px 12px rgba(42,122,90,0.2); }
-        .btn-warning { background:#d4a030; color:#fff; }
-        .btn-warning:hover { background:#b8892a; transform:translateY(-1px); box-shadow:0 4px 12px rgba(212,160,48,0.2); }
-        .btn-danger { background:#c0392b; color:#fff; }
-        .btn-danger:hover { background:#a03022; }
-        .btn-outline { background:transparent; border:1.5px solid #d0d8e0; color:#3a4a5a; }
-        .btn-outline:hover { background:#f0f4fa; border-color:#b0c0d0; }
-        .btn-sm { padding:4px 12px; font-size:0.75rem; }
-        .btn-copy { background:#f0e6d0; color:#6a5a3a; border-radius:40px; padding:4px 12px; font-size:0.75rem; font-weight:600; border:none; cursor:pointer; transition:0.2s; white-space:nowrap; }
-        .btn-copy:hover { background:#e6d8b8; }
-        .char-form-area { background:#f9fbfd; border-radius:18px; padding:18px; border:1px solid #e6ecf3; margin-bottom:20px; transition:border-color 0.3s; }
-        .char-form-area.editing { border-color:#d4a030; box-shadow:0 0 0 3px rgba(212,160,48,0.12); }
-        .char-form-area .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-        .char-form-area .form-row .full { grid-column:1/-1; }
-        .char-form-area label { display:block; font-size:0.75rem; font-weight:600; color:#5a6a7a; margin-bottom:2px; }
-        .char-form-area input, .char-form-area textarea { width:100%; border:1.5px solid #dce3ec; border-radius:12px; padding:6px 10px; font-size:0.85rem; background:#fff; transition:0.2s; font-family:inherit; }
-        .char-form-area input:focus, .char-form-area textarea:focus { border-color:#2d6a8a; outline:none; box-shadow:0 0 0 3px rgba(45,106,138,0.08); }
-        .char-form-area textarea { resize:vertical; min-height:44px; }
-        .char-form-area .form-actions { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; align-items:center; }
-        .char-form-area .edit-badge { display:none; font-size:0.75rem; color:#d4a030; font-weight:600; margin-left:6px; }
-        .char-form-area.editing .edit-badge { display:inline; }
-        .library-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
-        .library-header .count { font-size:0.85rem; color:#5a6a7a; }
-        .library-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:12px; }
-        .library-card { background:#f9fbfd; border-radius:16px; padding:12px; border:2px solid #e6ecf3; text-align:center; cursor:pointer; transition:0.25s; position:relative; }
-        .library-card:hover { border-color:#b0c8d8; transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.04); }
-        .library-card.selected { border-color:#2d6a8a; background:#eef6fa; box-shadow:0 0 0 3px rgba(45,106,138,0.12); }
-        .library-card .avatar { width:56px; height:56px; border-radius:50%; object-fit:cover; margin:0 auto 4px; border:2px solid #dce3ec; background:#fff; }
-        .library-card .avatar-placeholder { width:56px; height:56px; border-radius:50%; margin:0 auto 4px; background:#eef2f7; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:700; color:#4a6a8a; border:2px solid #dce3ec; }
-        .library-card .lname { font-weight:700; font-size:0.9rem; }
-        .library-card .lanime { font-size:0.7rem; color:#7a8a9a; }
-        .library-card .lbadge { display:inline-block; background:#2d6a8a; color:#fff; font-size:0.55rem; padding:1px 8px; border-radius:40px; margin-top:2px; }
-        .library-card .card-actions { display:flex; justify-content:center; gap:4px; margin-top:6px; }
-        .library-card .card-actions button { border:none; border-radius:40px; padding:1px 8px; font-size:0.65rem; cursor:pointer; transition:0.2s; display:inline-flex; align-items:center; gap:3px; }
-        .library-card .card-actions .edit-btn { background:#f0e6d0; color:#6a5a3a; }
-        .library-card .card-actions .edit-btn:hover { background:#e6d8b8; }
-        .library-card .card-actions .delete-btn { background:rgba(200,50,50,0.8); color:#fff; }
-        .library-card .card-actions .delete-btn:hover { background:#c0392b; }
-        .library-card .select-badge { position:absolute; bottom:4px; right:4px; background:#2d6a8a; color:#fff; border-radius:40px; padding:1px 8px; font-size:0.6rem; font-weight:600; }
-        .game-header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; }
-        .game-phase { font-size:1.2rem; font-weight:700; color:#1a2a3a; }
-        .game-phase i { color:#d35400; margin-right:6px; }
-        .game-day { font-size:0.85rem; color:#5a6a7a; background:#f0f4fa; padding:2px 14px; border-radius:40px; font-weight:600; }
-        .game-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-        .game-controls .speed-wrap { display:flex; align-items:center; gap:4px; font-size:0.75rem; color:#5a6a7a; }
-        .game-controls .speed-wrap input[type="range"] { width:80px; accent-color:#2d6a8a; }
-        .game-controls .speed-wrap .speed-label { font-size:0.65rem; color:#8a9aaa; }
-        .message-area { background:#f8fafc; border-radius:16px; padding:14px 16px; max-height:420px; overflow-y:auto; border:1px solid #e6ecf3; margin-top:12px; display:flex; flex-direction:column; gap:8px; }
-        .message-area::-webkit-scrollbar { width:5px; }
-        .message-area::-webkit-scrollbar-track { background:#f0f4fa; border-radius:10px; }
-        .message-area::-webkit-scrollbar-thumb { background:#c8d4e0; border-radius:10px; }
-        .msg-time { font-size:0.6rem; color:#9aabba; margin-right:8px; white-space:nowrap; }
-        .msg-system { text-align:center; font-size:0.75rem; color:#6a7a8a; background:#eef2f7; padding:4px 14px; border-radius:40px; display:inline-block; margin:2px auto; max-width:90%; font-weight:500; }
-        .msg-system .msg-time { color:#8a9aaa; margin-right:6px; }
-        .msg-system.death { background:#fce4e4; color:#b03a3a; }
-        .msg-system.reveal { background:#ede4f7; color:#7a4a9a; }
-        .msg-system.info { background:#e4f0f7; color:#2a6a8a; }
-        .msg-system.vote { background:#f0f0e8; color:#6a5a3a; font-size:0.7rem; }
-        .msg-system.win { background:#fce8c8; color:#b06a2a; font-weight:700; }
-        .msg-conversation { display:flex; align-items:flex-start; gap:10px; margin:2px 0; }
-        .msg-conversation .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #dce3ec; flex-shrink:0; background:#fff; }
-        .msg-conversation .avatar-placeholder { width:40px; height:40px; border-radius:50%; background:#eef2f7; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:700; color:#4a6a8a; border:2px solid #dce3ec; flex-shrink:0; }
-        .msg-conversation .bubble { flex:1; background:#ffffff; border-radius:12px 12px 12px 4px; padding:8px 14px; box-shadow:0 1px 4px rgba(0,0,0,0.04); border:1px solid #e6ecf3; max-width:calc(100% - 56px); }
-        .msg-conversation .bubble .name { font-weight:700; font-size:0.8rem; color:#2a3a4a; margin-bottom:2px; display:flex; align-items:center; gap:6px; }
-        .msg-conversation .bubble .name .msg-time { font-weight:400; font-size:0.6rem; color:#9aabba; }
-        .msg-conversation .bubble .text { font-size:0.9rem; color:#1a2a3a; word-break:break-word; line-height:1.5; }
-        .msg-conversation.self { flex-direction:row-reverse; }
-        .msg-conversation.self .bubble { border-radius:12px 12px 4px 12px; background:#dce8f5; }
-        .msg-vote { display:flex; align-items:center; gap:8px; background:#f4f6f0; border-radius:12px; padding:6px 14px; font-size:0.82rem; color:#3a4a3a; border-left:3px solid #b0b8a0; margin:2px 0; line-height:1.5; }
-        .msg-vote .msg-time { font-size:0.6rem; color:#9aabba; flex-shrink:0; }
-        .msg-vote .vote-icon { font-size:0.9rem; flex-shrink:0; }
-        .msg-vote .voter { font-weight:700; color:#1a2a3a; }
-        .msg-vote .vote-action { color:#6a7a6a; font-weight:400; }
-        .msg-vote .target { font-weight:700; color:#c0392b; }
-        .msg-vote .target.abstain { color:#7a8a9a; font-weight:600; }
-        .char-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px; margin:12px 0; }
-        .char-card { background:#f9fbfd; border-radius:14px; padding:10px 8px; border:1px solid #e6ecf3; text-align:center; transition:0.25s; }
-        .char-card.dead { opacity:0.45; filter:grayscale(0.7); border-color:#e0c8c8; }
-        .char-card .avatar { width:56px; height:56px; border-radius:50%; object-fit:cover; margin:0 auto 4px; border:2px solid #dce3ec; background:#fff; }
-        .char-card .avatar-placeholder { width:56px; height:56px; border-radius:50%; margin:0 auto 4px; background:#eef2f7; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:700; color:#4a6a8a; border:2px solid #dce3ec; }
-        .char-card .name { font-weight:700; font-size:0.85rem; }
-        .char-card .anime { font-size:0.6rem; color:#7a8a9a; }
-        .char-card .role-badge { display:inline-block; padding:1px 10px; border-radius:40px; font-size:0.6rem; font-weight:700; margin-top:2px; }
-        .role-badge.werewolf { background:#fce4e4; color:#b03a3a; }
-        .role-badge.villager { background:#e4f0f7; color:#2a6a8a; }
-        .role-badge.fortuneteller { background:#ede4f7; color:#7a4a9a; }
+
+        /* ===== ボタン ===== */
+        .btn {
+            border: none; border-radius: 999px; padding: 9px 22px;
+            font-weight: 600; font-size: 0.85rem;
+            display: inline-flex; align-items: center; gap: 7px;
+            cursor: pointer; transition: 0.2s; font-family: inherit;
+        }
+        .btn:active { transform: translateY(1px); }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 12px rgba(59,91,219,0.25); }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-success:hover { background: #177048; box-shadow: 0 4px 12px rgba(31,138,91,0.25); }
+        .btn-warning { background: var(--warning); color: #fff; }
+        .btn-warning:hover { background: #94630f; box-shadow: 0 4px 12px rgba(176,117,20,0.25); }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: #a02e21; box-shadow: 0 4px 12px rgba(192,57,43,0.25); }
+        .btn-outline { background: var(--surface); border: 1.5px solid var(--border-strong); color: var(--text-2); }
+        .btn-outline:hover { background: var(--surface-3); border-color: #a9b8c8; }
+        .btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+        .btn-copy {
+            background: var(--warning-soft); color: var(--warning);
+            border: 1px solid #ecd9ae;
+            border-radius: 999px; padding: 6px 14px; font-size: 0.75rem;
+            font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap;
+        }
+        .btn-copy:hover { background: #f7e8c8; }
+
+        /* ===== キャラフォーム ===== */
+        .char-form-area {
+            background: var(--surface-2); border-radius: var(--radius-md);
+            padding: 20px; border: 1.5px solid var(--border);
+            margin-bottom: 22px; transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .char-form-area.editing { border-color: var(--warning); box-shadow: 0 0 0 3px rgba(176,117,20,0.10); }
+        .char-form-area .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .char-form-area .form-row .full { grid-column: 1/-1; }
+        .char-form-area label { display: block; font-size: 0.73rem; font-weight: 700; color: var(--text-2); margin-bottom: 4px; letter-spacing: 0.02em; }
+        .char-form-area input, .char-form-area textarea {
+            width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+            padding: 8px 12px; font-size: 0.85rem; background: #fff; color: var(--text);
+            transition: 0.2s; font-family: inherit;
+        }
+        .char-form-area input:focus, .char-form-area textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(59,91,219,0.10); }
+        .char-form-area textarea { resize: vertical; min-height: 46px; }
+        .char-form-area .form-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+        .char-form-area .edit-badge { display: none; font-size: 0.73rem; color: var(--warning); font-weight: 700; margin-left: 6px; }
+        .char-form-area.editing .edit-badge { display: inline; }
+
+        /* ===== ライブラリ ===== */
+        .library-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+        .library-header .count { font-size: 0.83rem; color: var(--text-3); margin-left: 8px; }
+        .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px,1fr)); gap: 12px; }
+        .library-card {
+            background: var(--surface-2); border-radius: var(--radius-md);
+            padding: 14px 12px; border: 2px solid var(--border);
+            text-align: center; cursor: pointer; transition: 0.22s; position: relative;
+        }
+        .library-card:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: var(--shadow-card); }
+        .library-card.selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 3px rgba(59,91,219,0.10); }
+        .library-card .avatar, .library-card .avatar-placeholder {
+            width: 58px; height: 58px; border-radius: 50%;
+            margin: 0 auto 6px; border: 2px solid var(--border-strong);
+        }
+        .library-card .avatar { object-fit: cover; background: #fff; }
+        .library-card .avatar-placeholder {
+            background: var(--surface-3); display: flex; align-items: center; justify-content: center;
+            font-size: 1.55rem; font-weight: 800; color: var(--accent);
+        }
+        .library-card.selected .avatar, .library-card.selected .avatar-placeholder { border-color: var(--accent); }
+        .library-card .lname { font-weight: 700; font-size: 0.88rem; }
+        .library-card .lanime { font-size: 0.68rem; color: var(--text-3); margin-top: 1px; }
+        .library-card .lbadge {
+            display: inline-block; background: var(--surface-3); color: var(--text-3);
+            font-size: 0.56rem; padding: 2px 10px; border-radius: 999px; margin-top: 5px; font-weight: 600;
+        }
+        .library-card.selected .lbadge { background: var(--accent); color: #fff; }
+        .library-card .card-actions { display: flex; justify-content: center; gap: 5px; margin-top: 8px; }
+        .library-card .card-actions button {
+            border: none; border-radius: 999px; padding: 3px 10px; font-size: 0.66rem;
+            cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px;
+            font-weight: 600; font-family: inherit;
+        }
+        .library-card .card-actions .edit-btn { background: var(--warning-soft); color: var(--warning); }
+        .library-card .card-actions .edit-btn:hover { background: #f7e8c8; }
+        .library-card .card-actions .delete-btn { background: var(--danger-soft); color: var(--danger); }
+        .library-card .card-actions .delete-btn:hover { background: #f5d4cf; }
+        .library-card .select-badge {
+            position: absolute; top: 8px; right: 8px;
+            background: var(--accent); color: #fff;
+            width: 22px; height: 22px; border-radius: 50%;
+            font-size: 0.66rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 6px rgba(59,91,219,0.35);
+        }
+
+        /* ===== ゲーム画面 ===== */
+        .game-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .phase-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--accent-soft); border: 1px solid #ccd7f5;
+            color: var(--accent-hover);
+            font-size: 0.95rem; font-weight: 700;
+            padding: 7px 18px; border-radius: 999px;
+        }
+        .phase-badge.night { background: #eceafb; border-color: #d6cdf0; color: var(--purple); }
+        .phase-badge.vote-phase { background: var(--warning-soft); border-color: #ecd9ae; color: var(--warning); }
+        .phase-badge.end { background: var(--success-soft); border-color: #c4e6d6; color: var(--success); }
+        .game-day {
+            font-size: 0.82rem; color: var(--text-2);
+            background: var(--surface-3); border: 1px solid var(--border);
+            padding: 4px 16px; border-radius: 999px; font-weight: 700;
+        }
+        .game-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .game-controls .speed-wrap { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-2); }
+        .game-controls .speed-wrap input[type="range"] { width: 84px; accent-color: var(--accent); }
+        .game-controls .speed-wrap .speed-label { font-size: 0.64rem; color: var(--text-3); }
+
+        .char-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px,1fr)); gap: 10px; margin: 14px 0; }
+        .char-card {
+            background: var(--surface-2); border-radius: var(--radius-md);
+            padding: 12px 8px; border: 1.5px solid var(--border);
+            text-align: center; transition: 0.25s; position: relative;
+        }
+        .char-card .avatar, .char-card .avatar-placeholder {
+            width: 56px; height: 56px; border-radius: 50%;
+            margin: 0 auto 5px; border: 2px solid var(--border-strong);
+        }
+        .char-card .avatar { object-fit: cover; background: #fff; }
+        .char-card .avatar-placeholder {
+            background: var(--surface-3); display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: 800; color: var(--accent);
+        }
+        .char-card .name { font-weight: 700; font-size: 0.84rem; }
+        .char-card .anime { font-size: 0.6rem; color: var(--text-3); }
+        .char-card .role-badge { display: inline-block; padding: 2px 12px; border-radius: 999px; font-size: 0.62rem; font-weight: 700; margin-top: 4px; }
+        .role-badge.werewolf { background: var(--danger-soft); color: var(--danger); }
+        .role-badge.villager { background: var(--accent-soft); color: var(--accent-hover); }
+        .role-badge.fortuneteller { background: var(--purple-soft); color: var(--purple); }
+        .char-card.dead { opacity: 0.5; filter: grayscale(0.85); }
+        .char-card.dead .avatar, .char-card.dead .avatar-placeholder { border-color: #d8a8a2; }
+        .char-card .dead-ribbon {
+            position: absolute; top: 6px; left: 50%; transform: translateX(-50%) rotate(-4deg);
+            background: var(--danger); color: #fff; font-size: 0.55rem; font-weight: 800;
+            padding: 2px 10px; border-radius: 4px; letter-spacing: 0.08em;
+            box-shadow: 0 2px 6px rgba(192,57,43,0.4); display: none;
+        }
+        .char-card.dead .dead-ribbon { display: block; }
+
+        /* ===== メッセージエリア ===== */
+        .message-area {
+            background: var(--surface-2); border-radius: var(--radius-md);
+            padding: 16px 18px; max-height: 440px; overflow-y: auto;
+            border: 1px solid var(--border); margin-top: 12px;
+            display: flex; flex-direction: column; gap: 9px;
+        }
+        .message-area::-webkit-scrollbar { width: 6px; }
+        .message-area::-webkit-scrollbar-track { background: var(--surface-3); border-radius: 10px; }
+        .message-area::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+        .message-area::-webkit-scrollbar-thumb:hover { background: #a9b8c8; }
+        .msg-time { font-size: 0.6rem; color: var(--text-3); margin-right: 8px; white-space: nowrap; }
+        .msg-system {
+            text-align: center; font-size: 0.76rem; color: var(--text-2);
+            background: var(--surface-3); border: 1px solid var(--border);
+            padding: 5px 16px; border-radius: 999px; display: inline-block;
+            margin: 2px auto; max-width: 92%; font-weight: 600;
+        }
+        .msg-system.death { background: var(--danger-soft); color: var(--danger); border-color: #f0cdc8; }
+        .msg-system.reveal { background: var(--purple-soft); color: var(--purple); border-color: #ddc9f2; }
+        .msg-system.info { background: var(--accent-soft); color: var(--accent-hover); border-color: #ccd7f5; }
+        .msg-system.vote { background: var(--warning-soft); color: var(--warning); border-color: #ecd9ae; }
+        .msg-system.win { background: var(--success-soft); color: var(--success); border-color: #c4e6d6; font-weight: 800; font-size: 0.85rem; }
+
+        .msg-conversation { display: flex; align-items: flex-start; gap: 10px; margin: 2px 0; }
+        .msg-conversation .avatar, .msg-conversation .avatar-placeholder {
+            width: 42px; height: 42px; border-radius: 50%;
+            border: 2px solid var(--border-strong); flex-shrink: 0;
+        }
+        .msg-conversation .avatar { object-fit: cover; background: #fff; }
+        .msg-conversation .avatar-placeholder {
+            background: var(--surface-3); display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: 800; color: var(--accent);
+        }
+        .msg-conversation .bubble {
+            flex: 1; background: var(--surface); border-radius: 14px 14px 14px 5px;
+            padding: 9px 15px; box-shadow: var(--shadow-card);
+            border: 1px solid var(--border); max-width: calc(100% - 56px);
+        }
+        .msg-conversation .bubble .name {
+            font-weight: 700; font-size: 0.8rem; color: var(--text);
+            margin-bottom: 3px; display: flex; align-items: center; gap: 6px;
+        }
+        .msg-conversation .bubble .name .msg-time { font-weight: 400; font-size: 0.6rem; color: var(--text-3); }
+        .msg-conversation .bubble .text { font-size: 0.9rem; color: var(--text); word-break: break-word; line-height: 1.55; }
+
+        .msg-vote {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--warning-soft); border: 1px solid #ecd9ae;
+            border-radius: var(--radius-sm); padding: 7px 15px;
+            font-size: 0.82rem; color: #6a5424;
+            border-left: 3px solid #d9b96a; margin: 2px 0; line-height: 1.5;
+        }
+        .msg-vote .msg-time { font-size: 0.6rem; color: var(--text-3); flex-shrink: 0; }
+        .msg-vote .vote-icon { font-size: 0.9rem; flex-shrink: 0; }
+        .msg-vote .voter { font-weight: 700; color: var(--text); }
+        .msg-vote .vote-action { color: var(--text-2); font-weight: 400; }
+        .msg-vote .target { font-weight: 700; color: var(--danger); }
+        .msg-vote .target.abstain { color: var(--text-3); font-weight: 600; }
+
+        /* ===== ローディング ===== */
+        .ai-thinking {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 0.75rem; color: var(--text-3); font-weight: 600;
+            background: var(--surface-3); border: 1px solid var(--border);
+            padding: 5px 14px; border-radius: 999px; margin: 2px auto;
+        }
+        .ai-thinking .dots { display: inline-flex; gap: 3px; }
+        .ai-thinking .dots span {
+            width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+            animation: bounce 1.2s infinite;
+        }
+        .ai-thinking .dots span:nth-child(2) { animation-delay: 0.15s; }
+        .ai-thinking .dots span:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
+
         @media (max-width:600px) {
-            .app-header { flex-direction:column; align-items:stretch; }
-            .api-area input { width:100%; }
-            .tabs { flex-direction:column; border-radius:20px; }
-            .char-form-area .form-row { grid-template-columns:1fr; }
-            .library-grid { grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); }
-            .char-cards { grid-template-columns:repeat(auto-fit, minmax(100px,1fr)); }
-            .game-header { flex-direction:column; align-items:stretch; }
-            .msg-conversation .bubble { max-width:100%; }
+            .app-header { flex-direction: column; align-items: stretch; }
+            .api-area input { width: 100%; }
+            .tabs { flex-direction: column; border-radius: 18px; }
+            .char-form-area .form-row { grid-template-columns: 1fr; }
+            .library-grid { grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); }
+            .char-cards { grid-template-columns: repeat(auto-fit, minmax(100px,1fr)); }
+            .game-header { flex-direction: column; align-items: stretch; }
+            .msg-conversation .bubble { max-width: 100%; }
         }
     </style>
 </head>
@@ -137,11 +349,11 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span style="font-size:0.6rem;color:#6a8aaa;">Ver3.17</span></h1>
-                <span class="sub"><i class="fas fa-robot"></i> Gemini 3.5 Flash Lite — 因果関係バグ修正</span>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver4.0</span></h1>
+                <span class="sub"><i class="fas fa-robot"></i> Gemini — AIキャラ人狼シミュレーター</span>
             </div>
             <div class="api-area">
-                <i class="fas fa-key" style="color:#6a8aaa;"></i>
+                <i class="fas fa-key" style="color:var(--text-3);"></i>
                 <input type="password" id="apiKeyInput" placeholder="AIzaSy..." />
                 <button class="btn btn-primary btn-sm" id="saveApiKeyBtn"><i class="fas fa-save"></i> 保存</button>
                 <span class="status" id="apiKeyStatus"></span>
@@ -159,8 +371,8 @@
         <!-- ========================================================= -->
         <div id="tab-library" class="tab-pane active">
             <div class="char-form-area" id="charFormArea">
-                <h3 style="margin-bottom:10px;font-size:1rem;">
-                    <i class="fas fa-user-plus" style="color:#2d6a8a;"></i>
+                <h3 style="margin-bottom:12px;font-size:1rem;">
+                    <i class="fas fa-user-plus" style="color:var(--accent);"></i>
                     <span id="formTitle">新しいキャラクターを作成</span>
                     <span class="edit-badge"><i class="fas fa-pen"></i> 編集中</span>
                 </h3>
@@ -194,18 +406,18 @@
 
             <div class="library-header">
                 <div>
-                    <span style="font-weight:700;font-size:1rem;"><i class="fas fa-users"></i> キャラクターライブラリ</span>
+                    <span style="font-weight:700;font-size:1rem;"><i class="fas fa-users" style="color:var(--accent);"></i> キャラクターライブラリ</span>
                     <span class="count" id="libraryCount">0 キャラ</span>
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <span style="font-size:0.8rem;color:#5a6a7a;display:flex;align-items:center;">
-                        <i class="fas fa-check-circle" style="color:#2d6a8a;margin-right:4px;"></i> 選択中: <span id="selectedCount">0</span>/10
+                    <span style="font-size:0.8rem;color:var(--text-2);display:flex;align-items:center;font-weight:600;">
+                        <i class="fas fa-check-circle" style="color:var(--accent);margin-right:4px;"></i> 選択中: <span id="selectedCount">0</span>/10
                     </span>
                     <button class="btn btn-success btn-sm" id="startGameFromLibrary"><i class="fas fa-play"></i> 選択したキャラでゲーム開始</button>
                 </div>
             </div>
             <div class="library-grid" id="libraryGrid"></div>
-            <p style="margin-top:10px;font-size:0.75rem;color:#7a8a9a;text-align:center;">
+            <p style="margin-top:12px;font-size:0.75rem;color:var(--text-3);text-align:center;">
                 <i class="fas fa-info-circle"></i> キャラをクリックで選択/解除（6〜10人）。✏️編集ボタンで情報を変更できます。
             </p>
         </div>
@@ -215,8 +427,8 @@
         <!-- ========================================================= -->
         <div id="tab-game" class="tab-pane">
             <div class="game-header">
-                <div>
-                    <span class="game-phase" id="phaseDisplay"><i class="fas fa-hourglass-half"></i> 待機中</span>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <span class="phase-badge" id="phaseDisplay"><i class="fas fa-hourglass-half"></i> 待機中</span>
                     <span class="game-day" id="dayCounter">0日目</span>
                 </div>
                 <div class="game-controls">
@@ -239,6 +451,7 @@
     <script>
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
+        const VERSION = 'Ver4.0';
 
         const STATE = {
             apiKey: '',
@@ -258,7 +471,8 @@
             fortuneSecret: '',
             editingId: null,
             conversationLog: [],
-            isFirstNight: true,
+            // Ver4.0: ゲーム世代管理（リセット後に旧ループが書き込まないようにする）
+            gameToken: 0,
         };
 
         const STORAGE_KEY = 'werewolf_library';
@@ -268,6 +482,11 @@
             return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
             }[ch]));
+        }
+
+        // 現在のゲームが有効か確認（リセット後の旧ループ書き込み防止）
+        function isCurrentGame(token) {
+            return STATE.running && token === STATE.gameToken;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -607,6 +826,10 @@
                 return;
             }
 
+            // 新しいゲーム世代を発行（旧ループを無効化）
+            STATE.gameToken++;
+            const token = STATE.gameToken;
+
             STATE.characters = selectedChars.map((c, idx) => ({
                 index: idx,
                 anime: c.anime,
@@ -624,7 +847,6 @@
             STATE.paused = false;
             STATE.fortuneSecret = '';
             STATE.conversationLog = [];
-            STATE.isFirstNight = true;
 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('[data-tab="game"]').classList.add('active');
@@ -633,10 +855,12 @@
 
             renderCards();
             document.getElementById('messageArea').innerHTML = '';
+            document.getElementById('dayCounter').textContent = '0日目';
+            setPhase('⏳ 準備中…', '');
             const n = STATE.characters.length;
-            addSystemMessage(`🐺 Ver3.17 ゲーム開始！（${n}人対戦・因果関係バグ修正）`, 'info');
+            addSystemMessage(`🐺 ${VERSION} ゲーム開始！（${n}人対戦）`, 'info');
             assignRoles();
-            gameLoop().catch(handleGameLoopError);
+            gameLoop(token).catch(handleGameLoopError);
         }
 
         function getRoleComposition(n) {
@@ -682,81 +906,92 @@
 
         function handleGameLoopError(e) {
             console.error('ゲームループでエラーが発生しました:', e);
-            addSystemMessage('⚠️ エラーが発生したためゲームを停止しました。コンソールを確認してください。', 'info');
+            addSystemMessage('⚠️ エラーが発生したためゲームを停止しました。APIキーや通信状況を確認してください。', 'info');
             STATE.running = false;
         }
 
-        async function gameLoop() {
-            if (!STATE.running) return;
+        // 「思考中」インジケーター
+        function showThinking(text) {
+            const area = document.getElementById('messageArea');
+            if (!area) return null;
+            const div = document.createElement('div');
+            div.className = 'ai-thinking';
+            div.innerHTML = `<i class="fas fa-brain"></i> ${escapeHtml(text)} <span class="dots"><span></span><span></span><span></span></span>`;
+            area.appendChild(div);
+            area.scrollTop = area.scrollHeight;
+            return div;
+        }
+
+        async function gameLoop(token) {
+            if (!isCurrentGame(token)) return;
             try {
                 STATE.day++;
                 document.getElementById('dayCounter').textContent = `${STATE.day}日目`;
+                addSystemMessage(`🌅 ${STATE.day}日目が始まります。`, 'info');
 
-                if (STATE.day === 1) {
-                    addSystemMessage(`🌅 ${STATE.day}日目が始まります。`, 'info');
-                } else {
-                    addSystemMessage(`🌅 ${STATE.day}日目が始まります。`, 'info');
-                }
-
-                await setPhase('🌙 夜フェーズ');
+                // --- 夜フェーズ（1日目は襲撃なし、占いのみ初夜から実施する簡易ルール）---
+                setPhase('🌙 夜フェーズ', 'night');
                 await fastWait();
-
-                if (STATE.isFirstNight) {
-                    STATE.isFirstNight = false;
-                } else {
-                    await nightPhase();
+                let nightVictim = null;
+                if (STATE.day > 1) {
+                    if (!isCurrentGame(token)) return;
+                    nightVictim = await nightPhase(token);
                 }
-
+                if (!isCurrentGame(token)) return;
                 if (checkGameEnd()) return;
 
-                await setPhase('☀️ 昼フェーズ（議論）');
+                // --- 昼フェーズ ---
+                setPhase('☀️ 昼フェーズ（議論）', '');
                 await fastWait();
 
-                if (!STATE.isFirstNight) {
-                    const killed = STATE.characters.filter(c => !c.alive);
-                    if (killed.length > 0) {
-                        const names = killed.map(c => c.name).join('、');
-                        addSystemMessage(`💀 昨夜、${names} が命を落としました。`, 'death');
+                // Ver4.0 fix: 昨夜襲撃された人だけを発表する
+                if (STATE.day > 1) {
+                    if (nightVictim !== null) {
+                        addSystemMessage(`💀 昨夜、${STATE.characters[nightVictim].name} が命を落としました。`, 'death');
                     } else {
-                        addSystemMessage('😴 昨夜は誰も死にませんでした。', 'info');
+                        addSystemMessage('😴 昨夜は誰も襲われませんでした。', 'info');
                     }
                 }
 
                 STATE.conversationLog = STATE.conversationLog.slice(-20);
 
                 for (let round = 1; round <= 3; round++) {
-                    if (!STATE.running) return;
+                    if (!isCurrentGame(token)) return;
                     if (STATE.paused) await waitUntilResume();
-                    await setPhase(`☀️ 議論 ${round}/3`);
+                    if (!isCurrentGame(token)) return;
+                    setPhase(`☀️ 議論 ${round}/3`, '');
                     await wait(STATE.speed);
-                    await dayDiscussion(round);
+                    await dayDiscussion(round, token);
                     renderCards();
                     if (checkGameEnd()) return;
                 }
 
-                await setPhase('🗳️ 投票フェーズ');
+                setPhase('🗳️ 投票フェーズ', 'vote-phase');
                 await fastWait();
-                await votingPhase();
+                await votingPhase(token);
                 renderCards();
                 if (checkGameEnd()) return;
 
                 addSystemMessage(`🌙 ${STATE.day}日目が終了しました。`, 'info');
                 await fastWait();
-                setTimeout(() => gameLoop().catch(handleGameLoopError), 100);
+                setTimeout(() => { if (isCurrentGame(token)) gameLoop(token).catch(handleGameLoopError); }, 100);
             } catch (e) {
                 handleGameLoopError(e);
             }
         }
 
-        async function nightPhase() {
+        async function nightPhase(token) {
             const alive = STATE.aliveIndices;
             const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
             const fortuneIdx = STATE.fortuneTellerIndex;
 
             let attackTarget = -1;
             if (wolves.length > 0 && alive.length > 0) {
+                const thinking = showThinking('人狼が襲撃先を相談しています…');
                 const wolfPrompt = buildWolfNightPrompt();
                 const response = await callGemini(wolfPrompt);
+                if (thinking) thinking.remove();
+                if (!isCurrentGame(token)) return null;
                 let votes = {};
                 try {
                     votes = JSON.parse(response);
@@ -793,8 +1028,11 @@
 
             let fortuneTarget = -1;
             if (fortuneIdx !== -1 && STATE.characters[fortuneIdx].alive) {
+                const thinking = showThinking('占い師が占い先を選んでいます…');
                 const fortunePrompt = buildFortuneNightPrompt();
                 const response = await callGemini(fortunePrompt);
+                if (thinking) thinking.remove();
+                if (!isCurrentGame(token)) return null;
                 try {
                     const json = JSON.parse(response);
                     const targetName = json.fortune_teller_target || '';
@@ -812,31 +1050,37 @@
                 }
             }
 
+            let victim = null;
             if (attackTarget !== -1 && STATE.characters[attackTarget].alive) {
                 STATE.characters[attackTarget].alive = false;
                 STATE.aliveIndices = STATE.aliveIndices.filter(i => i !== attackTarget);
                 STATE.characters[attackTarget].speech = '⚰️ 死亡';
+                victim = attackTarget;
                 addSystemMessage(`🐺 ${STATE.characters[attackTarget].name} が襲撃されました。`, 'death');
             }
 
-            if (fortuneTarget !== -1 && STATE.characters[fortuneTarget].alive) {
+            // Ver4.0 fix: 占い師が死んだ場合・占い対象がいない場合は古い秘密情報を残さない
+            STATE.fortuneSecret = '';
+            if (fortuneTarget !== -1 && STATE.characters[fortuneTarget] && fortuneIdx !== -1 && STATE.characters[fortuneIdx].alive) {
                 const isWolf = STATE.werewolfIndices.includes(fortuneTarget);
                 const targetName = STATE.characters[fortuneTarget].name;
                 STATE.fortuneSecret = `${targetName} は ${isWolf ? '人狼' : '村人'} でした。`;
                 addSystemMessage(`🔮 占い師が ${targetName} を占いました。`, 'info');
-            } else {
-                STATE.fortuneSecret = '';
             }
             renderCards();
             await fastWait();
+            return victim;
         }
 
-        async function dayDiscussion(round) {
+        async function dayDiscussion(round, token) {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
 
+            const thinking = showThinking('各キャラが発言を考えています…');
             const prompt = buildDayPrompt(round);
             const response = await callGemini(prompt);
+            if (thinking) thinking.remove();
+            if (!isCurrentGame(token)) return;
 
             let parsed = {};
             try {
@@ -873,8 +1117,9 @@
             );
 
             for (const conv of conversations) {
-                if (!STATE.running) break;
+                if (!isCurrentGame(token)) break;
                 if (STATE.paused) await waitUntilResume();
+                if (!isCurrentGame(token)) break;
                 addConversationMessage(conv.idx, conv.speech);
                 renderCards();
                 const delay = Math.min(5000, Math.max(1000, conv.speech.length * 80));
@@ -899,12 +1144,15 @@
             });
         }
 
-        async function votingPhase() {
+        async function votingPhase(token) {
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
 
+            const thinking = showThinking('投票先を決めています…');
             const prompt = buildVotePrompt();
             const response = await callGemini(prompt);
+            if (thinking) thinking.remove();
+            if (!isCurrentGame(token)) return;
             let votes = {};
             try {
                 votes = JSON.parse(response);
@@ -925,7 +1173,7 @@
             alive.forEach(idx => {
                 const voterName = STATE.characters[idx].name;
                 let targetName = votes[voterName] || '';
-                
+
                 const isAbstain = !targetName || ['見送り', 'なし', '棄権', 'abstain', 'none', 'わからない', '不明'].some(k => targetName.includes(k));
 
                 if (isAbstain) {
@@ -946,15 +1194,16 @@
             });
 
             for (let i = 0; i < voteEntries.length; i++) {
-                if (!STATE.running) break;
+                if (!isCurrentGame(token)) break;
                 if (STATE.paused) await waitUntilResume();
+                if (!isCurrentGame(token)) break;
                 const e = voteEntries[i];
                 addVoteMessage(e.voter, e.target);
                 await waitFor(1800);
             }
 
             if (Object.keys(tally).length === 0) {
-                addSystemMessage('⚖️ 全員が投票を見送りました。処刑者は決まりませんでした。', 'info');
+                addSystemMessage('⚖️ 全員が投票を見送りました。処刑者は決まりませんでした。', 'vote');
                 renderCards();
                 await fastWait();
                 return;
@@ -965,11 +1214,11 @@
 
             if (topCandidates.length > 1) {
                 const names = topCandidates.map(([idx]) => STATE.characters[parseInt(idx)].name);
-                addSystemMessage(`⚖️ 投票が ${names.join('・')} で同数（${maxVoteCount}票）のため、処刑者は決まりませんでした。`, 'info');
+                addSystemMessage(`⚖️ 投票が ${names.join('・')} で同数（${maxVoteCount}票）のため、処刑者は決まりませんでした。`, 'vote');
             }
             else if (maxVoteCount <= abstainCount) {
                 const topName = STATE.characters[parseInt(topCandidates[0][0])].name;
-                addSystemMessage(`⚖️ ${topName}が${maxVoteCount}票を集めましたが、見送り（${abstainCount}票）を上回らなかったため、信任不足で処刑は見送られました。`, 'info');
+                addSystemMessage(`⚖️ ${topName}が${maxVoteCount}票を集めましたが、見送り（${abstainCount}票）を上回らなかったため、信任不足で処刑は見送られました。`, 'vote');
             }
             else {
                 const executed = parseInt(topCandidates[0][0]);
@@ -994,13 +1243,13 @@
             if (aliveWolves.length === 0) {
                 addSystemMessage('🎉 村人陣営の勝利！人狼を全て退治しました！', 'win');
                 STATE.running = false;
-                document.getElementById('phaseDisplay').textContent = '🏆 村人勝利！';
+                setPhase('🏆 村人勝利！', 'end');
                 return true;
             }
             if (aliveWolves.length >= aliveVillagers.length + (aliveFortune ? 1 : 0)) {
                 addSystemMessage('🐺 人狼陣営の勝利！村人は絶滅しました。', 'win');
                 STATE.running = false;
-                document.getElementById('phaseDisplay').textContent = '🏆 人狼勝利！';
+                setPhase('🏆 人狼勝利！', 'end');
                 return true;
             }
             return false;
@@ -1070,19 +1319,19 @@
             const div = document.createElement('div');
             div.className = 'msg-vote';
             const time = new Date().toLocaleTimeString();
-            
+
             const isAbstain = target === '見送り';
-            const actionText = isAbstain 
-                ? `<span class="vote-action">は投票を</span> <span class="target abstain">見送った</span>` 
+            const actionText = isAbstain
+                ? `<span class="vote-action">は投票を</span> <span class="target abstain">見送った</span>`
                 : `<span class="vote-action">が</span> <span class="target">${escapeHtml(target)}</span> <span class="vote-action">に投票した</span>`;
-                
+
             div.innerHTML = `<span class="msg-time">${time}</span> <span class="vote-icon">🗳️</span> <span class="voter">${escapeHtml(voter)}</span> ${actionText}`;
             area.appendChild(div);
             area.scrollTop = area.scrollHeight;
         }
 
         // ================================================================
-        //  ★ プロンプトビルダー（Ver3.17: 因果関係バグ修正）
+        //  ★ プロンプトビルダー（Ver4.0: 因果関係ルール維持 + 安定化）
         // ================================================================
         function buildDayPrompt(round) {
             const alive = STATE.aliveIndices;
@@ -1116,7 +1365,7 @@
             }
 
             return `あなたは人狼ゲームに参加している${n}人のキャラクターを同時に演じる、超一流の声優兼脚本家です。
-現在は${round}回目の昼議論です。
+現在は${STATE.day}日目・${round}回目の昼議論です。
 
 ## 現在の状況
 
@@ -1273,7 +1522,7 @@ ${charInfo}
 
         async function callGemini(prompt) {
             if (!STATE.apiKey) throw new Error('APIキーなし');
-            const models = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+            const models = ['gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.5-flash'];
             let lastError = null;
             for (const model of models) {
                 try {
@@ -1308,7 +1557,7 @@ ${charInfo}
                     continue;
                 }
             }
-            addSystemMessage('⚠️ APIが利用できません。後でもう一度お試しください。', 'info');
+            addSystemMessage('⚠️ APIが利用できません。しばらく待ってから再試行してください。', 'info');
             throw lastError || new Error('API Error');
         }
 
@@ -1341,6 +1590,7 @@ ${charInfo}
                     fortuneteller: 'fortuneteller'
                 }[c.role] || '';
                 card.innerHTML = `
+                    <span class="dead-ribbon">DEAD</span>
                     ${avatarHtml}
                     <div class="name">${safeName}</div>
                     <div class="anime">${safeAnime}</div>
@@ -1350,8 +1600,10 @@ ${charInfo}
             });
         }
 
-        async function setPhase(text) {
-            document.getElementById('phaseDisplay').innerHTML = text;
+        function setPhase(text, styleClass) {
+            const el = document.getElementById('phaseDisplay');
+            el.innerHTML = text;
+            el.className = 'phase-badge' + (styleClass ? ' ' + styleClass : '');
         }
 
         function wait(seconds) {
@@ -1384,16 +1636,18 @@ ${charInfo}
 
         function resetGame() {
             if (confirm('ゲームをリセットしてライブラリ画面に戻りますか？')) {
+                STATE.gameToken++;  // 旧ループを無効化
                 STATE.running = false;
                 STATE.paused = false;
                 document.querySelector('[data-tab="library"]').click();
                 document.getElementById('pauseBtn').innerHTML = '<i class="fas fa-pause"></i> 一時停止';
-                document.getElementById('phaseDisplay').innerHTML = '<i class="fas fa-hourglass-half"></i> 待機中';
+                setPhase('⏳ 待機中', '');
                 document.getElementById('dayCounter').textContent = '0日目';
                 document.getElementById('messageArea').innerHTML = '';
                 document.getElementById('charCards').innerHTML = '';
             }
         }
     </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body>
 </html>
