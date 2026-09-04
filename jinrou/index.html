@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver4.0 - Gemini</title>
+    <title>全自動人狼 Ver4.2 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -350,7 +350,7 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver4.0</span></h1>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver4.2</span></h1>
                 <span class="sub"><i class="fas fa-robot"></i> Gemini — AIキャラ人狼シミュレーター</span>
             </div>
             <div class="api-area">
@@ -452,7 +452,7 @@
     <script>
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
-        const VERSION = 'Ver4.1';
+        const VERSION = 'Ver4.2';
 
         const STATE = {
             apiKey: '',
@@ -1016,9 +1016,8 @@
                 }
                 const tally = {};
                 for (const [wolfName, targetName] of Object.entries(votes)) {
-                    const targetIdx = STATE.characters.findIndex(c =>
-                        c.name === targetName && STATE.aliveIndices.includes(c.index) && !STATE.werewolfIndices.includes(c.index)
-                    );
+                    const resolved = resolveAliveIndexByName(targetName);
+                    const targetIdx = (resolved !== -1 && !STATE.werewolfIndices.includes(resolved)) ? resolved : -1;
                     if (targetIdx !== -1) {
                         tally[targetIdx] = (tally[targetIdx] || 0) + 1;
                     }
@@ -1046,9 +1045,7 @@
                 try {
                     const json = JSON.parse(response);
                     const targetName = json.fortune_teller_target || '';
-                    const targetIdx = STATE.characters.findIndex(c =>
-                        c.name === targetName && STATE.aliveIndices.includes(c.index) && c.index !== fortuneIdx
-                    );
+                    const targetIdx = resolveAliveIndexByName(targetName, fortuneIdx);
                     if (targetIdx !== -1) fortuneTarget = targetIdx;
                     else {
                         const candidates = alive.filter(i => i !== fortuneIdx);
@@ -1100,16 +1097,15 @@
                 .sort((a, b) => b[1] - a[1]);
         }
 
-        // 発言テキストから「○○が怪しい」を検出してスコア加算
+        // 発言テキストから「○○が怪しい」を検出してスコア加算（部分名・呼び捨ても検出）
         function recordSuspicion(text, speakerIdx) {
             if (!text) return;
-            const speakerName = STATE.characters[speakerIdx] ? STATE.characters[speakerIdx].name : '';
             STATE.aliveIndices.forEach(i => {
-                const name = STATE.characters[i].name;
-                if (name === speakerName) return;
-                const re = new RegExp(escapeRegExp(name));
-                if (re.test(text) && /怪しい|疑わ|人狼|黒(?:だ|っぽ|じゃ|だと思う|の可能性)|白じゃない/.test(text)) {
-                    STATE.suspicion[name] = (STATE.suspicion[name] || 0) + 1;
+                if (i === speakerIdx) return;
+                const c = STATE.characters[i];
+                const mentioned = nameAliases(c.name).some(a => a.length >= 2 && text.includes(a));
+                if (mentioned && /怪しい|疑わ|人狼|黒(?:だ|っぽ|じゃ|の可能性)|白じゃない|信用できない/.test(text)) {
+                    STATE.suspicion[c.name] = (STATE.suspicion[c.name] || 0) + 1;
                 }
             });
         }
@@ -1133,21 +1129,62 @@
             return STATE.characters[candidates[Math.floor(Math.random() * candidates.length)]].name;
         }
 
-        // 1スピーカーの発言を生成（失敗してもnullを返して続行）
-        async function startSpeakerFetch(speakerIdx, round, roundSpoken, priorLog) {
+        // ===== Ver4.2: 名前のあいまい解決（投票・襲撃・占い・疑い集計用） =====
+        function nameAliases(name) {
+            const aliases = [name];
+            if (name.length > 3) aliases.push(name.slice(-3));
+            if (name.length > 2) aliases.push(name.slice(-2));
+            return [...new Set(aliases)];
+        }
+
+        function nameMatches(input, fullName) {
+            if (!input) return false;
+            input = String(input).replace(/[「」『』（）()\s]/g, '').replace(/(お姉ちゃん|お兄ちゃん|さん|くん|君|ちゃん|様|さま|先生|殿|どの)+$/g, '');
+            if (!input) return false;
+            if (input === fullName) return true;
+            if (input.length >= 2 && fullName.includes(input)) return true;
+            return nameAliases(fullName).some(a => a === input || (input.length >= 2 && input.includes(a)));
+        }
+
+        // 名前表記から生存者のindexを特定（部分名・敬称付きも許容）
+        function resolveAliveIndexByName(str, excludeIdx = -1) {
+            if (!str) return -1;
+            const exact = STATE.characters.find(c => c.name === str && STATE.aliveIndices.includes(c.index) && c.index !== excludeIdx);
+            if (exact) return exact.index;
+            for (const i of STATE.aliveIndices) {
+                if (i === excludeIdx) continue;
+                if (nameMatches(str, STATE.characters[i].name)) return i;
+            }
+            return -1;
+        }
+
+        // ===== Ver4.2: 発言の生成（3〜4人ずつのチャンク方式でAPI回数を削減） =====
+        const SPEECH_CHUNK = 4;
+
+        function pacingMs(speech) {
+            // 長いセリフほど読む時間を確保（次が早く出すぎないように）
+            return Math.min(6500, Math.max(1900, speech.length * 95));
+        }
+
+        async function fetchSpeechChunk(chunkIdxs, round, roundSpokenSnapshot, priorLog, attempt = 0) {
+            let thinking = null;
             try {
-                const speaker = STATE.characters[speakerIdx];
-                const thinking = showThinking(`${speaker.name} が発言を考えています…`);
-                const prompt = buildSpeakerPrompt(speakerIdx, round, roundSpoken, priorLog);
-                const response = await callGemini(prompt, false);
+                // 名前を出さない汎用インジケーター（実際の発言者とズレて表示される問題を回避）
+                thinking = showThinking('💬 発言を考えています…');
+                const prompt = buildChunkPrompt(chunkIdxs, round, roundSpokenSnapshot, priorLog);
+                const response = await callGemini(prompt, true);
                 if (thinking) thinking.remove();
-                let speech = (response || '').trim();
-                speech = speech.replace(/^["'「『]+|["'」』]+$/g, '').trim();
-                if (!speech || speech.length < 2) return null;
-                if (speech.length > 200) speech = speech.slice(0, 200) + '…';
-                return { idx: speakerIdx, speech };
+                let parsed = null;
+                try { parsed = JSON.parse(response); } catch (e) { parsed = null; }
+                if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                    if (attempt < 1) return fetchSpeechChunk(chunkIdxs, round, roundSpokenSnapshot, priorLog, attempt + 1);
+                    return null;
+                }
+                return parsed;
             } catch (e) {
-                console.warn('発言生成失敗:', e);
+                if (thinking) thinking.remove();
+                console.warn('発言チャンク生成失敗:', e);
+                if (attempt < 1) return fetchSpeechChunk(chunkIdxs, round, roundSpokenSnapshot, priorLog, attempt + 1);
                 return null;
             }
         }
@@ -1156,52 +1193,67 @@
             const alive = STATE.aliveIndices;
             if (alive.length < 2) return;
 
-            // Ver4.1: ラウンド開始時に一度だけ発言順をシャッフル（毎回変わる）
+            // ラウンド開始時に発言順をシャッフル（毎回変わる）
             const order = shuffleArray(alive);
             const priorLog = STATE.conversationLog.slice(-14);
             const roundSpoken = [];
             const messages = [];
 
-            let prevFetch = null;
-            for (let k = 0; k < order.length; k++) {
+            let pendingFetch = null;
+            for (let k = 0; k < order.length; k += SPEECH_CHUNK) {
                 if (!isCurrentGame(token)) break;
-                const speakerIdx = order[k];
+                const chunkIdxs = order.slice(k, k + SPEECH_CHUNK);
 
-                if (prevFetch === null) {
-                    prevFetch = startSpeakerFetch(speakerIdx, round, roundSpoken, priorLog);
+                if (pendingFetch === null) {
+                    pendingFetch = fetchSpeechChunk(chunkIdxs, round, roundSpoken.slice(), priorLog);
                 }
-                let result = null;
-                try {
-                    result = await prevFetch;
-                } catch (e) {
-                    console.warn('発言取得失敗:', e);
-                    prevFetch = null;
-                    continue;
-                }
-                prevFetch = null;
-                if (!result) continue;
-
-                const { idx: sidx, speech } = result;
-                roundSpoken.push({ name: STATE.characters[sidx].name, speech });
-                STATE.characters[sidx].speech = speech;
-                recordSuspicion(speech, sidx);
-                messages.push({ idx: sidx, speech });
-
-                // 次のスピーカーの生成を先読み（表示待ちの間にAPIを叩く＝遅延削減）
-                if (k + 1 < order.length) {
-                    prevFetch = startSpeakerFetch(order[k + 1], round, roundSpoken, priorLog);
-                }
-
-                if (STATE.paused) await waitUntilResume();
+                let parsed = null;
+                try { parsed = await pendingFetch; } catch (e) { parsed = null; }
+                pendingFetch = null;
                 if (!isCurrentGame(token)) break;
-                addConversationMessage(sidx, speech);
-                renderCards();
-                const delay = Math.min(5000, Math.max(1200, speech.length * 70));
-                await waitFor(delay);
+
+                const chunkMsgs = [];
+                if (parsed) {
+                    // JSONのキー順ではなく、こちらが決めた発言順で取り出す（並び替えバグ防止）
+                    for (const sidx of chunkIdxs) {
+                        const name = STATE.characters[sidx].name;
+                        let speech = parsed[name];
+                        if (speech === undefined) {
+                            const key = Object.keys(parsed).find(kk => nameMatches(kk, name));
+                            if (key) speech = parsed[key];
+                        }
+                        if (!speech) continue;
+                        speech = String(speech).trim().replace(/^["'「『]+|["'」』]+$/g, '').trim();
+                        if (speech.length < 2) continue;
+                        if (speech.length > 220) speech = speech.slice(0, 220) + '…';
+                        STATE.characters[sidx].speech = speech;
+                        recordSuspicion(speech, sidx);
+                        chunkMsgs.push({ idx: sidx, name, speech });
+                        roundSpoken.push({ name, speech });
+                    }
+                } else {
+                    addSystemMessage('⚠️ 発言の生成に失敗しました（このターンは一部スキップ）', 'info');
+                }
+
+                // 次のチャンクの生成を先読み（表示中にAPIを叩いて待ち時間を消す）
+                if (k + SPEECH_CHUNK < order.length) {
+                    pendingFetch = fetchSpeechChunk(order.slice(k + SPEECH_CHUNK, k + SPEECH_CHUNK * 2), round, roundSpoken.slice(), priorLog);
+                }
+
+                for (const m of chunkMsgs) {
+                    if (!isCurrentGame(token)) break;
+                    if (STATE.paused) await waitUntilResume();
+                    if (!isCurrentGame(token)) break;
+                    addConversationMessage(m.idx, m.speech);
+                    renderCards();
+                    await waitFor(pacingMs(m.speech));
+                }
+
+                messages.push(...chunkMsgs);
             }
 
             STATE.conversationLog = STATE.conversationLog.concat(
-                messages.map(m => ({ name: STATE.characters[m.idx].name, speech: m.speech }))
+                messages.map(m => ({ name: m.name, speech: m.speech }))
             );
             await wait(STATE.speed);
         }
@@ -1253,9 +1305,7 @@
                 if (isAbstain) {
                     // 見送りが出ても議論の傾向から自動投票（全員見送りによる進行停滞を防止）
                     targetName = pickBySuspicion(idx);
-                    const autoIdx = targetName ? STATE.characters.findIndex(c =>
-                        c.name === targetName && STATE.aliveIndices.includes(c.index) && c.index !== idx
-                    ) : -1;
+                    const autoIdx = targetName ? resolveAliveIndexByName(targetName, idx) : -1;
                     if (autoIdx !== -1) {
                         tally[autoIdx] = (tally[autoIdx] || 0) + 1;
                     } else {
@@ -1263,9 +1313,7 @@
                         targetName = '見送り';
                     }
                 } else {
-                    const targetIdx = STATE.characters.findIndex(c =>
-                        c.name === targetName && STATE.aliveIndices.includes(c.index) && c.index !== idx
-                    );
+                    const targetIdx = resolveAliveIndexByName(targetName, idx);
                     if (targetIdx !== -1) {
                         tally[targetIdx] = (tally[targetIdx] || 0) + 1;
                     } else {
@@ -1426,35 +1474,32 @@
         }
 
         // ================================================================
-        //  ★ プロンプトビルダー（Ver4.1: スピーカー単位生成）
+        //  ★ プロンプトビルダー（Ver4.2: チャンク生成・因果ルール強化）
         // ================================================================
-        function buildSpeakerPrompt(speakerIdx, round, roundSpoken, priorLog) {
-            const speaker = STATE.characters[speakerIdx];
+        function buildChunkPrompt(chunkIdxs, round, roundSpoken, priorLog) {
             const alive = STATE.aliveIndices;
             const n = STATE.characters.length;
-
-            const roleLabel = {
-                werewolf: '人狼（正体を隠して村人のふりをする。村人陣営の推理をかく乱しつつ、自分が疑われないように立ち回る）',
-                villager: '村人（人狼を見つけ出して処刑することが目標。推理し、議論をリードする）',
-                fortuneteller: '占い師（村人陣営。自分の占い結果を踏まえて推理する。正体を明かすかは自分で判断）'
-            }[speaker.role] || '村人';
-
-            let desc = speaker.description;
-            if (speakerIdx === STATE.fortuneTellerIndex && STATE.characters[speakerIdx].alive && STATE.fortuneSecret) {
-                desc += `\n【あなただけの秘密情報（占い結果）】${STATE.fortuneSecret}。他の誰にもまだ明かしていない。この情報を踏まえて推理しつつ、正体を悟られないように発言するか、あえて公表するかはあなたの判断。`;
-            }
-
             const aliveNames = alive.map(i => STATE.characters[i].name);
             const deadNames = STATE.characters.filter(c => !c.alive).map(c => c.name);
-            const aliveList = aliveNames.join('、');
-            const deadInfo = deadNames.length ? `死亡者（退場済み・発言なし）: ${deadNames.join('、')}` : '死亡者: なし';
+            const deadInfo = deadNames.length ? `死亡者（退場済み・発言しない）: ${deadNames.join('、')}` : '死亡者: なし';
 
-            let transcript = '';
-            if (roundSpoken.length > 0) {
-                transcript = roundSpoken.map(e => `・${e.name}: 「${e.speech}」`).join('\n');
-            } else {
-                transcript = '（まだ誰も発言していません。あなたがこのラウンドの最初の発言者です）';
-            }
+            const profiles = chunkIdxs.map((sidx, pos) => {
+                const c = STATE.characters[sidx];
+                let desc = c.description;
+                if (sidx === STATE.fortuneTellerIndex && STATE.characters[sidx].alive && STATE.fortuneSecret) {
+                    desc += `\n【${c.name}だけの秘密情報（占い結果）】${STATE.fortuneSecret}。他者に正体を悟られないよう活かすか、あえて公表するかは本人の判断。`;
+                }
+                const roleLabel = {
+                    werewolf: '人狼（正体を隠して村人のふりをする）',
+                    villager: '村人（人狼を見つけて処刑するのが目標）',
+                    fortuneteller: '占い師（村人陣営。占い結果を推理に活かす）'
+                }[c.role] || '村人';
+                return `■ 発言者${pos + 1}: ${c.name}（役職: ${roleLabel}）\n${desc}`;
+            }).join('\n\n');
+
+            const transcript = roundSpoken.length > 0
+                ? roundSpoken.map(e => `・${e.name}: 「${e.speech}」`).join('\n')
+                : '（このラウンドではまだ誰も発言していません）';
 
             let pastDigest = '';
             if (priorLog.length > 0) {
@@ -1467,134 +1512,33 @@
                 : '';
 
             const dayWord = STATE.day === 1 ? '初日' : `${STATE.day}日目`;
+            const keyOrder = chunkIdxs.map(i => `"${STATE.characters[i].name}": "セリフ"`).join(',\n  ');
 
-            return `あなたは「${speaker.anime}」の登場人物・${speaker.name}として、人狼ゲームの昼の議論に参加しています。あなたが演じるのは${speaker.name}ただ一人です（他のキャラを演じないでください）。
+            return `あなたは人狼ゲームの昼議論の脚本家です。以下の${chunkIdxs.length}人のキャラクターのセリフを、指定された発言順そのままで作成してください。
 
-## 現在の状況
-- ゲーム: ${dayWord}・昼の議論 ${round}回目（全${n}人）
-- あなたの役職: ${roleLabel}
-- 生存者: ${aliveList}
+## 状況
+- ${dayWord}・昼の議論 ${round}回目（生存${alive.length}人 / 全${n}人）
 - ${deadInfo}
-
-## あなたのキャラクター設定
-${desc}
 ${pastDigest}
 
-## このラウンドで、すでに発言した人（時系列・これが全て）
+## このラウンドで既に発言した人（時系列・これが全て）
 ${transcript}
 ${suspicionLine}
 
+## 今回セリフを書くキャラクター（この番号順＝発言順）
+${profiles}
+
 ## 絶対ルール
-1. **引用・同意できるのは、上の「すでに発言した人」に書かれた発言だけ。** それ以外の人物が「言った内容」に言及してはならない（まだ喋っていない人に「〜の言う通り」と言うのは厳禁。まだ喋っていない人に話を振る・質問するのはOK）。
-2. **単なる同意・相槌で発言を終わらせない。** 誰かの意見に同意する場合も、必ず「自分が新しく考えたこと・聞きたいこと・違和感」を1つ以上付け加える。「〜の言う通りだね」だけで終わる発言は禁止。
-3. **具体的な推理・違和感を述べる。** 確証がなくても「ここが気になる」「もっと話を聞きたい」という形で他者を探る発言をする。「まだ分からない」だけで終わらせない。
-4. **「誰が怪しい」という疑いの記述は、必ず前後に ** を付けて囲むこと。** 例: **レナが怪しいと思う** ／ **悟史の話は筋が通らない気がする**。強調は疑いの核心の文だけに使い、発言全体を囲まない。
-5. あなたの一人称・語尾・口調・口癖を忠実に再現する。設定にない言い回しを創作しない。
-6. 発言の長さはキャラの性格に合わせる（饒舌なら2〜3文、寡黙なら一言でも可）。全員が同じ長さ・同じトーンにならないようにする。
+1. **発言順の因果**: 各キャラが引用・同意・反論できるのは「このラウンドで既に発言した人」と、番号が自分より前のキャラの発言だけ。自分より後のキャラが「言った内容」に触れるのは厳禁（後のキャラに話を振る・質問するのはOK）。
+2. **キャラ再現の徹底**: 各キャラの【一人称】【語尾】【口癖】はもちろん、【他者の呼び方】も設定通りに厳密に守る（例: 「にーにー」「圭ちゃん」など）。設定にない呼び方・口調は使わない。
+3. **人間らしさ**: 「〜の言う通り」だけで終わる発言は禁止。同意する場合も自分の考え・疑問・違和感を必ず添える。ただし**毎回誰かを疑う必要はない**——時には観察・質問・雑談・ため息だけの発言も混ぜる。全員が「〜の様子こそ怪しい」のような同じ構文を繰り返すのは厳禁。
+4. **太字の制限**: 「誰が怪しい」と明確に疑う一文だけ **疑いの核心部分** の形で囲んでよいが、**1発言につき最大1箇所**。疑いを述べない発言では一切使わない。このチャンク内で太字を使うのは半分以下の発言に抑えること。
+5. **長さ**: 基本は1〜2文（60〜120文字目安）。饒舌なキャラのみ3文まで。前の人の発言をなぞった長い言い換えは禁止。
+6. セリフに引用符（「」『』）は付けない。話し言葉そのままを書く。
 
-## 出力
-${speaker.name}のセリフのみ、1〜3文で。前置き・説明・JSON・引用符（「」『』）は不要。`;
-        }
-
-        // ================================================================
-        //  ★ プロンプトビルダー（Ver4.0旧版: 後方互換のため残置・未使用）
-        // ================================================================
-        function buildDayPrompt(round) {
-            const alive = STATE.aliveIndices;
-            const n = STATE.characters.length;
-
-            let charInfo = alive.map(i => {
-                const c = STATE.characters[i];
-                let desc = c.description;
-                if (i === STATE.fortuneTellerIndex && STATE.characters[i].alive && STATE.fortuneSecret) {
-                    desc += `\n【占い師の秘密情報】${STATE.fortuneSecret}（この情報は占い師だけが知っている。他のキャラには絶対に漏らさない。占い師本人はこの情報を踏まえた上で、それを悟られないように発言すること）`;
-                }
-                const roleLabel = {
-                    werewolf: '人狼（正体を隠して村人のふりをする。疑われないよう自然に立ち回りつつ、村人陣営を混乱させる発言を心がける）',
-                    villager: '村人（人狼を見つけ出して処刑することが目標。推理し、議論をリードする）',
-                    fortuneteller: '占い師（村人陣営。占い結果を踏まえて推理するが、正体を明かすタイミングは自分で判断する）'
-                }[c.role] || '村人';
-                return `■ ${c.name}（役職: ${roleLabel}）\n性格・口調設定: ${desc}`;
-            }).join('\n\n');
-
-            const deadNames = STATE.characters.filter(c => !c.alive).map(c => c.name);
-            const deadInfo = deadNames.length > 0
-                ? `死亡者（既に退場済み・発言しない）: ${deadNames.join('、')}`
-                : '死亡者はいません';
-
-            let prevConversation = '';
-            if (round > 1 && STATE.conversationLog.length > 0) {
-                const lastRound = STATE.conversationLog.slice(-STATE.aliveIndices.length);
-                prevConversation = '\n## 直前の発言（この流れを踏まえて会話を続けること）:\n' + lastRound.map(entry =>
-                    `${entry.name}: 「${entry.speech}」`
-                ).join('\n');
-            }
-
-            return `あなたは人狼ゲームに参加している${n}人のキャラクターを同時に演じる、超一流の声優兼脚本家です。
-現在は${STATE.day}日目・${round}回目の昼議論です。
-
-## 現在の状況
-
-${charInfo}
-
-${deadInfo}
-${prevConversation}
-
-## 【最重要】キャラクター再現の絶対ルール
-
-### ルール1: 一人称・語尾・口調の完全再現
-各キャラの設定にある【一人称】【口調・語尾】【口癖】を一字一句守ってください。
-「〜ですわ」のキャラが「〜だよ」と言うのは絶対禁止。
-「俺」のキャラが「僕」と言うのも絶対禁止。
-設定に書かれていない一人称・語尾を勝手に作らないでください。
-
-### ルール2: キャラごとの「喋り方の個性」を極端に差別化する
-${n}人全員が同じような文章量・同じようなトーンで喋るのが最大の失敗です。
-- 饒舌なキャラ: 2〜3文の長めの発言。畳み掛けるように話す
-- 寡黙なキャラ: 1文、あるいは単語だけで終わらせる。「……そうか」「ふん」だけでもOK
-- 感情的なキャラ: 感嘆符が多い。短文を連続でぶつける
-- 冷静なキャラ: 論理的に1文で核心を突く。感情的にならない
-- おどけたキャラ: 冗談を挟む。深刻な場面でも軽いノリを崩さない
-各キャラの設定にある【話し方のテンポとリズム】【感情表現の温度差】を必ず参照してください。
-
-### ルール3: 口癖・決め台詞の頻度制限
-口癖・決め台詞は、この${round}回目の議論全体で各キャラ最大1回まで。
-毎ターン同じフレーズを繰り返すキャラは「壊れたレコード」に見えるので厳禁。
-前回の発言で使ったフレーズは今回使わないでください。
-
-### ルール4: 前回の発言との「会話としての連続性」
-${round > 1 ? '直前の発言を踏まえて、その内容に反応・反論・補足する形で会話を続けてください。完全に無関係な話題を突然始めるのは不自然です。ただし、全ての発言に逐一反応する必要はなく、自分のキャラが気になる発言だけに反応する方が自然です。' : '最初の議論です。自己紹介は不要で、いきなり本題（誰が怪しいか、どう推理するか）から入ってください。'}
-
-### ルール5: 発言順の因果関係と「未来予知」の禁止（超重要）
-出力JSONのキーの並び順＝実際の発言順（時系列）です。
-- **自分より上に書かれた（先に発言した）キャラ**: 発言内容を読んで反応・同意・反論してOK。名前を出して引用するのもOK。
-- **自分より下に書かれる（まだ発言していない）キャラ**: **絶対にその発言内容を予測してはいけません。**
-  - ❌ NG例: 「魅音の言う通りだぜ」（※魅音がまだ発言していないのに同意している）
-  - ❌ NG例: 「レナが怪しいって言ってたけど」（※レナがまだ発言していないのに引用している）
-  - ⭕ OK例: 「魅音、お前はどう思う？」（※まだ発言していないキャラに話を振るのはOK）
-  - ⭕ OK例: 「みんな、落ち着いて話を聞こうぜ」（※特定の誰かの発言には言及しない）
-- **特に「同意」や「引用」をする場合は、必ず自分より前のキー（発言済みキャラ）に対して行ってください。存在しない発言に同意するのはバグです。**
-
-### ルール6: 【超重要】序盤の過剰な推理・「詰め寄り」の禁止
-まだ情報が少ない段階（特に1日目や2日目、あるいは決定的な証拠がない時）で、根拠なく「お前が人狼だ！」と断定したり、強く詰め寄ったりするのは**極めて不自然**です。
-- **村人陣営**: 序盤は**『違和感の共有』『情報収集』『他者の反応を見る』**ことに注力してください。「今の発言のここが気になった」「もう少し話を聞きたい」といった**問いかけや牽制**に留め、**確信のない状態で人狼だと決めつけるのはNG**です。
-- **人狼陣営**: 序盤から露骨に誰かを庇ったり逆に強く攻めたりすると不自然なので、村人と同じく「様子見・情報収集」のスタンスを取ること。
-- **全キャラ共通**: 「推理ゲーム」としての質は求めますが、**証拠がないのにいきなり誰かを人狼扱いする「早い詰め」は絶対に避けてください。** 人間味のある「迷い」や「探り合い」を表現してください。
-
-### ルール7: 役職ごとの立ち回り
-- 村人: 推理を言語化し、根拠を示して疑わしい人物を指摘する。「怪しい」だけでは不十分。なぜ怪しいかをキャラの言葉で説明する
-- 人狼: 村人のふりをして自然に議論に参加する。露骨に誰かを陥れようとすると不自然。むしろ「自分は村人だ」と主張しすぎない方が自然。時折、的を射た推理をして信頼を稼ぐ
-- 占い師: 占い結果をすぐに明かすかどうかはキャラの性格次第。慎重なキャラは様子を見る。直感的なキャラは早めに切り込む
-
-## 出力形式
-JSONのみ。前置き・後書き・コードブロックの装飾は一切不要。
-キーの並び順＝発言順。生存者全員が最低1回は発言すること。
-
+## 出力（JSONのみ・前置き不要・キーの順序＝発言順）
 {
-  "キャラ名A": "セリフ（キャラの一人称・語尾・口調を完全再現）",
-  "キャラ名B": "セリフ",
-  "キャラ名C": "セリフ",
-  ...
+  ${keyOrder}
 }`;
         }
 
@@ -1695,7 +1639,7 @@ ${suspicionLine}
 - ただし、本当に何の手がかりもなく「誰が人狼か皆目見当がつかない」と確信できる場合のみ「見送り」と出力してよい（その場合も理由を括弧書きで添えること）。
 - 村人・占い師: 最も人狼らしいと判断した人物に投票。占い師が人狼を確定させる情報を持っているなら、その人狼に投票する。
 - 人狼: 村人陣営の最も危険な推理者（自分たちを疑っている人物・占い師っぽい人物）に投票する。ただし露骨すぎて自分が疑われない範囲で。
-- 自分自身には投票できない。人狼は仲間の人狼に投票できない。
+- 自分自身には投票できない。人狼は仲間の人狼に投票できない。\n- **投票先の名前は必ず上記一覧のフルネーム表記そのままで出力すること**（「魅音」「悟史くん」等の略称・敬称付きは禁止）。
 
 ## 出力（JSONのみ）
 {
@@ -1838,6 +1782,6 @@ ${suspicionLine}
             }
         }
     </script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
