@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver4.2 - Gemini</title>
+    <title>全自動人狼 Ver4.3 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -350,7 +350,7 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver4.2</span></h1>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver4.3</span></h1>
                 <span class="sub"><i class="fas fa-robot"></i> Gemini — AIキャラ人狼シミュレーター</span>
             </div>
             <div class="api-area">
@@ -436,7 +436,7 @@
                     <div class="speed-wrap">
                         <i class="fas fa-tachometer-alt"></i>
                         <span class="speed-label">遅い</span>
-                        <input type="range" id="speedSlider" min="0" max="10" value="0" />
+                        <input type="range" id="speedSlider" min="0" max="10" value="5" />
                         <span class="speed-label">速い</span>
                     </div>
                     <button class="btn btn-danger btn-sm" id="pauseBtn"><i class="fas fa-pause"></i> 一時停止</button>
@@ -452,7 +452,7 @@
     <script>
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
-        const VERSION = 'Ver4.2';
+        const VERSION = 'Ver4.3';
 
         const STATE = {
             apiKey: '',
@@ -507,8 +507,8 @@
 
             loadLibrary();
 
-            document.getElementById('speedSlider').value = 0;
-            STATE.speed = 0;
+            document.getElementById('speedSlider').value = 5;
+            STATE.speed = 5;
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -995,12 +995,25 @@
             const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
             const fortuneIdx = STATE.fortuneTellerIndex;
 
+            // 人狼と占い師のAPI呼び出しを並列実行（夜の待ち時間を半減）
+            const thinking = showThinking('🌙 夜が更けていきます…');
+            const wolfPromise = (wolves.length > 0 && alive.length > 0)
+                ? callGemini(buildWolfNightPrompt())
+                : Promise.resolve('{}');
+            const fortunePromise = (fortuneIdx !== -1 && STATE.characters[fortuneIdx].alive)
+                ? callGemini(buildFortuneNightPrompt())
+                : Promise.resolve('{}');
+            let wolfResponse = '{}', fortuneResponse = '{}';
+            try { [wolfResponse, fortuneResponse] = await Promise.all([wolfPromise, fortunePromise]); }
+            catch (e) {
+                try { wolfResponse = await wolfPromise; } catch (_) {}
+                try { fortuneResponse = await fortunePromise; } catch (_) {}
+            }
+            if (thinking) thinking.remove();
+
             let attackTarget = -1;
             if (wolves.length > 0 && alive.length > 0) {
-                const thinking = showThinking('人狼が襲撃先を相談しています…');
-                const wolfPrompt = buildWolfNightPrompt();
-                const response = await callGemini(wolfPrompt);
-                if (thinking) thinking.remove();
+                const response = wolfResponse;
                 if (!isCurrentGame(token)) return null;
                 let votes = {};
                 try {
@@ -1037,10 +1050,7 @@
 
             let fortuneTarget = -1;
             if (fortuneIdx !== -1 && STATE.characters[fortuneIdx].alive) {
-                const thinking = showThinking('占い師が占い先を選んでいます…');
-                const fortunePrompt = buildFortuneNightPrompt();
-                const response = await callGemini(fortunePrompt);
-                if (thinking) thinking.remove();
+                const response = fortuneResponse;
                 if (!isCurrentGame(token)) return null;
                 try {
                     const json = JSON.parse(response);
@@ -1110,23 +1120,25 @@
             });
         }
 
-        // 疑いスコアに基づいて投票先を決める（人狼は村人陣営から選ぶ）
+        // 疑いスコアに基づいて投票先を決める（フォールバック用）。
+        // 全員が同じトップに収束しないよう、投票者ごとにランキングの参照位置をずらす
         function pickBySuspicion(voterIdx) {
             const isWolf = STATE.werewolfIndices.includes(voterIdx);
-            const ranking = suspicionRanking();
-            for (const [name] of ranking) {
-                const idx = STATE.characters.findIndex(c =>
-                    c.name === name && STATE.aliveIndices.includes(c.index) && c.index !== voterIdx
-                );
-                if (idx === -1) continue;
-                if (isWolf && STATE.werewolfIndices.includes(idx)) continue;
-                return name;
+            const ranking = suspicionRanking()
+                .map(([name]) => name)
+                .filter(name => {
+                    const idx = STATE.characters.findIndex(c => c.name === name);
+                    return idx !== -1 && STATE.aliveIndices.includes(idx) && idx !== voterIdx
+                        && !(isWolf && STATE.werewolfIndices.includes(idx));
+                });
+            if (ranking.length > 0) {
+                return ranking[voterIdx % ranking.length];
             }
             const candidates = STATE.aliveIndices.filter(i =>
                 i !== voterIdx && (!isWolf || !STATE.werewolfIndices.includes(i))
             );
             if (candidates.length === 0) return '';
-            return STATE.characters[candidates[Math.floor(Math.random() * candidates.length)]].name;
+            return STATE.characters[candidates[voterIdx % candidates.length]].name;
         }
 
         // ===== Ver4.2: 名前のあいまい解決（投票・襲撃・占い・疑い集計用） =====
@@ -1159,11 +1171,11 @@
         }
 
         // ===== Ver4.2: 発言の生成（3〜4人ずつのチャンク方式でAPI回数を削減） =====
-        const SPEECH_CHUNK = 4;
+        const SPEECH_CHUNK = 3;
 
         function pacingMs(speech) {
-            // 長いセリフほど読む時間を確保（次が早く出すぎないように）
-            return Math.min(6500, Math.max(1900, speech.length * 95));
+            // 長いセリフほど読む時間を確保（ただし出しゃばりすぎないテンポで）
+            return Math.min(5000, Math.max(1500, speech.length * 75));
         }
 
         async function fetchSpeechChunk(chunkIdxs, round, roundSpokenSnapshot, priorLog, attempt = 0) {
@@ -1172,7 +1184,7 @@
                 // 名前を出さない汎用インジケーター（実際の発言者とズレて表示される問題を回避）
                 thinking = showThinking('💬 発言を考えています…');
                 const prompt = buildChunkPrompt(chunkIdxs, round, roundSpokenSnapshot, priorLog);
-                const response = await callGemini(prompt, true);
+                const response = await callGemini(prompt, true, 4000);
                 if (thinking) thinking.remove();
                 let parsed = null;
                 try { parsed = JSON.parse(response); } catch (e) { parsed = null; }
@@ -1303,8 +1315,13 @@
                 const isAbstain = !targetName || ['見送り', 'なし', '棄権', 'abstain', 'none', 'わからない', '不明'].some(k => targetName.includes(k));
 
                 if (isAbstain) {
-                    // 見送りが出ても議論の傾向から自動投票（全員見送りによる進行停滞を防止）
-                    targetName = pickBySuspicion(idx);
+                    // 見送りが出た場合、議論で明確に疑われた人物（2回以上言及）がいる時だけ自動投票
+                    const top = suspicionRanking().filter(([nm]) => nm !== voterName);
+                    if (top.length > 0 && top[0][1] >= 2) {
+                        targetName = pickBySuspicion(idx);
+                    } else {
+                        targetName = '';
+                    }
                     const autoIdx = targetName ? resolveAliveIndexByName(targetName, idx) : -1;
                     if (autoIdx !== -1) {
                         tally[autoIdx] = (tally[autoIdx] || 0) + 1;
@@ -1330,7 +1347,7 @@
                 if (!isCurrentGame(token)) break;
                 const e = voteEntries[i];
                 addVoteMessage(e.voter, e.target);
-                await waitFor(1000);
+                await waitFor(650);
             }
 
             if (Object.keys(tally).length === 0) {
@@ -1345,17 +1362,9 @@
 
             let executed = -1;
             if (topCandidates.length > 1) {
-                // 同票の場合は議論での疑いが高い方を処刑（引き分けによる停滞を防止）
-                const idxPairs = topCandidates.map(([i]) => parseInt(i));
-                const ranked = suspicionRanking().map(([name]) => name);
-                const resolvedIdx = idxPairs.find(i => ranked.includes(STATE.characters[i].name));
-                if (resolvedIdx !== undefined && maxVoteCount > abstainCount) {
-                    executed = resolvedIdx;
-                    addSystemMessage(`⚖️ 投票が同数（${maxVoteCount}票）のため、議論での疑いが最も高い ${STATE.characters[resolvedIdx].name} を処刑します。`, 'vote');
-                } else {
-                    const names = idxPairs.map(i => STATE.characters[i].name);
-                    addSystemMessage(`⚖️ 投票が ${names.join('・')} で同数（${maxVoteCount}票）のため、処刑者は決まりませんでした。`, 'vote');
-                }
+                // 同票の場合は処刑なし（人狼ゲームの標準ルール。疑いスコアでの独断処刑はしない）
+                const names = topCandidates.map(([idx]) => STATE.characters[parseInt(idx)].name);
+                addSystemMessage(`⚖️ 投票が ${names.join('・')} で同数（${maxVoteCount}票）のため、処刑者は決まりませんでした。`, 'vote');
             }
             else if (maxVoteCount <= abstainCount) {
                 const topName = STATE.characters[parseInt(topCandidates[0][0])].name;
@@ -1621,25 +1630,27 @@ ${fortunedLine}${suspicionLine}
                 return `■ ${c.name}${roleHint}\n${desc}`;
             }).join('\n\n');
 
-            const aliveNames = alive.map(i => STATE.characters[i].name);
-            const aliveRank = suspicionRanking().filter(([name]) => aliveNames.includes(name));
-            const suspicionLine = aliveRank.length
-                ? `\n## これまでの議論で疑われた人物（言及回数）\n` + aliveRank.map(([name, cnt]) => `・${name}: ${cnt}回`).join('\n')
-                : '\n## 疑いの記録はまだありません';
+            // 直近の議論ログ（自分で読んで判断させる材料）
+            const recentLog = STATE.conversationLog.slice(-20);
+            const logSection = recentLog.length
+                ? `\n## 直近の議論ログ\n` + recentLog.map(e => `・${e.name}: 「${e.speech}」`).join('\n')
+                : '\n## 議論ログはまだありません';
 
             return `投票フェーズです。${n}人のキャラクターが「誰を処刑したいか」を投票します。
 
 ## 現在の生存者
 ${charInfo}
-${suspicionLine}
+${logSection}
 
 ## 投票の指針（重要）
-- 各キャラは自分の役職・性格・これまでの議論・疑いの記録を踏まえて投票先を決める。
-- **原則として全員必ず誰かに投票する。** 「見送り」は基本的に禁止。迷った場合でも、議論の中で最も違和感を感じた人物に投票すること。
-- ただし、本当に何の手がかりもなく「誰が人狼か皆目見当がつかない」と確信できる場合のみ「見送り」と出力してよい（その場合も理由を括弧書きで添えること）。
+- 各キャラは**上の議論ログを自分で読み、自分の役職・性格・相手との関係性から独自に**投票先を決めること。
+- **全員が同じ人物に投票するのは不自然です。キャラごとに視点が違うはず**（感情的なキャラは自分を攻撃してきた相手へ、論理的なキャラは発言の矛盾を見た相手へ、日和見なキャラは流れに乗る、など）。**2〜4箇所に票が割れるのが自然な姿です。**
+- 迷った場合でも、自分が議論で最も違和感を感じた人物に投票すること。
+- 本当に何の手がかりもない初日など、「見送り」を選んでもよいのは全体の1〜2人まで。
 - 村人・占い師: 最も人狼らしいと判断した人物に投票。占い師が人狼を確定させる情報を持っているなら、その人狼に投票する。
-- 人狼: 村人陣営の最も危険な推理者（自分たちを疑っている人物・占い師っぽい人物）に投票する。ただし露骨すぎて自分が疑われない範囲で。
-- 自分自身には投票できない。人狼は仲間の人狼に投票できない。\n- **投票先の名前は必ず上記一覧のフルネーム表記そのままで出力すること**（「魅音」「悟史くん」等の略称・敬称付きは禁止）。
+- 人狼: 自分に疑いを向けてきた人物や鋭い推理者に投票する。ただし露骨すぎて自分が疑われない範囲で。
+- 自分自身には投票できない。人狼は仲間の人狼に投票できない。
+- **投票先の名前は必ず上記一覧のフルネーム表記そのままで出力すること**（「魅音」「悟史くん」等の略称・敬称付きは禁止）。
 
 ## 出力（JSONのみ）
 {
@@ -1649,9 +1660,9 @@ ${suspicionLine}
 }`;
         }
 
-        async function callGemini(prompt, jsonMode = true) {
+        async function callGemini(prompt, jsonMode = true, maxTokens = 1500) {
             if (!STATE.apiKey) throw new Error('APIキーなし');
-            // Ver4.1: 指定の2モデルを使用（先頭から順にフォールバック）
+            // 指定の2モデルを使用（先頭から順にフォールバック）
             const models = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
             let lastError = null;
             for (const model of models) {
@@ -1660,7 +1671,7 @@ ${suspicionLine}
                         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${STATE.apiKey}`;
                     const payload = {
                         contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { temperature: 0.85, maxOutputTokens: 3000 }
+                        generationConfig: { temperature: 0.85, maxOutputTokens: maxTokens }
                     };
                     const resp = await fetch(url, {
                         method: 'POST',
@@ -1740,7 +1751,7 @@ ${suspicionLine}
 
         function wait(seconds) {
             const inverted = 10 - seconds;
-            const base = 1.5 + (inverted / 10) * 13.5;
+            const base = 1.2 + (inverted / 10) * 6.8;
             const delay = base * 1000;
             return waitFor(delay);
         }
