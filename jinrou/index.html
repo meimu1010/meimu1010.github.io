@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver4.3 - Gemini</title>
+    <title>全自動人狼 Ver4.4 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -350,7 +350,7 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver4.3</span></h1>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver4.4</span></h1>
                 <span class="sub"><i class="fas fa-robot"></i> Gemini — AIキャラ人狼シミュレーター</span>
             </div>
             <div class="api-area">
@@ -452,7 +452,7 @@
     <script>
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
-        const VERSION = 'Ver4.3';
+        const VERSION = 'Ver4.4';
 
         const STATE = {
             apiKey: '',
@@ -1174,8 +1174,8 @@
         const SPEECH_CHUNK = 3;
 
         function pacingMs(speech) {
-            // 長いセリフほど読む時間を確保（ただし出しゃばりすぎないテンポで）
-            return Math.min(5000, Math.max(1500, speech.length * 75));
+            // 長いセリフほど読む時間を確保（読み終わる前に次が出ないように）
+            return Math.min(6200, Math.max(1900, speech.length * 95));
         }
 
         async function fetchSpeechChunk(chunkIdxs, round, roundSpokenSnapshot, priorLog, attempt = 0) {
@@ -1315,9 +1315,9 @@
                 const isAbstain = !targetName || ['見送り', 'なし', '棄権', 'abstain', 'none', 'わからない', '不明'].some(k => targetName.includes(k));
 
                 if (isAbstain) {
-                    // 見送りが出た場合、議論で明確に疑われた人物（2回以上言及）がいる時だけ自動投票
+                    // 見送りが出た場合、2日目以降かつ議論で明確に疑われた人物（2回以上言及）がいる時だけ自動投票
                     const top = suspicionRanking().filter(([nm]) => nm !== voterName);
-                    if (top.length > 0 && top[0][1] >= 2) {
+                    if (STATE.day >= 2 && top.length > 0 && top[0][1] >= 2) {
                         targetName = pickBySuspicion(idx);
                     } else {
                         targetName = '';
@@ -1347,7 +1347,7 @@
                 if (!isCurrentGame(token)) break;
                 const e = voteEntries[i];
                 addVoteMessage(e.voter, e.target);
-                await waitFor(650);
+                await waitFor(900);
             }
 
             if (Object.keys(tally).length === 0) {
@@ -1636,7 +1636,7 @@ ${fortunedLine}${suspicionLine}
                 ? `\n## 直近の議論ログ\n` + recentLog.map(e => `・${e.name}: 「${e.speech}」`).join('\n')
                 : '\n## 議論ログはまだありません';
 
-            return `投票フェーズです。${n}人のキャラクターが「誰を処刑したいか」を投票します。
+            return `${STATE.day}日目の投票フェーズです。${n}人のキャラクターが「誰を処刑したいか」を投票します。
 
 ## 現在の生存者
 ${charInfo}
@@ -1645,8 +1645,8 @@ ${logSection}
 ## 投票の指針（重要）
 - 各キャラは**上の議論ログを自分で読み、自分の役職・性格・相手との関係性から独自に**投票先を決めること。
 - **全員が同じ人物に投票するのは不自然です。キャラごとに視点が違うはず**（感情的なキャラは自分を攻撃してきた相手へ、論理的なキャラは発言の矛盾を見た相手へ、日和見なキャラは流れに乗る、など）。**2〜4箇所に票が割れるのが自然な姿です。**
-- 迷った場合でも、自分が議論で最も違和感を感じた人物に投票すること。
-- 本当に何の手がかりもない初日など、「見送り」を選んでもよいのは全体の1〜2人まで。
+- 【日数ルール】**初日（1日目）はまだ誰も犠牲者が出ておらず決定的な手がかりがないため、慎重なキャラは「見送り」を選ぶのが普通です（半数以上が見送りでもOK）。2日目以降は犠牲者が出ているため、原則として全員が自分なりの推理で誰かに投票してください**（この日に見送りを選べるのは本当に判断がつかない1〜2人まで）。
+- 見送りとする場合は「見送り」とだけ出力すること。
 - 村人・占い師: 最も人狼らしいと判断した人物に投票。占い師が人狼を確定させる情報を持っているなら、その人狼に投票する。
 - 人狼: 自分に疑いを向けてきた人物や鋭い推理者に投票する。ただし露骨すぎて自分が疑われない範囲で。
 - 自分自身には投票できない。人狼は仲間の人狼に投票できない。
@@ -1756,7 +1756,7 @@ ${logSection}
             return waitFor(delay);
         }
 
-        const FAST_PHASE_DELAY_MS = 400;
+        const FAST_PHASE_DELAY_MS = 1400;
         function fastWait(ms = FAST_PHASE_DELAY_MS) {
             return waitFor(ms);
         }
