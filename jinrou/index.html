@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver4.4 - Gemini</title>
+    <title>全自動人狼 Ver5.0 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -245,6 +245,10 @@
         .role-badge.werewolf { background: var(--danger-soft); color: var(--danger); }
         .role-badge.villager { background: var(--accent-soft); color: var(--accent-hover); }
         .role-badge.fortuneteller { background: var(--purple-soft); color: var(--purple); }
+        .role-badge.medium { background: #e2f0fa; color: #1a5a8a; }
+        .role-badge.knight { background: #e6f4ea; color: #1f6b3f; }
+        .role-badge.madman { background: #fce4e0; color: #8a3020; }
+        .msg-conversation .bubble .role-tag { font-size: 0.7rem; color: var(--text-3); font-weight: 500; margin-left: 4px; }
         .char-card.dead { opacity: 0.5; filter: grayscale(0.85); }
         .char-card.dead .avatar, .char-card.dead .avatar-placeholder { border-color: #d8a8a2; }
         .char-card .dead-ribbon {
@@ -350,7 +354,7 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver4.4</span></h1>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.0</span></h1>
                 <span class="sub"><i class="fas fa-robot"></i> Gemini — AIキャラ人狼シミュレーター</span>
             </div>
             <div class="api-area">
@@ -393,10 +397,19 @@
                     <div style="display:flex;gap:6px;align-items:flex-end;">
                         <div style="flex:1;">
                             <label>説明文（詳細に！）</label>
-                            <textarea id="newDesc" rows="5" placeholder="「プロンプト」ボタンで生成した説明文を貼り付けると、より本人らしいセリフになります"></textarea>
+                            <textarea id="newDesc" rows="6" placeholder="「プロンプト」ボタンで生成した説明文を貼り付けると、より本人らしいセリフになります"></textarea>
                         </div>
                         <button class="btn-copy" id="copyPromptBtn" style="align-self:flex-end;margin-bottom:2px;"><i class="fas fa-copy"></i> プロンプト</button>
                     </div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+                    <label style="font-size:0.78rem;font-weight:700;color:var(--text-2);">疑心度:</label>
+                    <select id="newSuspicionLevel" style="border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;font-size:0.85rem;background:#fff;font-family:inherit;">
+                        <option value="低">低（擁護型・場を和ませる）</option>
+                        <option value="中" selected>中（バランス型）</option>
+                        <option value="高">高（疑心暗鬼・積極的に疑う）</option>
+                    </select>
+                    <span style="font-size:0.72rem;color:var(--text-3);">キャラの性格に合わせて選択</span>
                 </div>
                 <div class="form-actions">
                     <button class="btn btn-success" id="addCharBtn"><i class="fas fa-plus"></i> <span id="submitBtnText">ライブラリに追加</span></button>
@@ -452,7 +465,7 @@
     <script>
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
-        const VERSION = 'Ver4.4';
+        const VERSION = 'Ver5.0';
 
         const STATE = {
             apiKey: '',
@@ -468,14 +481,19 @@
             aliveIndices: [],
             werewolfIndices: [],
             fortuneTellerIndex: -1,
+            mediumIndex: -1,
+            knightIndex: -1,
+            madmanIndex: -1,
             villagerIndices: [],
             fortuneSecret: '',
+            fortuneHistory: [], // {day, target, result} 占い履歴
+            mediumHistory: [],  // {day, target, result} 霊媒履歴
+            lastExecuted: -1,   // 前日の処刑者idx（霊媒判定用）
+            lastGuardedIdx: -1, // 前夜の護衛先
             editingId: null,
             conversationLog: [],
-            // Ver4.1: キャラごとの「怪しい」言及スコア（投票・襲撃判断の材料）
             suspicion: {},
             fortuned: [],
-            // Ver4.0: ゲーム世代管理（リセット後に旧ループが書き込まないようにする）
             gameToken: 0,
         };
 
@@ -549,6 +567,7 @@
             }
             STATE.library.forEach(c => {
                 if (!c.id) c.id = Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+                if (!c.suspicionLevel) c.suspicionLevel = '中';
             });
         }
 
@@ -558,12 +577,12 @@
 
         function addSampleCharacters() {
             const samples = [
-                { anime: 'ひぐらしのなく頃に', name: '前原圭一', imageUrl: '', description: '都会から雛見沢に引っ越してきた少年。正義感が強く、口が達者で仲間を引っ張るリーダータイプ。ただし、疑われると極端に感情的になり、周りを威圧する傾向がある。口調は乱暴だが、根は仲間思い。人狼ゲームでは、リーダーシップを発揮する反面、疑われると怒り狂って自爆しやすい。' },
-                { anime: 'ひぐらしのなく頃に', name: '竜宮レナ', imageUrl: '', description: '雛見沢の少女。物腰は柔らかく「〜かな？」が口癖だが、直感が鋭く、危険を察知するのが得意。性格は一見おっとりしているが、真実を見抜く力に長けており、鋭い指摘で周囲を驚かせる。人狼ゲームでは、勘の良さを武器に村人を導くが、自分の意見を強く主張しないため、時折流されやすい。' },
-                { anime: 'ひぐらしのなく頃に', name: '古手梨花', imageUrl: '', description: '雛見沢の神社の娘。見た目は幼いが、どこか達観した口調で「み〜」「にぱ〜」が口癖。ミステリアスな雰囲気を纏い、物事を斜めに見る傾向がある。実は非常に賢く、他人の心理を読むのが上手い。人狼ゲームでは、クールに分析し、ミスリードを誘うような発言で人狼を追い詰めるのが得意。' },
-                { anime: 'ひぐらしのなく頃に', name: '園崎詩音', imageUrl: '', description: '園崎家の次女。姉の魅音とは対照的に、大人びた口調で他人をからかうのが好き。洞察力に優れ、人の嘘を見抜くのが得意。ただし、やや皮肉っぽい物言いをするため、村人からは疑われやすい。人狼ゲームでは、鋭いツッコミで人狼を追い詰めるが、その毒舌が仇になることも。' },
-                { anime: 'ひぐらしのなく頃に', name: '園崎魅音', imageUrl: '', description: '園崎家の長女で、クラスのリーダー的存在。姉御肌で、仲間をまとめるのが上手い。口調は軽妙で「おじさん」が口癖。冷静な判断力を持ち、感情的になりがちな圭一をなだめる役割を担う。人狼ゲームでは、公平な仲裁役として、皆の意見をまとめながら人狼を炙り出す。' },
-                { anime: 'ひぐらしのなく頃に', name: '北条沙都子', imageUrl: '', description: '雛見沢の少女。お嬢様口調で高飛車な態度を取るが、実はかなりの策士。トラップを仕掛けるのが得意で、他人を挑発して誤った行動を引き出すのが上手い。人狼ゲームでは、挑発的な発言で相手を動揺させ、真実を引き出す囮役として活躍。ただし、自信過剰になりがちで、時として大きなミスを犯すことも。' },
+                { anime: 'ひぐらしのなく頃に', name: '前原圭一', imageUrl: '', suspicionLevel: '高', description: '都会から雛見沢に引っ越してきた少年。正義感が強く、口が達者で仲間を引っ張るリーダータイプ。ただし、疑われると極端に感情的になり、周りを威圧する傾向がある。口調は乱暴だが、根は仲間思い。人狼ゲームでは、リーダーシップを発揮する反面、疑われると怒り狂って自爆しやすい。' },
+                { anime: 'ひぐらしのなく頃に', name: '竜宮レナ', imageUrl: '', suspicionLevel: '高', description: '雛見沢の少女。物腰は柔らかく「〜かな？」が口癖だが、直感が鋭く、危険を察知するのが得意。性格は一見おっとりしているが、真実を見抜く力に長けており、鋭い指摘で周囲を驚かせる。人狼ゲームでは、勘の良さを武器に村人を導くが、自分の意見を強く主張しないため、時折流されやすい。' },
+                { anime: 'ひぐらしのなく頃に', name: '古手梨花', imageUrl: '', suspicionLevel: '中', description: '雛見沢の神社の娘。見た目は幼いが、どこか達観した口調で「み〜」「にぱ〜」が口癖。ミステリアスな雰囲気を纏い、物事を斜めに見る傾向がある。実は非常に賢く、他人の心理を読むのが上手い。人狼ゲームでは、クールに分析し、ミスリードを誘うような発言で人狼を追い詰めるのが得意。' },
+                { anime: 'ひぐらしのなく頃に', name: '園崎詩音', imageUrl: '', suspicionLevel: '高', description: '園崎家の次女。姉の魅音とは対照的に、大人びた口調で他人をからかうのが好き。洞察力に優れ、人の嘘を見抜くのが得意。ただし、やや皮肉っぽい物言いをするため、村人からは疑われやすい。人狼ゲームでは、鋭いツッコミで人狼を追い詰めるが、その毒舌が仇になることも。' },
+                { anime: 'ひぐらしのなく頃に', name: '園崎魅音', imageUrl: '', suspicionLevel: '中', description: '園崎家の長女で、クラスのリーダー的存在。姉御肌で、仲間をまとめるのが上手い。口調は軽妙で「おじさん」が口癖。冷静な判断力を持ち、感情的になりがちな圭一をなだめる役割を担う。人狼ゲームでは、公平な仲裁役として、皆の意見をまとめながら人狼を炙り出す。' },
+                { anime: 'ひぐらしのなく頃に', name: '北条沙都子', imageUrl: '', suspicionLevel: '中', description: '雛見沢の少女。お嬢様口調で高飛車な態度を取るが、実はかなりの策士。トラップを仕掛けるのが得意で、他人を挑発して誤った行動を引き出すのが上手い。人狼ゲームでは、挑発的な発言で相手を動揺させ、真実を引き出す囮役として活躍。ただし、自信過剰になりがちで、時として大きなミスを犯すことも。' },
             ];
             samples.forEach(s => {
                 STATE.library.push({
@@ -572,6 +591,7 @@
                     name: s.name,
                     imageUrl: s.imageUrl,
                     description: s.description,
+                    suspicionLevel: s.suspicionLevel || '中',
                 });
             });
             saveLibrary();
@@ -583,6 +603,7 @@
                 name: document.getElementById('newName').value.trim(),
                 imageUrl: document.getElementById('newImage').value.trim(),
                 description: document.getElementById('newDesc').value.trim(),
+                suspicionLevel: document.getElementById('newSuspicionLevel').value || '中',
             };
         }
 
@@ -591,6 +612,7 @@
             document.getElementById('newName').value = data.name || '';
             document.getElementById('newImage').value = data.imageUrl || '';
             document.getElementById('newDesc').value = data.description || '';
+            document.getElementById('newSuspicionLevel').value = data.suspicionLevel || '中';
         }
 
         function clearForm() {
@@ -628,6 +650,7 @@
             document.getElementById('newName').value = '';
             document.getElementById('newImage').value = '';
             document.getElementById('newDesc').value = '';
+            document.getElementById('newSuspicionLevel').value = '中';
         }
 
         function handleSubmit() {
@@ -669,7 +692,9 @@
 ---
 
 必ず次のテンプレートの見出しと構成をそのまま使い、各項目を埋めてください。
-見出し以外の前置き・後書き・説明は一切不要です。
+見出し以外の前置き・後書き・説明は一切不要です。**冒頭に必ず「作品名: ${anime} / キャラ名: ${name}」の1行を入れてください**（AIが誰を演じているかを常に思い出すため）。
+
+作品名: ${anime} / キャラ名: ${name}
 
 【一人称】：
 （原作で実際に使う一人称を全て列挙。状況による使い分けがあるなら「普段:◯◯ / 激昂時:◯◯ / 内心:◯◯」のように分けて記載）
@@ -678,38 +703,44 @@
 （具体的な呼び方のパターンを3つ以上。例：「仲間には◯◯くん、敵には呼び捨て、目上には◯◯さん付け」のように関係性ごとに記載）
 
 【口調・語尾の具体パターン】：
-（実際の語尾・接続詞・間投詞を5つ以上、そのままの形で列挙。例：「〜だぜ」「〜なんだよなぁ」「ふふん」「ったく」「まぁな」。関西弁・敬語・古語などの場合はその法則も一言で）
+（実際の語尾・接続詞・間投詞を5つ以上、そのままの形で列挙。関西弁・敬語・古語などの場合はその法則も一言で）
 
 【口癖・決め台詞】：
-（作中で実際に繰り返し使われるフレーズを2〜3個、原文そのままの形で。ただし人狼ゲームのAIが使う際は「数ラウンドに1回だけ」が適切な頻度であることも明記）
+（作中で実際に繰り返し使われるフレーズを2〜3個、原文そのままの形で。人狼ゲームAIが使う際は「数ラウンドに1回だけ」の頻度が適切と明記）
 
 【感情表現の温度差】：
-（このキャラが「平静時」「疑われた時」「追い詰められた時」「勝利を確信した時」にそれぞれどう喋るか、トーンの変化を具体的に。例：「平静時は冗談を挟むが、疑われると急に声が低くなり一文が短くなる」）
+（このキャラが「平静時」「疑われた時」「追い詰められた時」「勝利を確信した時」にそれぞれどう喋るか、トーンの変化を具体的に）
 
 【思考パターンの癖】：
-（このキャラの推理・判断の傾向。例：「感情より直感で動く」「証拠を積み上げてから結論を出す」「他人の矛盾を突くのが得意」「自分の意見を最後に言う」など。人狼ゲームでの立ち回りに直結する情報）
+（このキャラの推理・判断の傾向。例：「直感で動く」「証拠を積み上げてから結論」「他人の矛盾を突くのが得意」など）
 
 【話し方のテンポとリズム】：
-（文の長さ、間の取り方、畳み掛ける/ぼそっと言う等の物理的な喋り方の特徴。例：「短い文を3つ続けて畳み掛ける」「長い前置きの後に核心を一言で突く」）
+（文の長さ、間の取り方、畳み掛ける/ぼそっと言う等の物理的な喋り方の特徴）
+
+【推奨疑心度】：
+（このキャラを人狼ゲームで演じる時の疑心度を「低／中／高」から1つ選び、その理由を1行で。
+- 低: 他人を疑うより擁護・場を和ませる方が本人らしい（例: 温厚系・お姫様系）
+- 中: 状況に応じて疑ったり庇ったりバランスを取る（例: リーダー系・普通の主人公）
+- 高: 常に他人を疑い、鋭く突っ込むのが本人らしい（例: 名探偵系・皮肉屋）
+※このキャラを追加する時、UIの「疑心度」もこれに合わせて選ぶこと）
 
 【人狼ゲームでの行動傾向】：
-（このキャラが人狼ゲームに参加した場合の具体的な行動予測を3つ以上。例：
-・村人陣営の場合：序盤は様子見、中盤で一気に推理をぶつける
-・人狼の場合：笑顔で仲間のふりをして情報を集め、終盤で裏切る
-・疑われた場合：感情的に反論する/冷静に論理で返す/沈黙する
-など、役職ごとの傾向も踏まえて）
+（役職ごとの立ち回りを3つ以上。村人時／人狼時／占い師などの役職時／疑われた時の反応など）
 
 【実際の原作セリフ（引用）】：
-**※超重要：AIによる創作は厳禁。**必ず原作（アニメ・漫画・ゲーム）で**実際にそのキャラクターが発言したセリフ**を2〜3つ引用し、どのようなシーンでの発言か（感情や背景）を括弧書きで添えてください。このセリフの口調・語彙・テンポを、人狼ゲームでの発言生成の「絶対的なベースライン」とします。
+**※超重要：AIによる創作は厳禁。**必ず原作（アニメ・漫画・ゲーム）で**実際にそのキャラクターが発言したセリフ**を**5つ以上**引用し、どのようなシーンでの発言か（感情や背景）を括弧書きで添えてください。このセリフの口調・語彙・テンポを、人狼ゲームでの発言生成の「絶対的なベースライン」とします。**ただし人狼ゲームの発言では、このセリフをそのまま繰り返すのではなく、口調・語尾・テンポだけを踏襲して自然な会話にしてください。**
 1. 「（セリフ）」（シーン：〜）
 2. 「（セリフ）」（シーン：〜）
+3. 「（セリフ）」（シーン：〜）
+4. 「（セリフ）」（シーン：〜）
+5. 「（セリフ）」（シーン：〜）
 
 ---
 
 注意事項：
 - 独自解釈・二次創作・ファン理論は一切加えず、公式設定・原作の描写のみを根拠にしてください。
 - 抽象的な性格形容詞（「優しい」「賢い」等）ではなく、**AIがそのままセリフを生成できるレベルの具体的言語情報**を優先してください。
-- 全体で400〜600文字程度にまとめてください。`;
+- 全体で500〜800文字程度にまとめてください。`;
 
             const btn = document.getElementById('copyPromptBtn');
             const orig = btn.innerHTML;
@@ -844,10 +875,17 @@
                 name: c.name,
                 imageUrl: c.imageUrl || '',
                 description: c.description,
+                suspicionLevel: c.suspicionLevel || '中',
                 role: '',
                 alive: true,
                 speech: '',
             }));
+
+            // 履歴類を初期化
+            STATE.fortuneHistory = [];
+            STATE.mediumHistory = [];
+            STATE.lastExecuted = -1;
+            STATE.lastGuardedIdx = -1;
 
             STATE.log = [];
             STATE.day = 0;
@@ -873,25 +911,45 @@
             gameLoop(token).catch(handleGameLoopError);
         }
 
+        // 総人数別の配役表 [人狼, 占い師, 霊媒師, 騎士, 村人, 狂人]
+        // https://shiraberu.net/game/jinro/ を参考にした標準構成
         function getRoleComposition(n) {
             const table = {
-                6:  [1, 1, 4],
-                7:  [2, 1, 4],
-                8:  [2, 1, 5],
-                9:  [3, 1, 5],
-                10: [3, 1, 6],
+                5:  [1, 1, 0, 0, 3, 0],
+                6:  [1, 1, 0, 0, 4, 0],
+                7:  [2, 1, 1, 0, 3, 0],
+                8:  [2, 1, 1, 0, 4, 0],
+                9:  [2, 1, 1, 1, 3, 1],
+                10: [2, 1, 1, 1, 4, 1],
+                11: [3, 1, 1, 1, 4, 1],
+                12: [3, 1, 1, 1, 5, 1],
+                13: [3, 1, 1, 1, 6, 1],
+                14: [3, 1, 1, 1, 6, 2],
+                15: [3, 1, 1, 1, 7, 2],
             };
-            return table[n] || [Math.floor(n / 3), 1, n - Math.floor(n / 3) - 1];
+            if (table[n]) return table[n];
+            // 表にない大人数用フォールバック
+            const wolves = Math.max(1, Math.floor(n / 5));
+            const madmen = n >= 9 ? 1 : 0;
+            const rest = n - wolves - 1 - (n >= 7 ? 1 : 0) - (n >= 9 ? 1 : 0) - madmen;
+            return [wolves, 1, n >= 7 ? 1 : 0, n >= 9 ? 1 : 0, rest, madmen];
         }
 
         function assignRoles() {
             const n = STATE.characters.length;
-            const [wolfCount, fortuneCount, villagerCount] = getRoleComposition(n);
+            const [wolfCount, fortuneCount, mediumCount, knightCount, villagerCount, madmanCount] = getRoleComposition(n);
 
             const roles = [];
             for (let i = 0; i < wolfCount; i++) roles.push('werewolf');
             for (let i = 0; i < fortuneCount; i++) roles.push('fortuneteller');
+            for (let i = 0; i < mediumCount; i++) roles.push('medium');
+            for (let i = 0; i < knightCount; i++) roles.push('knight');
+            for (let i = 0; i < madmanCount; i++) roles.push('madman');
             for (let i = 0; i < villagerCount; i++) roles.push('villager');
+            // 足りない分は村人で埋める
+            while (roles.length < n) roles.push('villager');
+            // はみ出た分は削る
+            roles.length = n;
 
             for (let i = roles.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -901,16 +959,29 @@
             STATE.werewolfIndices = [];
             STATE.villagerIndices = [];
             STATE.fortuneTellerIndex = -1;
+            STATE.mediumIndex = -1;
+            STATE.knightIndex = -1;
+            STATE.madmanIndex = -1;
 
             roles.forEach((role, idx) => {
                 STATE.characters[idx].role = role;
                 if (role === 'werewolf') STATE.werewolfIndices.push(idx);
                 else if (role === 'villager') STATE.villagerIndices.push(idx);
                 else if (role === 'fortuneteller') STATE.fortuneTellerIndex = idx;
+                else if (role === 'medium') STATE.mediumIndex = idx;
+                else if (role === 'knight') STATE.knightIndex = idx;
+                else if (role === 'madman') STATE.madmanIndex = idx;
             });
 
             STATE.aliveIndices = Array.from({ length: n }, (_, i) => i);
-            addSystemMessage(`✅ 役職決定：人狼${wolfCount}・占い師${fortuneCount}・村人${villagerCount}`, 'info');
+            const parts = [];
+            if (wolfCount) parts.push(`人狼${wolfCount}`);
+            if (fortuneCount) parts.push(`占い師${fortuneCount}`);
+            if (mediumCount) parts.push(`霊媒師${mediumCount}`);
+            if (knightCount) parts.push(`騎士${knightCount}`);
+            if (villagerCount) parts.push(`村人${villagerCount}`);
+            if (madmanCount) parts.push(`狂人${madmanCount}`);
+            addSystemMessage(`✅ 役職決定：${parts.join('・')}`, 'info');
             renderCards();
         }
 
@@ -935,11 +1006,18 @@
         async function gameLoop(token) {
             if (!isCurrentGame(token)) return;
             try {
+                // 0日目の夜（オープニング儀式）: 初回のみ
+                if (STATE.day === 0) {
+                    setPhase('🌙 0日目の夜（オープニング）', 'night');
+                    await fastWait();
+                    await openingNight(token);
+                    if (!isCurrentGame(token)) return;
+                }
                 STATE.day++;
                 document.getElementById('dayCounter').textContent = `${STATE.day}日目`;
                 addSystemMessage(`🌅 ${STATE.day}日目が始まります。`, 'info');
 
-                // --- 夜フェーズ（1日目は襲撃なし、占いのみ初夜から実施する簡易ルール）---
+                // --- 夜フェーズ（1日目は襲撃なし。2日目以降は襲撃・占い・霊媒・護衛）---
                 setPhase('🌙 夜フェーズ', 'night');
                 await fastWait();
                 let nightVictim = null;
@@ -990,12 +1068,58 @@
             }
         }
 
+        // ============ Ver5.0: 0日目の夜（オープニング儀式） ============
+        async function openingNight(token) {
+            // 人狼同士の仲間確認（ナレーション）
+            const wolves = STATE.werewolfIndices;
+            if (wolves.length > 0) {
+                if (wolves.length === 1) {
+                    addSystemMessage(`🐺 人狼の${STATE.characters[wolves[0]].name}が村に潜んでいます…`, 'info');
+                } else {
+                    const names = wolves.map(i => STATE.characters[i].name).join('・');
+                    addSystemMessage(`🐺 人狼たち（${names}）が闇の中で仲間の顔を確認し合いました。`, 'info');
+                }
+            }
+            // 狂人の確認（本人だけの秘密として通知）
+            if (STATE.madmanIndex !== -1) {
+                addSystemMessage(`🎭 狂人が人狼陣営として密かに動き出します…`, 'info');
+            }
+            await fastWait();
+
+            // 占い師の初回占い
+            if (STATE.fortuneTellerIndex !== -1 && STATE.characters[STATE.fortuneTellerIndex].alive) {
+                const thinking = showThinking('🔮 占い師が最初の一人を占っています…');
+                let target = -1;
+                try {
+                    const resp = await callGemini(buildFortuneNightPrompt());
+                    const j = JSON.parse(resp);
+                    target = resolveAliveIndexByName(j.fortune_teller_target || '', STATE.fortuneTellerIndex);
+                } catch (e) {}
+                if (target === -1) {
+                    const cands = STATE.aliveIndices.filter(i => i !== STATE.fortuneTellerIndex);
+                    target = cands[Math.floor(Math.random() * cands.length)];
+                }
+                if (thinking) thinking.remove();
+                // 狂人は人狼側だが占いでは「村人」判定
+                const isWolf = STATE.werewolfIndices.includes(target);
+                const targetName = STATE.characters[target].name;
+                STATE.fortuneSecret = `${targetName} は ${isWolf ? '人狼' : '村人'} でした。`;
+                STATE.fortuneHistory.push({ day: 0, target, targetName, result: isWolf ? '人狼' : '村人' });
+                STATE.fortuned.push(target);
+                addSystemMessage(`🔮 占い師が今夜、村の誰か一人を占いました。`, 'info');
+            }
+            await fastWait();
+            addSystemMessage('🌅 朝が来ました。議論を始めましょう。', 'info');
+        }
+
         async function nightPhase(token) {
             const alive = STATE.aliveIndices;
             const wolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
             const fortuneIdx = STATE.fortuneTellerIndex;
+            const mediumIdx = STATE.mediumIndex;
+            const knightIdx = STATE.knightIndex;
 
-            // 人狼と占い師のAPI呼び出しを並列実行（夜の待ち時間を半減）
+            // 人狼襲撃・占い・霊媒・護衛のAPI呼び出しを並列実行
             const thinking = showThinking('🌙 夜が更けていきます…');
             const wolfPromise = (wolves.length > 0 && alive.length > 0)
                 ? callGemini(buildWolfNightPrompt())
@@ -1003,89 +1127,121 @@
             const fortunePromise = (fortuneIdx !== -1 && STATE.characters[fortuneIdx].alive)
                 ? callGemini(buildFortuneNightPrompt())
                 : Promise.resolve('{}');
-            let wolfResponse = '{}', fortuneResponse = '{}';
-            try { [wolfResponse, fortuneResponse] = await Promise.all([wolfPromise, fortunePromise]); }
+            const mediumPromise = (mediumIdx !== -1 && STATE.characters[mediumIdx].alive && STATE.lastExecuted !== -1)
+                ? Promise.resolve('{}') // 霊媒はAPI不要（決定的処理）
+                : Promise.resolve('{}');
+            const knightPromise = (knightIdx !== -1 && STATE.characters[knightIdx].alive)
+                ? callGemini(buildKnightNightPrompt())
+                : Promise.resolve('{}');
+
+            let wolfResponse = '{}', fortuneResponse = '{}', knightResponse = '{}';
+            try { [wolfResponse, fortuneResponse, , knightResponse] = await Promise.all([wolfPromise, fortunePromise, mediumPromise, knightPromise]); }
             catch (e) {
                 try { wolfResponse = await wolfPromise; } catch (_) {}
                 try { fortuneResponse = await fortunePromise; } catch (_) {}
+                try { knightResponse = await knightPromise; } catch (_) {}
             }
             if (thinking) thinking.remove();
 
+            // --- 人狼: 襲撃先決定 ---
             let attackTarget = -1;
             if (wolves.length > 0 && alive.length > 0) {
-                const response = wolfResponse;
                 if (!isCurrentGame(token)) return null;
                 let votes = {};
-                try {
-                    votes = JSON.parse(response);
-                } catch (e) {
+                try { votes = JSON.parse(wolfResponse); }
+                catch (e) {
                     wolves.forEach(idx => {
-                        const candidates = alive.filter(i => i !== idx && !STATE.werewolfIndices.includes(i));
-                        if (candidates.length > 0) {
-                            const target = candidates[Math.floor(Math.random() * candidates.length)];
-                            votes[STATE.characters[idx].name] = STATE.characters[target].name;
-                        }
+                        const cands = alive.filter(i => i !== idx && !STATE.werewolfIndices.includes(i));
+                        if (cands.length > 0) votes[STATE.characters[idx].name] = STATE.characters[cands[Math.floor(Math.random() * cands.length)]].name;
                     });
                 }
                 const tally = {};
-                for (const [wolfName, targetName] of Object.entries(votes)) {
+                for (const [, targetName] of Object.entries(votes)) {
                     const resolved = resolveAliveIndexByName(targetName);
-                    const targetIdx = (resolved !== -1 && !STATE.werewolfIndices.includes(resolved)) ? resolved : -1;
-                    if (targetIdx !== -1) {
-                        tally[targetIdx] = (tally[targetIdx] || 0) + 1;
+                    if (resolved !== -1 && !STATE.werewolfIndices.includes(resolved)) {
+                        tally[resolved] = (tally[resolved] || 0) + 1;
                     }
                 }
                 let maxVotes = 0;
                 for (const [idx, count] of Object.entries(tally)) {
-                    if (count > maxVotes) {
-                        maxVotes = count;
-                        attackTarget = parseInt(idx);
-                    }
+                    if (count > maxVotes) { maxVotes = count; attackTarget = parseInt(idx); }
                 }
                 if (attackTarget === -1) {
-                    const candidates = alive.filter(i => !STATE.werewolfIndices.includes(i));
-                    if (candidates.length > 0) attackTarget = candidates[Math.floor(Math.random() * candidates.length)];
+                    const cands = alive.filter(i => !STATE.werewolfIndices.includes(i));
+                    if (cands.length > 0) attackTarget = cands[Math.floor(Math.random() * cands.length)];
                 }
             }
 
-            let fortuneTarget = -1;
-            if (fortuneIdx !== -1 && STATE.characters[fortuneIdx].alive) {
-                const response = fortuneResponse;
+            // --- 騎士: 護衛先決定 ---
+            let guardTarget = -1;
+            if (knightIdx !== -1 && STATE.characters[knightIdx].alive) {
                 if (!isCurrentGame(token)) return null;
                 try {
-                    const json = JSON.parse(response);
-                    const targetName = json.fortune_teller_target || '';
-                    const targetIdx = resolveAliveIndexByName(targetName, fortuneIdx);
-                    if (targetIdx !== -1) fortuneTarget = targetIdx;
-                    else {
-                        const candidates = alive.filter(i => i !== fortuneIdx);
-                        if (candidates.length > 0) fortuneTarget = candidates[Math.floor(Math.random() * candidates.length)];
-                    }
-                } catch (e) {
-                    const candidates = alive.filter(i => i !== fortuneIdx);
-                    if (candidates.length > 0) fortuneTarget = candidates[Math.floor(Math.random() * candidates.length)];
+                    const j = JSON.parse(knightResponse);
+                    const t = resolveAliveIndexByName(j.knight_target || '', knightIdx);
+                    if (t !== -1) guardTarget = t;
+                } catch (e) {}
+                if (guardTarget === -1) {
+                    // 疑いが少ない=村人陣営っぽい人物を優先
+                    const cands = STATE.aliveIndices.filter(i => i !== knightIdx);
+                    guardTarget = cands[Math.floor(Math.random() * cands.length)];
+                }
+                STATE.lastGuardedIdx = guardTarget;
+            } else {
+                STATE.lastGuardedIdx = -1;
+            }
+
+            // --- 占い師: 占い先決定 ---
+            let fortuneTarget = -1;
+            if (fortuneIdx !== -1 && STATE.characters[fortuneIdx].alive) {
+                if (!isCurrentGame(token)) return null;
+                try {
+                    const j = JSON.parse(fortuneResponse);
+                    const t = resolveAliveIndexByName(j.fortune_teller_target || '', fortuneIdx);
+                    if (t !== -1) fortuneTarget = t;
+                } catch (e) {}
+                if (fortuneTarget === -1) {
+                    const cands = alive.filter(i => i !== fortuneIdx && !STATE.fortuned.includes(i));
+                    const pool = cands.length ? cands : alive.filter(i => i !== fortuneIdx);
+                    if (pool.length > 0) fortuneTarget = pool[Math.floor(Math.random() * pool.length)];
                 }
             }
 
+            // --- 襲撃実行（護衛で防げるかチェック） ---
             let victim = null;
             if (attackTarget !== -1 && STATE.characters[attackTarget].alive) {
-                STATE.characters[attackTarget].alive = false;
-                STATE.aliveIndices = STATE.aliveIndices.filter(i => i !== attackTarget);
-                STATE.characters[attackTarget].speech = '⚰️ 死亡';
-                victim = attackTarget;
-                addSystemMessage(`🐺 ${STATE.characters[attackTarget].name} が襲撃されました。`, 'death');
+                if (attackTarget === guardTarget) {
+                    // 護衛成功: 誰も死なない（人狼側にも騎士側にも情報は出さない＝サイレント）
+                    addSystemMessage(`😴 昨夜は誰も命を落としませんでした。`, 'info');
+                } else {
+                    STATE.characters[attackTarget].alive = false;
+                    STATE.aliveIndices = STATE.aliveIndices.filter(i => i !== attackTarget);
+                    STATE.characters[attackTarget].speech = '⚰️ 死亡';
+                    victim = attackTarget;
+                }
             }
 
-            // Ver4.0 fix: 占い師が死んだ場合・占い対象がいない場合は古い秘密情報を残さない
+            // --- 占い結果を秘密情報として保持 ---
             STATE.fortuneSecret = '';
             if (fortuneTarget !== -1 && STATE.characters[fortuneTarget] && fortuneIdx !== -1 && STATE.characters[fortuneIdx].alive) {
                 const isWolf = STATE.werewolfIndices.includes(fortuneTarget);
+                // 狂人は「村人」判定（人狼陣営だが占い結果は白）
+                const result = isWolf ? '人狼' : '村人';
                 const targetName = STATE.characters[fortuneTarget].name;
-                STATE.fortuneSecret = `${targetName} は ${isWolf ? '人狼' : '村人'} でした。`;
-                addSystemMessage(`🔮 占い師が ${targetName} を占いました。`, 'info');
-                STATE.fortuned = STATE.fortuned || [];
+                STATE.fortuneSecret = `${targetName} は ${result} でした。`;
+                STATE.fortuneHistory.push({ day: STATE.day, target: fortuneTarget, targetName, result });
                 if (!STATE.fortuned.includes(fortuneTarget)) STATE.fortuned.push(fortuneTarget);
             }
+
+            // --- 霊媒: 前日処刑者の判定 ---
+            if (mediumIdx !== -1 && STATE.characters[mediumIdx].alive && STATE.lastExecuted !== -1) {
+                const t = STATE.lastExecuted;
+                const isWolf = STATE.werewolfIndices.includes(t);
+                const result = isWolf ? '人狼' : '村人';
+                const targetName = STATE.characters[t].name;
+                STATE.mediumHistory.push({ day: STATE.day, target: t, targetName, result });
+            }
+
             renderCards();
             await fastWait();
             return victim;
@@ -1378,18 +1534,32 @@
                 STATE.characters[executed].alive = false;
                 STATE.aliveIndices = STATE.aliveIndices.filter(i => i !== executed);
                 STATE.characters[executed].speech = '⚰️ 処刑';
-                const roleMap = { werewolf: '人狼', villager: '村人', fortuneteller: '占い師' };
-                const revealedRole = roleMap[STATE.characters[executed].role] || '不明';
-                addSystemMessage(`⚖️ ${STATE.characters[executed].name}（${revealedRole}）が処刑されました。`, 'reveal');
+                STATE.lastExecuted = executed;
+                addSystemMessage(`⚖️ ${STATE.characters[executed].name}（${roleJa(STATE.characters[executed].role)}）が処刑されました。`, 'reveal');
+            } else {
+                STATE.lastExecuted = -1;
             }
             renderCards();
             await fastWait();
         }
 
+        // 役職の日本語名
+        function roleJa(role) {
+            return {
+                werewolf: '人狼', villager: '村人', fortuneteller: '占い師',
+                medium: '霊媒師', knight: '騎士', madman: '狂人'
+            }[role] || '不明';
+        }
+
+        // 陣営（狂人は人狼陣営）
+        function factionOf(role) {
+            return (role === 'werewolf' || role === 'madman') ? 'wolf' : 'village';
+        }
+
         function checkGameEnd() {
             const aliveWolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
-            const aliveVillagers = STATE.villagerIndices.filter(idx => STATE.characters[idx].alive);
-            const aliveFortune = STATE.fortuneTellerIndex !== -1 && STATE.characters[STATE.fortuneTellerIndex].alive;
+            // 村人陣営 = 人狼と狂人以外
+            const aliveVillageSide = STATE.aliveIndices.filter(i => factionOf(STATE.characters[i].role) === 'village');
 
             if (aliveWolves.length === 0) {
                 addSystemMessage('🎉 村人陣営の勝利！人狼を全て退治しました！', 'win');
@@ -1397,7 +1567,8 @@
                 setPhase('🏆 村人勝利！', 'end');
                 return true;
             }
-            if (aliveWolves.length >= aliveVillagers.length + (aliveFortune ? 1 : 0)) {
+            // 人狼数 >= 村人陣営数 で人狼勝利
+            if (aliveWolves.length >= aliveVillageSide.length) {
                 addSystemMessage('🐺 人狼陣営の勝利！村人は絶滅しました。', 'win');
                 STATE.running = false;
                 setPhase('🏆 人狼勝利！', 'end');
@@ -1452,7 +1623,8 @@
             const nameSpan = document.createElement('div');
             nameSpan.className = 'name';
             const time = new Date().toLocaleTimeString();
-            nameSpan.innerHTML = `${escapeHtml(c.name)} <span class="msg-time">${time}</span>`;
+            const roleTag = c.role ? `<span class="role-tag">(${roleJa(c.role)})</span>` : '';
+            nameSpan.innerHTML = `${escapeHtml(c.name)}${roleTag} <span class="msg-time">${time}</span>`;
             bubble.appendChild(nameSpan);
             const textSpan = document.createElement('div');
             textSpan.className = 'text';
@@ -1472,12 +1644,17 @@
             div.className = 'msg-vote';
             const time = new Date().toLocaleTimeString();
 
+            const voterChar = STATE.characters.find(c => c.name === voter);
+            const targetChar = STATE.characters.find(c => c.name === target);
+            const voterTag = voterChar && voterChar.role ? `<span class="role-tag">(${roleJa(voterChar.role)})</span>` : '';
+            const targetTag = targetChar && targetChar.role ? `<span class="role-tag">(${roleJa(targetChar.role)})</span>` : '';
+
             const isAbstain = target === '見送り';
             const actionText = isAbstain
                 ? `<span class="vote-action">は投票を</span> <span class="target abstain">見送った</span>`
-                : `<span class="vote-action">が</span> <span class="target">${escapeHtml(target)}</span> <span class="vote-action">に投票した</span>`;
+                : `<span class="vote-action">が</span> <span class="target">${escapeHtml(target)}${targetTag}</span> <span class="vote-action">に投票した</span>`;
 
-            div.innerHTML = `<span class="msg-time">${time}</span> <span class="vote-icon">🗳️</span> <span class="voter">${escapeHtml(voter)}</span> ${actionText}`;
+            div.innerHTML = `<span class="msg-time">${time}</span> <span class="vote-icon">🗳️</span> <span class="voter">${escapeHtml(voter)}${voterTag}</span> ${actionText}`;
             area.appendChild(div);
             area.scrollTop = area.scrollHeight;
         }
@@ -1492,18 +1669,39 @@
             const deadNames = STATE.characters.filter(c => !c.alive).map(c => c.name);
             const deadInfo = deadNames.length ? `死亡者（退場済み・発言しない）: ${deadNames.join('、')}` : '死亡者: なし';
 
+            // 人狼だけが知る仲間情報
+            const wolfNames = STATE.werewolfIndices.map(i => STATE.characters[i].name).join('・');
+            // 狂人は自分の役職は知っているが人狼が誰かは知らない
+
+            const roleDescs = {
+                werewolf: `人狼（人狼陣営）。仲間の人狼: ${wolfNames}。正体を隠して村人・占い師・霊媒師などの偽COも自由。占い師や騎士っぽい人物を襲撃で狙う。占われるとバレるので、鋭い村人陣営を先に潰したい`,
+                villager: '村人（村人陣営）。特別な能力はない。議論から人狼を推理して処刑に導く。「私は村人だ」と言うのは自由だが、それ自体が疑われる材料になることもある',
+                fortuneteller: `占い師（村人陣営）。毎晩1人を占って人狼か村人かを知る。**COする（自ら名乗る）と信頼を得やすいが人狼に襲撃されやすくなる**。COするタイミングは戦略次第。狂人は占い結果では「村人」と出る点に注意`,
+                medium: `霊媒師（村人陣営）。前日処刑された人物が人狼だったかを知る。**COすると信頼できる白判定を出せるが襲撃対象になりやすい**。COは戦略次第`,
+                knight: `騎士（村人陣営）。毎晩1人を選び、その人を人狼の襲撃から守る（自分は選べない）。**COは基本しない方が良い**（人狼にバレると先に殺される）。ただし終盤に必要なら判断する`,
+                madman: `狂人（人狼陣営）。自分は人間だが人狼の勝利が自分の勝ちになる。**人狼が誰かは知らない**。村人のふりをしつつ、議論を混乱させ、偽の占い師CO・偽の霊媒師COなどで村人陣営を惑わす戦法もある。占いでは「村人」判定なので占われても白と出る`
+            };
+
+            // 占い履歴/霊媒履歴（該当役職本人のみ渡す）
+            const fortuneHist = STATE.fortuneHistory.length
+                ? STATE.fortuneHistory.map(h => `${h.day === 0 ? '初日夜' : h.day + '日目夜'}: ${h.targetName} → ${h.result}`).join(' / ')
+                : 'まだ占っていない';
+            const mediumHist = STATE.mediumHistory.length
+                ? STATE.mediumHistory.map(h => `${h.day}日目: ${h.targetName} → ${h.result}`).join(' / ')
+                : 'まだ霊媒結果なし';
+
             const profiles = chunkIdxs.map((sidx, pos) => {
                 const c = STATE.characters[sidx];
-                let desc = c.description;
-                if (sidx === STATE.fortuneTellerIndex && STATE.characters[sidx].alive && STATE.fortuneSecret) {
-                    desc += `\n【${c.name}だけの秘密情報（占い結果）】${STATE.fortuneSecret}。他者に正体を悟られないよう活かすか、あえて公表するかは本人の判断。`;
+                let secret = '';
+                if (sidx === STATE.fortuneTellerIndex && STATE.characters[sidx].alive) {
+                    secret = `\n【${c.name}だけの秘密情報】占い履歴: ${fortuneHist}`;
                 }
-                const roleLabel = {
-                    werewolf: '人狼（正体を隠して村人のふりをする）',
-                    villager: '村人（人狼を見つけて処刑するのが目標）',
-                    fortuneteller: '占い師（村人陣営。占い結果を推理に活かす）'
-                }[c.role] || '村人';
-                return `■ 発言者${pos + 1}: ${c.name}（役職: ${roleLabel}）\n${desc}`;
+                if (sidx === STATE.mediumIndex && STATE.characters[sidx].alive) {
+                    secret = `\n【${c.name}だけの秘密情報】霊媒履歴: ${mediumHist}`;
+                }
+                const roleLabel = roleDescs[c.role] || '村人';
+                const sus = c.suspicionLevel || '中';
+                return `■ 発言者${pos + 1}: ${c.name}（『${c.anime}』／役職: ${roleLabel}／疑心度: ${sus}）${secret}\n設定: ${c.description}`;
             }).join('\n\n');
 
             const transcript = roundSpoken.length > 0
@@ -1539,15 +1737,45 @@ ${profiles}
 
 ## 絶対ルール
 1. **発言順の因果**: 各キャラが引用・同意・反論できるのは「このラウンドで既に発言した人」と、番号が自分より前のキャラの発言だけ。自分より後のキャラが「言った内容」に触れるのは厳禁（後のキャラに話を振る・質問するのはOK）。
-2. **キャラ再現の徹底**: 各キャラの【一人称】【語尾】【口癖】はもちろん、【他者の呼び方】も設定通りに厳密に守る（例: 「にーにー」「圭ちゃん」など）。設定にない呼び方・口調は使わない。
-3. **人間らしさ**: 「〜の言う通り」だけで終わる発言は禁止。同意する場合も自分の考え・疑問・違和感を必ず添える。ただし**毎回誰かを疑う必要はない**——時には観察・質問・雑談・ため息だけの発言も混ぜる。全員が「〜の様子こそ怪しい」のような同じ構文を繰り返すのは厳禁。
-4. **太字の制限**: 「誰が怪しい」と明確に疑う一文だけ **疑いの核心部分** の形で囲んでよいが、**1発言につき最大1箇所**。疑いを述べない発言では一切使わない。このチャンク内で太字を使うのは半分以下の発言に抑えること。
-5. **長さ**: 基本は1〜2文（60〜120文字目安）。饒舌なキャラのみ3文まで。前の人の発言をなぞった長い言い換えは禁止。
-6. セリフに引用符（「」『』）は付けない。話し言葉そのままを書く。
+2. **キャラ再現の徹底**: 各キャラの【一人称】【語尾】【口癖】はもちろん、【他者の呼び方】も設定通りに厳密に守る。設定にない呼び方・口調は使わない。
+3. **人間らしさ最重要**: 全員が「〜が怪しい」しか言わないのはNG。実際の議論では**雑談・観察・冗談・「まだ分からない」で終わる発言・話題の脱線**なども混ざる。設定の【疑心度】が「低」のキャラは擁護や場を和ませる発言を優先し、「高」のキャラだけが積極的に疑う。**チャンク内で「誰かを疑う」発言は多くても半分以下**にする（残りは反応・質問・観察・雑談・様子見）。
+4. **カミングアウト(CO)の扱い（重要・自然に）**:
+   - **占い師/霊媒師**: 自分の判定結果を活かすには「私は占い師だ」「私は霊媒師だ」と名乗る必要がある。ただし**名乗ると人狼に襲撃されるリスクが上がる**ため、タイミングはキャラの性格次第。慎重なキャラは温存し、直感的なキャラは早めに動く。**初日から即COする必要はない**——通常は2日目以降、疑いが強まった時や情報を出したい時に。
+   - **人狼/狂人**: 「私は村人だ」「私は占い師だ（偽CO）」など騙りは自由。ただし本物とバッティングすると危険なので、キャラの性格に合った動きを。
+   - **村人/騎士**: 自分から「私は村人だ」と言うのは自由（疑いを晴らしたい時など）。ただし**騎士は正体を明かすと即殺されるのでCOは基本避ける**。
+   - 全員: 名乗る時は「私は占い師です。○○を占ったら人狼でした」のように**セリフの中に自然に混ぜる**。棒読みの宣言口調は避ける。
+5. **同じ話題の反復を避ける**: 直前ラウンドで「お茶」「のんびり」など同じテーマが繰り返されていたら、必ず別の切り口（誰の発言が矛盾していたか・沈黙している人がいるか等）に議論を進める。**同じ雑談を全員で続けるのは厳禁**。
+6. **太字の制限**: 「誰が怪しい」と明確に疑う一文だけ **疑いの核心部分** の形で囲んでよいが、**1発言につき最大1箇所**。疑いを述べない発言では一切使わない。
+7. **長さ**: 基本は1〜2文（60〜120文字目安）。饒舌なキャラのみ3文まで。前の人の発言をなぞった長い言い換えは禁止。
+8. セリフに引用符（「」『』）は付けない。話し言葉そのままを書く。
 
 ## 出力（JSONのみ・前置き不要・キーの順序＝発言順）
 {
   ${keyOrder}
+}`;
+        }
+
+        function buildKnightNightPrompt() {
+            const idx = STATE.knightIndex;
+            const alive = STATE.aliveIndices;
+            const cands = alive.filter(i => i !== idx);
+            const info = cands.map(i => `${STATE.characters[i].name}（${STATE.characters[i].description.slice(0, 60)}）`).join('\n');
+            const susp = suspicionRanking().filter(([nm]) => cands.some(i => STATE.characters[i].name === nm));
+            const suspLine = susp.length ? `\n議論で疑われている人物: ${susp.map(([nm, c]) => `${nm}(${c})`).join('、')}` : '';
+            return `あなたは騎士（${STATE.characters[idx].name}）です。今夜、人狼の襲撃から守りたい人物を1人選んでください（自分は選べない）。
+
+## 生存者（自分以外）
+${info}
+${suspLine}
+
+## 選び方の指針
+- 占い師や霊媒師と思われる（COした・COしそう）人物を優先
+- 議論をリードしていて人狼に狙われそうな人物を優先
+- 疑いが強すぎて処刑されそうな人物は避ける（護衛が無駄になる）
+
+## 出力
+{
+  "knight_target": "守るキャラクターの名前"
 }`;
         }
 
@@ -1725,12 +1953,18 @@ ${logSection}
                 const roleLabel = {
                     werewolf: '🐺 人狼',
                     villager: '🏘️ 村人',
-                    fortuneteller: '🔮 占い師'
+                    fortuneteller: '🔮 占い師',
+                    medium: '👻 霊媒師',
+                    knight: '🛡️ 騎士',
+                    madman: '🎭 狂人'
                 }[c.role] || '';
                 const badgeClass = {
                     werewolf: 'werewolf',
                     villager: 'villager',
-                    fortuneteller: 'fortuneteller'
+                    fortuneteller: 'fortuneteller',
+                    medium: 'medium',
+                    knight: 'knight',
+                    madman: 'madman'
                 }[c.role] || '';
                 card.innerHTML = `
                     <span class="dead-ribbon">DEAD</span>
@@ -1790,6 +2024,10 @@ ${logSection}
                 document.getElementById('charCards').innerHTML = '';
                 STATE.suspicion = {};
                 STATE.fortuned = [];
+                STATE.fortuneHistory = [];
+                STATE.mediumHistory = [];
+                STATE.lastExecuted = -1;
+                STATE.lastGuardedIdx = -1;
             }
         }
     </script>
