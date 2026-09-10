@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver5.1 - Gemini</title>
+    <title>全自動人狼 Ver5.2 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -354,7 +354,7 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.1</span></h1>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.2</span></h1>
                 <span class="sub"><i class="fas fa-robot"></i> Gemini — AIキャラ人狼シミュレーター</span>
             </div>
             <div class="api-area">
@@ -453,6 +453,7 @@
                         <span class="speed-label">速い</span>
                     </div>
                     <button class="btn btn-danger btn-sm" id="pauseBtn"><i class="fas fa-pause"></i> 一時停止</button>
+                    <button class="btn btn-outline btn-sm" id="copyLogBtn"><i class="fas fa-copy"></i> ログコピー</button>
                     <button class="btn btn-outline btn-sm" id="resetBtn"><i class="fas fa-redo-alt"></i> リセット</button>
                 </div>
             </div>
@@ -465,7 +466,7 @@
     <script>
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
-        const VERSION = 'Ver5.1';
+        const VERSION = 'Ver5.2';
 
         const STATE = {
             apiKey: '',
@@ -495,6 +496,7 @@
             suspicion: {},
             fortuned: [],
             daySchedule: [], // その日の議論スケジュール [[ラウンド1の発言者idx...], [...], [...]]
+            fullLog: [], // 全メッセージのコピー用ログ（**太字**マーカーを保持）
             gameToken: 0,
         };
 
@@ -545,6 +547,7 @@
             document.getElementById('startGameFromLibrary').addEventListener('click', startGameFromLibrary);
             document.getElementById('pauseBtn').addEventListener('click', togglePause);
             document.getElementById('resetBtn').addEventListener('click', resetGame);
+            document.getElementById('copyLogBtn').addEventListener('click', copyGameLog);
             document.getElementById('speedSlider').addEventListener('input', (e) => {
                 STATE.speed = parseInt(e.target.value);
             });
@@ -888,6 +891,7 @@
             STATE.mediumHistory = [];
             STATE.lastExecuted = -1;
             STATE.lastGuardedIdx = -1;
+            STATE.fullLog = [];
 
             STATE.log = [];
             STATE.day = 0;
@@ -985,6 +989,38 @@
             if (madmanCount) parts.push(`狂人${madmanCount}`);
             addSystemMessage(`✅ 役職決定：${parts.join('・')}`, 'info');
             renderCards();
+        }
+
+        // ===== ゲームログのコピー（**太字**マーカーを保持したプレーンテキスト） =====
+        function copyGameLog() {
+            const lines = STATE.fullLog.map(e => {
+                if (e.kind === 'speech') {
+                    const role = e.role ? `(${e.role})` : '';
+                    return `${e.time} ${e.name}${role}: 「${e.text}」`;
+                } else if (e.kind === 'vote') {
+                    const vr = e.role ? `(${e.role})` : '';
+                    if (e.text === '見送り') return `${e.time} 🗳️ ${e.name}${vr} は投票を見送った`;
+                    const tr = e.targetRole ? `(${e.targetRole})` : '';
+                    return `${e.time} 🗳️ ${e.name}${vr} が ${e.text}${tr} に投票した`;
+                }
+                return `${e.time} ${e.text}`;
+            });
+            const out = `全自動人狼 ${VERSION} ゲームログ\n\n` + lines.join('\n');
+            const btn = document.getElementById('copyLogBtn');
+            const orig = btn.innerHTML;
+            const done = () => {
+                btn.innerHTML = '<i class="fas fa-check"></i> コピー完了';
+                setTimeout(() => btn.innerHTML = orig, 2000);
+            };
+            navigator.clipboard.writeText(out).then(done).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = out;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                done();
+            });
         }
 
         function handleGameLoopError(e) {
@@ -1133,15 +1169,13 @@
             const fortunePromise = (fortuneIdx !== -1 && STATE.characters[fortuneIdx].alive)
                 ? callGemini(buildFortuneNightPrompt())
                 : Promise.resolve('{}');
-            const mediumPromise = (mediumIdx !== -1 && STATE.characters[mediumIdx].alive && STATE.lastExecuted !== -1)
-                ? Promise.resolve('{}') // 霊媒はAPI不要（決定的処理）
-                : Promise.resolve('{}');
+            // 霊媒は結果が決定的に決まるためAPI不要
             const knightPromise = (knightIdx !== -1 && STATE.characters[knightIdx].alive)
                 ? callGemini(buildKnightNightPrompt())
                 : Promise.resolve('{}');
 
             let wolfResponse = '{}', fortuneResponse = '{}', knightResponse = '{}';
-            try { [wolfResponse, fortuneResponse, , knightResponse] = await Promise.all([wolfPromise, fortunePromise, mediumPromise, knightPromise]); }
+            try { [wolfResponse, fortuneResponse, knightResponse] = await Promise.all([wolfPromise, fortunePromise, knightPromise]); }
             catch (e) {
                 try { wolfResponse = await wolfPromise; } catch (_) {}
                 try { fortuneResponse = await fortunePromise; } catch (_) {}
@@ -1305,8 +1339,28 @@
                     }
                 }
             }
-            for (let i = 0; i < 3; i++) rounds[i] = shuffleArray(rounds[i]);
+            // 同一キャラがラウンド内で連続しないよう並び替え（連続だとAIが同じセリフを複製しやすい）
+            for (let i = 0; i < 3; i++) rounds[i] = deAdjacent(shuffleArray(rounds[i]));
             return rounds;
+        }
+
+        // 同じ要素が隣接しないよう貪欲に並び替える
+        function deAdjacent(arr) {
+            const a = [...arr];
+            for (let i = 1; i < a.length; i++) {
+                if (a[i] === a[i - 1]) {
+                    let swapped = false;
+                    for (let j = i + 1; j < a.length; j++) {
+                        if (a[j] !== a[i - 1] && (j + 1 >= a.length || a[j + 1] !== a[i])) {
+                            [a[i], a[j]] = [a[j], a[i]];
+                            swapped = true;
+                            break;
+                        }
+                    }
+                    if (!swapped) break; // 入れ替え不能なら諦める（極少数人の終盤のみ）
+                }
+            }
+            return a;
         }
 
         function suspicionRanking() {
@@ -1340,13 +1394,15 @@
                         && !(isWolf && STATE.werewolfIndices.includes(idx));
                 });
             if (ranking.length > 0) {
-                return ranking[voterIdx % ranking.length];
+                // 上位3候補からランダムに選ぶ（全員が同じトップに収束するのを防ぐ）
+                const pool = ranking.slice(0, Math.min(3, ranking.length));
+                return pool[Math.floor(Math.random() * pool.length)];
             }
             const candidates = STATE.aliveIndices.filter(i =>
                 i !== voterIdx && (!isWolf || !STATE.werewolfIndices.includes(i))
             );
             if (candidates.length === 0) return '';
-            return STATE.characters[candidates[voterIdx % candidates.length]].name;
+            return STATE.characters[candidates[Math.floor(Math.random() * candidates.length)]].name;
         }
 
         // ===== Ver4.2: 名前のあいまい解決（投票・襲撃・占い・疑い集計用） =====
@@ -1448,6 +1504,11 @@
                         speech = String(speech).trim().replace(/^["'「『]+|["'」』]+$/g, '').trim();
                         if (speech.length < 2) continue;
                         if (speech.length > 220) speech = speech.slice(0, 220) + '…';
+                        // 同一人物による同一・ほぼ同一セリフの複製をスキップ（正規化して比較）
+                        const norm = speech.replace(/[\s\*。、！？!?…~ー「」]/g, '');
+                        const isDup = roundSpoken.some(e => e.name === name && e.speech.replace(/[\s\*。、！？!?…~ー「」]/g, '') === norm)
+                            || priorLog.some(e => e.name === name && e.speech.replace(/[\s\*。、！？!?…~ー「」]/g, '') === norm);
+                        if (isDup) continue;
                         STATE.characters[sidx].speech = speech;
                         recordSuspicion(speech, sidx);
                         chunkMsgs.push({ idx: sidx, name, speech });
@@ -1637,6 +1698,7 @@
             const div = document.createElement('div');
             div.className = `msg-system ${type}`;
             const time = new Date().toLocaleTimeString();
+            STATE.fullLog.push({ time, kind: 'system', text });
             div.innerHTML = `<span class="msg-time">${time}</span> `;
             const span = document.createElement('span');
             span.textContent = text;
@@ -1677,6 +1739,7 @@
             const nameSpan = document.createElement('div');
             nameSpan.className = 'name';
             const time = new Date().toLocaleTimeString();
+            STATE.fullLog.push({ time, kind: 'speech', name: c.name, role: c.role ? roleJa(c.role) : '', text });
             const roleTag = c.role ? `<span class="role-tag">(${roleJa(c.role)})</span>` : '';
             nameSpan.innerHTML = `${escapeHtml(c.name)}${roleTag} <span class="msg-time">${time}</span>`;
             bubble.appendChild(nameSpan);
@@ -1700,6 +1763,11 @@
 
             const voterChar = STATE.characters.find(c => c.name === voter);
             const targetChar = STATE.characters.find(c => c.name === target);
+            STATE.fullLog.push({
+                time, kind: 'vote', name: voter, role: voterChar && voterChar.role ? roleJa(voterChar.role) : '',
+                text: target === '見送り' ? '見送り' : target,
+                targetRole: targetChar && targetChar.role ? roleJa(targetChar.role) : ''
+            });
             const voterTag = voterChar && voterChar.role ? `<span class="role-tag">(${roleJa(voterChar.role)})</span>` : '';
             const targetTag = targetChar && targetChar.role ? `<span class="role-tag">(${roleJa(targetChar.role)})</span>` : '';
 
@@ -1728,12 +1796,12 @@
             // 狂人は自分の役職は知っているが人狼が誰かは知らない
 
             const roleDescs = {
-                werewolf: `人狼（人狼陣営）。仲間の人狼: ${wolfNames}。正体を隠して村人・占い師・霊媒師などの偽COも自由。占い師や騎士っぽい人物を襲撃で狙う。占われるとバレるので、鋭い村人陣営を先に潰したい`,
+                werewolf: `人狼（人狼陣営）。仲間の人狼: ${wolfNames}。正体を隠して村人・占い師・霊媒師などの偽COも自由。**偽COする時は結果もでっち上げて具体的に言うこと**（例:「私は占い師です。○○は人狼でした」）。占い師や騎士っぽい人物を襲撃で狙う。占われるとバレるので、鋭い村人陣営を先に潰したい`,
                 villager: '村人（村人陣営）。特別な能力はない。議論から人狼を推理して処刑に導く。「私は村人だ」と言うのは自由だが、それ自体が疑われる材料になることもある',
                 fortuneteller: `占い師（村人陣営）。毎晩1人を占って人狼か村人かを知る。**COする（自ら名乗る）と信頼を得やすいが人狼に襲撃されやすくなる**。COするタイミングは戦略次第。**COする時は必ず具体的な結果をセットで言うこと（例:「私は占い師です。○○を占ったら人狼でした」）。名乗るだけ・予告だけで結果を言わないのは厳禁**。狂人は占い結果では「村人」と出る点に注意`,
                 medium: `霊媒師（村人陣営）。前日処刑された人物が人狼だったかを知る。**COする時は必ず具体的な結果をセットで言うこと（例:「私は霊媒師です。処刑された○○は村人でした」）。名乗るだけ・予告だけで結果を言わないのは厳禁。霊媒履歴が空の時はCO自体をしてはいけない**`,
                 knight: `騎士（村人陣営）。毎晩1人を選び、その人を人狼の襲撃から守る（自分は選べない）。**COは基本しない方が良い**（人狼にバレると先に殺される）。ただし終盤に必要なら判断する`,
-                madman: `狂人（人狼陣営）。自分は人間だが人狼の勝利が自分の勝ちになる。**人狼が誰かは知らない**。村人のふりをしつつ、議論を混乱させ、偽の占い師CO・偽の霊媒師COなどで村人陣営を惑わす戦法もある。占いでは「村人」判定なので占われても白と出る`
+                madman: `狂人（人狼陣営）。自分は人間だが人狼の勝利が自分の勝ちになる。**人狼が誰かは知らない**。村人のふりをしつつ議論を混乱させ、偽の占い師CO・偽の霊媒師COも有効（**偽COでは結果もでっち上げて具体的に言う**。「○○は人狼でした」と嘘の黒判定を振りまくのも手）。占いでは「村人」判定なので占われても白と出る`
             };
 
             // 占い履歴/霊媒履歴（該当役職本人のみ渡す）
@@ -1773,6 +1841,18 @@
                 : '';
 
             const dayWord = STATE.day === 1 ? '初日' : `${STATE.day}日目`;
+
+            // チャンク内で同一キャラが複数回出る場合の注記（同じセリフの複製を防ぐ）
+            const seenInChunk = {};
+            const dupNames = [];
+            chunkIdxs.forEach((i, pos) => {
+                const nm = STATE.characters[i].name;
+                if (seenInChunk[nm] !== undefined) dupNames.push(`発言者${seenInChunk[nm] + 1}と発言者${pos + 1}は同一人物（${nm}）`);
+                else seenInChunk[nm] = pos;
+            });
+            const dupNote = dupNames.length
+                ? `\n## 同一人物の複数回発言について\n${dupNames.join('、')}です。**2回目のセリフは1回目とは内容も言い回しも完全に変えること。同じ文・同じ趣旨の言い換えの複製は厳禁**（1回目の発言に対する他者の反応や、会話が進んだ後の新しい視点として書いてください）。`
+                : '';
             const keyOrder = chunkIdxs.map(i => `"${STATE.characters[i].name}": "セリフ"`).join(',\n  ');
 
             return `あなたは人狼ゲームの昼議論の脚本家です。以下の${chunkIdxs.length}件のセリフを、指定された発言順そのままで作成してください（同じキャラが2回出る場合は会話の流れを受けた別のセリフにすること）。
@@ -1788,6 +1868,7 @@ ${suspicionLine}
 
 ## 今回セリフを書くキャラクター（この番号順＝発言順）
 ${profiles}
+${dupNote}
 
 ## 絶対ルール
 1. **発言順の因果**: 各キャラが引用・同意・反論できるのは「このラウンドで既に発言した人」と、番号が自分より前のキャラの発言だけ。自分より後のキャラが「言った内容」に触れるのは厳禁（後のキャラに話を振る・質問するのはOK）。
@@ -1804,6 +1885,7 @@ ${profiles}
 6. **太字のバランス**: 「誰が怪しい」と明確に疑う一文だけ **疑いの核心部分** の形で囲む。**1発言につき最大1箇所**。疑いを述べない発言では一切使わない。**チャンク全体（3件前後）の中で太字を含む発言は1〜2件にする（0件でも3件全部でもダメ）**。
 7. **長さ**: 基本は1〜2文（60〜120文字目安）。饒舌なキャラのみ3文まで。前の人の発言をなぞった長い言い換えは禁止。
 8. セリフに引用符（「」『』）は付けない。話し言葉そのままを書く。
+9. **同一チャンク内で、全く同じ文・ほぼ同じ文を2回出力するのは厳禁**。各セリフは必ず内容の異なる独立した発言にすること。
 
 ## 出力（JSONのみ・前置き不要・キーの順序＝発言順）
 {
@@ -2085,6 +2167,7 @@ ${logSection}
                 STATE.lastExecuted = -1;
                 STATE.lastGuardedIdx = -1;
                 STATE.daySchedule = [];
+                STATE.fullLog = [];
             }
         }
     </script>
