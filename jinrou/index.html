@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver5.2 - Gemini</title>
+    <title>全自動人狼 Ver5.3 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -354,7 +354,7 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.2</span></h1>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.3</span></h1>
                 <span class="sub"><i class="fas fa-robot"></i> Gemini — AIキャラ人狼シミュレーター</span>
             </div>
             <div class="api-area">
@@ -466,7 +466,7 @@
     <script>
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
-        const VERSION = 'Ver5.2';
+        const VERSION = 'Ver5.3';
 
         const STATE = {
             apiKey: '',
@@ -1083,13 +1083,21 @@
                     }
                 }
 
-                STATE.conversationLog = STATE.conversationLog.slice(-20);
+                // Ver5.3: 日またぎでログを圧縮（AIが表示されていない古い発言を幻参照するのを防ぐ）
+                // 直近の発言はそのまま残し、古いものは「日付と要点」だけに置き換える
+                if (STATE.conversationLog.length > 12) {
+                    const recent = STATE.conversationLog.slice(-12);
+                    const older = STATE.conversationLog.slice(0, -12);
+                    const olderDigest = older.slice(-10).map(e => `${e.name}: 「${e.speech.slice(0, 40)}${e.speech.length > 40 ? '…' : ''}」`).join(' / ');
+                    STATE.conversationLog = [{ name: '（前日までの議論の要点）', speech: olderDigest }].concat(recent);
+                }
 
                 for (let round = 1; round <= 3; round++) {
                     if (!isCurrentGame(token)) return;
                     if (STATE.paused) await waitUntilResume();
                     if (!isCurrentGame(token)) return;
                     setPhase(`☀️ 議論 ${round}/3`, '');
+                    addSystemMessage(`💬 議論ターン ${round}/3`, 'info', true); // ログコピー専用
                     await wait(STATE.speed);
                     await dayDiscussion(round, token);
                     renderCards();
@@ -1302,10 +1310,10 @@
         // 総発言数は生存者の約2倍にして、会話に強弱をつける。
         function buildDaySchedule(alive) {
             const n = alive.length;
-            // 各キャラの発言回数: 全員1回 + alive.length 枠の追加（合計 ≒ 2*alive、1人最大3回）
+            // 各キャラの発言回数: 全員1回 + 追加スロット（合計 ≒ alive*2.5、1人最大3回）
             const perChar = {};
             alive.forEach(i => perChar[i] = 1);
-            let extra = n;
+            let extra = Math.round(n * 1.5);
             const addOrder = shuffleArray(alive);
             let oi = 0, guard = 0;
             while (extra > 0 && guard < 1000) {
@@ -1504,10 +1512,17 @@
                         speech = String(speech).trim().replace(/^["'「『]+|["'」』]+$/g, '').trim();
                         if (speech.length < 2) continue;
                         if (speech.length > 220) speech = speech.slice(0, 220) + '…';
-                        // 同一人物による同一・ほぼ同一セリフの複製をスキップ（正規化して比較）
-                        const norm = speech.replace(/[\s\*。、！？!?…~ー「」]/g, '');
-                        const isDup = roundSpoken.some(e => e.name === name && e.speech.replace(/[\s\*。、！？!?…~ー「」]/g, '') === norm)
-                            || priorLog.some(e => e.name === name && e.speech.replace(/[\s\*。、！？!?…~ー「」]/g, '') === norm);
+                        // 同一人物による同一・ほぼ同一セリフの複製をスキップ（全履歴で正規化比較・類似度もチェック）
+                        const norm = speech.replace(/[\s\*。、！？!?…~ー「」『』]/g, '');
+                        const allPast = roundSpoken.concat(STATE.conversationLog);
+                        const isDup = allPast.some(e => {
+                            if (e.name !== name) return false;
+                            const en = e.speech.replace(/[\s\*。、！？!?…~ー「」『』]/g, '');
+                            if (en === norm) return true;
+                            // 先頭30文字が一致する場合も類似とみなす（日をまたいだ言い回しの再利用対策）
+                            if (en.length >= 30 && norm.length >= 30 && en.slice(0, 30) === norm.slice(0, 30)) return true;
+                            return false;
+                        });
                         if (isDup) continue;
                         STATE.characters[sidx].speech = speech;
                         recordSuspicion(speech, sidx);
@@ -1586,9 +1601,12 @@
                 const isAbstain = !targetName || ['見送り', 'なし', '棄権', 'abstain', 'none', 'わからない', '不明'].some(k => targetName.includes(k));
 
                 if (isAbstain) {
-                    // 見送りが出た場合、2日目以降かつ議論で明確に疑われた人物（2回以上言及）がいる時だけ自動投票
+                    // 見送りが出た場合の自動投票:
+                    // - 終盤（生存5人以下）: 見送り＝敗北なので無条件で最も怪しい人物に自動投票
+                    // - それ以外の2日目以降: 議論で明確に疑われた人物（2回以上言及）がいる時だけ自動投票
                     const top = suspicionRanking().filter(([nm]) => nm !== voterName);
-                    if (STATE.day >= 2 && top.length > 0 && top[0][1] >= 2) {
+                    const endgame = STATE.aliveIndices.length <= 5 && STATE.day >= 2;
+                    if (endgame || (STATE.day >= 2 && top.length > 0 && top[0][1] >= 2)) {
                         targetName = pickBySuspicion(idx);
                     } else {
                         targetName = '';
@@ -1692,13 +1710,14 @@
             return false;
         }
 
-        function addSystemMessage(text, type = 'info') {
+        function addSystemMessage(text, type = 'info', copyOnly = false) {
             const area = document.getElementById('messageArea');
+            const time = new Date().toLocaleTimeString();
+            STATE.fullLog.push({ time, kind: 'system', text });
+            if (copyOnly) return; // ログコピー専用メッセージ（画面には出さない）
             if (!area) return;
             const div = document.createElement('div');
             div.className = `msg-system ${type}`;
-            const time = new Date().toLocaleTimeString();
-            STATE.fullLog.push({ time, kind: 'system', text });
             div.innerHTML = `<span class="msg-time">${time}</span> `;
             const span = document.createElement('span');
             span.textContent = text;
@@ -1841,6 +1860,8 @@
                 : '';
 
             const dayWord = STATE.day === 1 ? '初日' : `${STATE.day}日目`;
+            // その日の最初の発言者（round=1 かつまだ誰も喋っていないチャンク先頭）だけが日付の挨拶をしてよい
+            const isDayOpening = (round === 1 && roundSpoken.length === 0);
 
             // チャンク内で同一キャラが複数回出る場合の注記（同じセリフの複製を防ぐ）
             const seenInChunk = {};
@@ -1855,7 +1876,11 @@
                 : '';
             const keyOrder = chunkIdxs.map(i => `"${STATE.characters[i].name}": "セリフ"`).join(',\n  ');
 
-            return `あなたは人狼ゲームの昼議論の脚本家です。以下の${chunkIdxs.length}件のセリフを、指定された発言順そのままで作成してください（同じキャラが2回出る場合は会話の流れを受けた別のセリフにすること）。
+            const dayGreetRule = isDayOpening
+                ? '\n- このチャンクの**発言者1だけ**が「今日で○日目か」「もう○日目だね」のように日付に触れてよい。発言者2以降は日付に一切触れないこと。'
+                : '\n- **このタイミングでは誰も「○日目」など日付には触れないこと**（既に今日の議論は始まっています）。いきなり本題に入ってください。';
+
+            return `あなたは人狼ゲームの昼議論の脚本家です。以下の${chunkIdxs.length}件のセリフを、指定された発言順そのままで作成してください（同じキャラが2回出る場合は会話の流れを受けた別のセリフにすること）。${dayGreetRule}
 
 ## 状況
 - ${dayWord}・昼の議論 ${round}回目（生存${alive.length}人 / 全${n}人）
@@ -1871,7 +1896,7 @@ ${profiles}
 ${dupNote}
 
 ## 絶対ルール
-1. **発言順の因果**: 各キャラが引用・同意・反論できるのは「このラウンドで既に発言した人」と、番号が自分より前のキャラの発言だけ。自分より後のキャラが「言った内容」に触れるのは厳禁（後のキャラに話を振る・質問するのはOK）。
+1. **発言順の因果**: 各キャラが引用・同意・反論できるのは「このラウンドで既に発言した人」と、番号が自分より前のキャラの発言だけ。自分より後のキャラが「言った内容」に触れるのは厳禁（後のキャラに話を振る・質問するのはOK）。**特に自分の1つ前の発言者の内容には必ず何らかの反応を示すこと**（同意・反論・質問・補足のいずれか。完全に無視して別話題を始めるのは不自然）。
 2. **キャラ再現の徹底**: 各キャラの【一人称】【語尾】【口癖】はもちろん、【他者の呼び方】も設定通りに厳密に守る。設定にない呼び方・口調は使わない。
 3. **人間らしさ最重要**: 全員が「〜が怪しい」しか言わないのはNG。実際の議論では**雑談・観察・冗談・「まだ分からない」で終わる発言・話題の脱線**なども混ざる。設定の【疑心度】が「低」のキャラは擁護や場を和ませる発言を優先し、「高」のキャラだけが積極的に疑う。**チャンク内で「誰かを疑う」発言は多くても半分以下**にする（残りは反応・質問・観察・雑談・様子見）。**ただし逆に全員が雑談だけで終わるのもNG——このチャンクの中で少なくとも1件は、具体的な疑い・指摘・気づきを含む発言を入れること。**
 3.5. **追随だけの発言を疑う**: 「〜の言う通り」「みんなで様子を見よう」ばかりで自分の意見を一度も言わない人物は、人狼が目立たないよう隠れている典型パターンです。誰かがそういう振る舞いを続けていたら、鋭いキャラは「お前は自分の意見を言わなさすぎじゃないか」と突っ込んでよい。
@@ -2012,6 +2037,7 @@ ${logSection}
 - 各キャラは**上の議論ログを自分で読み、自分の役職・性格・相手との関係性から独自に**投票先を決めること。
 - **全員が同じ人物に投票するのは不自然です。キャラごとに視点が違うはず**（感情的なキャラは自分を攻撃してきた相手へ、論理的なキャラは発言の矛盾を見た相手へ、日和見なキャラは流れに乗る、など）。**2〜4箇所に票が割れるのが自然な姿です。**
 - 【日数ルール】**初日（1日目）はまだ誰も犠牲者が出ておらず決定的な手がかりがないため、慎重なキャラは「見送り」を選ぶのが普通です（半数以上が見送りでもOK）。2日目以降は犠牲者が出ているため、原則として全員が自分なりの推理で誰かに投票してください**（この日に見送りを選べるのは本当に判断がつかない1〜2人まで）。
+- 【終盤ルール・超重要】**生存者が5人以下になったら「見送り」は禁止です。**この人数で処刑できなければ、夜の襲撃で人狼の勝利が決まってしまいます。「完全に確信は持てないが一番怪しい人物」に必ず投票してください。村人陣営にとって、ここで見送ることは敗北を選ぶのと同じです。
 - 見送りとする場合は「見送り」とだけ出力すること。
 - 村人・占い師: 最も人狼らしいと判断した人物に投票。占い師が人狼を確定させる情報を持っているなら、その人狼に投票する。**なお「誰かの意見に同意するだけで自分の推理を一度も言っていない人物」「話題をそらす雑談ばかりの人物」は人狼が隠れている典型パターンなので、過激な人物だけでなくそういう目立たない人物も候補として検討すること。**
 - 人狼: 自分に疑いを向けてきた人物や鋭い推理者に投票する。ただし露骨すぎて自分が疑われない範囲で。
