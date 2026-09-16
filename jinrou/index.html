@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver5.3 - Gemini</title>
+    <title>全自動人狼 Ver5.4 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -354,7 +354,7 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.3</span></h1>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.4</span></h1>
                 <span class="sub"><i class="fas fa-robot"></i> Gemini — AIキャラ人狼シミュレーター</span>
             </div>
             <div class="api-area">
@@ -466,7 +466,7 @@
     <script>
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
-        const VERSION = 'Ver5.3';
+        const VERSION = 'Ver5.4';
 
         const STATE = {
             apiKey: '',
@@ -497,6 +497,8 @@
             fortuned: [],
             daySchedule: [], // その日の議論スケジュール [[ラウンド1の発言者idx...], [...], [...]]
             fullLog: [], // 全メッセージのコピー用ログ（**太字**マーカーを保持）
+            coClaims: [], // CO宣言の記録 {idx, name, role, day}（追跡用）
+            nightDeaths: [], // 夜の襲撃で死んだidxの履歴
             gameToken: 0,
         };
 
@@ -892,6 +894,8 @@
             STATE.lastExecuted = -1;
             STATE.lastGuardedIdx = -1;
             STATE.fullLog = [];
+            STATE.coClaims = [];
+            STATE.nightDeaths = [];
 
             STATE.log = [];
             STATE.day = 0;
@@ -1266,6 +1270,7 @@
                     STATE.aliveIndices = STATE.aliveIndices.filter(i => i !== attackTarget);
                     STATE.characters[attackTarget].speech = '⚰️ 死亡';
                     victim = attackTarget;
+                    STATE.nightDeaths.push(attackTarget);
                 }
             }
 
@@ -1388,6 +1393,37 @@
                     STATE.suspicion[c.name] = (STATE.suspicion[c.name] || 0) + 1;
                 }
             });
+        }
+
+        // CO宣言を検出して記録（占い師/霊媒師/騎士を名乗ったか）
+        function recordCO(text, speakerIdx) {
+            if (!text) return;
+            if (!/占い師|霊媒師|騎士/.test(text)) return;
+            if (!/私は|ボクは|俺は|僕は|あたしは|わたくしは|わしは|自分は|拙者は/.test(text)) return;
+            const m = text.match(/占い師|霊媒師|騎士/);
+            if (!m) return;
+            // 既に同じ人・同じ役職で記録済みなら追加しない
+            const already = STATE.coClaims.some(c => c.idx === speakerIdx && c.role === m[0]);
+            if (!already) {
+                STATE.coClaims.push({ idx: speakerIdx, name: STATE.characters[speakerIdx].name, role: m[0], day: STATE.day });
+            }
+        }
+
+        // 同一人物による口癖フレーズの使い回しを検出（12文字以上の部分文字列の再利用）
+        function hasRepeatedPhrase(speech, speakerName) {
+            const norm = speech.replace(/[\s\*。、！？!?…~ー「」『』]/g, '');
+            const past = STATE.conversationLog.filter(e => e.name === speakerName);
+            for (const e of past) {
+                const en = e.speech.replace(/[\s\*。、！？!?…~ー「」『』]/g, '');
+                // 過去の発言に含まれる12文字以上の部分文字列が今回の発言にも含まれるか
+                for (let len = Math.min(20, en.length); len >= 12; len--) {
+                    for (let st = 0; st + len <= en.length; st += 4) {
+                        const sub = en.slice(st, st + len);
+                        if (sub.length >= 12 && norm.includes(sub)) return true;
+                    }
+                }
+            }
+            return false;
         }
 
         // 疑いスコアに基づいて投票先を決める（フォールバック用）。
@@ -1524,8 +1560,11 @@
                             return false;
                         });
                         if (isDup) continue;
+                        // 口癖フレーズの使い回し（3回目以降）もスキップ
+                        if (hasRepeatedPhrase(speech, name)) continue;
                         STATE.characters[sidx].speech = speech;
                         recordSuspicion(speech, sidx);
+                        recordCO(speech, sidx);
                         chunkMsgs.push({ idx: sidx, name, speech });
                         roundSpoken.push({ name, speech });
                     }
@@ -1800,6 +1839,23 @@
             area.scrollTop = area.scrollHeight;
         }
 
+        // COしていた人物が夜に襲撃された場合の推理材料を生成
+        function buildCOInference() {
+            const lines = [];
+            for (const claim of STATE.coClaims) {
+                const c = STATE.characters[claim.idx];
+                if (!c) continue;
+                if (!c.alive && STATE.nightDeaths.includes(claim.idx)) {
+                    // COしていた人が夜に殺された → 本物の可能性が高い
+                    lines.push(`・${claim.name}は${claim.day}日目に「自分は${claim.role}」とCOしていましたが、その後夜に襲撃されました。**人狼が真実を語る${claim.role}を殺した可能性が高い**ため、${claim.name}が名指しで疑っていた人物は強く疑うべきです。`);
+                } else if (c.alive) {
+                    lines.push(`・${claim.name}は${claim.day}日目に「自分は${claim.role}」とCOしています（現在も生存中）。`);
+                }
+            }
+            if (lines.length === 0) return '';
+            return '\n## CO（役職カミングアウト）の記録と推理材料\n' + lines.join('\n');
+        }
+
         // ================================================================
         //  ★ プロンプトビルダー（Ver4.2: チャンク生成・因果ルール強化）
         // ================================================================
@@ -1863,6 +1919,9 @@
             // その日の最初の発言者（round=1 かつまだ誰も喋っていないチャンク先頭）だけが日付の挨拶をしてよい
             const isDayOpening = (round === 1 && roundSpoken.length === 0);
 
+            // CO追跡: COしていた人が夜に殺された場合の推理材料
+            const coNote = buildCOInference();
+
             // チャンク内で同一キャラが複数回出る場合の注記（同じセリフの複製を防ぐ）
             const seenInChunk = {};
             const dupNames = [];
@@ -1877,8 +1936,8 @@
             const keyOrder = chunkIdxs.map(i => `"${STATE.characters[i].name}": "セリフ"`).join(',\n  ');
 
             const dayGreetRule = isDayOpening
-                ? '\n- このチャンクの**発言者1だけ**が「今日で○日目か」「もう○日目だね」のように日付に触れてよい。発言者2以降は日付に一切触れないこと。'
-                : '\n- **このタイミングでは誰も「○日目」など日付には触れないこと**（既に今日の議論は始まっています）。いきなり本題に入ってください。';
+                ? `\n- このチャンクの**発言者1だけ**が「今日で${STATE.day}日目か」「もう${STATE.day}日目だね」のように日付（${STATE.day}日目という数字）に触れてよい。発言者2以降は日付に一切触れないこと。`
+                : `\n- **このタイミングでは誰も「○日目」など日付には一切触れないこと**（既に今日の議論は始まっています）。「○」のようなプレースホルダを出力してはいけません。いきなり本題に入ってください。`;
 
             return `あなたは人狼ゲームの昼議論の脚本家です。以下の${chunkIdxs.length}件のセリフを、指定された発言順そのままで作成してください（同じキャラが2回出る場合は会話の流れを受けた別のセリフにすること）。${dayGreetRule}
 
@@ -1895,7 +1954,10 @@ ${suspicionLine}
 ${profiles}
 ${dupNote}
 
+${coNote}
+
 ## 絶対ルール
+0. **死亡者への言及禁止**: 上の「死亡者」リストに載っている人物は既に死んでいます。**死んだ人に話しかけたり・名前を出して質問したり・「○○さんはどう思う」と聞くのは絶対にやめてください**（死人に口なし）。死亡者に触れる場合は「○○がいなくなって寂しい」のような追悼の言及のみ許可します。
 1. **発言順の因果**: 各キャラが引用・同意・反論できるのは「このラウンドで既に発言した人」と、番号が自分より前のキャラの発言だけ。自分より後のキャラが「言った内容」に触れるのは厳禁（後のキャラに話を振る・質問するのはOK）。**特に自分の1つ前の発言者の内容には必ず何らかの反応を示すこと**（同意・反論・質問・補足のいずれか。完全に無視して別話題を始めるのは不自然）。
 2. **キャラ再現の徹底**: 各キャラの【一人称】【語尾】【口癖】はもちろん、【他者の呼び方】も設定通りに厳密に守る。設定にない呼び方・口調は使わない。
 3. **人間らしさ最重要**: 全員が「〜が怪しい」しか言わないのはNG。実際の議論では**雑談・観察・冗談・「まだ分からない」で終わる発言・話題の脱線**なども混ざる。設定の【疑心度】が「低」のキャラは擁護や場を和ませる発言を優先し、「高」のキャラだけが積極的に疑う。**チャンク内で「誰かを疑う」発言は多くても半分以下**にする（残りは反応・質問・観察・雑談・様子見）。**ただし逆に全員が雑談だけで終わるのもNG——このチャンクの中で少なくとも1件は、具体的な疑い・指摘・気づきを含む発言を入れること。**
@@ -1907,10 +1969,16 @@ ${dupNote}
    - **村人/騎士**: 自分から「私は村人だ」と言うのは自由（疑いを晴らしたい時など）。ただし**騎士は正体を明かすと即殺されるのでCOは基本避ける**。
    - 全員: 名乗る時は「私は占い師です。○○を占ったら人狼でした」のように**セリフの中に自然に混ぜる**。棒読みの宣言口調は避ける。
 5. **同じ話題の反復を避ける**: 直前ラウンドで「お茶」「のんびり」など同じテーマが繰り返されていたら、必ず別の切り口（誰の発言が矛盾していたか・沈黙している人がいるか等）に議論を進める。**同じ雑談を全員で続けるのは厳禁**。
-6. **太字のバランス**: 「誰が怪しい」と明確に疑う一文だけ **疑いの核心部分** の形で囲む。**1発言につき最大1箇所**。疑いを述べない発言では一切使わない。**チャンク全体（3件前後）の中で太字を含む発言は1〜2件にする（0件でも3件全部でもダメ）**。
-7. **長さ**: 基本は1〜2文（60〜120文字目安）。饒舌なキャラのみ3文まで。前の人の発言をなぞった長い言い換えは禁止。
+6. **太字のバランス**: 「誰が怪しい」と明確に疑う一文の**うち、人名＋断定の最小部分だけ**を **ここだけ** の形で囲む（良い例:「**沙都子が人狼**だと思う」／悪い例:「**私は沙都子が人狼だと思うのですわよ**」←長すぎ）。**1発言につき最大1箇所**。疑いを述べない発言では一切使わない。**チャンク全体（3件前後）の中で太字を含む発言は1〜2件にする（0件でも3件全部でもダメ）**。
+7. **長さ**: 1〜2文（30〜100文字目安）。**短くていい発言は短く**——「そうかもね」「……微妙だな」「様子見ようぜ」だけで終わる発言もOK。無理に長文にして同じことを繰り返したり不自然な言い回しをするのは厳禁。饒舌なキャラでも3文まで。前の人の発言をなぞった長い言い換えは禁止。
 8. セリフに引用符（「」『』）は付けない。話し言葉そのままを書く。
 9. **同一チャンク内で、全く同じ文・ほぼ同じ文を2回出力するのは厳禁**。各セリフは必ず内容の異なる独立した発言にすること。
+10. **会話のパターンを混ぜる**: 以下のような実際の人狼らしいやり取りを意識的に織り交ぜること。
+   - 意見の提示＋問いかけ: 「俺は○○が怪しいと思うけど、みんなはどう思う？」
+   - 同調＋発展: 「自分もそう思う。しかも○○はさっき…」
+   - 反論: 「いや、それは違うと思う。○○はむしろ…」
+   - 観察のみ: 「○○がずっと黙ってるのが気になる」
+   全員が「○○が怪しい」の断言だけを繰り返すのは厳禁。
 
 ## 出力（JSONのみ・前置き不要・キーの順序＝発言順）
 {
@@ -2021,17 +2089,22 @@ ${fortunedLine}${suspicionLine}
                 return `■ ${c.name}${roleHint}\n${desc}`;
             }).join('\n\n');
 
+            // CO追跡の推理材料
+            const coSection = buildCOInference();
+
             // 直近の議論ログ（自分で読んで判断させる材料）
             const recentLog = STATE.conversationLog.slice(-20);
             const logSection = recentLog.length
                 ? `\n## 直近の議論ログ\n` + recentLog.map(e => `・${e.name}: 「${e.speech}」`).join('\n')
                 : '\n## 議論ログはまだありません';
 
-            return `${STATE.day}日目の投票フェーズです。${n}人のキャラクターが「誰を処刑したいか」を投票します。
+            const deadList = STATE.characters.filter(c => !c.alive).map(c => c.name).join('、') || 'なし';
+            return `${STATE.day}日目の投票フェーズです。${n}人のキャラクターが「誰を処刑したいか」を投票します。（死亡者: ${deadList}）
 
 ## 現在の生存者
 ${charInfo}
 ${logSection}
+${coSection}
 
 ## 投票の指針（重要）
 - 各キャラは**上の議論ログを自分で読み、自分の役職・性格・相手との関係性から独自に**投票先を決めること。
@@ -2194,6 +2267,8 @@ ${logSection}
                 STATE.lastGuardedIdx = -1;
                 STATE.daySchedule = [];
                 STATE.fullLog = [];
+                STATE.coClaims = [];
+                STATE.nightDeaths = [];
             }
         }
     </script>
