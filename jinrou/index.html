@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver5.4 - Gemini</title>
+    <title>全自動人狼 Ver5.5 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -354,7 +354,7 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.4</span></h1>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.5</span></h1>
                 <span class="sub"><i class="fas fa-robot"></i> Gemini — AIキャラ人狼シミュレーター</span>
             </div>
             <div class="api-area">
@@ -466,7 +466,7 @@
     <script>
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
-        const VERSION = 'Ver5.4';
+        const VERSION = 'Ver5.5';
 
         const STATE = {
             apiKey: '',
@@ -499,6 +499,7 @@
             fullLog: [], // 全メッセージのコピー用ログ（**太字**マーカーを保持）
             coClaims: [], // CO宣言の記録 {idx, name, role, day}（追跡用）
             nightDeaths: [], // 夜の襲撃で死んだidxの履歴
+            lastNightVictim: null, // 直前の夜の犠牲者idx（翌日冒頭のリアクション用）
             gameToken: 0,
         };
 
@@ -896,6 +897,7 @@
             STATE.fullLog = [];
             STATE.coClaims = [];
             STATE.nightDeaths = [];
+            STATE.lastNightVictim = null;
 
             STATE.log = [];
             STATE.day = 0;
@@ -1066,6 +1068,7 @@
                 if (STATE.day > 1) {
                     if (!isCurrentGame(token)) return;
                     nightVictim = await nightPhase(token);
+                    STATE.lastNightVictim = nightVictim;
                 }
                 if (!isCurrentGame(token)) return;
                 if (checkGameEnd()) return;
@@ -1087,13 +1090,17 @@
                     }
                 }
 
-                // Ver5.3: 日またぎでログを圧縮（AIが表示されていない古い発言を幻参照するのを防ぐ）
-                // 直近の発言はそのまま残し、古いものは「日付と要点」だけに置き換える
-                if (STATE.conversationLog.length > 12) {
-                    const recent = STATE.conversationLog.slice(-12);
-                    const older = STATE.conversationLog.slice(0, -12);
-                    const olderDigest = older.slice(-10).map(e => `${e.name}: 「${e.speech.slice(0, 40)}${e.speech.length > 40 ? '…' : ''}」`).join(' / ');
-                    STATE.conversationLog = [{ name: '（前日までの議論の要点）', speech: olderDigest }].concat(recent);
+                // Ver5.5: 日またぎで前日以前のログを要点化（昨日の会話がそのまま続くのを防ぐ）
+                if (STATE.conversationLog.length > 0) {
+                    const keep = STATE.conversationLog.slice(-6);
+                    const older = STATE.conversationLog.slice(0, -6);
+                    const lines = [];
+                    if (older.length > 0) {
+                        const digest = older.slice(-10).map(e => `${e.name}: 「${e.speech.slice(0, 30)}…」`).join(' / ');
+                        lines.push({ name: '（前日までの議論の要点）', speech: digest });
+                    }
+                    keep.forEach(e => lines.push({ name: e.name, speech: e.speech }));
+                    STATE.conversationLog = lines;
                 }
 
                 for (let round = 1; round <= 3; round++) {
@@ -1233,9 +1240,10 @@
                     const t = resolveAliveIndexByName(j.knight_target || '', knightIdx);
                     if (t !== -1) guardTarget = t;
                 } catch (e) {}
+                if (guardTarget === STATE.lastGuardedIdx) guardTarget = -1; // 連続護衛禁止
                 if (guardTarget === -1) {
                     // 疑いが少ない=村人陣営っぽい人物を優先
-                    const cands = STATE.aliveIndices.filter(i => i !== knightIdx);
+                    const cands = STATE.aliveIndices.filter(i => i !== knightIdx && i !== STATE.lastGuardedIdx);
                     guardTarget = cands[Math.floor(Math.random() * cands.length)];
                 }
                 STATE.lastGuardedIdx = guardTarget;
@@ -1284,6 +1292,7 @@
                 STATE.fortuneSecret = `${targetName} は ${result} でした。`;
                 STATE.fortuneHistory.push({ day: STATE.day, target: fortuneTarget, targetName, result });
                 if (!STATE.fortuned.includes(fortuneTarget)) STATE.fortuned.push(fortuneTarget);
+                addSystemMessage('🔮 占い師が今夜も村の誰かを占いました。', 'info');
             }
 
             // --- 霊媒: 前日処刑者の判定 ---
@@ -1293,6 +1302,7 @@
                 const result = isWolf ? '人狼' : '村人';
                 const targetName = STATE.characters[t].name;
                 STATE.mediumHistory.push({ day: STATE.day, target: t, targetName, result });
+                addSystemMessage('👻 霊媒師が処刑者の亡骸に語りかけました。', 'info');
             }
 
             renderCards();
@@ -1562,6 +1572,9 @@
                         if (isDup) continue;
                         // 口癖フレーズの使い回し（3回目以降）もスキップ
                         if (hasRepeatedPhrase(speech, name)) continue;
+                        // 自分自身の名前を含む太字（自爆表記）はマーカーだけ剥がす
+                        speech = speech.replace(/\*\*([^*]+)\*\*/g, (mm, inner) =>
+                            inner.includes(name) ? inner : mm);
                         STATE.characters[sidx].speech = speech;
                         recordSuspicion(speech, sidx);
                         recordCO(speech, sidx);
@@ -1730,8 +1743,8 @@
 
         function checkGameEnd() {
             const aliveWolves = STATE.werewolfIndices.filter(idx => STATE.characters[idx].alive);
-            // 村人陣営 = 人狼と狂人以外
-            const aliveVillageSide = STATE.aliveIndices.filter(i => factionOf(STATE.characters[i].role) === 'village');
+            // 人数カウントは標準ルール: 狂人も「人間」として数える（人狼数 >= 人間数で人狼勝利）
+            const aliveVillageSide = STATE.aliveIndices.filter(i => STATE.characters[i].role !== 'werewolf');
 
             if (aliveWolves.length === 0) {
                 addSystemMessage('🎉 村人陣営の勝利！人狼を全て退治しました！', 'win');
@@ -1922,6 +1935,11 @@
             // CO追跡: COしていた人が夜に殺された場合の推理材料
             const coNote = buildCOInference();
 
+            // 新しい日の冒頭の注記（前日の議論の蒸し返し防止）
+            const newDayNote = STATE.day > 1
+                ? '\n- 今日は新しい日です。前日の議論をそのまま引用して会話を続けるのは不自然です。昨夜の出来事（死者の有無）への反応と、今日の新しい推理から始めてください。'
+                : '';
+
             // チャンク内で同一キャラが複数回出る場合の注記（同じセリフの複製を防ぐ）
             const seenInChunk = {};
             const dupNames = [];
@@ -1935,15 +1953,19 @@
                 : '';
             const keyOrder = chunkIdxs.map(i => `"${STATE.characters[i].name}": "セリフ"`).join(',\n  ');
 
+            const griefRule = (isDayOpening && STATE.day > 1 && STATE.lastNightVictim !== null && STATE.characters[STATE.lastNightVictim])
+                ? `\n- 昨夜 ${STATE.characters[STATE.lastNightVictim].name} が殺されました。**このチャンクの発言者1は、必ずこの死へのそのキャラらしい感情反応（悲しみ・怒り・動揺・困惑など）から発言を始めること。**発言者2・3も、初手はこの死に触れてから本題に入ること。`
+                : '';
             const dayGreetRule = isDayOpening
-                ? `\n- このチャンクの**発言者1だけ**が「今日で${STATE.day}日目か」「もう${STATE.day}日目だね」のように日付（${STATE.day}日目という数字）に触れてよい。発言者2以降は日付に一切触れないこと。`
+                ? `\n- このチャンクの**発言者1だけ**が「今日で${STATE.day}日目か」「もう${STATE.day}日目だね」のように日付（${STATE.day}日目という数字）に触れてよい。発言者2以降は日付に一切触れないこと。${griefRule}`
                 : `\n- **このタイミングでは誰も「○日目」など日付には一切触れないこと**（既に今日の議論は始まっています）。「○」のようなプレースホルダを出力してはいけません。いきなり本題に入ってください。`;
 
             return `あなたは人狼ゲームの昼議論の脚本家です。以下の${chunkIdxs.length}件のセリフを、指定された発言順そのままで作成してください（同じキャラが2回出る場合は会話の流れを受けた別のセリフにすること）。${dayGreetRule}
 
 ## 状況
 - ${dayWord}・昼の議論 ${round}回目（生存${alive.length}人 / 全${n}人）
-- ${deadInfo}
+- 生存者: ${aliveNames.join('、')}
+- ${deadInfo}${newDayNote}
 ${pastDigest}
 
 ## このラウンドで既に発言した人（時系列・これが全て）
@@ -1958,9 +1980,12 @@ ${coNote}
 
 ## 絶対ルール
 0. **死亡者への言及禁止**: 上の「死亡者」リストに載っている人物は既に死んでいます。**死んだ人に話しかけたり・名前を出して質問したり・「○○さんはどう思う」と聞くのは絶対にやめてください**（死人に口なし）。死亡者に触れる場合は「○○がいなくなって寂しい」のような追悼の言及のみ許可します。
+0.5. **話題に出せる人物の限定**: 言及できるのは上の「生存者」「死亡者」リストに載っている人物だけです。**このゲームに参加していない人物（原作の他キャラクターなど）の名前は絶対に出さないこと。**他者への同意・引用も、生存者リストにある人物の実際の発言に対してのみ行ってください。
+0.6. **他人の口調の借用禁止**: 他のキャラクターの口癖・語尾・決め台詞を使ってはいけません。自分の設定にある口調だけを使うこと。
 1. **発言順の因果**: 各キャラが引用・同意・反論できるのは「このラウンドで既に発言した人」と、番号が自分より前のキャラの発言だけ。自分より後のキャラが「言った内容」に触れるのは厳禁（後のキャラに話を振る・質問するのはOK）。**特に自分の1つ前の発言者の内容には必ず何らかの反応を示すこと**（同意・反論・質問・補足のいずれか。完全に無視して別話題を始めるのは不自然）。
+1.5. **重大な宣告への即応答**: 直前の発言が役職CO（占い師・霊媒師などの名乗り）や占い・霊媒結果の公表を含む場合、**その次に喋るキャラは必ずその宣告に反応すること**（驚き・疑い・質問など）。重大な情報を全員がスルーするのは不自然です。
 2. **キャラ再現の徹底**: 各キャラの【一人称】【語尾】【口癖】はもちろん、【他者の呼び方】も設定通りに厳密に守る。設定にない呼び方・口調は使わない。
-3. **人間らしさ最重要**: 全員が「〜が怪しい」しか言わないのはNG。実際の議論では**雑談・観察・冗談・「まだ分からない」で終わる発言・話題の脱線**なども混ざる。設定の【疑心度】が「低」のキャラは擁護や場を和ませる発言を優先し、「高」のキャラだけが積極的に疑う。**チャンク内で「誰かを疑う」発言は多くても半分以下**にする（残りは反応・質問・観察・雑談・様子見）。**ただし逆に全員が雑談だけで終わるのもNG——このチャンクの中で少なくとも1件は、具体的な疑い・指摘・気づきを含む発言を入れること。**
+3. **人間らしさ最重要**: 全員が「〜が怪しい」しか言わないのはNG。実際の議論では**雑談・観察・冗談・「まだ分からない」で終わる発言・話題の脱線**なども混ざる。設定の【疑心度】が「低」のキャラは擁護や場を和ませる発言を優先し、「高」のキャラだけが積極的に疑う。**チャンク内で「誰かを疑う」発言は多くても半分以下**にする（残りは反応・質問・観察・雑談・様子見）。**ただし、まだ誰も具体的に疑われていない状況で、根拠なくいきなり「○○が人狼」と断言したり疑いを捏造するのは厳禁**（「ちょっと様子が気になる」「もっと話を聞きたい」程度の違和感の表明や質問はOK）。すでに誰かへの疑いが議場に出ている場合は、それへの賛否を自分の視点で述べること。
 3.5. **追随だけの発言を疑う**: 「〜の言う通り」「みんなで様子を見よう」ばかりで自分の意見を一度も言わない人物は、人狼が目立たないよう隠れている典型パターンです。誰かがそういう振る舞いを続けていたら、鋭いキャラは「お前は自分の意見を言わなさすぎじゃないか」と突っ込んでよい。
 3.6. **自分の過去発言の言い換え禁止**: 過去の議論ログに自分自身の発言がある場合、それと同じ趣旨の発言を繰り返すのは厳禁。必ず新しい内容・新しい視点・新しい疑問を述べること（「また同じことを言っているキャラ」は壊れて見える）。
 4. **カミングアウト(CO)の扱い（重要・自然に）**:
@@ -1990,10 +2015,13 @@ ${coNote}
             const idx = STATE.knightIndex;
             const alive = STATE.aliveIndices;
             const cands = alive.filter(i => i !== idx);
+            const lastGuardNote = (STATE.lastGuardedIdx !== -1 && STATE.characters[STATE.lastGuardedIdx])
+                ? `\n※昨夜あなたは ${STATE.characters[STATE.lastGuardedIdx].name} を護衛しました。標準ルールにより同じ人物を2晩連続で護衛できないため、今夜は別の人物を選んでください。`
+                : '';
             const info = cands.map(i => `${STATE.characters[i].name}（${STATE.characters[i].description.slice(0, 60)}）`).join('\n');
             const susp = suspicionRanking().filter(([nm]) => cands.some(i => STATE.characters[i].name === nm));
             const suspLine = susp.length ? `\n議論で疑われている人物: ${susp.map(([nm, c]) => `${nm}(${c})`).join('、')}` : '';
-            return `あなたは騎士（${STATE.characters[idx].name}）です。今夜、人狼の襲撃から守りたい人物を1人選んでください（自分は選べない）。
+            return `あなたは騎士（${STATE.characters[idx].name}）です。今夜、人狼の襲撃から守りたい人物を1人選んでください（自分は選べない）。${lastGuardNote}
 
 ## 生存者（自分以外）
 ${info}
@@ -2028,12 +2056,17 @@ ${suspLine}
                 exampleJson[STATE.characters[idx].name] = '（襲撃したいキャラ名）';
             });
 
+            const wolfCo = STATE.coClaims.length
+                ? '\n## 役職を名乗った人物（CO）\n' + STATE.coClaims.map(c => `・${c.name}: ${c.role}（${c.day}日目にCO）`).join('\n') + '\n※COした人物は本物の可能性が高い。放っておくと人狼が特定されるため、最優先の襲撃候補。'
+                : '';
             return `あなたは人狼です。${teamLine}
 
 ## 現在の生存者
 ${charInfo}
+${wolfCo}
 
 ## 襲撃対象の選び方の指針
+- **占い師・霊媒師をCOした人物を最優先で襲撃する**（真実を知る役職を早く潰す）
 - 占い師と思われる人物を優先的に襲撃する（占い結果を公開されると不利になるため）
 - 推理が鋭く、人狼に迫っている発言をしていた村人を狙う
 - 議論で自分たち（人狼）を特に疑っていた村人を優先する
@@ -2269,6 +2302,7 @@ ${coSection}
                 STATE.fullLog = [];
                 STATE.coClaims = [];
                 STATE.nightDeaths = [];
+                STATE.lastNightVictim = null;
             }
         }
     </script>
