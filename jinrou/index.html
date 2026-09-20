@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>全自動人狼 Ver5.8 - Gemini</title>
+    <title>全自動人狼 Ver5.9 - Gemini</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -354,7 +354,7 @@
         <!-- ===== ヘッダー ===== -->
         <div class="app-header">
             <div>
-                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.8</span></h1>
+                <h1><i class="fas fa-paw"></i> 全自動人狼 <span class="ver">Ver5.9</span></h1>
                 <span class="sub"><i class="fas fa-robot"></i> Gemini — AIキャラ人狼シミュレーター</span>
             </div>
             <div class="api-area">
@@ -466,7 +466,7 @@
     <script>
         const MAX_PLAYERS = 10;
         const MIN_PLAYERS = 6;
-        const VERSION = 'Ver5.8';
+        const VERSION = 'Ver5.9';
 
         const STATE = {
             apiKey: '',
@@ -498,6 +498,7 @@
             daySchedule: [], // その日の議論スケジュール [[ラウンド1の発言者idx...], [...], [...]]
             fullLog: [], // 全メッセージのコピー用ログ（**太字**マーカーを保持）
             coClaims: [], // CO宣言の記録 {idx, name, role, day}（追跡用）
+            publicResults: [], // 発言で公開された占い/霊媒の判定ラベル（'名前 → 人狼' 等）
             nightDeaths: [], // 夜の襲撃で死んだidxの履歴
             lastNightVictim: null, // 直前の夜の犠牲者idx（翌日冒頭のリアクション用）
             gameToken: 0,
@@ -895,7 +896,7 @@
             STATE.lastExecuted = -1;
             STATE.lastGuardedIdx = -1;
             STATE.fullLog = [];
-            STATE.coClaims = [];
+            STATE.coClaims = []; STATE.publicResults = [];
             STATE.nightDeaths = [];
             STATE.lastNightVictim = null;
 
@@ -1257,7 +1258,8 @@
                 if (!isCurrentGame(token)) return null;
                 try {
                     const j = JSON.parse(fortuneResponse);
-                    const t = resolveAliveIndexByName(j.fortune_teller_target || '', fortuneIdx);
+                    let t = resolveAliveIndexByName(j.fortune_teller_target || '', fortuneIdx);
+                    if (t !== -1 && STATE.fortuned.includes(t)) t = -1; // 占い済みの再占いは無効
                     if (t !== -1) fortuneTarget = t;
                 } catch (e) {}
                 if (fortuneTarget === -1) {
@@ -1581,14 +1583,9 @@
                             }
                             return false;
                         });
-                        if (isDup) {
-                            // 同一チャンク内で同一人物のセリフが複製された場合、キーごと消えず
-                            // 「……（言葉に詰まる）」のような最小の反応に置き換えて会話の連続性を保つ
-                            speech = '……。';
-                        }
-                        // 口癖フレーズの使い回し（3回目以降）もスキップ
-                        if (hasRepeatedPhrase(speech, name)) {
-                            speech = '……（黙ってうなずく）';
+                        // リピート・口癖使い回し・同じ太字フレーズの再使用は「……。」で誤魔化さず発言自体をスキップ
+                        if (isDup || hasRepeatedPhrase(speech, name) || hasRepeatedBold(speech, name)) {
+                            continue;
                         }
                         // 自分自身の名前を含む太字（自爆表記）はマーカーだけ剥がす
                         speech = speech.replace(/\*\*([^*]+)\*\*/g, (mm, inner) =>
@@ -1596,6 +1593,7 @@
                         STATE.characters[sidx].speech = speech;
                         recordSuspicion(speech, sidx);
                         recordCO(speech, sidx);
+                        recordPublicResult(speech);
                         chunkMsgs.push({ idx: sidx, name, speech });
                         roundSpoken.push({ name, speech });
                     }
@@ -1870,6 +1868,28 @@
             area.scrollTop = area.scrollHeight;
         }
 
+        // 発言内で言及された占い・霊媒の判定を「公開済み情報」として記録する
+        function recordPublicResult(speech) {
+            if (!/(占|霊媒|結果|判定)/.test(speech)) return;
+            for (const c of STATE.characters) {
+                if (!speech.includes(c.name)) continue;
+                let res = null;
+                if (speech.includes('人狼')) res = '人狼';
+                else if (speech.includes('村人')) res = '村人';
+                if (!res) continue;
+                const label = c.name + ' → ' + res;
+                if (!STATE.publicResults.includes(label)) STATE.publicResults.push(label);
+            }
+        }
+
+        // 同一人物が過去と同じ太字フレーズを使い回したか（「沙都子のその攻撃的すぎる態度」2連発型の防止）
+        function hasRepeatedBold(speech, name) {
+            const bolds = speech.match(/\*\*[^*]{4,}\*\*/g);
+            if (!bolds) return false;
+            const past = STATE.conversationLog.filter(e => e.name === name).map(e => e.speech).join('\n');
+            return bolds.some(b => past.includes(b));
+        }
+
         // COしていた人物が夜に襲撃された場合の推理材料を生成
         function buildCOInference() {
             const lines = [];
@@ -1904,7 +1924,7 @@
             const roleDescs = {
                 werewolf: `人狼（人狼陣営）。仲間の人狼: ${wolfNames}。正体を隠して村人・占い師・霊媒師などの偽COも自由。**偽COする時は結果もでっち上げて具体的に言うこと**（例:「私は占い師です。○○は人狼でした」）。占い師や騎士っぽい人物を襲撃で狙う。占われるとバレるので、鋭い村人陣営を先に潰したい`,
                 villager: '村人（村人陣営）。特別な能力はない。議論から人狼を推理して処刑に導く。**疑われた時・信頼を得たい時は「私は村人だ」と名乗ってよい**（「俺は本当に村人だから信じてくれ」など）。ただし役職（占い師・霊媒師・騎士）を騙るのは村人にはリスクが大きいので基本しない',
-                fortuneteller: `占い師（村人陣営）。毎晩1人を占って人狼か村人かを知る。**COする（自ら名乗る）と信頼を得やすいが人狼に襲撃されやすくなる**。COするタイミングは戦略次第。**COは初回の1回だけ。一度名乗った後は「私は占い師です」と言い直さず、『○○を占ったら××だった』と結果だけを伝えること**。**COする時は必ず具体的な結果をセットで言うこと。名乗るだけ・予告だけで結果を言わないのは厳禁**。**自分以外に占い師を名乗る者が現れたら、その人物は偽物（人狼か狂人）なので、必ず「私が本物の占い師です」と対抗して主張し、相手の矛盾を突くこと**。狂人は占い結果では「村人」と出る点に注意`,
+                fortuneteller: `占い師（村人陣営）。毎晩1人を占って人狼か村人かを知る。**COする（自ら名乗る）と信頼を得やすいが人狼に襲撃されやすくなる**。COするタイミングは戦略次第。**COは初回の1回だけ。一度名乗った後は「私は占い師です」と言い直さず、『○○を占ったら××だった』と結果だけを伝えること**。**COする時は必ず具体的な結果をセットで言うこと。名乗るだけ・予告だけで結果を言わないのは厳禁**。**自分以外に占い師を名乗る者が現れたら、その人物は偽物（人狼か狂人）なので、必ず「私が本物の占い師です」と対抗して主張し、相手の矛盾を突くこと**。狂人は占い結果では「村人」と出る点に注意。※既に発表済みの占い結果を「昨夜の新事実」のように再発表してはいけない。触れる場合は「昨日も言った通り」と既知の情報として述べること`,
                 medium: `霊媒師（村人陣営）。前日処刑された人物が人狼だったかを知る。**COは初回の1回だけ。以降は名乗り直さず結果だけを伝えること**。**COする時は必ず具体的な結果をセットで言うこと（例:「私は霊媒師です。処刑された○○は村人でした」）。名乗るだけ・予告だけで結果を言わないのは厳禁。霊媒履歴が空の時はCO自体をしてはいけない**。**自分以外に霊媒師を名乗る者が現れたら偽物なので、必ず「私が本物の霊媒師です」と対抗して主張すること**`,
                 knight: `騎士（村人陣営）。毎晩1人を選び、その人を人狼の襲撃から守る（自分は選べない）。**COは基本しない方が良い**（人狼にバレると先に殺される）。ただし終盤に必要なら判断する`,
                 madman: `狂人（人狼陣営）。自分は人間だが人狼の勝利が自分の勝ちになる。**人狼が誰かは知らない**。村人のふりをしつつ議論を混乱させ、偽の占い師CO・偽の霊媒師COも有効（**偽COでは結果もでっち上げて具体的に言う**。「○○は人狼でした」と嘘の黒判定を振りまくのも手）。占いでは「村人」判定なので占われても白と出る`
@@ -1946,6 +1966,9 @@
             }
 
             const aliveRank = suspicionRanking().filter(([name]) => aliveNames.includes(name));
+            const publicLine = STATE.publicResults.length
+                ? `\n## 既に公開済みの占い・霊媒の結果（全員が既に知っている既知情報）\n` + STATE.publicResults.map(r => '・' + r).join('\n') + '\n※これらに対して驚く・初めて聞く反応・「今すごいことを言った」などの初見の反応は厳禁。触れる場合は「さっき言っていた通り」のように既知の話題として扱うこと。'
+                : '';
             const suspicionLine = aliveRank.length
                 ? `\n## これまでに「怪しい」と疑われた人物（言及回数）\n` + aliveRank.map(([name, cnt]) => `・${name}: ${cnt}回`).join('\n')
                 : '';
@@ -1984,6 +2007,10 @@
 
             return `あなたは人狼ゲームの昼議論の脚本家です。以下の${chunkIdxs.length}件のセリフを、指定された発言順そのままで作成してください（同じキャラが2回出る場合は会話の流れを受けた別のセリフにすること）。${dayGreetRule}
 
+【情報統制の絶対ルール】
+- 各キャラは「自分の役職」と「このプロンプト内の会話ログで実際に口に出された内容」しか知りません。まだ誰も口にしていない占い結果・他人の役職を、知っているかのように書くのは厳禁です。例：占い師本人が結果を明かす前に、他者が「占い結果が出た」「○○が人狼だと結果が出た」と反応するのは禁止。
+- 実際に言われていない発言を「言った」と反応するのも厳禁。例：誰も「○○は人狼」と言っていないのに「今度は私を人狼だって言うのか」と反応しない。
+
 ## 状況
 - ${dayWord}・昼の議論 ${round}回目（生存${alive.length}人 / 全${n}人）
 - 生存者: ${aliveNames.join('、')}
@@ -1992,7 +2019,7 @@ ${pastDigest}
 
 ## このラウンドで既に発言した人（時系列・これが全て）
 ${transcript}
-${suspicionLine}
+${suspicionLine}${publicLine}
 
 ## 今回セリフを書くキャラクター（この番号順＝発言順）
 ${profiles}
@@ -2331,7 +2358,7 @@ ${coSection}
                 STATE.lastGuardedIdx = -1;
                 STATE.daySchedule = [];
                 STATE.fullLog = [];
-                STATE.coClaims = [];
+                STATE.coClaims = []; STATE.publicResults = [];
                 STATE.nightDeaths = [];
                 STATE.lastNightVictim = null;
             }
