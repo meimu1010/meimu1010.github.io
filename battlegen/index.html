@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -193,11 +192,6 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
 <div class="step" data-step="02">
   <div class="step-title"><span class="num">2</span> VISUAL STYLE</div>
   <div class="style-grid" style="grid-template-columns:1fr">
-    <div class="style-card sel" data-style="battlev5" onclick="selectStyle(this)">
-      <span class="style-icon">👑</span>
-      <div class="style-name">BATTLE V5</div>
-      <div class="style-desc">シネマ・アルティメット — 光線＆金パーティクル／スムーズshake／フィルムグレイン（V2進化・最高品質）</div>
-    </div>
     <div class="style-card" data-style="battle" onclick="selectStyle(this)">
       <span class="style-icon">⚡</span>
       <div class="style-name">BATTLE</div>
@@ -217,6 +211,11 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       <span class="style-icon">👊</span>
       <div class="style-name">BATTLE V4</div>
       <div class="style-desc">コミック風・擬音爆発・スタンプ判定</div>
+    </div>
+    <div class="style-card sel" data-style="battlev5" onclick="selectStyle(this)">
+      <span class="style-icon">👑</span>
+      <div class="style-name">BATTLE V5</div>
+      <div class="style-desc">シネマ・アルティメット — 光線＆金パーティクル／スムーズshake／フィルムグレイン（V2進化・最高品質）</div>
     </div>
   </div>
 </div>
@@ -307,7 +306,7 @@ main{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 18px 8
       </select>
     </label>
   </div>
-  <div style="margin-top:9px;font-size:.76rem;color:#4a6a8a;line-height:1.6">💡 解像度が高いほど動画は綺麗になります（ビットレートも自動増強）。<br>720×1280 以上は <strong style="color:#ffa030">TURBO モード推奨</strong>（ノーマルモードは高解像度でメモリを多く使用）。</div>
+  <div style="margin-top:9px;font-size:.76rem;color:#4a6a8a;line-height:1.6">💡 解像度が高いほど動画は綺麗になります（ビットレート自動調整済み）。<br>サイズ目安（約29秒の動画）：540p≒15MB ／ 720p≒25MB ／ 1080p≒40MB<br>720×1280 以上は <strong style="color:#ffa030">TURBO モード推奨</strong>（ノーマルモードは高解像度でメモリを多く使用）。</div>
 
   <!-- ⚡ TURBO MODE TOGGLE -->
   <div class="turbo-box" id="turboBox">
@@ -628,7 +627,7 @@ function selectStyle(el){
 // ═══════════════════════════════════════════════
 // STEP 6 — 推定生成時間
 // ═══════════════════════════════════════════════
-function getVideoBitrate(){ return (typeof CW!=='undefined'&&CW>=1080)?18_000_000:((typeof CW!=='undefined'&&CW>=720)?12_000_000:8_000_000); }
+function getVideoBitrate(){ return (typeof CW!=='undefined'&&CW>=1080)?12_000_000:((typeof CW!=='undefined'&&CW>=720)?8_000_000:6_000_000); }
 function getSpeed(){
   const el=document.getElementById('cfgSpeed');
   return el ? parseFloat(el.value) : 1.0;
@@ -2375,7 +2374,8 @@ function V5_embers(i,count,color,alphaMul){
 function V5_grain(i,alpha){
   const tile=V5_grainTile();
   if(_v5Cache.grainPatCtx!==ctx){ _v5Cache.grainPat=ctx.createPattern(tile,'repeat'); _v5Cache.grainPatCtx=ctx; }
-  const ox=(V5_hash(i*3.3+9)*128)|0, oy=(V5_hash(i*7.7+5)*128)|0;
+  const gi=(i/3)|0; // 3フレーム毎に更新（VP9エンコーダ負荷＆サイズ削減）
+  const ox=(V5_hash(gi*3.3+9)*128)|0, oy=(V5_hash(gi*7.7+5)*128)|0;
   ctx.save();
   ctx.globalAlpha=alpha; ctx.globalCompositeOperation='overlay';
   ctx.translate(-ox,-oy);
@@ -2654,7 +2654,7 @@ function V5_renderIntro(i,cat,ci){
   V5_embers(i,20,'#ffc860',.85*ez);
   V5_cineBars(.65);
   drawProgNum(ci);
-  V5_grain(i,.05);
+  V5_grain(i,.032);
   drawVignette(.46);
 }
 // ── V5 CUT ──
@@ -2677,7 +2677,7 @@ function V5_renderCut(i,winner,pA,pB){
     ctx.restore();
     V5_embers(i,16,'#9fb6cc',.5);
     V5_scoreBanner(pA,pB,1);
-    V5_cineBars(.7); V5_grain(i,.05); drawVignette(.5); drawFlash(i,5);
+    V5_cineBars(.7); V5_grain(i,.032); drawVignette(.5); drawFlash(i,5);
     return;
   }
   const wImg=winner==='A'?S.imgA:S.imgB;
@@ -2725,11 +2725,10 @@ function V5_renderCut(i,winner,pA,pB){
   V5_embers(i,24,'#ffc860',.6+zE*.5);
   V5_scoreBanner(pA,pB,1);
   V5_cineBars(.75);
-  V5_grain(i,.05);
+  V5_grain(i,.032);
   drawVignette(.5);
   const ip=1-Math.abs(t-impT)/.06;
-  if(ip>0){ ctx.fillStyle=`rgba(255,255,255,${V5_clamp01(ip)*.8})`; ctx.fillRect(0,0,CW,CH); }
-  drawFlash(i,6);
+  if(ip>0){ ctx.fillStyle=`rgba(255,255,255,${V5_clamp01(ip)*.75})`; ctx.fillRect(0,0,CW,CH); }
 }
 // ── V5 FINAL ──
 function V5_renderFinal(i,winner,pA,pB){
@@ -2753,7 +2752,7 @@ function V5_renderFinal(i,winner,pA,pB){
     ctx.restore();
     V5_embers(i,18,'#9fb6cc',.6);
     V5_scoreBanner(pA,pB,1);
-    V5_cineBars(.7); V5_grain(i,.05); drawVignette(.55); drawFlash(i,18);
+    V5_cineBars(.7); V5_grain(i,.032); drawVignette(.55); drawFlash(i,18);
     return;
   }
   const bursts=[[.10,.24],[.46,.60],[.78,.92]];
@@ -2798,7 +2797,7 @@ function V5_renderFinal(i,winner,pA,pB){
   V5_lightSweep(i,.10+bAmp*.10);
   V5_embers(i,30,'#ffc860',.9);
   drawScanlines();
-  V5_grain(i,.055);
+  V5_grain(i,.035);
   // テキスト
   const eI=V5_clamp01(t*6);
   const wP=V5_easeOutElastic(V5_clamp01(t/.14));
