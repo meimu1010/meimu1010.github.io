@@ -19,7 +19,8 @@
     model: 'lain_model',
     temp: 'lain_temperature',
     provider: 'lain_search_provider',
-    persona: 'lain_persona_mode'
+    persona: 'lain_persona_mode',
+    reasoning: 'lain_reasoning_effort'
   };
 
   /* ---------- DOM ---------- */
@@ -37,6 +38,7 @@
   /* ---------- 状態 ---------- */
   let history = [];   // Groq に送る messages 配列 (system を除く会話履歴)
   let busy = false;
+  let reasoningParamOk = true; // reasoning_effort を拒否するモデルでは自動でオフにする
 
   /* ---------- 玲音アバター (インラインSVG: 赤い瞳の抽象シルエット) ---------- */
   const LAIN_AVATAR_SVG = `
@@ -64,7 +66,8 @@
       model: localStorage.getItem(LS_KEYS.model) || 'qwen/qwen3.8-27b',
       temperature: parseFloat(localStorage.getItem(LS_KEYS.temp) ?? '0.9'),
       provider: localStorage.getItem(LS_KEYS.provider) || 'auto',
-      persona: localStorage.getItem(LS_KEYS.persona) || 'lite'
+      persona: localStorage.getItem(LS_KEYS.persona) || 'lite',
+      reasoning: localStorage.getItem(LS_KEYS.reasoning) || 'none'
     };
   }
 
@@ -76,6 +79,7 @@
     $('cfg-temp').value = s.temperature;
     $('cfg-provider').value = s.provider;
     $('cfg-persona').value = s.persona;
+    $('cfg-reasoning').value = s.reasoning;
   }
 
   function updateBadges() {
@@ -249,6 +253,24 @@
     return m ? m[1] : 'rate limit';
   }
 
+  /** リクエストボディを組み立てる。reasoning_effort 等の非標準パラメータは
+      対応モデルでだけ送り、非対応モデルで 400 にならないようにする。 */
+  function buildRequestBody(messages, settings) {
+    const body = {
+      model: settings.model,
+      messages: messages,
+      tools: WIRED_TOOLS,
+      tool_choice: 'auto',
+      temperature: settings.temperature,
+      max_completion_tokens: 1200
+    };
+    const effort = settings.reasoning;
+    if (reasoningParamOk && effort && effort !== 'off' && /qwen3\.8|gpt-oss|qwen\/qwen3/i.test(settings.model || '')) {
+      body.reasoning_effort = effort;   // 'none' | 'low' | 'default' ...
+    }
+    return body;
+  }
+
   async function callGroq(messages, settings) {
     const res = await fetch(GROQ_ENDPOINT, {
       method: 'POST',
@@ -256,14 +278,7 @@
         'Authorization': 'Bearer ' + settings.groqKey,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        model: settings.model,
-        messages: messages,
-        tools: WIRED_TOOLS,
-        tool_choice: 'auto',
-        temperature: settings.temperature,
-        max_completion_tokens: 1200
-      })
+      body: JSON.stringify(buildRequestBody(messages, settings))
     });
 
     if (!res.ok) {
@@ -306,6 +321,13 @@
       try {
         return await callGroq(messages, settings);
       } catch (err) {
+        /* reasoning_effort 非対応モデル (400) → パラメータを外して即リトライ */
+        if (err.status === 400 && /reasoning_effort|reasoning_format|unsupported|unknown.*(param|field)/i.test(err.message) && reasoningParamOk) {
+          reasoningParamOk = false;
+          console.warn('[groq] reasoning_effort rejected, disabling for this session:', err.message);
+          addSys('※ このモデルは reasoning_effort 非対応のため、以降は付けずに送信します。');
+          continue;
+        }
         const retryable = err.status === 429 && err.retryAfterMs != null && err.retryAfterMs <= 60000;
         if (!retryable || attempt >= MAX_RETRY) throw err;
         stopStatusRotation();
@@ -442,7 +464,7 @@
             });
             if (searchOut.note) addSys('※ ' + searchOut.note);
 
-            /* モデルへ返すペイロードはスリム化 (ITPM 7K級の無料枠対策)。
+            /* モデルへ返すペイロードはスリム化 (ITPM が数千級の無料枠対策)。
                UI には上のとおり全文・最大5件を表示済み */
             toolPayload = JSON.stringify({
               query: query,
@@ -567,6 +589,7 @@
       localStorage.setItem(LS_KEYS.temp, String(clampTemp($('cfg-temp').value)));
       localStorage.setItem(LS_KEYS.provider, $('cfg-provider').value);
       localStorage.setItem(LS_KEYS.persona, $('cfg-persona').value);
+      localStorage.setItem(LS_KEYS.reasoning, $('cfg-reasoning').value);
       overlay.classList.add('hidden');
       updateBadges();
       addSys('CONFIG saved. NAVI を再構成しました。 [model=' + loadSettings().model + ']');
