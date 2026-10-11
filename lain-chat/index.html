@@ -85,7 +85,6 @@
             <option value="llama-3.1-8b-instant">llama-3.1-8b-instant — 軽量 (レート制限が緩め)</option>
             <option value="openai/gpt-oss-120b">openai/gpt-oss-120b — reasoning対応・高品質</option>
             <option value="openai/gpt-oss-20b">openai/gpt-oss-20b — reasoning対応・高速</option>
-            <option value="minimaxai/minimax-m2.7">minimaxai/minimax-m2.7</option>
             <option value="__custom__">その他… (手入力)</option>
           </select>
           <input type="text" id="cfg-model-custom" class="hidden" placeholder="モデルIDを入力 (例: llama-3.1-8b-instant)" autocomplete="off" />
@@ -99,10 +98,10 @@
         <div class="field">
           <label for="cfg-persona">PERSONA (システムプロンプトの重さ)</label>
           <select id="cfg-persona">
-            <option value="lite">lite — 軽量版 約1,280トークン (ITPM節約・既定)</option>
-            <option value="full">full — リッチ版 約2,800トークン (演技の作り込み優先)</option>
+            <option value="lite">lite — 軽量版 約890トークン (ITPM節約・既定)</option>
+            <option value="full">full — リッチ版 約1,500トークン (演技の作り込み優先)</option>
           </select>
-          <small>full は1リクエストあたり約1,500トークン増。実測では full でも検索ターン合計≈7,000で7K制限ギリギリ、lite なら≈3,900で余裕です。429が増えたら lite に。</small>
+          <small>full は1リクエストあたり約600トークン増。実測では検索ターン合計 full ≈4,200 / lite ≈3,000 で、どちらも7K制限内に収まります。</small>
         </div>
         <div class="field">
           <label for="cfg-reasoning">THINKING MODE (reasoning_effort)</label>
