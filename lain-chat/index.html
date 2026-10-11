@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>serial experiments lain — Wired Chat</title>
+  <meta name="description" content="岩倉玲音と Wired で対話するチャット端末 (Groq API / qwen/qwen3.8-27b)" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000'/><text x='16' y='22' font-size='16' fill='%23e02020' text-anchor='middle' font-family='monospace'>L</text></svg>" />
+</head>
+<body>
+
+  <!-- CRT エフェクト層 -->
+  <div class="crt-scanlines" aria-hidden="true"></div>
+  <div class="crt-vignette" aria-hidden="true"></div>
+  <div class="wired-grid" aria-hidden="true"></div>
+
+  <div id="app">
+
+    <!-- ===== ヘッダー ===== -->
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-sub">serial experiments</span>
+        <h1 class="glitch" data-text="lain">lain</h1>
+      </div>
+      <div class="top-status">
+        <div class="status-item" id="wired-status">
+          <span class="led" id="led"></span>
+          <span id="wired-status-text">WIRED LINK: STANDBY</span>
+        </div>
+        <div class="status-item mono-dim" id="model-badge">MODEL: ——</div>
+        <button id="btn-settings" class="btn-icon" title="設定 (APIキー / モデル)">⚙ CONFIG</button>
+        <button id="btn-clear" class="btn-icon" title="会話ログを初期化">✕ RESET</button>
+      </div>
+    </header>
+
+    <!-- ===== チャットログ ===== -->
+    <main id="chat-log" aria-live="polite">
+      <noscript>
+        <div class="msg sys"><span class="msg-tag">SYS</span> JavaScript を有効にしてください。この端末にはそれが必要です。</div>
+      </noscript>
+    </main>
+
+    <!-- ===== ステータスライン ===== -->
+    <div id="status-line" class="status-line hidden">
+      <span class="spinner"></span>
+      <span id="status-text"></span>
+      <span class="cursor-blink">█</span>
+    </div>
+
+    <!-- ===== 入力バー ===== -->
+    <footer class="input-bar">
+      <span class="prompt-symbol">&gt;_</span>
+      <textarea id="user-input" rows="1"
+        placeholder="玲音に話しかける… (Enter で送信 / Shift+Enter で改行)"
+        autocomplete="off" spellcheck="false"></textarea>
+      <button id="btn-send" class="btn-send" title="送信">SEND</button>
+    </footer>
+
+  </div>
+
+  <!-- ===== 設定パネル (モーダル) ===== -->
+  <div id="settings-overlay" class="overlay hidden">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">// NAVI CONFIG — Layer 07</span>
+        <button id="btn-settings-close" class="btn-icon">✕</button>
+      </div>
+      <div class="panel-body">
+        <div class="field">
+          <label for="cfg-groq">GROQ_API_KEY <em>(必須)</em></label>
+          <input type="password" id="cfg-groq" placeholder="gsk_..." autocomplete="off" />
+          <small>console.groq.com → API Keys で発行。このブラウザの localStorage にのみ保存されます。</small>
+        </div>
+        <div class="field">
+          <label for="cfg-tavily">TAVILY_API_KEY <em>(任意・なくても動作)</em></label>
+          <input type="password" id="cfg-tavily" placeholder="tvly-... (未設定でOK)" autocomplete="off" />
+          <small>未設定でも検索は動きます (Jina→DuckDuckGo→Wikipedia のキー不要チェーンに自動フォールバック)。Tavily は検索品質を上げたい場合のみ。</small>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="cfg-model">MODEL</label>
+            <input type="text" id="cfg-model" value="qwen/qwen3.8-27b" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="cfg-temp">TEMPERATURE</label>
+            <input type="number" id="cfg-temp" min="0" max="2" step="0.1" value="0.9" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="cfg-provider">SEARCH PROVIDER</label>
+          <select id="cfg-provider">
+            <option value="auto">auto (Tavilyキーがあれば優先 → なければキー不要検索)</option>
+            <option value="free">キー不要検索のみ (Jina/DDG/Wikipedia)</option>
+            <option value="tavily">Tavily のみ (キー必須)</option>
+          </select>
+        </div>
+        <div class="panel-actions">
+          <button id="btn-save" class="btn-send">SAVE</button>
+        </div>
+        <p class="panel-note">※ APIキーはブラウザから直接送信されます。公開サーバーに置く場合はバックエンド経由の秘匿を推奨します (README参照)。</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/system-prompt.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
