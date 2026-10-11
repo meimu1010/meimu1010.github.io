@@ -9,7 +9,10 @@
 
   const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
   const MAX_AGENT_ITERATIONS = 5;      // ツール往復の最大回数
-  const MAX_HISTORY_MESSAGES = 40;     // モデルへ送る履歴の上限
+  const MAX_HISTORY_MESSAGES = 24;     // モデルへ送る履歴の上限
+  const MAX_RETRY = 4;                 // 429 (レートリミット) の自動リトライ回数
+  const TOOL_RESULTS_IN_PAYLOAD = 4;   // モデルに返す検索結果の件数 (UI表示は別)
+  const TOOL_CONTENT_LIMIT = 280;      // モデルに返す各スニペットの最大長
   const LS_KEYS = {
     groq: 'lain_groq_api_key',
     tavily: 'lain_tavily_api_key',
@@ -225,6 +228,24 @@
   }
 
   /* ---------- Groq API ---------- */
+
+  /** 429 のエラーメッセージ/ヘッダから待機時間(ms)を解析する */
+  function parseRetryAfter(msg, headers) {
+    try {
+      const h = headers && headers.get && headers.get('retry-after');
+      if (h) { const s = parseFloat(h); if (!isNaN(s)) return s * 1000; }
+    } catch (_) {}
+    const m = String(msg).match(/try again in ([\d.]+)\s*(ms|s)\b/i);
+    if (m) return m[2].toLowerCase() === 'ms' ? parseFloat(m[1]) : parseFloat(m[1]) * 1000;
+    return 3000; // 解析できなければ控えめな既定値
+  }
+
+  /** 長大なレートリミット文言から短い理由を取り出す */
+  function shortLimitReason(msg) {
+    const m = String(msg).match(/\((ITPM|TPM|RPM|TPD|ITPD)\)/);
+    return m ? m[1] : 'rate limit';
+  }
+
   async function callGroq(messages, settings) {
     const res = await fetch(GROQ_ENDPOINT, {
       method: 'POST',
@@ -238,7 +259,7 @@
         tools: WIRED_TOOLS,
         tool_choice: 'auto',
         temperature: settings.temperature,
-        max_completion_tokens: 2048
+        max_completion_tokens: 1200
       })
     });
 
@@ -248,15 +269,66 @@
         const j = await res.json();
         msg = j.error?.message || JSON.stringify(j.error || j);
       } catch (_) {}
-      if (res.status === 401) msg += ' — APIキーが無効です (⚙ CONFIG で確認)';
-      if (res.status === 404) msg += ' — モデルIDが見つかりません (console.groq.com/docs/models で確認)';
-      if (res.status === 429) msg += ' — レートリミット。少し待ってください';
-      if (res.status === 400 && /context|length|token/i.test(msg)) {
-        msg += ' — 会話履歴がコンテキスト上限に達しました。✕ RESET でログを初期化してください。';
+      const err = new Error(msg);
+      err.status = res.status;
+      if (res.status === 429) {
+        err.retryAfterMs = parseRetryAfter(msg, res.headers);
+        err.friendly = '……Wiredが、混雑してる。少しだけ待って、もう一度呼んで。 (' + shortLimitReason(msg) + ')';
+      } else if (res.status === 401) {
+        err.friendly = 'NAVI が認証に失敗しました。⚙ CONFIG で GROQ_API_KEY を確認してください。';
+      } else if (res.status === 404) {
+        err.friendly = 'モデルIDが見つかりません (console.groq.com/docs/models で確認してください)。';
+      } else if (res.status === 400 && /context|length|token/i.test(msg)) {
+        err.friendly = '会話履歴がコンテキスト上限に達しました。✕ RESET でログを初期化してください。';
       }
-      throw new Error(msg);
+      throw err;
     }
     return res.json();
+  }
+
+  /** 待機中のカウントダウン表示 */
+  async function countdownStatus(ms, retryNo) {
+    const end = Date.now() + ms;
+    while (Date.now() < end) {
+      const remain = Math.max(1, Math.ceil((end - Date.now()) / 1000));
+      setStatus('Wired の混雑が晴れるのを待っている... 再接続まで ' + remain + ' 秒 (retry ' + retryNo + '/' + (MAX_RETRY - 1) + ')');
+      await sleep(Math.min(1000, end - Date.now()));
+    }
+  }
+
+  /** 429 なら「try again in Xs」を解析して自動リトライするラッパー */
+  async function callGroqWithRetry(messages, settings) {
+    let notified = false;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await callGroq(messages, settings);
+      } catch (err) {
+        const retryable = err.status === 429 && err.retryAfterMs != null && err.retryAfterMs <= 60000;
+        if (!retryable || attempt >= MAX_RETRY) throw err;
+        stopStatusRotation();
+        if (!notified) {
+          addWired('>> Wired が、混雑してる... 自動で再接続します。');
+          notified = true;
+        }
+        const waitMs = Math.min(Math.max(err.retryAfterMs, 600), 45000) + 250 + Math.random() * 500;
+        console.warn('[wired] 429 rate limit, retrying in', Math.round(waitMs), 'ms (attempt', attempt + ')');
+        await countdownStatus(waitMs, attempt);
+      }
+    }
+  }
+
+  /** 古いターンの tool 結果(検索スニペット)を圧縮してトークンを節約する。
+      直近2件は全文保持 (直前の検索内容を玲音が参照できるように)。 */
+  function compressHistory(hist) {
+    const toolIdx = [];
+    hist.forEach((m, i) => { if (m.role === 'tool') toolIdx.push(i); });
+    toolIdx.slice(0, -2).forEach(i => {
+      const c = hist[i].content;
+      if (typeof c === 'string' && c.length > 160) {
+        hist[i] = { ...hist[i], content: c.slice(0, 140) + '...(古いWiredの記録は圧縮されました)' };
+      }
+    });
+    return hist;
   }
 
   /** tool_calls / tool メッセージが分断されないよう履歴を刈り込む */
@@ -280,6 +352,7 @@
 
     history.push({ role: 'user', content: userText });
     const historySnapshotLen = history.length - 1; // 失敗時に巻き戻す地点
+    compressHistory(history);
 
     const messages = [{ role: 'system', content: buildSystemPrompt() }]
       .concat(trimHistory(history));
@@ -292,10 +365,11 @@
 
       let data;
       try {
-        data = await callGroq(messages, settings);
+        data = await callGroqWithRetry(messages, settings);
       } catch (err) {
+        console.error('[groq]', err);
         stopStatusRotation();
-        addErr('NAVI が応答しません: ' + err.message);
+        addErr(err.friendly || ('NAVI が応答しません: ' + err.message));
         history.length = historySnapshotLen; // 不完全なターン (user / 途中のtool対) を巻き戻す
         return;
       }
@@ -365,10 +439,16 @@
             });
             if (searchOut.note) addSys('※ ' + searchOut.note);
 
+            /* モデルへ返すペイロードはスリム化 (ITPM 7K級の無料枠対策)。
+               UI には上のとおり全文・最大5件を表示済み */
             toolPayload = JSON.stringify({
               query: query,
               provider: searchOut.provider,
-              results: searchOut.results
+              results: searchOut.results.slice(0, TOOL_RESULTS_IN_PAYLOAD).map(r => ({
+                title: r.title,
+                url: r.url,
+                content: String(r.content || '').slice(0, TOOL_CONTENT_LIMIT)
+              }))
             });
           } catch (err) {
             addErr('>> Wired が、濁ってる... 検索に失敗: ' + err.message);

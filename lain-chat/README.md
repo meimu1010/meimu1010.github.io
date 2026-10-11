@@ -120,7 +120,8 @@ python3 -m http.server 8080
 |---|---|
 | `HTTP 401 — APIキーが無効` | ⚙ CONFIG で Groq キーを再確認 |
 | `HTTP 404 — モデルIDが見つかりません` | <https://console.groq.com/docs/models> で最新のモデルIDを確認し MODEL を変更 |
-| `HTTP 429` | レートリミット。少し待って再送 |
+| `……Wiredが、混雑してる` (429) | **自動リトライ対応済み** (Groqが返す「try again in Xs」を解析して待機→再接続、最大3回)。それでも失敗したら1分待って再送 |
+| 検索ターンで頻繁に429になる | 無料枠の `qwen/qwen3.8-27b` は入力が **7,000トークン/分 (ITPM)** と低く、検索ありの1ターン(リクエスト2回)で上限に届きます。対策: ①少し間隔を空けて送る ②⚙ CONFIG で軽いモデル (例 `llama-3.1-8b-instant`) に変更 ③Groq の Dev Tier にアップグレード |
 | `Wired が、濁ってる...`(検索失敗) | 全経路が失敗したときに表示。時間をおいて再送、または検索語を変えてみる。Jinaは約20req/分の制限あり |
 | 検索結果が百科事典的すぎる | キー不要チェーンの下位(Wikipedia/DDG-IA)に落ちている可能性。少し待って再送するとJina経路が復活します |
 | 玲音が検索を使わない | 「今日のニュースは?」など外部情報が必要な質問を試す。システムプロンプトの検索指示は `js/system-prompt.js` で調整可 |
@@ -129,3 +130,31 @@ python3 -m http.server 8080
 
 『serial experiments lain』は Production 2nd / 安倍吉俊・中村隆太郎ほかの著作物です。
 本プロジェクトは非公式のファンメイド技術デモであり、営利利用を目的としません。
+
+## 7. GitHub Pages へのデプロイ
+
+完全静的サイトなので GitHub Pages でそのまま公開できます。
+
+```bash
+cd lain-chat
+git init && git add -A && git commit -m "lain wired chat terminal"
+git branch -M main
+git remote add origin https://github.com/<ユーザー名>/<リポジトリ名>.git
+git push -u origin main
+```
+
+または GitHub の Web UI からファイルをアップロードし、
+**Settings → Pages → Build and deployment → Source: Deploy from a branch → main / (root)** を選択。
+数分で `https://<ユーザー名>.github.io/<リポジトリ名>/` に公開されます。
+(`.nojekyll` を同梱済みなので Jekyll ビルドはスキップされます)
+
+### ⚠️ 公開前の重要注意
+
+- **自分の API キーをコードに書き込んで push しないでください。**
+  公開リポジトリのソースやネットワークタブから誰でも抜けます
+  (GitHub には `gsk_...` キーを自動検知するシークレットスキャンもあり、検出されると Groq 側で無効化されます)。
+- 本アプリは **BYOK (Bring Your Own Key) 設計**です。訪問者それぞれが
+  ⚙ CONFIG で自分のキーを自分のブラウザ (localStorage) に入れるため、
+  サイト本体に秘密情報は含まれず、そのまま公開して問題ありません。
+- 会話内容もすべてブラウザ内で完結し、GitHub のサーバーには送信されません
+  (送信先は Groq API と検索経路のみ)。
