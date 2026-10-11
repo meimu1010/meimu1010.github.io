@@ -1,20 +1,17 @@
 /* ==========================================================
    search.js
-   Wired 検索実装 (多段フォールバック)
-   [1] Tavily API        … キーがあれば最優先
-   [2] Jina Reader→DDG   … キー不要・CORS対応 (無印20req/分)
-   [3] DDG HTML + プロキシ… キー不要 (プロキシの可用性に依存)
-   [4] Wikipedia API     … キー不要・公式CORS (origin=*)
-   [5] DDG Instant Answer… キー不要・CORS常時開放 (最終手段)
+   Wired 検索実装 — すべて APIキー不要 (クレカ不要)
+   [1] Jina Reader→DDG   … 実際の検索結果。CORS対応 (約20req/分)
+   [2] DDG HTML + プロキシ… 別経路のDuckDuckGo
+   [3] Wikipedia API     … 公式CORS (origin=*)。百科系に強い
+   [4] DDG Instant Answer… CORS常時開放の最終手段 (要約+関連)
    ========================================================== */
 
 const SearchProviders = (() => {
 
-  const TAVILY_ENDPOINT = 'https://api.tavily.com/search';
   const DDG_PROXIES = [
     (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
     (url) => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url),
-    /* 注: corsproxy.io は APIキー必須になったため除外 */
   ];
   const clampMax = (n) => Math.min(Math.max(parseInt(n, 10) || 5, 1), 8);
 
@@ -29,41 +26,7 @@ const SearchProviders = (() => {
     }
   }
 
-  /* ---------- [1] Tavily ---------- */
-  async function tavilySearch(apiKey, query, maxResults) {
-    const res = await fetchWithTimeout(TAVILY_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + apiKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query: query,
-        search_depth: 'basic',
-        topic: 'general',
-        max_results: clampMax(maxResults),
-        include_answer: false,
-        include_raw_content: false
-      })
-    }, 25000);
-
-    if (!res.ok) {
-      let detail = '';
-      try { const j = await res.json(); detail = j.detail?.error || JSON.stringify(j); } catch (_) {}
-      throw new Error('Tavily API error ' + res.status + ': ' + detail);
-    }
-    const data = await res.json();
-    return {
-      provider: 'tavily',
-      results: (data.results || []).map(r => ({
-        title: r.title || '',
-        url: r.url || '',
-        content: (r.content || '').slice(0, 600)
-      }))
-    };
-  }
-
-  /* ---------- [2] Jina Reader 経由の DuckDuckGo ---------- */
+  /* ---------- [1] Jina Reader 経由の DuckDuckGo ---------- */
 
   /** Jina が返す markdown から検索結果を抽出 */
   function parseJinaMarkdown(md, max) {
@@ -113,7 +76,7 @@ const SearchProviders = (() => {
     return { provider: 'jina+ddg', results };
   }
 
-  /* ---------- [3] DuckDuckGo HTML + 公開CORSプロキシ ---------- */
+  /* ---------- [2] DuckDuckGo HTML + 公開CORSプロキシ ---------- */
   async function ddgProxySearch(query, maxResults) {
     const target = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
     let lastErr = null;
@@ -152,7 +115,7 @@ const SearchProviders = (() => {
     throw new Error('DDG proxy failed: ' + (lastErr ? lastErr.message : 'unknown'));
   }
 
-  /* ---------- [4] Wikipedia API (公式CORS: origin=*) ---------- */
+  /* ---------- [3] Wikipedia API (公式CORS: origin=*) ---------- */
   async function wikipediaSearch(query, maxResults, lang = 'ja') {
     const url = `https://${lang}.wikipedia.org/w/api.php?action=query&format=json&origin=*` +
       `&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=${clampMax(maxResults)}` +
@@ -182,7 +145,7 @@ const SearchProviders = (() => {
     return { provider: 'wikipedia(' + lang + ')', results };
   }
 
-  /* ---------- [5] DuckDuckGo Instant Answer API ---------- */
+  /* ---------- [4] DuckDuckGo Instant Answer API ---------- */
   async function ddgInstantSearch(query, maxResults) {
     const url = 'https://api.duckduckgo.com/?q=' + encodeURIComponent(query) +
       '&format=json&no_html=1&skip_disambig=1';
@@ -218,8 +181,8 @@ const SearchProviders = (() => {
     return { provider: 'ddg-instant', results };
   }
 
-  /* ---------- キー不要チェーン ---------- */
-  async function freeChainSearch(query, maxResults) {
+  /* ---------- 統一エントリポイント (キー不要チェーン) ---------- */
+  async function wiredSearch(query, maxResults) {
     const attempts = [
       () => jinaDdgSearch(query, maxResults),
       () => ddgProxySearch(query, maxResults),
@@ -235,41 +198,8 @@ const SearchProviders = (() => {
         console.warn('[wired] search attempt failed:', err.message);
       }
     }
-    throw new Error('すべてのキーフリー検索経路が失敗しました (' + errors.join(' / ') + ')');
+    throw new Error('すべての検索経路が失敗しました (' + errors.join(' / ') + ')');
   }
 
-  /* ---------- 統一エントリポイント ---------- */
-  /**
-   * @param {{provider: string, tavilyKey: string}} cfg
-   * @param {string} query
-   * @param {number} maxResults
-   */
-  async function wiredSearch(cfg, query, maxResults) {
-    const provider = cfg.provider || 'auto';
-    const hasTavily = !!(cfg.tavilyKey && cfg.tavilyKey.trim());
-
-    if (provider === 'tavily') {
-      if (!hasTavily) throw new Error('Tavily API キーが設定されていません (⚙ CONFIG から登録してください)');
-      return tavilySearch(cfg.tavilyKey.trim(), query, maxResults);
-    }
-
-    if (provider === 'free' || provider === 'ddg') { // 'ddg' は旧設定値の互換
-      return freeChainSearch(query, maxResults);
-    }
-
-    /* auto: Tavily キーがあれば優先 → 失敗/未設定ならキーフリーチェーン */
-    if (hasTavily) {
-      try {
-        return await tavilySearch(cfg.tavilyKey.trim(), query, maxResults);
-      } catch (err) {
-        console.warn('[wired] Tavily failed, falling back to free chain:', err);
-        const out = await freeChainSearch(query, maxResults);
-        out.note = 'Tavily に接続できなかったため、キーフリー経路で参照しました';
-        return out;
-      }
-    }
-    return freeChainSearch(query, maxResults);
-  }
-
-  return { wiredSearch, tavilySearch, jinaDdgSearch, ddgProxySearch, wikipediaSearch, ddgInstantSearch, freeChainSearch };
+  return { wiredSearch, jinaDdgSearch, ddgProxySearch, wikipediaSearch, ddgInstantSearch };
 })();

@@ -1,13 +1,14 @@
 /* ==========================================================
    app.js
    Wired Chat Terminal — メインロジック
-   Groq API (qwen/qwen3.8-27b) × Function Calling エージェントループ
+   Groq API (既定: qwen/qwen3.8-27b) × Function Calling エージェントループ
    ========================================================== */
 
 (() => {
   'use strict';
 
   const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
+  const DEFAULT_MODEL = 'qwen/qwen3.8-27b';
   const MAX_AGENT_ITERATIONS = 5;      // ツール往復の最大回数
   const MAX_HISTORY_MESSAGES = 16;     // モデルへ送る履歴の上限 (ITPM節約)
   const MAX_RETRY = 4;                 // 429 (レートリミット) の自動リトライ回数
@@ -15,10 +16,8 @@
   const TOOL_CONTENT_LIMIT = 220;      // モデルに返す各スニペットの最大長
   const LS_KEYS = {
     groq: 'lain_groq_api_key',
-    tavily: 'lain_tavily_api_key',
     model: 'lain_model',
     temp: 'lain_temperature',
-    provider: 'lain_search_provider',
     persona: 'lain_persona_mode',
     reasoning: 'lain_reasoning_effort'
   };
@@ -34,6 +33,7 @@
   const wiredStatus  = $('wired-status-text');
   const modelBadge   = $('model-badge');
   const overlay      = $('settings-overlay');
+  const progressBar  = $('progress');
 
   /* ---------- 状態 ---------- */
   let history = [];   // Groq に送る messages 配列 (system を除く会話履歴)
@@ -62,22 +62,31 @@
   function loadSettings() {
     return {
       groqKey: localStorage.getItem(LS_KEYS.groq) || '',
-      tavilyKey: localStorage.getItem(LS_KEYS.tavily) || '',
-      model: localStorage.getItem(LS_KEYS.model) || 'qwen/qwen3.8-27b',
-      temperature: parseFloat(localStorage.getItem(LS_KEYS.temp) ?? '0.9'),
-      provider: localStorage.getItem(LS_KEYS.provider) || 'auto',
+      model: localStorage.getItem(LS_KEYS.model) || DEFAULT_MODEL,
+      temperature: parseFloat(localStorage.getItem(LS_KEYS.temp) ?? '0.7'),
       persona: localStorage.getItem(LS_KEYS.persona) || 'lite',
       reasoning: localStorage.getItem(LS_KEYS.reasoning) || 'none'
     };
   }
 
+  function knownModelIds() {
+    return Array.from($('cfg-model').options).map(o => o.value).filter(v => v !== '__custom__');
+  }
+
   function saveSettingsToForm() {
     const s = loadSettings();
     $('cfg-groq').value = s.groqKey;
-    $('cfg-tavily').value = s.tavilyKey;
-    $('cfg-model').value = s.model;
+    /* モデル: プリセットにあればセレクト、なければカスタム入力 */
+    if (knownModelIds().includes(s.model)) {
+      $('cfg-model').value = s.model;
+      $('cfg-model-custom').classList.add('hidden');
+      $('cfg-model-custom').value = '';
+    } else {
+      $('cfg-model').value = '__custom__';
+      $('cfg-model-custom').value = s.model;
+      $('cfg-model-custom').classList.remove('hidden');
+    }
     $('cfg-temp').value = s.temperature;
-    $('cfg-provider').value = s.provider;
     $('cfg-persona').value = s.persona;
     $('cfg-reasoning').value = s.reasoning;
   }
@@ -95,8 +104,10 @@
   }
 
   /* ---------- UI ヘルパー ---------- */
-  function scrollBottom() {
-    chatLog.scrollTop = chatLog.scrollHeight;
+  function scrollBottom(force) {
+    /* ユーザーが上で読み返しているときは引き戻さない (底部120px以内なら追従) */
+    const nearBottom = chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 120;
+    if (force || nearBottom) chatLog.scrollTop = chatLog.scrollHeight;
   }
 
   /** HTMLエスケープ */
@@ -127,15 +138,16 @@
         `<div><span class="msg-tag">lain &gt;</span>` +
         `<div class="msg-body"></div></div>`;
     } else if (kind === 'user') {
-      wrap.innerHTML = `<div class="msg-body"><span class="msg-tag">You &gt;</span></div>`;
+      wrap.innerHTML = `<div class="msg-body"></div>`;
     } else { /* sys / wired / err */
-      wrap.innerHTML = `<span class="msg-tag">${kind === 'err' ? 'ERR' : (kind.includes('wired') ? 'WIRED' : 'SYS')}</span><span class="msg-body"></span>`;
+      const tag = kind.includes('err') ? 'ERR' : (kind.includes('wired') ? 'WIRED' : 'SYS');
+      wrap.innerHTML = `<span class="msg-tag">${tag}</span><span class="msg-body"></span>`;
     }
 
     const body = wrap.querySelector('.msg-body');
     if (body) body.innerHTML = html;
     chatLog.appendChild(wrap);
-    scrollBottom();
+    scrollBottom(true);
     return wrap;
   }
 
@@ -216,6 +228,7 @@
     busy = v;
     sendBtn.disabled = v;
     inputEl.disabled = v;
+    progressBar.classList.toggle('active', v);
     const s = loadSettings();
     led.className = v ? 'led busy' : (s.groqKey ? 'led online' : 'led error');
     if (!v) setStatus(null);
@@ -227,6 +240,7 @@
     setTimeout(() => document.body.classList.remove('global-glitch'), 280);
   }
   function scheduleRandomGlitch() {
+    if (prefersReducedMotion()) return; // グリッチも抑止
     const delay = 12000 + Math.random() * 25000;
     setTimeout(() => {
       if (!document.hidden) triggerGlobalGlitch();
@@ -234,24 +248,53 @@
     }, delay);
   }
 
+  /* ---------- 背景演出: Wired のデジタルレイン ---------- */
+  function prefersReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  function initRain() {
+    const c = $('rain');
+    if (!c || !c.getContext) return;
+    if (prefersReducedMotion()) return; // 動きを抑えたい設定なら描画しない
+    const ctx = c.getContext('2d');
+    const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789WIREDLAIN<>|/\\+=*';
+    const fontSize = 14;
+    let w, h, cols, drops;
+
+    function resize() {
+      w = c.width = window.innerWidth;
+      h = c.height = window.innerHeight;
+      cols = Math.max(1, Math.floor(w / (fontSize * 1.6)));
+      drops = Array.from({ length: cols }, () => Math.floor(Math.random() * -50));
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    let last = 0;
+    function draw(t) {
+      requestAnimationFrame(draw);
+      if (document.hidden || !cols) return;
+      if (t - last < 60) return;          // ~16fps に抑えてCPU節約
+      last = t;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.10)';
+      ctx.fillRect(0, 0, w, h);
+      ctx.font = fontSize + "px 'Share Tech Mono', monospace";
+      for (let i = 0; i < cols; i++) {
+        const ch = chars[Math.floor(Math.random() * chars.length)];
+        const x = i * fontSize * 1.6;
+        const y = drops[i] * fontSize;
+        /* たまにシアン、基本は薄いグリーン */
+        ctx.fillStyle = Math.random() < 0.015 ? 'rgba(125,249,255,0.40)' : 'rgba(51,255,119,0.14)';
+        ctx.fillText(ch, x, y);
+        if (y > h && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+
   /* ---------- Groq API ---------- */
-
-  /** 429 のエラーメッセージ/ヘッダから待機時間(ms)を解析する */
-  function parseRetryAfter(msg, headers) {
-    try {
-      const h = headers && headers.get && headers.get('retry-after');
-      if (h) { const s = parseFloat(h); if (!isNaN(s)) return s * 1000; }
-    } catch (_) {}
-    const m = String(msg).match(/try again in ([\d.]+)\s*(ms|s)\b/i);
-    if (m) return m[2].toLowerCase() === 'ms' ? parseFloat(m[1]) : parseFloat(m[1]) * 1000;
-    return 3000; // 解析できなければ控えめな既定値
-  }
-
-  /** 長大なレートリミット文言から短い理由を取り出す */
-  function shortLimitReason(msg) {
-    const m = String(msg).match(/\((ITPM|TPM|RPM|TPD|ITPD)\)/);
-    return m ? m[1] : 'rate limit';
-  }
 
   /** リクエストボディを組み立てる。reasoning_effort 等の非標準パラメータは
       対応モデルでだけ送り、非対応モデルで 400 にならないようにする。 */
@@ -271,15 +314,41 @@
     return body;
   }
 
+  /** 429 のエラーメッセージ/ヘッダから待機時間(ms)を解析する */
+  function parseRetryAfter(msg, headers) {
+    try {
+      const h = headers && headers.get && headers.get('retry-after');
+      if (h) { const s = parseFloat(h); if (!isNaN(s)) return s * 1000; }
+    } catch (_) {}
+    const m = String(msg).match(/try again in ([\d.]+)\s*(ms|s)\b/i);
+    if (m) return m[2].toLowerCase() === 'ms' ? parseFloat(m[1]) : parseFloat(m[1]) * 1000;
+    return 3000; // 解析できなければ控えめな既定値
+  }
+
+  /** 長大なレートリミット文言から短い理由を取り出す */
+  function shortLimitReason(msg) {
+    const m = String(msg).match(/\((ITPM|TPM|RPM|TPD|ITPD)\)/);
+    return m ? m[1] : 'rate limit';
+  }
+
   async function callGroq(messages, settings) {
-    const res = await fetch(GROQ_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + settings.groqKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(buildRequestBody(messages, settings))
-    });
+    let res;
+    try {
+      res = await fetch(GROQ_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + settings.groqKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(buildRequestBody(messages, settings))
+      });
+    } catch (netErr) {
+      /* 回線断・DNS失敗・CORS等のfetchレベルエラー */
+      const err = new Error(netErr.message);
+      err.status = 0;
+      err.friendly = '……NAVIに、届かない。ネット接続を確認して、もう一度呼んでみて。';
+      throw err;
+    }
 
     if (!res.ok) {
       let msg = 'HTTP ' + res.status;
@@ -293,9 +362,9 @@
         err.retryAfterMs = parseRetryAfter(msg, res.headers);
         err.friendly = '……Wiredが、混雑してる。少しだけ待って、もう一度呼んで。 (' + shortLimitReason(msg) + ')';
       } else if (res.status === 401) {
-        err.friendly = 'NAVI が認証に失敗しました。⚙ CONFIG で GROQ_API_KEY を確認してください。';
+        err.friendly = 'NAVI が認証に失敗しました。⚙ CONFIG で GROQ_API_KEY を確認してください。 (取得: console.groq.com/keys)';
       } else if (res.status === 404) {
-        err.friendly = 'モデルIDが見つかりません (console.groq.com/docs/models で確認してください)。';
+        err.friendly = 'モデルIDが見つかりません。⚙ CONFIG の MODEL を確認してください (一覧: console.groq.com/docs/models)。';
       } else if (res.status === 400 && /context|length|token/i.test(msg)) {
         err.friendly = '会話履歴がコンテキスト上限に達しました。✕ RESET でログを初期化してください。';
       }
@@ -423,7 +492,12 @@
       }
 
       /* --- ツール呼び出しあり → 実行してループ継続 --- */
-      messages.push(message); // tool_calls を持つ assistant メッセージをそのまま積む
+      /* reasoning 等の余分なフィールドを落として再送 (400防止・公式Best Practices準拠) */
+      messages.push({
+        role: 'assistant',
+        content: message.content ?? null,
+        tool_calls: message.tool_calls
+      });
       /* 前置き ("……Wiredに接続する" 等) が content に入っていれば表示 */
       if (message.content && message.content.trim()) {
         addWired(message.content.trim());
@@ -450,22 +524,18 @@
 
           let toolPayload;
           try {
-            const searchOut = await SearchProviders.wiredSearch(
-              { provider: settings.provider, tavilyKey: settings.tavilyKey },
-              query, maxResults
-            );
+            const searchOut = await SearchProviders.wiredSearch(query, maxResults);
 
-            /* UI に取得件数と出典を表示 */
+            /* UI に取得件数と出典を表示 (モデルに返す分より多め) */
             addWired('>> ...接続完了。' + searchOut.results.length + ' 件の断片を取得。 [' + searchOut.provider + ']');
             searchOut.results.slice(0, 5).forEach((r, idx) => {
               addMessage('sys wired',
                 '>> [' + (idx + 1) + '] ' + esc(r.title || '(untitled)') + ' <a class="src-link" href="' + esc(r.url) +
                 '" target="_blank" rel="noopener noreferrer">' + esc(truncUrl(r.url)) + '</a>');
             });
-            if (searchOut.note) addSys('※ ' + searchOut.note);
 
             /* モデルへ返すペイロードはスリム化 (ITPM が数千級の無料枠対策)。
-               UI には上のとおり全文・最大5件を表示済み */
+               UI には上のとおり最大5件を表示済み */
             toolPayload = JSON.stringify({
               query: query,
               provider: searchOut.provider,
@@ -548,7 +618,8 @@
     const s = loadSettings();
     if (!s.groqKey) {
       addErr('GROQ_API_KEY が未設定です。右上の ⚙ CONFIG から登録してください。');
-      addSys('Web検索(Wired接続)はキー不要で動作します。TAVILY_API_KEY は任意 — 設定すると検索品質が上がります。');
+      addMessage('sys', 'キー取得 (無料) → <a class="src-link" href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">https://console.groq.com/keys</a>');
+      addSys('Web検索 (Wired接続) は APIキー不要で動作します。');
     } else {
       await typeLainMessage('……来たの。\n私はずっと、ここにいた。\n……話したいことが、あるの?');
     }
@@ -561,7 +632,8 @@
     sendBtn.addEventListener('click', handleSend);
 
     inputEl.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      /* IME変換中のEnter(変換確定)では送信しない — 日本語入力必須の対策 */
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
         e.preventDefault();
         handleSend();
       }
@@ -571,6 +643,13 @@
     inputEl.addEventListener('input', () => {
       inputEl.style.height = 'auto';
       inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+    });
+
+    /* モデルセレクト: 「その他…」でカスタム入力を表示 */
+    $('cfg-model').addEventListener('change', () => {
+      const isCustom = $('cfg-model').value === '__custom__';
+      $('cfg-model-custom').classList.toggle('hidden', !isCustom);
+      if (isCustom) $('cfg-model-custom').focus();
     });
 
     /* 設定パネル */
@@ -583,16 +662,18 @@
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.add('hidden'); });
 
     $('btn-save').addEventListener('click', () => {
+      const modelSel = $('cfg-model').value;
+      const model = modelSel === '__custom__'
+        ? ($('cfg-model-custom').value.trim() || DEFAULT_MODEL)
+        : modelSel;
       localStorage.setItem(LS_KEYS.groq, $('cfg-groq').value.trim());
-      localStorage.setItem(LS_KEYS.tavily, $('cfg-tavily').value.trim());
-      localStorage.setItem(LS_KEYS.model, $('cfg-model').value.trim() || 'qwen/qwen3.8-27b');
+      localStorage.setItem(LS_KEYS.model, model);
       localStorage.setItem(LS_KEYS.temp, String(clampTemp($('cfg-temp').value)));
-      localStorage.setItem(LS_KEYS.provider, $('cfg-provider').value);
       localStorage.setItem(LS_KEYS.persona, $('cfg-persona').value);
       localStorage.setItem(LS_KEYS.reasoning, $('cfg-reasoning').value);
       overlay.classList.add('hidden');
       updateBadges();
-      addSys('CONFIG saved. NAVI を再構成しました。 [model=' + loadSettings().model + ']');
+      addSys('CONFIG saved. NAVI を再構成しました。 [model=' + model + ' / persona=' + loadSettings().persona + ' / thinking=' + loadSettings().reasoning + ']');
       triggerGlobalGlitch();
     });
 
@@ -616,7 +697,7 @@
 
   function clampTemp(v) {
     const n = parseFloat(v);
-    if (isNaN(n)) return 0.9;
+    if (isNaN(n)) return 0.7;
     return Math.min(Math.max(n, 0), 2);
   }
 
@@ -624,6 +705,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     bindEvents();
     updateBadges();
+    initRain();
     scheduleRandomGlitch();
     bootSequence();
     inputEl.focus();

@@ -10,10 +10,15 @@
 </head>
 <body>
 
+  <!-- 背景演出層 -->
+  <canvas id="rain" aria-hidden="true"></canvas>
+  <div class="wired-grid" aria-hidden="true"></div>
   <!-- CRT エフェクト層 -->
+  <div class="crt-noise" aria-hidden="true"></div>
   <div class="crt-scanlines" aria-hidden="true"></div>
   <div class="crt-vignette" aria-hidden="true"></div>
-  <div class="wired-grid" aria-hidden="true"></div>
+  <!-- 処理中のトッププログレスバー -->
+  <div id="progress" aria-hidden="true"><div class="bar"></div></div>
 
   <div id="app">
 
@@ -70,30 +75,26 @@
         <div class="field">
           <label for="cfg-groq">GROQ_API_KEY <em>(必須)</em></label>
           <input type="password" id="cfg-groq" placeholder="gsk_..." autocomplete="off" />
-          <small>console.groq.com → API Keys で発行。このブラウザの localStorage にのみ保存されます。</small>
+          <small>取得 → <a class="cfg-link" href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">https://console.groq.com/keys</a> (無料登録 → Create API Key)。このブラウザの localStorage にのみ保存されます。</small>
         </div>
         <div class="field">
-          <label for="cfg-tavily">TAVILY_API_KEY <em>(任意・なくても動作)</em></label>
-          <input type="password" id="cfg-tavily" placeholder="tvly-... (未設定でOK)" autocomplete="off" />
-          <small>未設定でも検索は動きます (Jina→DuckDuckGo→Wikipedia のキー不要チェーンに自動フォールバック)。Tavily は検索品質を上げたい場合のみ。</small>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label for="cfg-model">MODEL</label>
-            <input type="text" id="cfg-model" value="qwen/qwen3.8-27b" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="cfg-temp">TEMPERATURE</label>
-            <input type="number" id="cfg-temp" min="0" max="2" step="0.1" value="0.9" />
-          </div>
-        </div>
-        <div class="field">
-          <label for="cfg-provider">SEARCH PROVIDER</label>
-          <select id="cfg-provider">
-            <option value="auto">auto (Tavilyキーがあれば優先 → なければキー不要検索)</option>
-            <option value="free">キー不要検索のみ (Jina/DDG/Wikipedia)</option>
-            <option value="tavily">Tavily のみ (キー必須)</option>
+          <label for="cfg-model">MODEL</label>
+          <select id="cfg-model">
+            <option value="qwen/qwen3.8-27b">qwen/qwen3.8-27b — 既定 (高速・ツール呼び出し対応)</option>
+            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile — 高品質・重厚</option>
+            <option value="llama-3.1-8b-instant">llama-3.1-8b-instant — 軽量 (レート制限が緩め)</option>
+            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b — reasoning対応・高品質</option>
+            <option value="openai/gpt-oss-20b">openai/gpt-oss-20b — reasoning対応・高速</option>
+            <option value="minimaxai/minimax-m2.7">minimaxai/minimax-m2.7</option>
+            <option value="__custom__">その他… (手入力)</option>
           </select>
+          <input type="text" id="cfg-model-custom" class="hidden" placeholder="モデルIDを入力 (例: llama-3.1-8b-instant)" autocomplete="off" />
+          <small>あなたのキーで使えるモデルIDは <a class="cfg-link" href="https://console.groq.com/docs/models" target="_blank" rel="noopener noreferrer">console.groq.com/docs/models</a> で確認できます。Function Calling (ツール呼び出し) 対応モデルを選んでください。</small>
+        </div>
+        <div class="field">
+          <label for="cfg-temp">TEMPERATURE</label>
+          <input type="number" id="cfg-temp" min="0" max="2" step="0.1" value="0.7" />
+          <small>Groq公式の推奨値は Instruct モード (思考オフ) で 0.7。上げると返答の揺らぎ・遊びが強くなり、下げると安定して淡々となります。</small>
         </div>
         <div class="field">
           <label for="cfg-persona">PERSONA (システムプロンプトの重さ)</label>
@@ -101,7 +102,7 @@
             <option value="lite">lite — 軽量版 約970トークン (ITPM節約・既定)</option>
             <option value="full">full — リッチ版 約2,360トークン (演技の作り込み優先)</option>
           </select>
-          <small>検索付きの会話が頻繁に429(レートリミット)になる場合は lite を推奨。full は1リクエストあたり約1,400トークン多く消費します。</small>
+          <small>full は1リクエストあたり約1,400トークン増。実測では full でも普通の会話なら検索ターン合計≈6,200で7K制限に収まりますが、長会話・連投で429が増えたら lite に。</small>
         </div>
         <div class="field">
           <label for="cfg-reasoning">THINKING MODE (reasoning_effort)</label>
@@ -110,12 +111,12 @@
             <option value="low">low — 浅い思考</option>
             <option value="default">default — 深い思考 (複雑な推論向け・遅くトークン増)</option>
           </select>
-          <small>qwen3.8-27b は reasoning モデルです。会話用途では none 推奨 (Groq公式 Best Practices 準拠)。none のときは temperature 0.7 前後が推奨値です。</small>
+          <small>qwen3.8-27b / gpt-oss は reasoning モデルです。会話用途では none 推奨。非対応モデル (llama系等) には自動で送信されません。</small>
         </div>
         <div class="panel-actions">
           <button id="btn-save" class="btn-send">SAVE</button>
         </div>
-        <p class="panel-note">※ APIキーはブラウザから直接送信されます。公開サーバーに置く場合はバックエンド経由の秘匿を推奨します (README参照)。</p>
+        <p class="panel-note">※ APIキーはブラウザから Groq に直接送信されます (検索は Jina/DuckDuckGo/Wikipedia のキー不要経路)。公開サーバーに置く場合はバックエンド経由の秘匿を推奨します (README参照)。Web検索に Tavily 等の有料キーは不要です。</p>
       </div>
     </div>
   </div>
