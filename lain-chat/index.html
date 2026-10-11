@@ -99,10 +99,10 @@
         <div class="field">
           <label for="cfg-persona">PERSONA (システムプロンプトの重さ)</label>
           <select id="cfg-persona">
-            <option value="lite">lite — 軽量版 約970トークン (ITPM節約・既定)</option>
-            <option value="full">full — リッチ版 約2,360トークン (演技の作り込み優先)</option>
+            <option value="lite">lite — 軽量版 約1,280トークン (ITPM節約・既定)</option>
+            <option value="full">full — リッチ版 約2,800トークン (演技の作り込み優先)</option>
           </select>
-          <small>full は1リクエストあたり約1,400トークン増。実測では full でも普通の会話なら検索ターン合計≈6,200で7K制限に収まりますが、長会話・連投で429が増えたら lite に。</small>
+          <small>full は1リクエストあたり約1,500トークン増。実測では full でも検索ターン合計≈7,000で7K制限ギリギリ、lite なら≈3,900で余裕です。429が増えたら lite に。</small>
         </div>
         <div class="field">
           <label for="cfg-reasoning">THINKING MODE (reasoning_effort)</label>
