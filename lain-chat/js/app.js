@@ -9,16 +9,17 @@
 
   const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
   const MAX_AGENT_ITERATIONS = 5;      // ツール往復の最大回数
-  const MAX_HISTORY_MESSAGES = 24;     // モデルへ送る履歴の上限
+  const MAX_HISTORY_MESSAGES = 16;     // モデルへ送る履歴の上限 (ITPM節約)
   const MAX_RETRY = 4;                 // 429 (レートリミット) の自動リトライ回数
-  const TOOL_RESULTS_IN_PAYLOAD = 4;   // モデルに返す検索結果の件数 (UI表示は別)
-  const TOOL_CONTENT_LIMIT = 280;      // モデルに返す各スニペットの最大長
+  const TOOL_RESULTS_IN_PAYLOAD = 3;   // モデルに返す検索結果の件数 (UI表示は5件のまま)
+  const TOOL_CONTENT_LIMIT = 220;      // モデルに返す各スニペットの最大長
   const LS_KEYS = {
     groq: 'lain_groq_api_key',
     tavily: 'lain_tavily_api_key',
     model: 'lain_model',
     temp: 'lain_temperature',
-    provider: 'lain_search_provider'
+    provider: 'lain_search_provider',
+    persona: 'lain_persona_mode'
   };
 
   /* ---------- DOM ---------- */
@@ -62,7 +63,8 @@
       tavilyKey: localStorage.getItem(LS_KEYS.tavily) || '',
       model: localStorage.getItem(LS_KEYS.model) || 'qwen/qwen3.8-27b',
       temperature: parseFloat(localStorage.getItem(LS_KEYS.temp) ?? '0.9'),
-      provider: localStorage.getItem(LS_KEYS.provider) || 'auto'
+      provider: localStorage.getItem(LS_KEYS.provider) || 'auto',
+      persona: localStorage.getItem(LS_KEYS.persona) || 'lite'
     };
   }
 
@@ -73,6 +75,7 @@
     $('cfg-model').value = s.model;
     $('cfg-temp').value = s.temperature;
     $('cfg-provider').value = s.provider;
+    $('cfg-persona').value = s.persona;
   }
 
   function updateBadges() {
@@ -318,14 +321,14 @@
   }
 
   /** 古いターンの tool 結果(検索スニペット)を圧縮してトークンを節約する。
-      直近2件は全文保持 (直前の検索内容を玲音が参照できるように)。 */
+      直近1件のみ全文保持 (直前の検索内容を玲音が参照できるように)。 */
   function compressHistory(hist) {
     const toolIdx = [];
     hist.forEach((m, i) => { if (m.role === 'tool') toolIdx.push(i); });
-    toolIdx.slice(0, -2).forEach(i => {
+    toolIdx.slice(0, -1).forEach(i => {
       const c = hist[i].content;
-      if (typeof c === 'string' && c.length > 160) {
-        hist[i] = { ...hist[i], content: c.slice(0, 140) + '...(古いWiredの記録は圧縮されました)' };
+      if (typeof c === 'string' && c.length > 120) {
+        hist[i] = { ...hist[i], content: c.slice(0, 100) + '...(古いWiredの記録は圧縮)' };
       }
     });
     return hist;
@@ -354,7 +357,7 @@
     const historySnapshotLen = history.length - 1; // 失敗時に巻き戻す地点
     compressHistory(history);
 
-    const messages = [{ role: 'system', content: buildSystemPrompt() }]
+    const messages = [{ role: 'system', content: buildSystemPrompt(settings.persona) }]
       .concat(trimHistory(history));
 
     let iterations = 0;
@@ -563,6 +566,7 @@
       localStorage.setItem(LS_KEYS.model, $('cfg-model').value.trim() || 'qwen/qwen3.8-27b');
       localStorage.setItem(LS_KEYS.temp, String(clampTemp($('cfg-temp').value)));
       localStorage.setItem(LS_KEYS.provider, $('cfg-provider').value);
+      localStorage.setItem(LS_KEYS.persona, $('cfg-persona').value);
       overlay.classList.add('hidden');
       updateBadges();
       addSys('CONFIG saved. NAVI を再構成しました。 [model=' + loadSettings().model + ']');

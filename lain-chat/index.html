@@ -95,6 +95,14 @@
             <option value="tavily">Tavily のみ (キー必須)</option>
           </select>
         </div>
+        <div class="field">
+          <label for="cfg-persona">PERSONA (システムプロンプトの重さ)</label>
+          <select id="cfg-persona">
+            <option value="lite">lite — 軽量版 約800トークン (無料枠ITPM 7K対策・推奨)</option>
+            <option value="full">full — リッチ版 約2,300トークン (演技の作り込み優先)</option>
+          </select>
+          <small>無料枠で検索付きの会話が頻繁に429(レートリミット)になる場合は lite を推奨。full は1リクエストあたり約1,500トークン多く消費します。</small>
+        </div>
         <div class="panel-actions">
           <button id="btn-save" class="btn-send">SAVE</button>
         </div>
