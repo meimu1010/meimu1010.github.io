@@ -237,8 +237,9 @@ function loadModelFile(file) {
         return;
       }
 
-      // 【修正】loadPMX は生データしか返さないため、
-      // THREE.SkinnedMesh を生成する load() を使用します
+      // load() はURL末尾の拡張子で判定するため blob: URL で失敗する。
+      // 拡張子チェックの無い loadPMX() でパースデータを受け取り、
+      // meshBuilder.build() で SkinnedMesh を生成する。
       mmdLoader.loadPMX(
         url,
         (data) => {
@@ -310,7 +311,7 @@ function setPMX(mesh, fileName) {
   clearCurrentModel();
 
   currentVrm = null;
-  currentRoot = mesh; // mesh は THREE.SkinnedMesh (Object3Dを継承)
+  currentRoot = mesh;
 
   scene.add(currentRoot);
 
