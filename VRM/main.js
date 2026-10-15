@@ -237,11 +237,13 @@ function loadModelFile(file) {
         return;
       }
 
-      mmdLoader.loadPMX(
+      // 【修正】loadPMX は生データしか返さないため、
+      // THREE.SkinnedMesh を生成する load() を使用します
+      mmdLoader.load(
         url,
-        (object) => {
+        (mesh) => {
           URL.revokeObjectURL(url);
-          setPMX(object, file.name);
+          setPMX(mesh, file.name);
         },
         undefined,
         (error) => {
@@ -291,11 +293,11 @@ function setVRM(gltf, fileName) {
   );
 }
 
-function setPMX(object, fileName) {
+function setPMX(mesh, fileName) {
   clearCurrentModel();
 
   currentVrm = null;
-  currentRoot = object;
+  currentRoot = mesh; // mesh は THREE.SkinnedMesh (Object3Dを継承)
 
   scene.add(currentRoot);
 
@@ -304,7 +306,7 @@ function setPMX(object, fileName) {
   fitCameraToObject(currentRoot);
 
   setStatus(
-    `読み込み完了: ${fileName}\n形式: PMX（テクスチャは別ファイルのため未読み込み）`
+    `読み込み完了: ${fileName}\n形式: PMX`
   );
 }
 
