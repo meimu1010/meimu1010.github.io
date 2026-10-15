@@ -19,7 +19,7 @@ canvas { display: block; }
   padding: 24px; z-index: 10;
 }
 .panel h1 { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #1a202c; }
-.file-input-wrapper { position: relative; margin-bottom: 20px; }
+.file-input-wrapper { position: relative; margin-bottom: 12px; }
 .file-input-wrapper input[type="file"] {
   position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;
 }
@@ -28,6 +28,9 @@ canvas { display: block; }
   padding: 14px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white; border-radius: 10px; font-weight: 500;
   transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;
+}
+.file-input-button.secondary {
+  background: linear-gradient(135deg, #20c997 0%, #12a085 100%);
 }
 .file-input-button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
 .control-group { margin-bottom: 16px; }
@@ -61,13 +64,23 @@ canvas { display: block; }
 <body>
 <div class="panel">
   <h1>3D Model Viewer</h1>
+  
   <div class="file-input-wrapper">
-    <input id="file" type="file" accept=".vrm,.glb,.pmx" />
-    <div class="file-input-button">
-      <span>📁</span>
-      <span>モデルを選択</span>
+    <input id="folder" type="file" webkitdirectory directory multiple />
+    <div class="file-input-button secondary">
+      <span>📂</span>
+      <span>PMXフォルダごと選択</span>
     </div>
   </div>
+
+  <div class="file-input-wrapper">
+    <input id="file" type="file" accept=".vrm,.glb" />
+    <div class="file-input-button">
+      <span>📄</span>
+      <span>VRM/GLB単体選択</span>
+    </div>
+  </div>
+
   <div class="control-group">
     <label class="control-label">
       <input id="physics" type="checkbox" checked />
@@ -87,9 +100,8 @@ canvas { display: block; }
     ホイール: ズーム<br>
     R: ポーズリセット<br>
     <br>
-    <strong>対応形式</strong><br>
-    VRM / GLB / PMX<br>
-    (PMXはテクスチャ別ファイルのため<br>ファイル選択ではテクスチャ非読み込み)
+    <strong>PMXについて</strong><br>
+    「フォルダごと選択」を使うと<br>テクスチャも自動で読み込まれます。
   </div>
   <div id="status" class="status">モデルファイルを選択してください</div>
 </div>
