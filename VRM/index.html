@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VRM Touch Viewer</title>
+<style>
+html, body { margin:0; width:100%; height:100%; overflow:hidden; background:#20242a; color:#fff; font-family:sans-serif; }
+#ui { position:fixed; top:8px; left:8px; z-index:10; background:rgba(0,0,0,.55); padding:10px; border-radius:10px; display:grid; gap:8px; max-width:min(92vw,520px); }
+#status { white-space:pre-wrap; line-height:1.35; }
+label { user-select:none; }
+canvas { display:block; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/build/three.module.js",
+    "three/examples/jsm/": "./vendor/three/examples/jsm/",
+    "@pixiv/three-vrm": "./vendor/three-vrm/lib/three-vrm.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<div id="ui">
+  <input id="file" type="file" accept=".vrm,.glb" />
+  <label><input id="physics" type="checkbox" checked /> 物理（VRM update）</label>
+  <label><input id="autoRotate" type="checkbox" /> 視点自動回転</label>
+  <div>左長押し: 部位ドラッグ / 右ドラッグ: 視点 / ホイール: ズーム / R: リセット</div>
+  <div id="status">VRMファイルを選択してください。</div>
+</div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
