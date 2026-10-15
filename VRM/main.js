@@ -20,7 +20,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x20242a);
+scene.background = new THREE.Color(0xf0f0f0);
 
 const camera = new THREE.PerspectiveCamera(
   45,
@@ -58,7 +58,21 @@ const loader = new GLTFLoader();
 if (ThreeVRM.VRMLoaderPlugin) {
   loader.register((parser) => new ThreeVRM.VRMLoaderPlugin(parser));
 } else {
-  setStatus('VRMLoaderPlugin が見つかりません。@pixiv/three-vrm の export を確認してください。');
+  setStatus('VRMLoaderPlugin が見つかりません。');
+}
+
+let mmdLoaderPromise = null;
+
+function getMMDLoader() {
+  if (!mmdLoaderPromise) {
+    mmdLoaderPromise = import('three/examples/jsm/loaders/MMDLoader.js')
+      .then((mod) => new mod.MMDLoader())
+      .catch((err) => {
+        console.warn('MMDLoader を読み込めませんでした', err);
+        return null;
+      });
+  }
+  return mmdLoaderPromise;
 }
 
 let currentVrm = null;
@@ -93,7 +107,7 @@ fileInput.addEventListener('change', () => {
   const file = fileInput.files && fileInput.files[0];
   if (!file) return;
 
-  loadVRMFile(file);
+  loadModelFile(file);
   fileInput.value = '';
 });
 
@@ -101,8 +115,8 @@ physicsCheckbox.addEventListener('change', () => {
   physicsEnabled = physicsCheckbox.checked;
   setStatus(
     physicsEnabled
-      ? '物理オン（VRM update を実行）'
-      : '物理オフ（VRM update を停止）'
+      ? '物理演算: オン'
+      : '物理演算: オフ'
   );
 });
 
@@ -195,23 +209,52 @@ function endPointer() {
   pendingHit = null;
 }
 
-function loadVRMFile(file) {
+function loadModelFile(file) {
   const url = URL.createObjectURL(file);
+  const ext = file.name.split('.').pop().toLowerCase();
+
   setStatus(`読み込み中: ${file.name}`);
 
-  loader.load(
-    url,
-    (gltf) => {
-      URL.revokeObjectURL(url);
-      setVRM(gltf, file.name);
-    },
-    undefined,
-    (error) => {
-      URL.revokeObjectURL(url);
-      console.error(error);
-      setStatus(`読み込み失敗: ${error && error.message ? error.message : error}`);
-    }
-  );
+  if (ext === 'vrm' || ext === 'glb' || ext === 'gltf') {
+    loader.load(
+      url,
+      (gltf) => {
+        URL.revokeObjectURL(url);
+        setVRM(gltf, file.name);
+      },
+      undefined,
+      (error) => {
+        URL.revokeObjectURL(url);
+        console.error(error);
+        setStatus(`読み込み失敗: ${error && error.message ? error.message : error}`);
+      }
+    );
+  } else if (ext === 'pmx') {
+    getMMDLoader().then((mmdLoader) => {
+      if (!mmdLoader) {
+        URL.revokeObjectURL(url);
+        setStatus('PMX 非対応: この three バージョンに MMDLoader がありません');
+        return;
+      }
+
+      mmdLoader.loadPMX(
+        url,
+        (object) => {
+          URL.revokeObjectURL(url);
+          setPMX(object, file.name);
+        },
+        undefined,
+        (error) => {
+          URL.revokeObjectURL(url);
+          console.error(error);
+          setStatus(`読み込み失敗: ${error && error.message ? error.message : error}`);
+        }
+      );
+    });
+  } else {
+    URL.revokeObjectURL(url);
+    setStatus(`未対応の形式: ${ext}`);
+  }
 }
 
 function setVRM(gltf, fileName) {
@@ -244,8 +287,24 @@ function setVRM(gltf, fileName) {
   fitCameraToObject(currentRoot);
 
   setStatus(
-    `読み込み完了: ${fileName}\n` +
-    '左長押しで部位を掴む / 右ドラッグで視点 / ホイールでズーム / Rでリセット'
+    `読み込み完了: ${fileName}\n形式: VRM/GLB`
+  );
+}
+
+function setPMX(object, fileName) {
+  clearCurrentModel();
+
+  currentVrm = null;
+  currentRoot = object;
+
+  scene.add(currentRoot);
+
+  collectSkinnedMeshes();
+  cacheInitialPose();
+  fitCameraToObject(currentRoot);
+
+  setStatus(
+    `読み込み完了: ${fileName}\n形式: PMX（テクスチャは別ファイルのため未読み込み）`
   );
 }
 

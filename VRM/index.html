@@ -3,13 +3,127 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>VRM Touch Viewer</title>
+<title>3D Model Viewer</title>
 <style>
-html, body { margin:0; width:100%; height:100%; overflow:hidden; background:#20242a; color:#fff; font-family:sans-serif; }
-#ui { position:fixed; top:8px; left:8px; z-index:10; background:rgba(0,0,0,.55); padding:10px; border-radius:10px; display:grid; gap:8px; max-width:min(92vw,520px); }
-#status { white-space:pre-wrap; line-height:1.35; }
-label { user-select:none; }
-canvas { display:block; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+canvas { display: block; }
+
+.panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 320px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  z-index: 10;
+}
+
+.panel h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #1a202c;
+}
+
+.file-input-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.file-input-wrapper input[type="file"] {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.file-input-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.file-input-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.control-group {
+  margin-bottom: 16px;
+}
+
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.control-label:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.control-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.control-label span {
+  font-size: 14px;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.help-text {
+  margin-top: 20px;
+  padding: 12px;
+  background: rgba(102, 126, 234, 0.08);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #4a5568;
+}
+
+.help-text strong {
+  color: #2d3748;
+}
+
+.status {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #4a5568;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
 </style>
 <script type="importmap">
 {
@@ -22,13 +136,46 @@ canvas { display:block; }
 </script>
 </head>
 <body>
-<div id="ui">
-  <input id="file" type="file" accept=".vrm,.glb" />
-  <label><input id="physics" type="checkbox" checked /> 物理（VRM update）</label>
-  <label><input id="autoRotate" type="checkbox" /> 視点自動回転</label>
-  <div>左長押し: 部位ドラッグ / 右ドラッグ: 視点 / ホイール: ズーム / R: リセット</div>
-  <div id="status">VRMファイルを選択してください。</div>
+<div class="panel">
+  <h1>3D Model Viewer</h1>
+
+  <div class="file-input-wrapper">
+    <input id="file" type="file" accept=".vrm,.glb,.pmx" />
+    <div class="file-input-button">
+      <span>📁</span>
+      <span>モデルを選択</span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label class="control-label">
+      <input id="physics" type="checkbox" checked />
+      <span>物理演算</span>
+    </label>
+  </div>
+
+  <div class="control-group">
+    <label class="control-label">
+      <input id="autoRotate" type="checkbox" />
+      <span>自動回転</span>
+    </label>
+  </div>
+
+  <div class="help-text">
+    <strong>操作方法</strong><br>
+    左長押し: 部位を掴む<br>
+    右ドラッグ: 視点回転<br>
+    ホイール: ズーム<br>
+    R: ポーズリセット<br>
+    <br>
+    <strong>対応形式</strong><br>
+    VRM / GLB / PMX<br>
+    (PMXはテクスチャ別ファイルのため<br>ファイル選択ではテクスチャ非読み込み)
+  </div>
+
+  <div id="status" class="status">モデルファイルを選択してください</div>
 </div>
+
 <script type="module" src="./main.js"></script>
 </body>
 </html>
