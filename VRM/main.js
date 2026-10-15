@@ -5,6 +5,7 @@ import * as ThreeVRM from '@pixiv/three-vrm';
 
 const status = document.getElementById('status');
 const fileInput = document.getElementById('file');
+const folderInput = document.getElementById('folder');
 const physicsCheckbox = document.getElementById('physics');
 const autoRotateCheckbox = document.getElementById('autoRotate');
 
@@ -53,12 +54,29 @@ scene.add(dirLight);
 
 scene.add(new THREE.GridHelper(10, 20, 0x777777, 0x3a3f46));
 
-const loader = new GLTFLoader();
+// 【追加】テクスチャ解決用のManager
+const textureFilesMap = new Map();
+const manager = new THREE.LoadingManager();
+
+manager.setURLModifier((url) => {
+  // data URI や base64 はそのまま
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  
+  // ファイル名部分のみ抽出 (textures/foo.png -> foo.png)
+  const match = url.match(/[^\\/]+$/);
+  if (match) {
+    const filename = match[0];
+    if (textureFilesMap.has(filename)) {
+      return textureFilesMap.get(filename); // Blob URLに書き換え
+    }
+  }
+  return url;
+});
+
+const loader = new GLTFLoader(manager);
 
 if (ThreeVRM.VRMLoaderPlugin) {
   loader.register((parser) => new ThreeVRM.VRMLoaderPlugin(parser));
-} else {
-  setStatus('VRMLoaderPlugin が見つかりません。');
 }
 
 let mmdLoaderPromise = null;
@@ -66,7 +84,7 @@ let mmdLoaderPromise = null;
 function getMMDLoader() {
   if (!mmdLoaderPromise) {
     mmdLoaderPromise = import('three/examples/jsm/loaders/MMDLoader.js')
-      .then((mod) => new mod.MMDLoader())
+      .then((mod) => new mod.MMDLoader(manager)) // Managerを渡す
       .catch((err) => {
         console.warn('MMDLoader を読み込めませんでした', err);
         return null;
@@ -102,6 +120,41 @@ const DRAG_SPEED = 0.006;
 const xAxis = new THREE.Vector3(1, 0, 0);
 const yAxis = new THREE.Vector3(0, 1, 0);
 const tmpQuat = new THREE.Quaternion();
+
+// 【追加】フォルダ選択ハンドラ
+folderInput.addEventListener('change', (e) => {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+
+  textureFilesMap.clear();
+  let pmxFile = null;
+  let vrmFile = null;
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const ext = f.name.split('.').pop().toLowerCase();
+
+    if (ext === 'pmx') {
+      pmxFile = f;
+    } else if (ext === 'vrm' || ext === 'glb') {
+      vrmFile = f;
+    } else if (['png', 'jpg', 'jpeg', 'bmp', 'tga', 'sph', 'spa'].includes(ext)) {
+      // テクスチャ候補をMapに登録 (Blob URLを生成)
+      const url = URL.createObjectURL(f);
+      textureFilesMap.set(f.name, url);
+    }
+  }
+
+  if (pmxFile) {
+    loadPMXFile(pmxFile);
+  } else if (vrmFile) {
+    loadModelFile(vrmFile);
+  } else {
+    setStatus('PMXまたはVRM/GLBファイルが見つかりませんでした');
+  }
+  
+  folderInput.value = '';
+});
 
 fileInput.addEventListener('change', () => {
   const file = fileInput.files && fileInput.files[0];
@@ -209,6 +262,46 @@ function endPointer() {
   pendingHit = null;
 }
 
+function loadPMXFile(file) {
+  const url = URL.createObjectURL(file);
+  setStatus(`読み込み中: ${file.name} (テクスチャ解決済み)`);
+
+  getMMDLoader().then((mmdLoader) => {
+    if (!mmdLoader) {
+      URL.revokeObjectURL(url);
+      setStatus('PMX 非対応');
+      return;
+    }
+
+    mmdLoader.loadPMX(
+      url,
+      (data) => {
+        let mesh = null;
+        try {
+          // resourcePath は空でOK。Manager がテクスチャを解決する
+          mesh = mmdLoader.meshBuilder.build(data, '');
+        } catch (buildError) {
+          console.error(buildError);
+        }
+
+        URL.revokeObjectURL(url);
+
+        if (mesh) {
+          setPMX(mesh, file.name);
+        } else {
+          setStatus('PMXからメッシュを生成できませんでした');
+        }
+      },
+      undefined,
+      (error) => {
+        URL.revokeObjectURL(url);
+        console.error(error);
+        setStatus(`読み込み失敗: ${error && error.message ? error.message : error}`);
+      }
+    );
+  });
+}
+
 function loadModelFile(file) {
   const url = URL.createObjectURL(file);
   const ext = file.name.split('.').pop().toLowerCase();
@@ -229,44 +322,6 @@ function loadModelFile(file) {
         setStatus(`読み込み失敗: ${error && error.message ? error.message : error}`);
       }
     );
-  } else if (ext === 'pmx') {
-    getMMDLoader().then((mmdLoader) => {
-      if (!mmdLoader) {
-        URL.revokeObjectURL(url);
-        setStatus('PMX 非対応: この three バージョンに MMDLoader がありません');
-        return;
-      }
-
-      // load() はURL末尾の拡張子で判定するため blob: URL で失敗する。
-      // 拡張子チェックの無い loadPMX() でパースデータを受け取り、
-      // meshBuilder.build() で SkinnedMesh を生成する。
-      mmdLoader.loadPMX(
-        url,
-        (data) => {
-          let mesh = null;
-
-          try {
-            mesh = mmdLoader.meshBuilder.build(data, '');
-          } catch (buildError) {
-            console.error(buildError);
-          }
-
-          URL.revokeObjectURL(url);
-
-          if (mesh) {
-            setPMX(mesh, file.name);
-          } else {
-            setStatus('PMXからメッシュを生成できませんでした');
-          }
-        },
-        undefined,
-        (error) => {
-          URL.revokeObjectURL(url);
-          console.error(error);
-          setStatus(`読み込み失敗: ${error && error.message ? error.message : error}`);
-        }
-      );
-    });
   } else {
     URL.revokeObjectURL(url);
     setStatus(`未対応の形式: ${ext}`);
