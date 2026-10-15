@@ -239,11 +239,24 @@ function loadModelFile(file) {
 
       // 【修正】loadPMX は生データしか返さないため、
       // THREE.SkinnedMesh を生成する load() を使用します
-      mmdLoader.load(
+      mmdLoader.loadPMX(
         url,
-        (mesh) => {
+        (data) => {
+          let mesh = null;
+
+          try {
+            mesh = mmdLoader.meshBuilder.build(data, '');
+          } catch (buildError) {
+            console.error(buildError);
+          }
+
           URL.revokeObjectURL(url);
-          setPMX(mesh, file.name);
+
+          if (mesh) {
+            setPMX(mesh, file.name);
+          } else {
+            setStatus('PMXからメッシュを生成できませんでした');
+          }
         },
         undefined,
         (error) => {
